@@ -1,0 +1,19 @@
+#Submit file for geomSeqImager and other design code that I write will probably look similar
+batch_name   = CP81B_runs
+baseDir      = /exports/home/gloiseau
+
+executable = /exports/home/gloiseau/mslib/trunk_AS/bin/CATM_v24.4
+output     = $(baseDir)/$(Process).out
+log        = $(baseDir)/$(Process).log
+error      = $(baseDir)/$(Process).err
+
+configFile = /exports/home/gloiseau/mslib/trunk_AS/config/CATM.config
+
+stream_output = TRUE
+stream_error  = TRUE
+
+#Runs
+arguments = "--config $(configFile) --fullSequence RASLLLMVLLGPLLGALLVVLILI --uniprotAccession Q9UNU6WT"
+queue
+arguments = "--config $(configFile) --fullSequence RASLLLMVLLGALLGALLVVLILI --uniprotAccession Q9UNU6"
+queue

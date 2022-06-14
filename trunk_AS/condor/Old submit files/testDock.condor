@@ -1,0 +1,15 @@
+#Submit file for a large scale design test
+batch_name   = sequenceDesign
+baseDir      = /data02/gloiseau/Sequence_Design_Project/vdwSequenceDesign/$(batch_name)
+
+executable   = /exports/home/gloiseau/mslib/trunk_AS/bin/geomRepack
+output       = $(baseDir)/out/$(Process).out
+log          = $(baseDir)/log/$(Process).log
+error        = $(baseDir)/err/$(Process).err
+
+stream_output = TRUE
+stream_error  = TRUE
+
+#Runs
+arguments = "--config /data02/gloiseau/Sequence_Design_Project/vdwSequenceDesign/sequenceDesign/10_30_2021/design_0/0/repack.config"
+queue

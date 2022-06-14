@@ -1,0 +1,614 @@
+#Submit file for a large scale design test
+batch_name   = lsdesign_weight_test
+baseDir      = /data02/gloiseau/Sequence_Design_Project/vdwSequenceDesign/$(batch_name)
+
+executable   = /exports/home/gloiseau/mslib/trunk_AS/bin/seqDesign
+output       = $(baseDir)/out/$(Process).out
+log          = $(baseDir)/log/test1.log
+error        = $(baseDir)/err/$(Process).err
+#requirements = TARGET.MACHINE!="cluste1-0004.biochem.wisc.edu"
+
+#Info
+configFile = /exports/home/gloiseau/mslib/trunk_AS/config/seqDesign.config
+
+#Runs
+arguments = "--config $(configFile) --runNumber 0 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 3.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 1 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 3.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 2 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 3 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 4 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 5 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 6 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 7 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 1.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 8 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 1.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 9 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 1.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 10 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 1.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 11 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 12 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 13 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 14 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 15 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 16 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 17 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 18 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 19 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 20 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 21 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 22 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 23 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 24 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 25 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 26 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 1.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 27 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 1.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 28 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 1.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 29 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 1.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 30 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 31 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 32 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 33 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 34 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 35 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 36 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 37 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 38 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 39 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 40 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 41 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 42 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 43 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 44 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 45 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 1.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 46 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 1.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 47 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 1.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 48 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 1.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 49 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 50 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 51 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 52 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 53 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 54 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 55 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 56 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 57 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 58 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 59 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 60 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 61 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 62 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 63 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 64 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 1.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 65 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 1.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 66 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 1.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 67 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 1.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 68 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 69 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 70 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 71 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 72 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 73 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 74 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 75 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 76 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 77 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 78 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 79 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 80 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 81 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 82 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 83 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 1.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 84 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 1.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 85 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 1.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 86 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 1.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 87 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 88 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 89 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 90 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 91 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 92 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 93 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 94 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 95 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.6 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 96 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.8 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 97 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 4.0 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 98 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 4.2 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 99 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 4.4 --weight_seqEntropy 0"
+queue
+arguments = "--config $(configFile) --runNumber 100 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 3.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 101 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 3.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 102 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 103 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 104 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 105 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 106 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 107 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 1.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 108 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 1.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 109 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 1.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 110 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 1.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 111 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 112 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 113 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 114 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 115 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 116 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 117 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 118 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 119 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 120 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 121 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 122 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 123 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 124 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 125 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 126 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 1.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 127 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 1.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 128 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 1.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 129 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 1.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 130 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 131 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 132 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 133 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 134 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 135 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 136 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 137 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 138 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 139 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 140 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 141 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 142 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 143 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 144 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 145 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 1.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 146 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 1.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 147 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 1.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 148 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 1.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 149 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 150 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 151 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 152 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 153 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 154 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 155 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 156 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 157 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 158 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 159 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 160 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 161 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 162 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 163 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 164 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 1.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 165 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 1.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 166 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 1.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 167 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 1.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 168 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 169 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 170 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 171 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 172 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 173 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 174 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 175 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 176 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 177 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 178 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 179 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 180 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 181 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 182 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 183 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 1.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 184 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 1.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 185 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 1.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 186 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 1.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 187 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 188 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 189 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 190 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 191 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 192 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 193 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 194 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 195 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.6 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 196 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.8 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 197 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 4.0 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 198 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 4.2 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 199 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 4.4 --weight_seqEntropy 10"
+queue
+arguments = "--config $(configFile) --runNumber 200 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 3.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 201 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 3.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 202 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 203 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 204 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 205 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 206 --xShift 9.2 --crossingAngle 27 --axialRotation 45 --zShift 4.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 207 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 1.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 208 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 1.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 209 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 1.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 210 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 1.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 211 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 212 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 213 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 214 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 215 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 2.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 216 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 217 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 218 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 219 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 220 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 3.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 221 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 222 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 223 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 224 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 225 --xShift 9.2 --crossingAngle 27 --axialRotation 50 --zShift 4.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 226 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 1.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 227 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 1.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 228 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 1.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 229 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 1.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 230 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 231 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 232 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 233 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 234 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 2.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 235 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 236 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 237 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 238 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 239 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 3.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 240 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 241 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 242 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 243 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 244 --xShift 9.2 --crossingAngle 27 --axialRotation 55 --zShift 4.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 245 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 1.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 246 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 1.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 247 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 1.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 248 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 1.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 249 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 250 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 251 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 252 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 253 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 2.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 254 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 255 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 256 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 257 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 258 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 3.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 259 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 260 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 261 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 262 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 263 --xShift 9.2 --crossingAngle 32 --axialRotation 35 --zShift 4.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 264 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 1.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 265 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 1.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 266 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 1.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 267 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 1.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 268 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 269 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 270 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 271 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 272 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 2.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 273 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 274 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 275 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 276 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 277 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 3.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 278 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 279 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 280 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 281 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 282 --xShift 9.2 --crossingAngle 32 --axialRotation 40 --zShift 4.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 283 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 1.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 284 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 1.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 285 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 1.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 286 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 1.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 287 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 288 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 289 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 290 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 291 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 2.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 292 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 293 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 294 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.4 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 295 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.6 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 296 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 3.8 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 297 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 4.0 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 298 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 4.2 --weight_seqEntropy 100"
+queue
+arguments = "--config $(configFile) --runNumber 299 --xShift 9.2 --crossingAngle 32 --axialRotation 45 --zShift 4.4 --weight_seqEntropy 100"
+queue

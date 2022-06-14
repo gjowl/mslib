@@ -1,0 +1,19 @@
+#Submit file for backboneOptimizer and other design code that I write will probably look similar
+batch_name   = backboneOptimizer
+baseDir      = /exports/home/gloiseau
+outDir       = /data02/gloiseau/Sequence_Design_Project/Design_Data/backboneOptimization
+
+executable   = /exports/home/gloiseau/mslib/trunk_AS/bin/backboneOptimizer
+output       = $(outDir)/out/$(sequence).out
+log          = $(outDir)/log/$(sequence).log
+error        = $(outDir)/err/$(sequence).err
+scriptDir    = $(baseDir)/mslib/trunk_AS/myProgs/backboneOptimizer
+inputFileDir = /exports/home/gloiseau/mslib/trunk_AS/myProgs/CATM/parameterFiles
+stream_output = TRUE
+stream_error  = TRUE
+#Info
+configFile = /exports/home/gloiseau/mslib/trunk_AS/config/backboneOptimizer.config
+
+#Runs
+Arguments = "--config $(configFile) --outputDir $(outDir) --MCCycles 500 --negAngle $(negAngle) --negRot $(negRot) --sequence $(sequence) --pdbFile $(pdbFile) --xShift $(xShift) --crossingAngle $(crossingAngle) --axialRotation $(axialRotation) --zShift $(zShift) --topFile $(inputFileDir)/top_all22_prot.inp --solvFile $(inputFileDir)/solvpar22.inp --parFile $(inputFileDir)/par_all22_prot.inp --hbondFile $(inputFileDir)/par_hbond_CA_2.txt --rotLibFile $(inputFileDir)/rotlib_combined_-60_-40.txt --verbose true"
+queue sequence,xShift,crossingAngle,negAngle,axialRotation,negRot,zShift,configFile,pdbFile from $(scriptDir)/nonGxxxg_backboneOptimizer_test.csv

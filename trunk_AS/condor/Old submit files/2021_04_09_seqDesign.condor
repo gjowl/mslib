@@ -1,0 +1,304 @@
+#Submit file for a large scale design test
+batch_name   = lsdesign_left
+baseDir      = /data02/gloiseau/Sequence_Design_Project/vdwSequenceDesign/$(batch_name)
+
+executable   = /exports/home/gloiseau/mslib/trunk_AS/bin/seqDesign
+output       = $(baseDir)/out/$(Process).out
+log          = $(baseDir)/log/test1.log
+error        = $(baseDir)/err/$(Process).err
+#requirements = TARGET.MACHINE!="cluste1-0004.biochem.wisc.edu"
+stream_output = TRUE
+stream_error  = TRUE
+
+#Info
+configFile = /exports/home/gloiseau/mslib/trunk_AS/config/seqDesign.config
+
+#Runs
+arguments = "--config $(configFile) --runNumber 0"
+queue
+arguments = "--config $(configFile) --runNumber 1"
+queue
+arguments = "--config $(configFile) --runNumber 2"
+queue
+arguments = "--config $(configFile) --runNumber 3"
+queue
+arguments = "--config $(configFile) --runNumber 4"
+queue
+arguments = "--config $(configFile) --runNumber 5"
+queue
+arguments = "--config $(configFile) --runNumber 6"
+queue
+arguments = "--config $(configFile) --runNumber 7"
+queue
+arguments = "--config $(configFile) --runNumber 8"
+queue
+arguments = "--config $(configFile) --runNumber 9"
+queue
+arguments = "--config $(configFile) --runNumber 10"
+queue
+arguments = "--config $(configFile) --runNumber 11"
+queue
+arguments = "--config $(configFile) --runNumber 12"
+queue
+arguments = "--config $(configFile) --runNumber 13"
+queue
+arguments = "--config $(configFile) --runNumber 14"
+queue
+arguments = "--config $(configFile) --runNumber 15"
+queue
+arguments = "--config $(configFile) --runNumber 16"
+queue
+arguments = "--config $(configFile) --runNumber 17"
+queue
+arguments = "--config $(configFile) --runNumber 18"
+queue
+arguments = "--config $(configFile) --runNumber 19"
+queue
+arguments = "--config $(configFile) --runNumber 20"
+queue
+arguments = "--config $(configFile) --runNumber 21"
+queue
+arguments = "--config $(configFile) --runNumber 22"
+queue
+arguments = "--config $(configFile) --runNumber 23"
+queue
+arguments = "--config $(configFile) --runNumber 24"
+queue
+arguments = "--config $(configFile) --runNumber 25"
+queue
+arguments = "--config $(configFile) --runNumber 26"
+queue
+arguments = "--config $(configFile) --runNumber 27"
+queue
+arguments = "--config $(configFile) --runNumber 28"
+queue
+arguments = "--config $(configFile) --runNumber 29"
+queue
+arguments = "--config $(configFile) --runNumber 30"
+queue
+arguments = "--config $(configFile) --runNumber 31"
+queue
+arguments = "--config $(configFile) --runNumber 32"
+queue
+arguments = "--config $(configFile) --runNumber 33"
+queue
+arguments = "--config $(configFile) --runNumber 34"
+queue
+arguments = "--config $(configFile) --runNumber 35"
+queue
+arguments = "--config $(configFile) --runNumber 36"
+queue
+arguments = "--config $(configFile) --runNumber 37"
+queue
+arguments = "--config $(configFile) --runNumber 38"
+queue
+arguments = "--config $(configFile) --runNumber 39"
+queue
+arguments = "--config $(configFile) --runNumber 40"
+queue
+arguments = "--config $(configFile) --runNumber 41"
+queue
+arguments = "--config $(configFile) --runNumber 42"
+queue
+arguments = "--config $(configFile) --runNumber 43"
+queue
+arguments = "--config $(configFile) --runNumber 44"
+queue
+arguments = "--config $(configFile) --runNumber 45"
+queue
+arguments = "--config $(configFile) --runNumber 46"
+queue
+arguments = "--config $(configFile) --runNumber 47"
+queue
+arguments = "--config $(configFile) --runNumber 50"
+queue
+arguments = "--config $(configFile) --runNumber 51"
+queue
+arguments = "--config $(configFile) --runNumber 52"
+queue
+arguments = "--config $(configFile) --runNumber 53"
+queue
+arguments = "--config $(configFile) --runNumber 54"
+queue
+arguments = "--config $(configFile) --runNumber 55"
+queue
+arguments = "--config $(configFile) --runNumber 56"
+queue
+arguments = "--config $(configFile) --runNumber 57"
+queue
+arguments = "--config $(configFile) --runNumber 58"
+queue
+arguments = "--config $(configFile) --runNumber 59"
+queue
+arguments = "--config $(configFile) --runNumber 60"
+queue
+arguments = "--config $(configFile) --runNumber 61"
+queue
+arguments = "--config $(configFile) --runNumber 62"
+queue
+arguments = "--config $(configFile) --runNumber 63"
+queue
+arguments = "--config $(configFile) --runNumber 64"
+queue
+arguments = "--config $(configFile) --runNumber 65"
+queue
+arguments = "--config $(configFile) --runNumber 66"
+queue
+arguments = "--config $(configFile) --runNumber 67"
+queue
+arguments = "--config $(configFile) --runNumber 68"
+queue
+arguments = "--config $(configFile) --runNumber 69"
+queue
+arguments = "--config $(configFile) --runNumber 70"
+queue
+arguments = "--config $(configFile) --runNumber 71"
+queue
+arguments = "--config $(configFile) --runNumber 72"
+queue
+arguments = "--config $(configFile) --runNumber 73"
+queue
+arguments = "--config $(configFile) --runNumber 74"
+queue
+arguments = "--config $(configFile) --runNumber 75"
+queue
+arguments = "--config $(configFile) --runNumber 76"
+queue
+arguments = "--config $(configFile) --runNumber 77"
+queue
+arguments = "--config $(configFile) --runNumber 78"
+queue
+arguments = "--config $(configFile) --runNumber 79"
+queue
+arguments = "--config $(configFile) --runNumber 80"
+queue
+arguments = "--config $(configFile) --runNumber 81"
+queue
+arguments = "--config $(configFile) --runNumber 82"
+queue
+arguments = "--config $(configFile) --runNumber 83"
+queue
+arguments = "--config $(configFile) --runNumber 84"
+queue
+arguments = "--config $(configFile) --runNumber 85"
+queue
+arguments = "--config $(configFile) --runNumber 86"
+queue
+arguments = "--config $(configFile) --runNumber 87"
+queue
+arguments = "--config $(configFile) --runNumber 88"
+queue
+arguments = "--config $(configFile) --runNumber 89"
+queue
+arguments = "--config $(configFile) --runNumber 90"
+queue
+arguments = "--config $(configFile) --runNumber 91"
+queue
+arguments = "--config $(configFile) --runNumber 92"
+queue
+arguments = "--config $(configFile) --runNumber 93"
+queue
+arguments = "--config $(configFile) --runNumber 94"
+queue
+arguments = "--config $(configFile) --runNumber 95"
+queue
+arguments = "--config $(configFile) --runNumber 96"
+queue
+arguments = "--config $(configFile) --runNumber 97"
+queue
+arguments = "--config $(configFile) --runNumber 100"
+queue
+arguments = "--config $(configFile) --runNumber 101"
+queue
+arguments = "--config $(configFile) --runNumber 102"
+queue
+arguments = "--config $(configFile) --runNumber 103"
+queue
+arguments = "--config $(configFile) --runNumber 104"
+queue
+arguments = "--config $(configFile) --runNumber 105"
+queue
+arguments = "--config $(configFile) --runNumber 106"
+queue
+arguments = "--config $(configFile) --runNumber 107"
+queue
+arguments = "--config $(configFile) --runNumber 108"
+queue
+arguments = "--config $(configFile) --runNumber 109"
+queue
+arguments = "--config $(configFile) --runNumber 110"
+queue
+arguments = "--config $(configFile) --runNumber 111"
+queue
+arguments = "--config $(configFile) --runNumber 112"
+queue
+arguments = "--config $(configFile) --runNumber 113"
+queue
+arguments = "--config $(configFile) --runNumber 114"
+queue
+arguments = "--config $(configFile) --runNumber 115"
+queue
+arguments = "--config $(configFile) --runNumber 116"
+queue
+arguments = "--config $(configFile) --runNumber 117"
+queue
+arguments = "--config $(configFile) --runNumber 118"
+queue
+arguments = "--config $(configFile) --runNumber 119"
+queue
+arguments = "--config $(configFile) --runNumber 120"
+queue
+arguments = "--config $(configFile) --runNumber 121"
+queue
+arguments = "--config $(configFile) --runNumber 122"
+queue
+arguments = "--config $(configFile) --runNumber 123"
+queue
+arguments = "--config $(configFile) --runNumber 124"
+queue
+arguments = "--config $(configFile) --runNumber 125"
+queue
+arguments = "--config $(configFile) --runNumber 126"
+queue
+arguments = "--config $(configFile) --runNumber 127"
+queue
+arguments = "--config $(configFile) --runNumber 128"
+queue
+arguments = "--config $(configFile) --runNumber 129"
+queue
+arguments = "--config $(configFile) --runNumber 130"
+queue
+arguments = "--config $(configFile) --runNumber 131"
+queue
+arguments = "--config $(configFile) --runNumber 132"
+queue
+arguments = "--config $(configFile) --runNumber 133"
+queue
+arguments = "--config $(configFile) --runNumber 134"
+queue
+arguments = "--config $(configFile) --runNumber 135"
+queue
+arguments = "--config $(configFile) --runNumber 136"
+queue
+arguments = "--config $(configFile) --runNumber 137"
+queue
+arguments = "--config $(configFile) --runNumber 138"
+queue
+arguments = "--config $(configFile) --runNumber 139"
+queue
+arguments = "--config $(configFile) --runNumber 140"
+queue
+arguments = "--config $(configFile) --runNumber 141"
+queue
+arguments = "--config $(configFile) --runNumber 142"
+queue
+arguments = "--config $(configFile) --runNumber 143"
+queue
+arguments = "--config $(configFile) --runNumber 144"
+queue
+arguments = "--config $(configFile) --runNumber 145"
+queue
+arguments = "--config $(configFile) --runNumber 146"
+queue
+arguments = "--config $(configFile) --runNumber 147"
+queue

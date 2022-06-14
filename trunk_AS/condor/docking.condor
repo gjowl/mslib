@@ -1,0 +1,18 @@
+#Submit file for a docking run
+batch_name   = docking
+baseDir      = /exports/home/gloiseau/dockTest
+
+executable   = /exports/home/gloiseau/mslib/trunk_AS/bin/dockingAlgorithm
+output       = $(baseDir)/$(seq).out
+log          = $(baseDir)/$(seq).log
+error        = $(baseDir)/$(seq).err
+scriptDir    = /exports/home/gloiseau/mslib/trunk_AS/myProgs/dockingProgram
+stream_output = TRUE
+stream_error  = TRUE
+
+#Info
+configFile = /exports/home/gloiseau/mslib/trunk_AS/config/docking.config
+
+#Runs
+Arguments = "--config $(configFile) --chainSeq $(seq) $(seq) --rotLevel $(rotLevel)"
+queue seq,rotLevel from $(scriptDir)/test.csv

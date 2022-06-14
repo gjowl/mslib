@@ -1,0 +1,63 @@
+batch_name   = generateBaselines_rejectvdw
+#baseDir      = /data02/gloiseau/Sequence_Design_Project/vdwSequenceDesign
+baseDir      = /exports/home/gloiseau/Generated_PDBs/baselineGenerator
+
+executable   = /exports/home/gloiseau/mslib/trunk_AS/bin/generateBaselinevdW_IMM1
+output       = $(baseDir)/$(batch_name).out
+log          = $(baseDir)/$(batch_name).log
+error        = $(baseDir)/$(batch_name).err
+#requirements = TARGET.MACHINE!="cluster-0004.biochem.wisc.edu"
+
+#Info
+configFile1 = /exports/home/gloiseau/mslib/trunk_AS/myProgs/gloiseau/generateBaselinevdW_IMM1.config
+configFile2 = /exports/home/gloiseau/mslib/trunk_AS/myProgs/gloiseau/generateBaselinevdW_IMM1_lessAAs.config
+
+#Runs
+arguments = "--configfile $(configFile1) --runNumber 01 --SL 70.00 --seqNumber 10000 --rejectvdw true"
+queue
+arguments = "--configfile $(configFile1) --runNumber 02 --SL 80.00 --seqNumber 10000 --rejectvdw true"
+queue
+arguments = "--configfile $(configFile1) --runNumber 03 --SL 90.00 --seqNumber 10000 --rejectvdw true"
+queue
+arguments = "--configfile $(configFile2) --runNumber 04 --SL 70.00 --seqNumber 10000 --rejectvdw true"
+queue
+arguments = "--configfile $(configFile2) --runNumber 05 --SL 80.00 --seqNumber 10000 --rejectvdw true"
+queue
+arguments = "--configfile $(configFile2) --runNumber 06 --SL 90.00 --seqNumber 10000 --rejectvdw true"
+queue
+arguments = "--configfile $(configFile1) --runNumber 07 --SL 70.00 --seqNumber 100000 --rejectvdw true"
+queue
+arguments = "--configfile $(configFile1) --runNumber 08 --SL 80.00 --seqNumber 100000 --rejectvdw true"
+queue
+arguments = "--configfile $(configFile1) --runNumber 09 --SL 90.00 --seqNumber 100000 --rejectvdw true"
+queue
+arguments = "--configfile $(configFile2) --runNumber 10 --SL 70.00 --seqNumber 100000 --rejectvdw true"
+queue
+arguments = "--configfile $(configFile2) --runNumber 11 --SL 80.00 --seqNumber 100000 --rejectvdw true"
+queue
+arguments = "--configfile $(configFile2) --runNumber 12 --SL 90.00 --seqNumber 100000 --rejectvdw true"
+queue
+arguments = "--configfile $(configFile1) --runNumber 21 --SL 70.00 --seqNumber 10000 --rejectvdw false"
+queue
+arguments = "--configfile $(configFile1) --runNumber 22 --SL 80.00 --seqNumber 10000 --rejectvdw false"
+queue
+arguments = "--configfile $(configFile1) --runNumber 23 --SL 90.00 --seqNumber 10000 --rejectvdw false"
+queue
+arguments = "--configfile $(configFile2) --runNumber 24 --SL 70.00 --seqNumber 10000 --rejectvdw false"
+queue
+arguments = "--configfile $(configFile2) --runNumber 25 --SL 80.00 --seqNumber 10000 --rejectvdw false"
+queue
+arguments = "--configfile $(configFile2) --runNumber 26 --SL 90.00 --seqNumber 10000 --rejectvdw false"
+queue
+arguments = "--configfile $(configFile1) --runNumber 27 --SL 70.00 --seqNumber 100000 --rejectvdw false"
+queue
+arguments = "--configfile $(configFile1) --runNumber 28 --SL 80.00 --seqNumber 100000 --rejectvdw false"
+queue
+arguments = "--configfile $(configFile1) --runNumber 29 --SL 90.00 --seqNumber 100000 --rejectvdw false"
+queue
+arguments = "--configfile $(configFile2) --runNumber 30 --SL 70.00 --seqNumber 100000 --rejectvdw false"
+queue
+arguments = "--configfile $(configFile2) --runNumber 31 --SL 80.00 --seqNumber 100000 --rejectvdw false"
+queue
+arguments = "--configfile $(configFile2) --runNumber 32 --SL 90.00 --seqNumber 100000 --rejectvdw false"
+queue
