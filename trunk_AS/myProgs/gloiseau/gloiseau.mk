@@ -35,7 +35,7 @@
 # Programs:
 #   make bin/prog1
 #   make bin/prog2
-
+#Add in an inputdir for source (obj) and progs (progs)
 MYSOURCE  = 
 MYPROGS   = pizza00 rotateDihedral rotateDihedral2 rotateDihedral3  testEnergyCalculation2 greedySPM_new predictDisulfideDimer localDimerSearch CATM_v24 CATM_v24_yudong EnergyTest Energiiies CSBPlayground 
 MYHEADERS = 
