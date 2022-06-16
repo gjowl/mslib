@@ -39,14 +39,15 @@
 MYSOURCE  = 
 MYPROGS   = pizza00 rotateDihedral rotateDihedral2 rotateDihedral3  testEnergyCalculation2 greedySPM_new predictDisulfideDimer localDimerSearch CATM_v24 CATM_v24_yudong EnergyTest Energiiies CSBPlayground 
 MYHEADERS = 
-
+#MYDIR = CATM seqDesign
+#INC = -I/myProgs/CATM/CATM.mk -I/myProgs/seqDesign.mk
 # This make file is read by the master make file for MSL /mslib/trunk_AS/Makefile
 # Add in make files for different programs below. This allows you to compile these with their corresponding objects independently of one another
 # The below only works for the bottom most include for some reason? TODO: fix that
--include myProgs/randomProgs.mk
--include myProgs/seqDesign.mk
--include myProgs/dockingProgram.mk
--include myProgs/baselineBuilder.mk
--include myProgs/CATM.mk
--include myProgs/backboneOptimizer.mk
-include myProgs/readPDBAndCalcEnergy.mk
+#-include myProgs/randomProgs.mk
+#-include myProgs/seqDesign.mk
+#-include myProgs/dockingProgram.mk
+#-include myProgs/baselineBuilder.mk
+#-include myProgs/CATM/CATM.mk
+#-include myProgs/backboneOptimizer.mk
+#include myProgs/readPDBAndCalcEnergy.mk

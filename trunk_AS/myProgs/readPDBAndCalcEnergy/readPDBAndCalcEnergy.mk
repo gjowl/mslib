@@ -38,4 +38,4 @@
 
 MYSOURCE  = functions options
 MYPROGS   = readPDBAndCalcEnergy
-MYDIR     = myProgs/readPDBAndCalcEnergy
+#MYDIR     = myProgs/readPDBAndCalcEnergy
