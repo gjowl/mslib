@@ -329,6 +329,13 @@ FLAGS   +=  -DUSE_REAL_EQ_DOUBLE
 
 # Include local Makefile
 MYDIR=myProgs
+# edited on 2022-06-17: wanted to have separation between my programs
+# and my objects, so I added in these directories. It should still work 
+# with the original method we use since these directories are
+# changed in the local makefile and kept the same as MYDIR here
+#MYOBJDIR=$(MYDIR)
+#MYPROGDIR=$(MYDIR)
+# changed my mind for now, but keeping above in case
 -include myProgs/myProgs.mk
 
 # -include Makefile.local
@@ -362,7 +369,6 @@ gold: ${GOLDBIN}
 lead: ${LEADBIN}
 examples: ${EXAMPLEBINS}
 mybins: ${MYBINS}
-
 
 ${OBJECTS}: objs/%.o : src/%.cpp src/%.h 
 	${CC} ${FLAGS} -I${INCLUDE} ${SYMBOLS} -c $< -o $@ 

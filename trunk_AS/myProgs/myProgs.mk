@@ -37,8 +37,12 @@
 #   make bin/prog2
 
 MYSOURCE  = 
-MYPROGS   = pizza00 rotateDihedral rotateDihedral2 rotateDihedral3  testEnergyCalculation2 greedySPM_new predictDisulfideDimer localDimerSearch CATM_v24 CATM_v24_yudong EnergyTest Energiiies CSBPlayground 
+MYPROGS   = seqDesign pizza00 rotateDihedral rotateDihedral2 rotateDihedral3  testEnergyCalculation2 greedySPM_new predictDisulfideDimer localDimerSearch CATM_v24 CATM_v24_yudong EnergyTest Energiiies CSBPlayground 
 MYHEADERS = 
+
+name = gloiseau
+MYDIR = myProgs/$(name)
+include $(MYDIR)/$(name).mk
 #MYDIR = CATM seqDesign
 #INC = -I/myProgs/CATM/CATM.mk -I/myProgs/seqDesign.mk
 # This make file is read by the master make file for MSL /mslib/trunk_AS/Makefile
