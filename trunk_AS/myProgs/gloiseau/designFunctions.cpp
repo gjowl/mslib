@@ -12,29 +12,12 @@
 #include <unistd.h>
 #include "designFunctions.h"
 #include "homodimerFunctions.h"
+#include "functions.h"
 
 using namespace std;
 using namespace MSL;
 
 static SysEnv SYSENV;
-
-/***********************************
- *geometry
- ***********************************/
-void moveZCenterOfCAMassToOrigin(AtomPointerVector& _apV, AtomPointerVector& _axis, Transforms & _trans) {
-	AtomSelection sel(_apV);
-	AtomPointerVector & caApV = sel.select("name CA");
-	double zShift = 0.0;
-	for(int i = 0; i < caApV.size(); i++) {
-		zShift += (caApV[i]->getCoor()).getZ();
-	}
-	zShift = -1.0 * zShift/double(caApV.size());
-
-	CartesianPoint interDistVect;
-	interDistVect.setCoor(0.0, 0.0, zShift);
-	_trans.translate(_apV, interDistVect);
-	_trans.translate(_axis, interDistVect);
-}
 
 /***********************************
  *string output functions

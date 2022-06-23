@@ -46,6 +46,7 @@
 #include "designFunctions.h"
 #include "homodimerFunctions.h"
 #include "designOptions.h"
+#include "functions.h"
 
 using namespace MSL;
 using namespace std;

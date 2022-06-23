@@ -131,7 +131,6 @@ void outputEnergiesByTermLinked(EnergySet *_Eset, map<string,double> &_energyMap
 // adds sequences from the vector<pair<double,string>> energyVector to the vector of all sequences if it's not already in there
 void addSequencesToVector(vector<pair<double,string>> &_energyVector, vector<string> &_allSeqs);
 
-
 //TODO: functions to add to other header files
 /***********************************
  *sequence entropy functions
@@ -155,8 +154,6 @@ double calculateSequenceProbability(map<string,int> &_seqCountMap, map<string,do
 void calculateSequenceEntropy(Options &_opt, string _prevSeq, string _currSeq,
   map<string,double> _entropyMap, double &_prevSEProb, double &_currSEProb, double &_prevEntropy,
   double &_currEntropy, double _bestEnergy, double _currEnergy, double &_bestEnergyTotal, double &_currEnergyTotal);
-// helper functions for computing monomer energy (actually not sure what it does yet)
-double getStandardNormal(RandomNumberGenerator& RNG);
 
 /***********************************
  *energy builders

@@ -12,6 +12,7 @@
 #include <iterator>
 #include <unistd.h>
 #include "homodimerFunctions.h"
+#include "functions.h"
 
 using namespace std;
 using namespace MSL;
@@ -21,53 +22,6 @@ static SysEnv SYSENV;
 /***********************************
  *geometry
  ***********************************/
-void c2Symmetry(AtomPointerVector & _apvA, AtomPointerVector & _apvB) {
-	// Set coordinates of chain A to chain B
-	for (uint i=0; i < _apvA.size(); i++) {
-		_apvB[i]->copyAllCoor(*_apvA[i]);
-	}
-
-	// Rotation matrix for 180 degrees
-	// flips the sign on the x and y coordinates
-	Matrix m(3,3,0.0);
-	m[0][0] = -1.0;
-	m[0][1] = 0.0;
-	m[0][2] = 0.0;
-	m[1][0] = 0.0;
-	m[1][1] = -1.0;
-	m[1][2] = 0.0;
-	m[2][0] = 0.0;
-	m[2][1] = 0.0;
-	m[2][2] = 1.0;
-
-	// Rotate chain B around Z axis
-	Transforms trans;
-	trans.rotate(_apvB, m);
-}
-
-void transformation(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA,
-	AtomPointerVector & _axisB, CartesianPoint & _ori, CartesianPoint & _xAxis, CartesianPoint & _zAxis,
-	double _zShift, double _axialRotation, double _crossingAngle, double _xShift, Transforms & _trans) {
-	//====== Z Shift (Crossing Point) ======
-	CartesianPoint zShiftCP(0.0, 0.0, _zShift);
-	_trans.translate(_chainA, zShiftCP);
-
-	//===== Axial Rotation ======
-	_trans.rotate(_chainA, _axialRotation, _ori, _zAxis);
-
-	//====== Local Crossing Angle ======
-	_trans.rotate(_chainA, (_crossingAngle/2.0), _ori, _xAxis);
-	_trans.rotate(_axisA, (_crossingAngle/2.0), _ori, _xAxis);
-
-	//====== X shift (Interhelical Distance) =======
-	CartesianPoint interDistVect;
-	interDistVect.setCoor((-1.0*_xShift/2.0), 0.0, 0.0);
-	_trans.translate(_chainA, interDistVect);
-	_trans.translate(_axisA, interDistVect);
-
-	c2Symmetry(_chainA, _chainB);
-	c2Symmetry(_axisA, _axisB);
-}
 
 void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out){
 	// Setup file reader
@@ -861,15 +815,6 @@ double &_currEntropy, double _bestEnergy, double _currEnergy, double &_bestEnerg
 		cout << "Best Energy: " << _bestEnergyTotal << endl;
 		cout << "New Energy: " << _currEnergyTotal << endl;
 	}
-}
-
-// other random functions
-double getStandardNormal(RandomNumberGenerator& RNG) {
-	double retVal = 0.0;
-	for(int i = 0; i < 10; i ++) {
-		retVal += RNG.getRandomDouble();
-	}
-	return (retVal/10.0 - 0.5) * 1.2;
 }
 
 void internalAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, int _seqLength){
