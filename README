@@ -1,0 +1,7 @@
+
+If using from WSL on a windows computer:
+sudo apt install make
+sudo apt install g++
+
+Change the .cshrc file to accomodate file paths on your computer
+
