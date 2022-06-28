@@ -130,9 +130,7 @@ int main(int argc, char *argv[]){
 	} else {
 		RNG.setSeed(opt.seed);
 	}
-
-
-	// TODO:...
+	
 	// *Change this function for selecting geometries to design
 	vector<double> densities;
 	if (opt.getGeoFromPDBData){
@@ -209,6 +207,7 @@ END";
 	// PS is the actual polymerSeq object whereas polySeq is the string version of the polymerSeq
 	defineInterfaceAndRotamerSampling(opt, PS, rotamerLevels, polySeq, variablePositionString, rotamerSamplingString, linkedPositions, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, sout, axis);
 
+//TODO: find the way to make this process faster; currently it is slow because it is doing a lot of calculations for each position
 	/******************************************************************************
 	 *         === COPY BACKBONE COORDINATES AND TRANSFORM TO GEOMETRY ===
 	 ******************************************************************************/
