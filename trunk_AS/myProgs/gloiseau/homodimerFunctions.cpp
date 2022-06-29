@@ -1555,42 +1555,6 @@ void deleteTerminalHydrogenBondInteractions(System &_sys, Options &_opt){
 	pESet->deleteInteractionsWithAtoms(atoms,"SCWRL4_HBOND");
 }
 
-/***********************************
- *load rotamer functions
- ***********************************/
-void loadMonomerRotamers(System &_sys, SystemRotamerLoader &_sysRot){
-	for (uint k=0; k<_sys.positionSize(); k++) {
-		Position &pos = _sys.getPosition(k);
-		if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-			if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), "SL90.00")) {//lower rotamer level because I did baselines at this level
-				cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
-			}
-		}
-	}
-}
-void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
-	for (uint k=0; k<_sys.positionSize(); k++) {
-		Position &pos = _sys.getPosition(k);
-		if (pos.identitySize() > 1){
-			for (uint j=0; j < pos.getNumberOfIdentities(); j++){
-				pos.setActiveIdentity(j);
-				if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-					if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
-						cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
-					}
-				}
-				pos.setActiveIdentity(0);
-			}
-		} else {
-			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-				if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
-					cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
-				}
-			}
-		}
-	}
-}
-
 void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling){
 	//Repack side chains based on sasa scores
 	for (uint i = 0; i < _rotamerSampling.size()/2; i++) {
@@ -1632,33 +1596,6 @@ void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Option
 	}
 }
 
-//below function only loads rotamers onto the interfacial positions by interfacialPositions (01 where 0 = non-interfacial and 1 = interfacial)
-void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<int> _interface){
-	for (uint k=0; k<_interface.size(); k++) {
-		if (_interface[k] < _numRotamerLevels){
-			Position &pos = _sys.getPosition(k);
-			if (pos.identitySize() > 1){
-				for (uint j=0; j < pos.getNumberOfIdentities(); j++){
-					pos.setActiveIdentity(j);
-					if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-						if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
-							cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
-						}
-					}
-					pos.setActiveIdentity(0);
-				}
-			} else {
-				if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-					if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
-						cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
-					}
-				}
-			}
-		}
-	}
-}
-
-
 void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling){
 	if (_opt.useSasa){
 		if (_opt.verbose){
@@ -1675,7 +1612,6 @@ void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vec
 		loadInterfacialRotamers(_sys, _sysRot, _opt.SLInterface, _opt.sasaRepackLevel.size(), _rotamerSampling);
 	}
 }
-
 //Other functions
 void saveEnergyDifference(Options _opt, map<string,map<string,double>> &_sequenceEnergyMap, string _sequence){
 	map<string,double> &energyMap = _sequenceEnergyMap[_sequence];

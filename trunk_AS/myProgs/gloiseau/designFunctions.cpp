@@ -98,23 +98,6 @@ string generateMonomerMultiIDPolymerSequence(string _seq, int _startResNum, vect
 	return "A" + ps;
 }
 
-
-string generateMonomerPolymerSequenceFromSequence(string _sequence, int _startResNum) {
-	string ps = "";
-	for (uint i=0; i<_sequence.length(); i++){
-		stringstream tmp;
-		tmp << _sequence[i];
-		string aa = tmp.str();
-		string resName = MslTools::getThreeLetterCode(aa);
-		if(resName == "HIS") {
-			resName = "HSE";
-		}
-		ps = ps + " " + resName;
-	}
-	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
-	return "A" + ps;
-}
-
 string getInterfaceString(vector<int> _interface, int _seqLength){
 	string interfaceString = "";
 	for (uint i=0; i<_interface.size(); i++){
@@ -247,17 +230,6 @@ string generateMultiIDPolymerSequence(string _seq, int _startResNum, vector<stri
 	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
 	return "A" + ps + "\nB" + ps;
 }
-
-/***********************************
- *repack functions
- ***********************************/
-void repackSideChains(SelfPairManager & _spm, int _greedyCycles) {
-	_spm.setOnTheFly(1);
-	_spm.calculateEnergies(); // CHANGE BACK!!!
-	_spm.runGreedyOptimizer(_greedyCycles);
-}
-
-
 
 /***********************************
  *define interface and rotamer sampling
@@ -1649,37 +1621,6 @@ void computeMonomerEnergies(Options &_opt, Transforms &_trans, map<string, map<s
 	cout << "End monomer calculations: " << diffTimeMono << "s" << endl << endl;
 	_sout << "End monomer calculations: " << diffTimeMono << "s" << endl << endl;
 }
-
-/***********************************
- *other helper functions
- ***********************************/
-
-
-
-
-
-
-
-
-
-
-void checkIfAtomsAreBuilt(System &_sys, ofstream &_err){
-	for (uint i=0; i<_sys.atomSize(); i++){
-		Atom atom = _sys.getAtom(i);
-		if (!atom.hasCoor()){
-			_err << "Atom " << i << " was not assigned coordinates; program termination";
-			cout << "Atom " << i << " was not assigned coordinates; program termination";
-			break;
-		} else {
-			continue;
-		}
-	}
-}
-
-
-
-
-
 
 /***********************************
  * MonteCarlo Functions

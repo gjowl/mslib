@@ -21,7 +21,7 @@
 #include "SysEnv.h"
 #include "ResidueSelection.h"
 #include "SasaCalculator.h"
-#include "functions.h"
+#include "backboneOptimizerFunctions.h"
 
 using namespace MSL;
 using namespace std;
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]){
 	Options opt = parseOptions(argc, argv, defaults);
 
 	if (opt.errorFlag) {
-		outputErrorMessage(opt);
+		backboneOptimizerOutputErrorMessage(opt);
 		exit(1);
 	}
 

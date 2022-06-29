@@ -61,15 +61,12 @@ void moveZCenterOfCAMassToOrigin(AtomPointerVector& _apV, AtomPointerVector& _ax
 string generateBackboneSequence(string _backbone, int _length);
 string generateMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions);
 string generateMonomerMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions);
-string generateMonomerPolymerSequenceFromSequence(string _sequence, int _startResNum);
 string getInterfaceString(vector<int> _interface, int _seqLength);
 string getAlternateIdString(vector<string> _alternateIds);
 
 /***********************************
  *repack functions
  ***********************************/
-// runs a greedy to quickly repack sidechains
-void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
 // Code Samson made a while back that should get each active ID and set a mask for anything that isn't active
 // allows for repacking side chains of only active ID...
 

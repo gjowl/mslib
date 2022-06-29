@@ -296,51 +296,6 @@ void addStructureToTopMCRepackList(vector<vector<double> > & _topMCRepackVector,
 
 }
 
-void backboneMovement(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, Transforms _trans, double _deltaMove, unsigned int moveType) {
-
-	 if (moveType == 0) {
-		// Z Shift
-		CartesianPoint translateA = _axisA(1).getCoor() - _axisA(0).getCoor(); // vector minus helical center
-		translateA = translateA.getUnit() * _deltaMove; // unit vector of helical _axis times the amount to shift by
-
-		_trans.translate(_chainA, translateA);
-
-		c2Symmetry(_chainA, _chainB);
-		c2Symmetry(_axisA, _axisB);
-
-	} else if (moveType == 1) {
-		// Axial Rotation
-		_trans.rotate(_chainA, (_deltaMove), _axisA(0).getCoor(), _axisA(1).getCoor());
-
-		c2Symmetry(_chainA, _chainB);
-		c2Symmetry(_axisA, _axisB);
-
-	} else 	if (moveType == 2) {
-		// Crossing Angle
-		_trans.rotate(_chainA, (_deltaMove * 0.5), _axisA(0).getCoor(), _axisB(0).getCoor());
-		_trans.rotate(_axisA, (_deltaMove * 0.5), _axisA(0).getCoor(), _axisB(0).getCoor());
-
-		c2Symmetry(_chainA, _chainB);
-		c2Symmetry(_axisA, _axisB);
-
-	} else if (moveType == 3) {
-		// XShift
-		// Helix A interhelical distance
-		CartesianPoint translateA = _axisB(0).getCoor() - _axisA(0).getCoor(); // vector minus helical center
-		translateA = translateA.getUnit() * _deltaMove * -0.5; // unit vector of helical axis times the amount to shift by
-
-		_trans.translate(_chainA, translateA);
-		_trans.translate(_axisA, translateA);
-
-		// Helix B interhelical distance
-		c2Symmetry(_chainA, _chainB);
-		c2Symmetry(_axisA, _axisB);
-
-	} else {
-		cerr << "Unknown moveType " << moveType << " in backboneMovement. Should be 0-3 " << endl;
-	}
-}
-
 void deleteTerminalBondInteractions(System &_sys, Options& _opt) {
 	// look at all hbond interactions and remove those
 	// remove any interaction that has a donor or acceptor from residues 1 2 3 and n-2 n-1 n on each chain that are not part of the TM
@@ -369,31 +324,6 @@ void deleteTerminalBondInteractions(System &_sys, Options& _opt) {
 		pESet->deleteInteractionsWithAtoms(atoms,_opt.deleteTerminalInteractions[i]);
 	}
 }
-
-map<string,double> getEnergyByTerm(EnergySet* _eSet) {
-	// get all terms
-	map<string,double> eByTerm;
-	map<string,vector<Interaction*> > * allTerms = _eSet->getEnergyTerms();
-	for(map<string,vector<Interaction*> >::iterator it = allTerms->begin(); it != allTerms->end(); it++) {
-		if(_eSet->isTermActive(it->first)) {
-			eByTerm[it->first] =  _eSet->getTermEnergy(it->first);
-		}
-	}
-	return eByTerm;
-}
-
-map<string,double> getEnergyByTermDoubled(EnergySet* _eSet) {
-	// get all terms
-	map<string,double> eByTerm;
-	map<string,vector<Interaction*> > * allTerms = _eSet->getEnergyTerms();
-	for(map<string,vector<Interaction*> >::iterator it = allTerms->begin(); it != allTerms->end(); it++) {
-		if(_eSet->isTermActive(it->first)) {
-			eByTerm[it->first] =  2.0* _eSet->getTermEnergy(it->first);
-		}
-	}
-	return eByTerm;
-}
-
 
 void readRulesFile(string _fileName, map<int, string> & _rulesFileMap) {
 	ifstream file;

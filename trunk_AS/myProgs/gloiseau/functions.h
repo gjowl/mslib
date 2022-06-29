@@ -30,5 +30,22 @@ double getStandardNormal(RandomNumberGenerator& RNG);
 void moveZCenterOfCAMassToOrigin(AtomPointerVector& _apV, AtomPointerVector& _axis, Transforms & _trans);
 void c2Symmetry(AtomPointerVector & _apvA, AtomPointerVector & _apvB);
 void transformation(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, CartesianPoint & _ori, CartesianPoint & _xAxis, CartesianPoint & _zAxis, double _zShift, double _axialRotation, double _crossingAngle, double _xShift, Transforms & _trans);
+void backboneMovement(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, Transforms _trans, double _deltaMove, unsigned int moveType);
+map<string,double> getEnergyByTerm(EnergySet* _eSet);
+map<string,double> getEnergyByTermDoubled(EnergySet* _eSet);
+void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
+string generateMonomerPolymerSequenceFromSequence(string _sequence, int _startResNum);
 
+// runs a greedy to quickly repack sidechains
+void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
+
+/***********************************
+ *load rotamer functions
+ ***********************************/
+//load rotamers for a monomer
+void loadMonomerRotamers(System &_sys, SystemRotamerLoader &_sysRot);
+//load rotamers for non-interfacial positions
+void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL);
+//below function only loads rotamers onto the interfacial positions by interfacialPositions (01 where 0 = non-interfacial and 1 = interfacial)
+void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<int> _interface);
 # endif

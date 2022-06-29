@@ -84,3 +84,167 @@ void transformation(AtomPointerVector & _chainA, AtomPointerVector & _chainB, At
 	c2Symmetry(_axisA, _axisB);
 }
 
+void backboneMovement(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, Transforms _trans, double _deltaMove, unsigned int moveType) {
+
+	 if (moveType == 0) {
+		// Z Shift
+		CartesianPoint translateA = _axisA(1).getCoor() - _axisA(0).getCoor(); // vector minus helical center
+		translateA = translateA.getUnit() * _deltaMove; // unit vector of helical _axis times the amount to shift by
+
+		_trans.translate(_chainA, translateA);
+
+		c2Symmetry(_chainA, _chainB);
+		c2Symmetry(_axisA, _axisB);
+
+	} else if (moveType == 1) {
+		// Axial Rotation
+		_trans.rotate(_chainA, (_deltaMove), _axisA(0).getCoor(), _axisA(1).getCoor());
+
+		c2Symmetry(_chainA, _chainB);
+		c2Symmetry(_axisA, _axisB);
+
+	} else 	if (moveType == 2) {
+		// Crossing Angle
+		_trans.rotate(_chainA, (_deltaMove * 0.5), _axisA(0).getCoor(), _axisB(0).getCoor());
+		_trans.rotate(_axisA, (_deltaMove * 0.5), _axisA(0).getCoor(), _axisB(0).getCoor());
+
+		c2Symmetry(_chainA, _chainB);
+		c2Symmetry(_axisA, _axisB);
+
+	} else if (moveType == 3) {
+		// XShift
+		// Helix A interhelical distance
+		CartesianPoint translateA = _axisB(0).getCoor() - _axisA(0).getCoor(); // vector minus helical center
+		translateA = translateA.getUnit() * _deltaMove * -0.5; // unit vector of helical axis times the amount to shift by
+
+		_trans.translate(_chainA, translateA);
+		_trans.translate(_axisA, translateA);
+
+		// Helix B interhelical distance
+		c2Symmetry(_chainA, _chainB);
+		c2Symmetry(_axisA, _axisB);
+
+	} else {
+		cerr << "Unknown moveType " << moveType << " in backboneMovement. Should be 0-3 " << endl;
+	}
+}
+
+map<string,double> getEnergyByTerm(EnergySet* _eSet) {
+	// get all terms
+	map<string,double> eByTerm;
+	map<string,vector<Interaction*> > * allTerms = _eSet->getEnergyTerms();
+	for(map<string,vector<Interaction*> >::iterator it = allTerms->begin(); it != allTerms->end(); it++) {
+		if(_eSet->isTermActive(it->first)) {
+			eByTerm[it->first] =  _eSet->getTermEnergy(it->first);
+		}
+	}
+	return eByTerm;
+}
+
+map<string,double> getEnergyByTermDoubled(EnergySet* _eSet) {
+	// get all terms
+	map<string,double> eByTerm;
+	map<string,vector<Interaction*> > * allTerms = _eSet->getEnergyTerms();
+	for(map<string,vector<Interaction*> >::iterator it = allTerms->begin(); it != allTerms->end(); it++) {
+		if(_eSet->isTermActive(it->first)) {
+			eByTerm[it->first] =  2.0* _eSet->getTermEnergy(it->first);
+		}
+	}
+	return eByTerm;
+}
+
+void checkIfAtomsAreBuilt(System &_sys, ofstream &_err){
+	for (uint i=0; i<_sys.atomSize(); i++){
+		Atom atom = _sys.getAtom(i);
+		if (!atom.hasCoor()){
+			_err << "Atom " << i << " was not assigned coordinates; program termination";
+			cout << "Atom " << i << " was not assigned coordinates; program termination";
+			break;
+		} else {
+			continue;
+		}
+	}
+}
+string generateMonomerPolymerSequenceFromSequence(string _sequence, int _startResNum) {
+	string ps = "";
+	for (uint i=0; i<_sequence.length(); i++){
+		stringstream tmp;
+		tmp << _sequence[i];
+		string aa = tmp.str();
+		string resName = MslTools::getThreeLetterCode(aa);
+		if(resName == "HIS") {
+			resName = "HSE";
+		}
+		ps = ps + " " + resName;
+	}
+	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+	return "A" + ps;
+}
+
+/***********************************
+ *load rotamer functions
+ ***********************************/
+void loadMonomerRotamers(System &_sys, SystemRotamerLoader &_sysRot){
+	for (uint k=0; k<_sys.positionSize(); k++) {
+		Position &pos = _sys.getPosition(k);
+		if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+			if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), "SL90.00")) {//lower rotamer level because I did baselines at this level
+				cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+			}
+		}
+	}
+}
+void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
+	for (uint k=0; k<_sys.positionSize(); k++) {
+		Position &pos = _sys.getPosition(k);
+		if (pos.identitySize() > 1){
+			for (uint j=0; j < pos.getNumberOfIdentities(); j++){
+				pos.setActiveIdentity(j);
+				if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+					if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
+						cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+					}
+				}
+				pos.setActiveIdentity(0);
+			}
+		} else {
+			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+				if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
+					cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+				}
+			}
+		}
+	}
+}
+
+//below function only loads rotamers onto the interfacial positions by interfacialPositions (01 where 0 = non-interfacial and 1 = interfacial)
+void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<int> _interface){
+	for (uint k=0; k<_interface.size(); k++) {
+		if (_interface[k] < _numRotamerLevels){
+			Position &pos = _sys.getPosition(k);
+			if (pos.identitySize() > 1){
+				for (uint j=0; j < pos.getNumberOfIdentities(); j++){
+					pos.setActiveIdentity(j);
+					if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+						if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
+							cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+						}
+					}
+					pos.setActiveIdentity(0);
+				}
+			} else {
+				if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+					if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
+						cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+					}
+				}
+			}
+		}
+	}
+}
+
+void repackSideChains(SelfPairManager & _spm, int _greedyCycles) {
+	_spm.setOnTheFly(1);
+	_spm.calculateEnergies(); // CHANGE BACK!!!
+	_spm.runGreedyOptimizer(_greedyCycles);
+}

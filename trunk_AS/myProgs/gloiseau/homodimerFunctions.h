@@ -187,10 +187,6 @@ void saveEnergyDifference(Options _opt, map<string,map<string,double>> &_sequenc
 /***********************************
  *load rotamer functions
  ***********************************/
-//load rotamers for a monomer
-void loadMonomerRotamers(System &_sys, SystemRotamerLoader &_sysRot);
-//load rotamers for non-interfacial positions
-void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL);
 //load rotamers for dimer with different rotamer levels at each position
 void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling);
 //load rotamers for interfacial positions
