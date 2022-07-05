@@ -97,10 +97,9 @@ int main(int argc, char *argv[]){
 	err.open(errfile.c_str());
 	rerun.open(rerunfile.c_str());
 
+	// write the rerun config file
 	rerun << opt.rerunConf << endl;
 	rerun.close();
-
-	err << date << endl;
 
 	/******************************************************************************
 	 *                     === DECLARE SYSTEM ===
@@ -114,11 +113,14 @@ int main(int argc, char *argv[]){
 	CSB.setBuildTerm("CHARMM_IMPR", false);
 	CSB.setBuildTerm("CHARMM_U-BR", false);
 
+	// load the membrane as solvent
 	CSB.setSolvent("MEMBRANE");
 	CSB.setIMM1Params(15, 10);
 
+	// build the system from the input pdb
     CSB.buildSystemFromPDB(opt.pdbFile);
 	
+	// get chain A and B from the system
 	Chain & chainA = sys.getChain("A");
 	Chain & chainB = sys.getChain("B");
 
@@ -147,12 +149,7 @@ int main(int argc, char *argv[]){
 	EnergySet* Eset = sys.getEnergySet();
 	// Set all terms active, besides Charmm-Elec
 	Eset->setAllTermsInactive();
-	Eset->setTermActive("CHARMM_ELEC", false);
-	Eset->setTermActive("CHARMM_ANGL", false);
-	Eset->setTermActive("CHARMM_BOND", false);
-	Eset->setTermActive("CHARMM_DIHE", false);
-	Eset->setTermActive("CHARMM_IMPR", false);
-	Eset->setTermActive("CHARMM_U-BR", false);
+	//Eset->setTermActive("CHARMM_ELEC", false);
 	Eset->setTermActive("CHARMM_VDW", true);
 	Eset->setTermActive("SCWRL4_HBOND", true);
 	Eset->setTermActive("CHARMM_IMM1REF", true);
@@ -184,6 +181,7 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *                  === GREEDY TO OPTIMIZE ROTAMERS ===
 	 ******************************************************************************/
+	// setup random number generator object
 	RandomNumberGenerator RNG;
 	RNG.setSeed(opt.seed); 
 
@@ -198,10 +196,10 @@ int main(int argc, char *argv[]){
 	spm.saveEnergiesByTerm(true);
 	spm.calculateEnergies();
 	
-	//Switch to current sequence
+	// Switch to current sequence
 	string sequence = opt.sequence;
 	
-	//Repack dimer
+	// Repack dimer
 	repackSideChains(spm, 10);
 	vector<uint> startStateVec = spm.getMinStates()[0];
 	sys.setActiveRotamers(startStateVec);
@@ -259,6 +257,7 @@ END";
 	writer1.open(opt.outputDir + "/" + opt.sequence + "_inputGeometry.pdb");
 	writer1.write(sys.getAtomPointers(), true, false, true);
 	writer1.close();
+
 	// Transformation to zShift, axialRotation, crossingAngle, and xShift
 	transformation(apvChainA1, apvChainB1, axisA, axisB, ori, xAxis, zAxis, opt.zShift, opt.axialRotation, opt.crossingAngle, opt.xShift, trans);
 	moveZCenterOfCAMassToOrigin(pdb.getAtomPointers(), helicalAxis.getAtomPointers(), trans);
@@ -270,7 +269,8 @@ END";
 	writer1.open(opt.outputDir + "/" + opt.sequence + "_farGeometry.pdb");
 	writer1.write(sys.getAtomPointers(), true, false, true);
 	writer1.close();
-	
+	// as of 2022-7-5: not sure if the above works or needs to be reworked
+
 	// assign the coordinates of our system to the given geometry that was assigned without energies using System pdb
 	//sys.wipeAllCoordinates();
 	//sys.assignCoordinates(pdb.getAtomPointers(),false);
@@ -284,7 +284,8 @@ END";
 	 ******************************************************************************/
     map<string,double> monomerEnergyByTerm;
     double monomer = computeMonomerEnergy(sys, opt, RNG, monomerEnergyByTerm, mout);
-    
+	
+	// calculate the energy of the system
 	double startDimer = sys.calcEnergy();
     cout << "Monomer Energy: " << monomer << endl;
     cout << "Dimer-Monomer: " << startDimer-monomer << endl;
@@ -305,11 +306,14 @@ END";
 	double previousEnergy = monomerEnergy;
 	double deltaXShift = -0.1;
 	double xShiftEnd = 6.5;
+
 	// Global lowest energy found (if above monomer we won't save anyways)
 	double globalLowestE = monomerEnergy;
-	
+
+	// while loop for x-shifts	
 	while (xShift >= xShiftEnd) {
 
+		// add the xShift change to the current xShift
 		xShift += deltaXShift;
 
 		// Move the helix
@@ -324,13 +328,13 @@ END";
 
 		currentEnergy = spm.getMinBound()[0];
 
+		// Check if this is the lowest energy found so far
 		if (currentEnergy < bestEnergy) {
 			bestEnergy = currentEnergy;
 			savedXShift = xShift;
 			sys.saveAltCoor("savedBestState");
 			helicalAxis.saveAltCoor("BestAxis");
 		}
-
 		cout << "xShift: " << xShift << " energy: " << currentEnergy-monomerEnergy << endl;
 
 		// If energy increase twice in a row, and it is above the global lowest energy, quit
@@ -340,11 +344,9 @@ END";
 		if (currentEnergy > (globalLowestE+10.0) && previousEnergy > (globalLowestE+10.0) && currentEnergy > previousEnergy) {
 			cout << "Energy increasing above global lowest energy... (currently " << globalLowestE-monomerEnergy << ")" << endl;
 			break;
-		}
-		else {
+		} else {
 			previousEnergy = currentEnergy;
 		}
-
 	}
 	cout << "Best Energy at x shift: " << bestEnergy-monomerEnergy << " at " << savedXShift << endl;
 	sys.saveAltCoor("savedBestState");
@@ -352,6 +354,7 @@ END";
 	writer1.open(opt.outputDir + "/" + opt.sequence + "_xShifted.pdb");
 	writer1.write(sys.getAtomPointers(), true, false, true);
 	writer1.close();
+
 	/******************************************************************************
 	 *               === LOCAL BACKBONE MONTE CARLO REPACKS ===
 	 ******************************************************************************/
@@ -360,7 +363,8 @@ END";
 	cout << "Current Best Energy: " << bestEnergy-monomerEnergy << endl;
 	cout << "Interaction Energies: " << endl;
 	cout << spm.getSummary(startStateVec) << endl;
-	
+
+	// Local Backbone Monte Carlo Repacks Time setup	
 	time_t startTimeMC, endTimeMC;
 	double diffTimeMC;
 	time(&startTimeMC);
@@ -391,8 +395,6 @@ END";
 	//MonteCarloManager MCMngr(opt.MCStartTemp, opt.MCEndTemp, opt.MCCycles, opt.MCCurve, opt.MCMaxRejects);
 	MonteCarloManager MCMngr(100, 0.5, opt.MCCycles, opt.MCCurve, opt.MCMaxRejects);
 	// MonteCarloManager MCMngr(1000, 0.5, opt.MCCycles, opt.MCCurve, opt.MCMaxRejects, 10, 0.01);
-	//MonteCarloManager MCMngr(1000, 0.5, 1000, opt.MCCurve, opt.MCMaxRejects);
-	//MonteCarloManager MCMngr(1000, 0.5, 10, 2, 2);//same amount as in monomer
 		
 	MCMngr.setEner(prevBestEnergy);
 		
@@ -493,14 +495,6 @@ END";
 	double dimerSasa = sasa.getTotalSasa();
 
 	// Print out info to the summary csv file
-	//vector<string> cols{'Sequence','Total','Dimer','Monomer','DimerDiff','VDWDimer','VDWDiff','HBONDDiff','IMM1Dimer','IMM1Diff','startXShift','xShift','xShiftDiff','startCrossingAngle','crossingAngleDiff','startAxialRotation','startZShift','zShift','zShiftDiff'};
-	//for (uint i = 0; i < cols.size(); i++){
-	//	if (i < cols.size()-1){
-	//		sout << cols[i] << ',';
-	//	} else {
-	//		sout << cols[i] << endl;
-	//	}
-	//}
 	//sout << 'Sequence,Total,Dimer,Monomer,DimerDiff,VDWDimer,VDWDiff,HBONDDiff,IMM1Dimer,IMM1Diff,startXShift,xShift,xShiftDiff,startCrossingAngle,crossingAngleDiff,startAxialRotation,startZShift,zShift,zShiftDiff' << endl;
 	sout << sequence << ',' << finalEnergy << ',' << dimerEnergy << ',' << monomer << ',' << dimerDiff << ',' << dimerSasa << ',' << vdw << ',' << hbond << ',' << imm1 << ',' << opt.xShift << ',' << xShift << ',' << xShiftDiff << ',' << opt.crossingAngle << ',' << crossingAngle << ',' << angleDiff << ',' << opt.axialRotation << ',' << axialRotation << ',' << axialRotDiff << ',' << opt.zShift << ',' << zShift << ',' << zShiftDiff << endl;
 	cout << sequence << ',' << finalEnergy << ',' << dimerEnergy << ',' << monomer << ',' << dimerDiff << ',' << dimerSasa << ',' << vdw << ',' << hbond << ',' << imm1 << ',' << opt.xShift << ',' << xShift << ',' << xShiftDiff << ',' << opt.crossingAngle << ',' << crossingAngle << ',' << angleDiff << ',' << opt.axialRotation << ',' << axialRotation << ',' << axialRotDiff << ',' << opt.zShift << ',' << zShift << ',' << zShiftDiff << endl;

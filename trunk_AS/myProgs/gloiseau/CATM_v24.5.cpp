@@ -308,8 +308,7 @@ END";
 		monomerEnergyByTerm["CHARMM_IMM1"] = opt.monoE_solv;
 		monomerEnergyByTerm["CHARMM_IMM1REF"] = opt.monoE_solvRef;
 		monomerEnergyByTerm["SCWRL4_HBOND"] = opt.monoE_hbond;
-	}
-	else {
+	} else {
 		monomerEnergy = computeMonomerEnergy(sys, trans, opt, helicalAxis, RNG1, monomerEnergyByTerm, fout, opt.greedyCycles, opt.MCCycles, opt.MCMaxRejects);
 	}
 
