@@ -28,7 +28,7 @@ using namespace MSL;
 using namespace std;
 
 static SysEnv SYSENV;
-string programName = "dockingAlgorithm";
+string programName = "backboneOptimizer";
 string programDescription = "This is an updated version of geomRepack: geomRepack does local backbone moves, then mutates sequences, but doesn't\n\
  	make moves for the mutated sequences. This will take a given backbone and do the local repacks for it. I've copied the code from two programs:\n\
  	readPDBAndCalcEnergy.cpp and geomRepack.cpp and just readjusted it for this program to work properly.";
@@ -41,18 +41,13 @@ string mslDate = MSLDATE;
 time_t startTime, endTime, spmStart, spmEnd;
 double diffTime, spmTime;
 
-//TODO: I think I have an idea for how to run this. I can queue everything in a file that's trimmed from the original csv file with clashing information,
-// and queue it up as variables separated by commas. I just need to find the variables I need, get rid of all of the ones I don't, and then fix any constant
-// variables and hard code it here. So the only thing I need to do is copy stuff over, make an option.cpp and options.h, functions.cpp and functions.h, and 
-// test until it works. Should only take a couple of days.
-
-// All of the below is copied from readPDBAndCalcEnergy
 int main(int argc, char *argv[]){
 
 	time_t rawtime;
 	struct tm * timeinfo;
 	char buffer[80];
 
+	// Start the timer
 	time(&startTime);
 	time (&rawtime);
 	timeinfo = localtime(&rawtime);
@@ -85,13 +80,16 @@ int main(int argc, char *argv[]){
 	// rerun config output
 	ofstream rerun;
 
+	// function that defines the output directory
 	setupOutputDirectory(opt);
 
+	// setup the output files
 	string soutfile = opt.outputDir + "/energy.csv";
 	string moutfile = opt.outputDir + "/monomer.out";
 	string errfile  = opt.outputDir + "/errors.out";
 	string rerunfile = opt.outputDir + "/rerun.config";
 
+	// open the output files
 	sout.open(soutfile.c_str());
 	mout.open(moutfile.c_str());
 	err.open(errfile.c_str());
@@ -99,6 +97,7 @@ int main(int argc, char *argv[]){
 
 	// write the rerun config file
 	rerun << opt.rerunConf << endl;
+	// close the rerun config file
 	rerun.close();
 
 	/******************************************************************************
