@@ -109,13 +109,6 @@ string convertPolymerSeqToOneLetterSeq(Chain &_chain) {
 	return seq;
 }
 
-string generateString(string _backbone, int _length) {
-	string str = "";
-	for (uint i=0; i<_length; i++){
-		str = str + _backbone;
-	}
-	return str;
-}
 
 string getInterfaceSequence(Options &_opt, string _interface, string _sequence){
 	string interfaceSequence = "";
@@ -136,18 +129,6 @@ string getInterfaceSequence(Options &_opt, string _interface, string _sequence){
 /***********************************
  *define interface and rotamer sampling
  ***********************************/
-vector<int> getLinkedPositions(vector<int> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel){
-	vector<int> positionsToLink;
-	for (uint i=0; i<_rotamerSampling.size(); i++){
-		if (_rotamerSampling[i] < _interfaceLevel || _rotamerSampling[i] == _highestRotamerLevel){
-			positionsToLink.push_back(1);
-		} else {
-			positionsToLink.push_back(0);
-		}
-	}
-	return positionsToLink;
-}
-
 //Identify which positions are found at the identified interface
 //Example: Sequence:  LLLLIGLLIGLLIGLLLL
 //         Interface: 000011001100110000

@@ -262,6 +262,9 @@ void repackSideChains(SelfPairManager & _spm, int _greedyCycles) {
 	_spm.runGreedyOptimizer(_greedyCycles);
 }
 
+/***********************************
+ *functions from designFunctions
+ ***********************************/
 string getAlternateIdString(vector<string> _alternateIds){
 	string alternateIdsString = "";
 	for (uint i=0; i<_alternateIds.size(); i++){
@@ -272,4 +275,224 @@ string getAlternateIdString(vector<string> _alternateIds){
 		}
 	}
 	return alternateIdsString;
+}
+
+vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition){
+	vector<uint> variableInterfacePositions;
+	//TODO: make this variable in case I eventually decide that I actually want to mutate everything but the final Leu or something
+	//for (uint k=0; k<_opt.backboneLength; k++){
+	for (uint k=0; k<_opt.backboneLength; k++){
+		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
+			variableInterfacePositions.push_back(k);
+		} else {
+			continue;
+		}
+	}
+	return variableInterfacePositions;
+}
+
+vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition){
+	vector<uint> variableInterfacePositions;
+	//TODO: make this variable in case I eventually decide that I actually want to mutate everything but the final Leu or something
+	//for (uint k=0; k<_opt.backboneLength; k++){
+	for (uint k=3; k<_opt.backboneLength-5; k++){
+		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
+			variableInterfacePositions.push_back(k);
+		} else {
+			continue;
+		}
+	}
+	return variableInterfacePositions;
+}
+
+string getInterfaceString(vector<int> _interface, int _seqLength){
+	string interfaceString = "";
+	for (uint i=0; i<_interface.size(); i++){
+		if (i == _seqLength){
+			i = _interface.size();
+		} else {
+			interfaceString += MslTools::intToString(_interface[i]);
+		}
+	}
+	return interfaceString;
+}
+
+// get the positions that will be linked on the interface (will have same AA identity and rotamer for self consistent mean field)
+vector<int> getLinkedPositions(vector<int> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel){
+	vector<int> positionsToLink;
+	for (uint i=0; i<_rotamerSampling.size(); i++){
+		if (_rotamerSampling[i] < _interfaceLevel || _rotamerSampling[i] == _highestRotamerLevel){
+			positionsToLink.push_back(1);
+		} else {
+			positionsToLink.push_back(0);
+		}
+	}
+	return positionsToLink;
+}
+
+// define the rotamer level for each position in the backbone
+vector<int> getRotamerSampling(string _rotamerLevels){
+	vector<int> rotamerSampling;
+	for (uint n=0; n<2; n++){
+		for (uint i=0; i<_rotamerLevels.size(); i++){
+			stringstream ss;
+			ss << _rotamerLevels[i];
+			rotamerSampling.push_back(MslTools::toInt(ss.str()));
+		}
+	}
+	return rotamerSampling;
+}
+
+// get a backbone sequence with an alanine cap at the beginning and end as an option
+string generateBackboneSequence(string _backboneAA, int _length, bool _useAlaCap) {
+	string str = "";
+	//2021-09-21: add in an alanine cap to allow for more variable positions at the leucine region
+	for (uint i=0; i<_length-4; i++){
+		if (i<4){
+			if (_useAlaCap == true){
+				str = str + "A";
+			} else {
+				str = str + _backboneAA;
+			}
+		} else {
+			str = str + _backboneAA;
+		}
+	}
+	// Adds in the LILI at the end of the sequence which is necessary for our TOXCAT plasmids
+	str = str + "LILI";
+	return str;
+}
+
+// calculate the SASA burial for each residue
+std::vector<pair <int, double> > calculateResidueBurial (System &_sys) {
+	/*
+	  SASA reference:
+	  Protein Engineering vol.15 no.8 pp.659–667, 2002
+	  Quantifying the accessible surface area of protein residues in their local environment
+	  Uttamkumar Samanta Ranjit P.Bahadur and  Pinak Chakrabarti
+	*/
+	map<string,double> refSasa;
+	refSasa["G"] = 83.91;
+	refSasa["A"] = 116.40;
+	refSasa["S"] = 125.68;
+	refSasa["C"] = 141.48;
+	refSasa["P"] = 144.80;
+	refSasa["T"] = 148.06;
+	refSasa["D"] = 155.37;
+	refSasa["V"] = 162.24;
+	refSasa["N"] = 168.87;
+	refSasa["E"] = 187.16;
+	refSasa["Q"] = 189.17;
+	refSasa["I"] = 189.95;
+	refSasa["L"] = 197.99;
+	refSasa["H"] = 198.51;
+	refSasa["K"] = 207.49;
+	refSasa["M"] = 210.55;
+	refSasa["F"] = 223.29;
+	refSasa["Y"] = 238.30;
+	refSasa["R"] = 249.26;
+	refSasa["W"] = 265.42;
+
+	std::vector<pair <int, double> > residueBurial;
+	SasaCalculator b(_sys.getAtomPointers());
+	//b.setProbeRadius(3.0);
+	b.calcSasa();
+	for (uint i = 0; i < _sys.positionSize()/2; i++) {//Changed this to account for linked positions in the dimer; gives each AA same number of rotamers as correspnding chain
+		string posIdA = _sys.getPosition(i).getPositionId();
+		//string posIdB = _sys.getPosition(i+_sys.positionSize()/2).getPositionId();
+		string oneLetter = MslTools::getOneLetterCode(_sys.getPosition(i).getResidueName());
+		double resiSasa = b.getResidueSasa(posIdA);
+		double burial = resiSasa / refSasa[oneLetter];
+		residueBurial.push_back(pair<int,double>(i, burial));
+		//residueBurial.push_back(pair<string,double>(posIdB, burial));
+		//cout << posId << "\t" << resiSasa << "\t" << burial << endl;
+	}
+
+	return residueBurial;
+}
+
+//Calculate Residue Burial and output a PDB that highlights the interface
+std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &_opt, string _seq) {
+	string polySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, 1);
+	PolymerSequence PS(polySeq);
+
+	// Declare new system
+	System monoSys;
+	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile);
+	CSBMono.setBuildTerm("CHARMM_ELEC", false);
+	CSBMono.setBuildTerm("CHARMM_ANGL", false);
+	CSBMono.setBuildTerm("CHARMM_BOND", false);
+	CSBMono.setBuildTerm("CHARMM_DIHE", false);
+	CSBMono.setBuildTerm("CHARMM_IMPR", false);
+	CSBMono.setBuildTerm("CHARMM_U-BR", false);
+
+	CSBMono.setBuildNonBondedInteractions(false);
+	if (!CSBMono.buildSystem(PS)){
+		cerr << "Unable to build system from " << polySeq << endl;
+	}
+
+	/******************************************************************************
+	 *                         === INITIALIZE POLYGLY ===
+	 ******************************************************************************/
+	// Read in Gly-69 to use as backbone coordinate template
+	CRDReader cRead;
+	cRead.open(_opt.backboneCrd);
+	if(!cRead.read()) {
+		cerr << "Unable to read " << _opt.backboneCrd << endl;
+		exit(0);
+	}
+	cRead.close();
+
+	AtomPointerVector& glyAPV = cRead.getAtomPointers();//*/
+
+	/******************************************************************************
+	 *                         === INITIALIZE POLYGLY ===
+	 ******************************************************************************/
+	monoSys.assignCoordinates(glyAPV,false);
+	monoSys.buildAllAtoms();
+
+	std::vector<pair <int, double> > residueBurial;
+	SasaCalculator dimerSasa(_sys.getAtomPointers());
+	SasaCalculator monoSasa(monoSys.getAtomPointers());
+	dimerSasa.calcSasa();
+	monoSasa.calcSasa();
+	dimerSasa.setTempFactorWithSasa(true);
+
+	for (uint i = 0; i < monoSys.positionSize(); i++) {//Changed this to account for linked positions in the dimer; gives each AA same number of rotamers as correspnding chain
+		string posIdMonomer = monoSys.getPosition(i).getPositionId();
+		string posIdDimer = _sys.getPosition(i).getPositionId();
+		double resiSasaMonomer = monoSasa.getResidueSasa(posIdMonomer);
+		double resiSasaDimer = dimerSasa.getResidueSasa(posIdDimer);
+		double burial = resiSasaDimer/resiSasaMonomer;
+		residueBurial.push_back(pair<int,double>(i, burial));
+
+		//set sasa for each residue in the b-factor
+		AtomSelection selA(_sys.getPosition(i).getAtomPointers());
+		AtomSelection selB(_sys.getPosition(i+_opt.backboneLength).getAtomPointers());
+		AtomPointerVector atomsA = selA.select("all");
+		AtomPointerVector atomsB = selB.select("all");
+		for (AtomPointerVector::iterator k=atomsA.begin(); k!=atomsA.end();k++) {
+			// set the residue sasa in the b-factor
+			(*k)->setTempFactor(burial);
+		}
+		for (AtomPointerVector::iterator k=atomsB.begin(); k!=atomsB.end();k++) {
+			// set the residue sasa in the b-factor
+			(*k)->setTempFactor(burial);
+		}
+	}
+
+	PDBWriter writer;
+	writer.open(_opt.pdbOutputDir+"/interfaceSASA.pdb");
+	writer.write(_sys.getAtomPointers(), true, false, true);
+	writer.close();
+	return residueBurial;
+}
+
+// generate string for backbone sequence
+string generateString(string _backbone, int _length) {
+	string str = "";
+	for (uint i=0; i<_length; i++){
+		str = str + _backbone;
+	}
+	return str;
 }
