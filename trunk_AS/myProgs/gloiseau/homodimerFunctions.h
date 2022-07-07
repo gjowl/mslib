@@ -70,7 +70,7 @@ string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum);
 string convertPolymerSeqToOneLetterSeq(Chain &_chain);
 string generateString(string _backbone, int _length);
-string generatePolymerSequence(string _backboneAA, int _backboneLength, int _startResNum);
+
 
 string getInterfaceSequence(Options &_opt, string _interface, string _sequence);
 

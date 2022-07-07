@@ -110,18 +110,6 @@ string getInterfaceString(vector<int> _interface, int _seqLength){
 	return interfaceString;
 }
 
-string getAlternateIdString(vector<string> _alternateIds){
-	string alternateIdsString = "";
-	for (uint i=0; i<_alternateIds.size(); i++){
-		if (i == _alternateIds.size()-1){
-			alternateIdsString += _alternateIds[i];
-		} else {
-			alternateIdsString += _alternateIds[i] += " ";
-		}
-	}
-	return alternateIdsString;
-}
-
 string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum) {
 	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
 	// A:{32}ALA ILE GLY GLY GLY

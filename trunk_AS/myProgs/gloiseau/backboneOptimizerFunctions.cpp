@@ -10,147 +10,9 @@ using namespace MSL;
 static SysEnv SYSENV;
 
 /***********************************
- *version 2 functions
- ***********************************/
-void prepareSystem(Options &_opt, System &_sys){
-	// declare system
-	CharmmSystemBuilder CSB(_sys,_opt.topFile,_opt.parFile,_opt.solvFile);
-	if (_opt.useElec == false){
-		CSB.setBuildTerm("CHARMM_ELEC", false);
-	} else {
-		CSB.setBuildTerm("CHARMM_ELEC", true);
-	}
-	CSB.setBuildTerm("CHARMM_ANGL", false);
-	CSB.setBuildTerm("CHARMM_BOND", false);
-	CSB.setBuildTerm("CHARMM_DIHE", false);
-	CSB.setBuildTerm("CHARMM_IMPR", false);
-	CSB.setBuildTerm("CHARMM_U-BR", false);
-
-	// load the membrane as solvent
-	CSB.setSolvent("MEMBRANE");
-	CSB.setIMM1Params(15, 10);
-
-	// build the system from the input pdb
-    CSB.buildSystemFromPDB(_opt.pdbFile);
-	
-	// get chain A and B from the _system
-	Chain & chainA = _sys.getChain("A");
-	Chain & chainB = _sys.getChain("B");
-
-	// Set up chain A and chain B atom pointer vectors
-	AtomPointerVector & apvChainA = chainA.getAtomPointers();
-	AtomPointerVector & apvChainB = chainB.getAtomPointers();
-	
-    /******************************************************************************
-	 *                     === COPY BACKBONE COORDINATES ===
-	 ******************************************************************************/
-	// assign the coordinates of our _system to the given geometry that was assigned without energies using System pdb
-	_sys.buildAllAtoms();
-
-	// initialize the object for loading rotamers into our _system
-	SystemRotamerLoader sysRot(_sys, _opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
-
-	// Add hydrogen bond term
-	HydrogenBondBuilder hb(_sys, _opt.hbondFile);
-	hb.buildInteractions(50);//when this is here, the HB weight is correct
-
-	/******************************************************************************
-	 *                     === INITIAL VARIABLE SET UP ===
-	 ******************************************************************************/
-	// Initialize EnergySet that contains energies for the chosen terms for our design
-	EnergySet* Eset = _sys.getEnergySet();
-	// Set all terms active, besides Charmm-Elec
-	Eset->setAllTermsInactive();
-	//Eset->setTermActive("CHARMM_ELEC", false);
-	Eset->setTermActive("CHARMM_VDW", true);
-	Eset->setTermActive("SCWRL4_HBOND", true);
-	Eset->setTermActive("CHARMM_IMM1REF", true);
-	Eset->setTermActive("CHARMM_IMM1", true);
-
-	// Set weights
-	Eset->setWeight("CHARMM_VDW", _opt.weight_vdw);
-	Eset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
-	Eset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
-	Eset->setWeight("CHARMM_IMM1", _opt.weight_solv);
-
-	/******************************************************************************
-	 *                === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
-	 ******************************************************************************/
-	// removes all hydrogen bonding near the termini of our helices
-	// (remnant from CATM, but used in the code that was used to get baselines so keeping it to be consistent)
-	int firstPos = 0;
-    int lastPos = _sys.positionSize();
-    deleteTerminalHydrogenBondInteractions(_sys,firstPos,lastPos);
-
-	// Up to here is from readDPBAndCalcEnergy
-	/******************************************************************************
-	 *                === CHECK TO SEE IF ALL ATOMS ARE BUILT ===
-	 ******************************************************************************/
-	// Assign number of rotamers by residue burial
-	loadRotamersBySASABurial(_sys, sysRot, _opt);
-	CSB.updateNonBonded(10,12,50);
-	
-	// as of 2022-7-5: not sure if the above works or needs to be reworked
-
-	// assign the coordinates of our system to the given geometry that was assigned without energies using System pdb
-	//sys.wipeAllCoordinates();
-	//sys.assignCoordinates(pdb.getAtomPointers(),false);
-	//sys.buildAllAtoms();
-	//writer1.open(opt.outputDir + "/" + opt.sequence + "_farGeometry.pdb");
-	//writer1.write(sys.getAtomPointers(), true, false, true);
-	//writer1.close();
-}
-
-void transformToStartingPosition(Options &_opt, System &_sys, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, CartesianPoint &_xAxis, CartesianPoint &_zAxis){
-	/******************************************************************************
-	 *                      === TRANSFORM TO COORDINATES ===
-	 ******************************************************************************/
-	System pdb;
-	pdb.readPdb(_opt.pdbFile);//gly69 pdb file; changed from the CRD file during testing to fix a bug but both work and the bug was separate
-	
-	Chain & chainA1 = pdb.getChain("A");
-	Chain & chainB1 = pdb.getChain("B");
-
-	// Set up chain A and chain B atom pointer vectors
-	AtomPointerVector & apvChainA1 = chainA1.getAtomPointers();
-	AtomPointerVector & apvChainB1 = chainB1.getAtomPointers();
-	
-	// Objects used for transformations
-	Transforms trans; 
-	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
-	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
-	
-	PDBWriter writer1;
-	writer1.open(_opt.outputDir + "/" + _opt.sequence + "_inputGeometry.pdb");
-	writer1.write(_sys.getAtomPointers(), true, false, true);
-	writer1.close();
-
-	// Transformation to zShift, axialRotation, crossingAngle, and xShift
-	transformation(apvChainA1, apvChainB1, _axisA, _axisB, _ori, _xAxis, _zAxis, _opt.zShift, _opt.axialRotation, _opt.crossingAngle, _opt.xShift, trans);
-	moveZCenterOfCAMassToOrigin(pdb.getAtomPointers(), _helicalAxis.getAtomPointers(), trans);
-
-	// was having a problem setting coordinates to the above, so I just decided to move the whole backbone using this code instead
-	// in the future, could probably write a function similar to transformation that puts everything in the appropriate geometry
-	//double xTranslate = 7;
-	//backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, xTranslate, 3);
-	//writer1.open(_opt.outputDir + "/" + _opt.sequence + "_farGeometry.pdb");
-	//writer1.write(_sys.getAtomPointers(), true, false, true);
-	//writer1.close();
-}
-/***********************************
  *output file functions
  ***********************************/
-// for running on chtc
-void setupOutputDirectoryChtc(Options &_opt){
-	_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.sequence;
-	string cmd = "mkdir -p " + _opt.outputDir;
-	if (system(cmd.c_str())){
-		cout << "Unable to make directory" << endl;
-		exit(0);
-	}
-}
-
+//TODO: make changes so that this can be run locally vs external server
 void setupOutputDirectory(Options &_opt){
 	_opt.outputDir = _opt.outputDir + "/" + _opt.sequence;
 	string cmd = "mkdir -p " + _opt.outputDir;
@@ -649,11 +511,16 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 	vector<string> required;
 	vector<string> allowed;
 
-	//optional
+	//opt.required.push_back("");
+	//opt.allowed.push_back("");
+
+	//opt.allowed.push_back("");
+	// optional
 	//Weights
 	opt.allowed.push_back("weight_vdw");
 	opt.allowed.push_back("weight_hbond");
 	opt.allowed.push_back("weight_solv");
+
 	opt.allowed.push_back("verbose");
 
 	//Input Files
@@ -673,7 +540,6 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 	opt.allowed.push_back("rotamerSamplingVector");
 	opt.allowed.push_back("sasaRepackLevel");
 	opt.allowed.push_back("seed");
-
 	//Geometry
 	opt.allowed.push_back("xShift");
 	opt.allowed.push_back("crossingAngle");
@@ -697,9 +563,6 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 
 	opt.allowed.push_back("negAngle");
 	opt.allowed.push_back("negRot");
-
-	//version 2
-	opt.allowed.push_back("useElec");
 
 	//Begin Parsing through the options
 	OptionParser OP;
@@ -1003,13 +866,6 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 		opt.MCMaxRejects = 10;
 	}
 
-	// version 2 options
-	opt.useElec = OP.getBool("useElec");
-	if (OP.fail()) {
-		opt.warningMessages += "useElec not specified using true\n";
-		opt.warningFlag = true;
-		opt.useElec = true;
-	}
 	opt.rerunConf = OP.getConfFile();
 
 	return opt;

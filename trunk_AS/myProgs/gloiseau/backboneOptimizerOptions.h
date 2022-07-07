@@ -74,8 +74,11 @@ using namespace std;
 	bool negAngle;
 	bool negRot;
 
-	//version 2
+	//version 2: I think it should work for both versions
 	bool useElec;
+	string backboneFile;
+	vector<string> ids;
+	int backboneLength;
 
 	/***** MANAGEMENT VARIABLES ******/
 	string pwd; // the present working directory obtained with a getenv

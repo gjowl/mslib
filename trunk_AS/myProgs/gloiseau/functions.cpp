@@ -180,6 +180,19 @@ string generateMonomerPolymerSequenceFromSequence(string _sequence, int _startRe
 	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
 	return "A" + ps;
 }
+string generatePolymerSequence(string _backboneAA, int _backboneLength, int _startResNum) {
+	string ps = "";
+	string resName = MslTools::getThreeLetterCode(_backboneAA);
+	if(resName == "HIS") {
+		resName = "HSE";
+	}
+	for (uint i=0; i<_backboneLength; i++){
+		ps = ps + " " + resName;
+	}
+	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+	return "A" + ps + "\nB" + ps;
+}
+
 
 /***********************************
  *load rotamer functions
@@ -247,4 +260,16 @@ void repackSideChains(SelfPairManager & _spm, int _greedyCycles) {
 	_spm.setOnTheFly(1);
 	_spm.calculateEnergies(); // CHANGE BACK!!!
 	_spm.runGreedyOptimizer(_greedyCycles);
+}
+
+string getAlternateIdString(vector<string> _alternateIds){
+	string alternateIdsString = "";
+	for (uint i=0; i<_alternateIds.size(); i++){
+		if (i == _alternateIds.size()-1){
+			alternateIdsString += _alternateIds[i];
+		} else {
+			alternateIdsString += _alternateIds[i] += " ";
+		}
+	}
+	return alternateIdsString;
 }

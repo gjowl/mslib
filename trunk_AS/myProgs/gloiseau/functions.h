@@ -35,6 +35,7 @@ map<string,double> getEnergyByTerm(EnergySet* _eSet);
 map<string,double> getEnergyByTermDoubled(EnergySet* _eSet);
 void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
 string generateMonomerPolymerSequenceFromSequence(string _sequence, int _startResNum);
+string generatePolymerSequence(string _backboneAA, int _backboneLength, int _startResNum);
 
 // runs a greedy to quickly repack sidechains
 void repackSideChains(SelfPairManager & _spm, int _greedyCycles);

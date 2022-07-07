@@ -117,20 +117,6 @@ string generateString(string _backbone, int _length) {
 	return str;
 }
 
-string generatePolymerSequence(string _backboneAA, int _backboneLength, int _startResNum) {
-	string ps = "";
-	string resName = MslTools::getThreeLetterCode(_backboneAA);
-	if(resName == "HIS") {
-		resName = "HSE";
-	}
-	for (uint i=0; i<_backboneLength; i++){
-		ps = ps + " " + resName;
-	}
-	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
-	return "A" + ps + "\nB" + ps;
-}
-
-
 string getInterfaceSequence(Options &_opt, string _interface, string _sequence){
 	string interfaceSequence = "";
 	for(string::iterator it = _interface.begin(); it != _interface.end(); it++) {

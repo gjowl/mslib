@@ -21,7 +21,7 @@
 #include "SysEnv.h"
 #include "ResidueSelection.h"
 #include "SasaCalculator.h"
-#include "backboneOptimizerFunctions.h"
+#include "backboneOptimizerFunctions_v2.h"
 #include "functions.h"
 
 using namespace MSL;
@@ -100,26 +100,6 @@ int main(int argc, char *argv[]){
 	// close the rerun config file
 	rerun.close();
 
-	// TODO: try to make the below into a function that can be called from the main function
-	// will make it easier to edit for sequence design
-
-	// add variables ()
-	System sys;
-	prepareSystem(opt, sys); //I can't remember if copying a system is annoying or not, but I might as well try
-
-	// get chain A and B from the system
-	Chain & chainA = sys.getChain("A");
-	Chain & chainB = sys.getChain("B");
-
-	// Set up chain A and chain B atom pointer vectors
-	AtomPointerVector & apvChainA = chainA.getAtomPointers();
-	AtomPointerVector & apvChainB = chainB.getAtomPointers();
-
-	// Objects used for transformations
-	Transforms trans; 
-	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
-	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
-	
 	/******************************************************************************
 	 *                     === HELICAL AXIS SET UP ===
 	 ******************************************************************************/
@@ -149,8 +129,67 @@ END";
 	CartesianPoint xAxis(1.0,0.0,0.0);
 	CartesianPoint zAxis(0.0,0.0,1.0);
 
-	transformToStartingPosition(opt, sys, helicalAxis, axisA, axisB, ori, xAxis, zAxis);
+	// Set up object used for transformations
+	Transforms trans;
+	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
+	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
+	
+	/******************************************************************************
+	 *                       === GENERATE POLYMER SEQUENCE ===
+	 ******************************************************************************/
+	// polymer sequences have: chain, starting position of chain residue, three letter AA code
+	string polySeq = generatePolymerSequence("L", opt.backboneLength, opt.thread);
+	PolymerSequence PS(polySeq);
+	
+	// set up the system
+	System sys;
+	prepareSystem(opt, sys, polySeq, helicalAxis, axisA, axisB, ori, xAxis, zAxis, trans);
 
+	// get chain A and B from the system
+	Chain & chainA = sys.getChain("A");
+	Chain & chainB = sys.getChain("B");
+
+	// Set up chain A and chain B atom pointer vectors
+	AtomPointerVector & apvChainA = chainA.getAtomPointers();
+	AtomPointerVector & apvChainB = chainB.getAtomPointers();
+
+	/******************************************************************************
+	 *                          === PRINT GEOMETRY ===
+	 ******************************************************************************/
+	// Output the starting geometry
+	cout << "***STARTING GEOMETRY:***" << endl;
+	cout << "xShift:        " << opt.xShift << endl;
+	cout << "crossingAngle: " << opt.crossingAngle << endl;
+	cout << "axialRotation: " << opt.axialRotation << endl;
+	cout << "zShift:        " << opt.zShift << endl;
+
+	//String for the alternateIds at the interface
+	string alternateIds = getAlternateIdString(opt.ids);
+	cout << "Amino acids for design: LEU " << alternateIds << endl;
+	
+	/******************************************************************************
+	 *       === IDENTIFY INTERFACIAL POSITIONS AND GET ROTAMER ASSIGNMENTS ===
+	 ******************************************************************************/
+	// Variables to output from defineInterfaceAndRotamerSampling function
+	string rotamerLevels;
+	string variablePositionString;
+	string rotamerSamplingString;
+	// vector of the positions that will be linked
+	vector<int> linkedPositions;
+	// vector of positions at the interface excluding termini positions
+	vector<uint> interfacePositions;
+	// vector of positions at the interface including the terminal positions
+	vector<uint> allInterfacePositions;
+	// vector of rotamer level for each position
+	vector<int> rotamerSamplingPerPosition;
+
+	// Defines the interfacial positions and the number of rotamers to give each position
+	// This takes poly-val helix to calculate the residue burial of every position and based on the burial and number
+	// of 'SASA interface level' decides rotamer level to assign to the position and also decides which of these positions are 'interfacial'
+	// PS is the actual polymerSeq object whereas polySeq is the string version of the polymerSeq
+	defineInterfaceAndRotamerSampling(opt, PS, rotamerLevels, polySeq, variablePositionString, rotamerSamplingString, linkedPositions, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, sout, axis);
+	
+	
 	/******************************************************************************
 	 *                  === GREEDY TO OPTIMIZE ROTAMERS ===
 	 ******************************************************************************/
