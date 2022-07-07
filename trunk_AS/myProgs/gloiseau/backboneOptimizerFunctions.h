@@ -25,10 +25,16 @@
 #include "backboneOptimizerOptions.h"
 
 /***********************************
+ *version 2 functions
+ ***********************************/
+void prepareSystem(Options &_opt, System &_sys);
+
+/***********************************
  *output file functions
  ***********************************/
 // function to setup the output directory
 void setupOutputDirectory(Options &_opt);
+void setupOutputDirectoryChtc(Options &_opt);
 
 //
 void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum);

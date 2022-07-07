@@ -8,7 +8,7 @@ output       = $(outDir)/out/$(sequence).out
 log          = $(outDir)/log/$(sequence).log
 error        = $(outDir)/err/$(sequence).err
 scriptDir    = $(baseDir)/mslib/trunk_AS/myProgs/backboneOptimizer
-inputFileDir = /exports/home/gloiseau/mslib/trunk_AS/myProgs/CATM/parameterFiles
+inputFileDir = /exports/home/gloiseau/mslib/trunk_AS/myProgs/parameterFiles
 stream_output = TRUE
 stream_error  = TRUE
 #Info

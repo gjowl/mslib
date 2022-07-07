@@ -74,6 +74,8 @@ using namespace std;
 	bool negAngle;
 	bool negRot;
 
+	//version 2
+	bool useElec;
 
 	/***** MANAGEMENT VARIABLES ******/
 	string pwd; // the present working directory obtained with a getenv

@@ -81,7 +81,7 @@ int main(int argc, char *argv[]){
 	ofstream rerun;
 
 	// function that defines the output directory
-	setupOutputDirectory(opt);
+	setupOutputDirectoryChtc(opt);
 
 	// setup the output files
 	string soutfile = opt.outputDir + "/energy.csv";
