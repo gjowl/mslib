@@ -28,6 +28,7 @@
  *version 2 functions
  ***********************************/
 void prepareSystem(Options &_opt, System &_sys);
+void transformToStartingPosition(Options &_opt, System &_sys, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, CartesianPoint &_xAxis, CartesianPoint &_zAxis);
 
 /***********************************
  *output file functions

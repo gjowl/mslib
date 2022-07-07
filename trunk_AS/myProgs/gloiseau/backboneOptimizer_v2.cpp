@@ -107,6 +107,50 @@ int main(int argc, char *argv[]){
 	System sys;
 	prepareSystem(opt, sys); //I can't remember if copying a system is annoying or not, but I might as well try
 
+	// get chain A and B from the system
+	Chain & chainA = sys.getChain("A");
+	Chain & chainB = sys.getChain("B");
+
+	// Set up chain A and chain B atom pointer vectors
+	AtomPointerVector & apvChainA = chainA.getAtomPointers();
+	AtomPointerVector & apvChainB = chainB.getAtomPointers();
+
+	// Objects used for transformations
+	Transforms trans; 
+	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
+	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
+	
+	/******************************************************************************
+	 *                     === HELICAL AXIS SET UP ===
+	 ******************************************************************************/
+	string axis = "\
+ATOM      1  O   DUM A   1       0.000   0.000   0.000  1.00  0.00           P\n\
+ATOM      2  Z   DUM A   1       0.000   0.000   1.000  1.00  0.00           O\n\
+TER\n\
+ATOM      3  O   DUM B   1       0.000   0.000   0.000  1.00  0.00           P\n\
+ATOM      4  Z   DUM B   1       0.000   0.000   1.000  1.00  0.00           O\n\
+TER\n\
+END";
+	
+	PDBReader readAxis;
+	if(!readAxis.read(axis)) {
+		cerr << "Unable to read axis" << endl;
+		exit(0);
+	}
+
+	System helicalAxis;
+	helicalAxis.addAtoms(readAxis.getAtomPointers());
+
+	AtomPointerVector &axisA = helicalAxis.getChain("A").getAtomPointers();
+	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
+
+	// Reference points for Helices
+	CartesianPoint ori(0.0,0.0,0.0);
+	CartesianPoint xAxis(1.0,0.0,0.0);
+	CartesianPoint zAxis(0.0,0.0,1.0);
+
+	transformToStartingPosition(opt, sys, helicalAxis, axisA, axisB, ori, xAxis, zAxis);
+
 	/******************************************************************************
 	 *                  === GREEDY TO OPTIMIZE ROTAMERS ===
 	 ******************************************************************************/
@@ -136,79 +180,6 @@ int main(int argc, char *argv[]){
 	sys.setActiveRotamers(startStateVec);
 
 	/******************************************************************************
-	 *                     === HELICAL AXIS SET UP ===
-	 ******************************************************************************/
-	string axis = "\
-ATOM      1  O   DUM A   1       0.000   0.000   0.000  1.00  0.00           P\n\
-ATOM      2  Z   DUM A   1       0.000   0.000   1.000  1.00  0.00           O\n\
-TER\n\
-ATOM      3  O   DUM B   1       0.000   0.000   0.000  1.00  0.00           P\n\
-ATOM      4  Z   DUM B   1       0.000   0.000   1.000  1.00  0.00           O\n\
-TER\n\
-END";
-	
-	PDBReader readAxis;
-	if(!readAxis.read(axis)) {
-		cerr << "Unable to read axis" << endl;
-		exit(0);
-	}
-
-	System helicalAxis;
-	helicalAxis.addAtoms(readAxis.getAtomPointers());
-
-	AtomPointerVector &axisA = helicalAxis.getChain("A").getAtomPointers();
-	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
-
-	// Reference points for Helices
-	CartesianPoint ori(0.0,0.0,0.0);
-	CartesianPoint zAxis(0.0,0.0,1.0);
-	CartesianPoint xAxis(1.0,0.0,0.0);
-	
-	/******************************************************************************
-	 *                      === TRANSFORM TO COORDINATES ===
-	 ******************************************************************************/
-	System pdb;
-	pdb.readPdb(opt.pdbFile);//gly69 pdb file; changed from the CRD file during testing to fix a bug but both work and the bug was separate
-	
-	Chain & chainA1 = pdb.getChain("A");
-	Chain & chainB1 = pdb.getChain("B");
-
-	// Set up chain A and chain B atom pointer vectors
-	AtomPointerVector & apvChainA1 = chainA1.getAtomPointers();
-	AtomPointerVector & apvChainB1 = chainB1.getAtomPointers();
-	
-	// Objects used for transformations
-	Transforms trans; 
-	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
-	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
-	
-	PDBWriter writer1;
-	writer1.open(opt.outputDir + "/" + opt.sequence + "_inputGeometry.pdb");
-	writer1.write(sys.getAtomPointers(), true, false, true);
-	writer1.close();
-
-	// Transformation to zShift, axialRotation, crossingAngle, and xShift
-	transformation(apvChainA1, apvChainB1, axisA, axisB, ori, xAxis, zAxis, opt.zShift, opt.axialRotation, opt.crossingAngle, opt.xShift, trans);
-	moveZCenterOfCAMassToOrigin(pdb.getAtomPointers(), helicalAxis.getAtomPointers(), trans);
-
-	// was having a problem setting coordinates to the above, so I just decided to move the whole backbone using this code instead
-	// in the future, could probably write a function similar to transformation that puts everything in the appropriate geometry
-	double xTranslate = 7;
-	backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, xTranslate, 3);
-	writer1.open(opt.outputDir + "/" + opt.sequence + "_farGeometry.pdb");
-	writer1.write(sys.getAtomPointers(), true, false, true);
-	writer1.close();
-	// as of 2022-7-5: not sure if the above works or needs to be reworked
-
-	// assign the coordinates of our system to the given geometry that was assigned without energies using System pdb
-	//sys.wipeAllCoordinates();
-	//sys.assignCoordinates(pdb.getAtomPointers(),false);
-	//sys.buildAllAtoms();
-	//writer1.open(opt.outputDir + "/" + opt.sequence + "_farGeometry.pdb");
-	//writer1.write(sys.getAtomPointers(), true, false, true);
-	//writer1.close();
-
-	/******************************************************************************
 	 *                    === COMPUTE MONOMER ENERGY ===
 	 ******************************************************************************/
     map<string,double> monomerEnergyByTerm;
@@ -229,6 +200,7 @@ END";
 	/******************************************************************************
 	 *                     === X SHIFT REPACKS ===
 	 ******************************************************************************/
+	double xTranslate = 7;
 	double bestEnergy = currentEnergy-monomerEnergy;
 	double xShift = opt.xShift+xTranslate/2;
 	double savedXShift = xShift;
@@ -280,6 +252,7 @@ END";
 	cout << "Best Energy at x shift: " << bestEnergy-monomerEnergy << " at " << savedXShift << endl;
 	sys.saveAltCoor("savedBestState");
 	helicalAxis.saveAltCoor("BestAxis");
+	PDBWriter writer1;
 	writer1.open(opt.outputDir + "/" + opt.sequence + "_xShifted.pdb");
 	writer1.write(sys.getAtomPointers(), true, false, true);
 	writer1.close();

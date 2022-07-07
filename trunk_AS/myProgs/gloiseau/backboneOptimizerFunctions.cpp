@@ -90,8 +90,54 @@ void prepareSystem(Options &_opt, System &_sys){
 	// Assign number of rotamers by residue burial
 	loadRotamersBySASABurial(_sys, sysRot, _opt);
 	CSB.updateNonBonded(10,12,50);
+	
+	// as of 2022-7-5: not sure if the above works or needs to be reworked
+
+	// assign the coordinates of our system to the given geometry that was assigned without energies using System pdb
+	//sys.wipeAllCoordinates();
+	//sys.assignCoordinates(pdb.getAtomPointers(),false);
+	//sys.buildAllAtoms();
+	//writer1.open(opt.outputDir + "/" + opt.sequence + "_farGeometry.pdb");
+	//writer1.write(sys.getAtomPointers(), true, false, true);
+	//writer1.close();
 }
 
+void transformToStartingPosition(Options &_opt, System &_sys, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, CartesianPoint &_xAxis, CartesianPoint &_zAxis){
+	/******************************************************************************
+	 *                      === TRANSFORM TO COORDINATES ===
+	 ******************************************************************************/
+	System pdb;
+	pdb.readPdb(_opt.pdbFile);//gly69 pdb file; changed from the CRD file during testing to fix a bug but both work and the bug was separate
+	
+	Chain & chainA1 = pdb.getChain("A");
+	Chain & chainB1 = pdb.getChain("B");
+
+	// Set up chain A and chain B atom pointer vectors
+	AtomPointerVector & apvChainA1 = chainA1.getAtomPointers();
+	AtomPointerVector & apvChainB1 = chainB1.getAtomPointers();
+	
+	// Objects used for transformations
+	Transforms trans; 
+	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
+	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
+	
+	PDBWriter writer1;
+	writer1.open(_opt.outputDir + "/" + _opt.sequence + "_inputGeometry.pdb");
+	writer1.write(_sys.getAtomPointers(), true, false, true);
+	writer1.close();
+
+	// Transformation to zShift, axialRotation, crossingAngle, and xShift
+	transformation(apvChainA1, apvChainB1, _axisA, _axisB, _ori, _xAxis, _zAxis, _opt.zShift, _opt.axialRotation, _opt.crossingAngle, _opt.xShift, trans);
+	moveZCenterOfCAMassToOrigin(pdb.getAtomPointers(), _helicalAxis.getAtomPointers(), trans);
+
+	// was having a problem setting coordinates to the above, so I just decided to move the whole backbone using this code instead
+	// in the future, could probably write a function similar to transformation that puts everything in the appropriate geometry
+	//double xTranslate = 7;
+	//backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, xTranslate, 3);
+	//writer1.open(_opt.outputDir + "/" + _opt.sequence + "_farGeometry.pdb");
+	//writer1.write(_sys.getAtomPointers(), true, false, true);
+	//writer1.close();
+}
 /***********************************
  *output file functions
  ***********************************/
