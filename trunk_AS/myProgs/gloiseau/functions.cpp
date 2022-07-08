@@ -9,7 +9,6 @@ using namespace MSL;
 static SysEnv ENV;
 
 // General functions that many of my programs use
-
 // Just add 10 U(0,1) uniform random variables, offset by 0.5 to make mean = 0 and divide by variance = (10 * var(U(0,1)))
 double getStandardNormal(RandomNumberGenerator& RNG) {
 	double retVal = 0.0;
@@ -165,6 +164,7 @@ void checkIfAtomsAreBuilt(System &_sys, ofstream &_err){
 		}
 	}
 }
+
 string generateMonomerPolymerSequenceFromSequence(string _sequence, int _startResNum) {
 	string ps = "";
 	for (uint i=0; i<_sequence.length(); i++){
@@ -277,33 +277,6 @@ string getAlternateIdString(vector<string> _alternateIds){
 	return alternateIdsString;
 }
 
-vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition){
-	vector<uint> variableInterfacePositions;
-	//TODO: make this variable in case I eventually decide that I actually want to mutate everything but the final Leu or something
-	//for (uint k=0; k<_opt.backboneLength; k++){
-	for (uint k=0; k<_opt.backboneLength; k++){
-		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
-			variableInterfacePositions.push_back(k);
-		} else {
-			continue;
-		}
-	}
-	return variableInterfacePositions;
-}
-
-vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition){
-	vector<uint> variableInterfacePositions;
-	//TODO: make this variable in case I eventually decide that I actually want to mutate everything but the final Leu or something
-	//for (uint k=0; k<_opt.backboneLength; k++){
-	for (uint k=3; k<_opt.backboneLength-5; k++){
-		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
-			variableInterfacePositions.push_back(k);
-		} else {
-			continue;
-		}
-	}
-	return variableInterfacePositions;
-}
 
 string getInterfaceString(vector<int> _interface, int _seqLength){
 	string interfaceString = "";
@@ -363,131 +336,6 @@ string generateBackboneSequence(string _backboneAA, int _length, bool _useAlaCap
 	return str;
 }
 
-// calculate the SASA burial for each residue
-std::vector<pair <int, double> > calculateResidueBurial (System &_sys) {
-	/*
-	  SASA reference:
-	  Protein Engineering vol.15 no.8 pp.659–667, 2002
-	  Quantifying the accessible surface area of protein residues in their local environment
-	  Uttamkumar Samanta Ranjit P.Bahadur and  Pinak Chakrabarti
-	*/
-	map<string,double> refSasa;
-	refSasa["G"] = 83.91;
-	refSasa["A"] = 116.40;
-	refSasa["S"] = 125.68;
-	refSasa["C"] = 141.48;
-	refSasa["P"] = 144.80;
-	refSasa["T"] = 148.06;
-	refSasa["D"] = 155.37;
-	refSasa["V"] = 162.24;
-	refSasa["N"] = 168.87;
-	refSasa["E"] = 187.16;
-	refSasa["Q"] = 189.17;
-	refSasa["I"] = 189.95;
-	refSasa["L"] = 197.99;
-	refSasa["H"] = 198.51;
-	refSasa["K"] = 207.49;
-	refSasa["M"] = 210.55;
-	refSasa["F"] = 223.29;
-	refSasa["Y"] = 238.30;
-	refSasa["R"] = 249.26;
-	refSasa["W"] = 265.42;
-
-	std::vector<pair <int, double> > residueBurial;
-	SasaCalculator b(_sys.getAtomPointers());
-	//b.setProbeRadius(3.0);
-	b.calcSasa();
-	for (uint i = 0; i < _sys.positionSize()/2; i++) {//Changed this to account for linked positions in the dimer; gives each AA same number of rotamers as correspnding chain
-		string posIdA = _sys.getPosition(i).getPositionId();
-		//string posIdB = _sys.getPosition(i+_sys.positionSize()/2).getPositionId();
-		string oneLetter = MslTools::getOneLetterCode(_sys.getPosition(i).getResidueName());
-		double resiSasa = b.getResidueSasa(posIdA);
-		double burial = resiSasa / refSasa[oneLetter];
-		residueBurial.push_back(pair<int,double>(i, burial));
-		//residueBurial.push_back(pair<string,double>(posIdB, burial));
-		//cout << posId << "\t" << resiSasa << "\t" << burial << endl;
-	}
-
-	return residueBurial;
-}
-
-//Calculate Residue Burial and output a PDB that highlights the interface
-std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &_opt, string _seq) {
-	string polySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, 1);
-	PolymerSequence PS(polySeq);
-
-	// Declare new system
-	System monoSys;
-	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile);
-	CSBMono.setBuildTerm("CHARMM_ELEC", false);
-	CSBMono.setBuildTerm("CHARMM_ANGL", false);
-	CSBMono.setBuildTerm("CHARMM_BOND", false);
-	CSBMono.setBuildTerm("CHARMM_DIHE", false);
-	CSBMono.setBuildTerm("CHARMM_IMPR", false);
-	CSBMono.setBuildTerm("CHARMM_U-BR", false);
-
-	CSBMono.setBuildNonBondedInteractions(false);
-	if (!CSBMono.buildSystem(PS)){
-		cerr << "Unable to build system from " << polySeq << endl;
-	}
-
-	/******************************************************************************
-	 *                         === INITIALIZE POLYGLY ===
-	 ******************************************************************************/
-	// Read in Gly-69 to use as backbone coordinate template
-	CRDReader cRead;
-	cRead.open(_opt.backboneCrd);
-	if(!cRead.read()) {
-		cerr << "Unable to read " << _opt.backboneCrd << endl;
-		exit(0);
-	}
-	cRead.close();
-
-	AtomPointerVector& glyAPV = cRead.getAtomPointers();//*/
-
-	/******************************************************************************
-	 *                         === INITIALIZE POLYGLY ===
-	 ******************************************************************************/
-	monoSys.assignCoordinates(glyAPV,false);
-	monoSys.buildAllAtoms();
-
-	std::vector<pair <int, double> > residueBurial;
-	SasaCalculator dimerSasa(_sys.getAtomPointers());
-	SasaCalculator monoSasa(monoSys.getAtomPointers());
-	dimerSasa.calcSasa();
-	monoSasa.calcSasa();
-	dimerSasa.setTempFactorWithSasa(true);
-
-	for (uint i = 0; i < monoSys.positionSize(); i++) {//Changed this to account for linked positions in the dimer; gives each AA same number of rotamers as correspnding chain
-		string posIdMonomer = monoSys.getPosition(i).getPositionId();
-		string posIdDimer = _sys.getPosition(i).getPositionId();
-		double resiSasaMonomer = monoSasa.getResidueSasa(posIdMonomer);
-		double resiSasaDimer = dimerSasa.getResidueSasa(posIdDimer);
-		double burial = resiSasaDimer/resiSasaMonomer;
-		residueBurial.push_back(pair<int,double>(i, burial));
-
-		//set sasa for each residue in the b-factor
-		AtomSelection selA(_sys.getPosition(i).getAtomPointers());
-		AtomSelection selB(_sys.getPosition(i+_opt.backboneLength).getAtomPointers());
-		AtomPointerVector atomsA = selA.select("all");
-		AtomPointerVector atomsB = selB.select("all");
-		for (AtomPointerVector::iterator k=atomsA.begin(); k!=atomsA.end();k++) {
-			// set the residue sasa in the b-factor
-			(*k)->setTempFactor(burial);
-		}
-		for (AtomPointerVector::iterator k=atomsB.begin(); k!=atomsB.end();k++) {
-			// set the residue sasa in the b-factor
-			(*k)->setTempFactor(burial);
-		}
-	}
-
-	PDBWriter writer;
-	writer.open(_opt.pdbOutputDir+"/interfaceSASA.pdb");
-	writer.write(_sys.getAtomPointers(), true, false, true);
-	writer.close();
-	return residueBurial;
-}
-
 // generate string for backbone sequence
 string generateString(string _backbone, int _length) {
 	string str = "";
@@ -495,4 +343,177 @@ string generateString(string _backbone, int _length) {
 		str = str + _backbone;
 	}
 	return str;
+}
+
+string generateMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions) {
+	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+	// A:{32}ALA ILE GLY GLY GLY
+	// B:{32}ALA ILE GLY GLY GLY
+	string ps = "";
+	int counter = 0;
+	int startPos = _startResNum;
+	int endPos = _startResNum+_seq.length();
+	for(string::iterator it = _seq.begin(); it != _seq.end(); it++) {
+		int pos = it-_seq.begin()+_startResNum;
+		if (it == _seq.begin() || it == _seq.end()-1){
+		//if (it == _seq.begin()){
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if (it == _seq.begin()){
+				if(resName == "HIS") {
+					ps = ps + " HSE-ACE";
+				} else {
+					ps = ps + " " + resName + "-ACE";
+				}
+			} else {
+				if(resName == "HIS") {
+					ps = ps + " HSE-CT2";
+				} else {
+					ps = ps + " " + resName + "-CT2";
+				}
+			}
+			counter++;
+		} else if (pos < startPos+3 || pos > endPos-5){
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if(resName == "HIS") {
+				ps = ps + " HSE";
+			} else {
+				ps = ps + " " + resName;
+			}
+		} else {
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			//cout << pos << endl;
+			if (find(_interfacialPositions.begin(), _interfacialPositions.end(), pos) != _interfacialPositions.end()){
+				ps = ps + " [";
+				if(resName == "HIS") {
+					ps = ps + " HSE";
+				} else {
+					ps = ps + " " + resName;
+				}
+				for (uint i=0; i<_alternateIds.size(); i++){
+					if(_alternateIds[i] == "HIS") {
+						ps = ps + " HSE";
+					} else {
+						ps = ps + " " + _alternateIds[i];
+					}
+				}
+				ps = ps + "] ";
+			} else {
+				if(resName == "HIS") {
+					ps = ps + " HSE";
+				} else {
+					ps = ps + " " + resName;
+				}
+			}
+			counter++;
+		}
+	}
+	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+	return "A" + ps + "\nB" + ps;
+}
+
+//Code Samson made a while back that should get each active ID and set a mask for anything that isn't active
+std::vector < std::vector < bool > > getActiveMask (System &_sys) {
+	_sys.updateVariablePositions();
+	std::vector <unsigned int> residueState;
+	std::vector < std::vector<unsigned int> > resRots(_sys.getMasterPositions().size());
+	std::vector < std::vector<bool> > resMask(_sys.getMasterPositions().size());
+	//Initialize residue state at the current active identity for each position
+	for (unsigned int i = 0; i < _sys.getMasterPositions().size(); i++) {
+		Position &pos = _sys.getPosition(_sys.getMasterPositions()[i]);
+		unsigned int activeRes = pos.getActiveIdentity();
+		residueState.push_back(activeRes);
+
+		resRots[i] = std::vector<unsigned int> (pos.identitySize());
+		for (unsigned int j = 0; j < pos.identitySize(); j++) {
+			resRots[i][j] = pos.getTotalNumberOfRotamers(j);
+		}
+	}
+
+	for (unsigned int i = 0; i < residueState.size(); i++) {
+		unsigned int activeResidue = residueState[i];
+		if (activeResidue >= resRots[i].size()) {
+			cerr << "ERROR: the current residue number exceeds the number of residues for position " << i << endl;
+			exit(100);
+		}
+		for (unsigned int j = 0; j < resRots[i].size(); j++) {
+			if (j==activeResidue) {
+				for (unsigned int k = 0; k < resRots[i][j]; k++) {
+					resMask[i].push_back(true);
+				}
+			} else {
+				for (unsigned int k = 0; k < resRots[i][j]; k++) {
+					resMask[i].push_back(false);
+				}
+			}
+		}
+
+		//Sanity check for presence of true rotamers
+
+		bool trueRots = false;
+		for (unsigned int j = 0; j < resMask[i].size(); j++) {
+			if (resMask[i][j]) {
+				trueRots = true;
+			}
+		}
+		if (!trueRots) {
+			cerr << "ERROR AT POSITION: " << i << endl;
+			cerr << "Current Residue: " << activeResidue << endl;
+			cerr << "resRots at this position: " << endl;
+			for (uint k = 0; k < resRots[i].size(); k++) {
+				cerr << resRots[i][k] << " ";
+			}
+			cerr << endl;
+			cerr << "resMask at this position: " << endl;
+			for (uint k = 0; k < resMask[i].size(); k++) {
+				cerr << resMask[i][k] << " ";
+			}
+			cerr << endl;
+			exit(9123);
+		}
+	}
+	return resMask;
+}
+
+string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum) {
+	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+	// A:{32}ALA ILE GLY GLY GLY
+	// B:{32}ALA ILE GLY GLY GLY
+	string ps = "";
+	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
+		if (it == _seq.begin() || it == _seq.end()-1){
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if (it == _seq.begin()){
+				if(resName == "HIS") {
+					ps = ps + " HSE-ACE";
+				} else {
+					ps = ps + " " + resName + "-ACE";
+				}
+			} else {
+				if(resName == "HIS") {
+					ps = ps + " HSE-CT2";
+				} else {
+					ps = ps + " " + resName + "-CT2";
+				}
+			}
+		} else {
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if(resName == "HIS") {
+				ps = ps + " HSE";
+			} else {
+				ps = ps + " " + resName;
+			}
+		}
+	}
+	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+	return "A" + ps + "\nB" + ps;
 }

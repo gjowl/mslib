@@ -27,12 +27,8 @@
 /***********************************
  *version 2 functions
  ***********************************/
-void prepareSystem(Options &_opt, System &_sys, string _polySeq, System &_helicalAxis,
- AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, CartesianPoint &_xAxis,
- CartesianPoint &_zAxis, Transforms &_trans);
-void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis,
- AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, 
- CartesianPoint &_xAxis, CartesianPoint &_zAxis, Transforms &_trans);
+string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum);
+
 
 /***********************************
  *output file functions

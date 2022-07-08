@@ -7,7 +7,6 @@
  * @Last modified time: 2022/02/22
  */
 
-
 #include <sstream>
 #include <iterator>
 #include <unistd.h>
@@ -60,45 +59,6 @@ void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_de
 /***********************************
  *string output functions
  ***********************************/
-string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum) {
-	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
-	// A:{32}ALA ILE GLY GLY GLY
-	// B:{32}ALA ILE GLY GLY GLY
-	string ps = "";
-	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
-		if (it == _seq.begin() || it == _seq.end()-1){
-			stringstream ss;
-			ss << *it;
-			string resName = MslTools::getThreeLetterCode(ss.str());
-			if (it == _seq.begin()){
-				if(resName == "HIS") {
-					ps = ps + " HSE-ACE";
-				} else {
-					ps = ps + " " + resName + "-ACE";
-				}
-			} else {
-				if(resName == "HIS") {
-					ps = ps + " HSE-CT2";
-				} else {
-					ps = ps + " " + resName + "-CT2";
-				}
-			}
-		} else {
-			stringstream ss;
-			ss << *it;
-			string resName = MslTools::getThreeLetterCode(ss.str());
-			if(resName == "HIS") {
-				ps = ps + " HSE";
-			} else {
-				ps = ps + " " + resName;
-			}
-		}
-	}
-	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
-	return "A" + ps + "\nB" + ps;
-}
-
-
 string convertPolymerSeqToOneLetterSeq(Chain &_chain) {
 	string seq = "";
 	for (uint i=0; i<_chain.positionSize(); i++){
@@ -108,7 +68,6 @@ string convertPolymerSeqToOneLetterSeq(Chain &_chain) {
 	}
 	return seq;
 }
-
 
 string getInterfaceSequence(Options &_opt, string _interface, string _sequence){
 	string interfaceSequence = "";
@@ -828,68 +787,7 @@ double calculateSequenceProbability(map<string,int> &_seqCountMap, map<string,do
 }
 /////
 
-//Code Samson made a while back that should get each active ID and set a mask for anything that isn't active
-std::vector < std::vector < bool > > getActiveMask (System &_sys) {
-	_sys.updateVariablePositions();
-	std::vector <unsigned int> residueState;
-	std::vector < std::vector<unsigned int> > resRots(_sys.getMasterPositions().size());
-	std::vector < std::vector<bool> > resMask(_sys.getMasterPositions().size());
-	//Initialize residue state at the current active identity for each position
-	for (unsigned int i = 0; i < _sys.getMasterPositions().size(); i++) {
-		Position &pos = _sys.getPosition(_sys.getMasterPositions()[i]);
-		unsigned int activeRes = pos.getActiveIdentity();
-		residueState.push_back(activeRes);
 
-		resRots[i] = std::vector<unsigned int> (pos.identitySize());
-		for (unsigned int j = 0; j < pos.identitySize(); j++) {
-			resRots[i][j] = pos.getTotalNumberOfRotamers(j);
-		}
-	}
-
-	for (unsigned int i = 0; i < residueState.size(); i++) {
-		unsigned int activeResidue = residueState[i];
-		if (activeResidue >= resRots[i].size()) {
-			cerr << "ERROR: the current residue number exceeds the number of residues for position " << i << endl;
-			exit(100);
-		}
-		for (unsigned int j = 0; j < resRots[i].size(); j++) {
-			if (j==activeResidue) {
-				for (unsigned int k = 0; k < resRots[i][j]; k++) {
-					resMask[i].push_back(true);
-				}
-			} else {
-				for (unsigned int k = 0; k < resRots[i][j]; k++) {
-					resMask[i].push_back(false);
-				}
-			}
-		}
-
-		//Sanity check for presence of true rotamers
-
-		bool trueRots = false;
-		for (unsigned int j = 0; j < resMask[i].size(); j++) {
-			if (resMask[i][j]) {
-				trueRots = true;
-			}
-		}
-		if (!trueRots) {
-			cerr << "ERROR AT POSITION: " << i << endl;
-			cerr << "Current Residue: " << activeResidue << endl;
-			cerr << "resRots at this position: " << endl;
-			for (uint k = 0; k < resRots[i].size(); k++) {
-				cerr << resRots[i][k] << " ";
-			}
-			cerr << endl;
-			cerr << "resMask at this position: " << endl;
-			for (uint k = 0; k < resMask[i].size(); k++) {
-				cerr << resMask[i][k] << " ";
-			}
-			cerr << endl;
-			exit(9123);
-		}
-	}
-	return resMask;
-}
 /***********************************
  * MonteCarlo Functions
  ***********************************/
@@ -1031,9 +929,6 @@ vector<int> &_rotamerSampling, vector<vector<string>> &_linkedPos, RandomNumberG
 			prevStateVec = currStateVec;
 			_sys.setActiveRotamers(currStateVec);
 
-			//addEnergiesToStateMap(stateMCEnergies, currStateVec, ){
-
-			//}
 			double EnergyBeforeLocalMC = currStateEnergy-(_spm.getStateEnergy(currStateVec, "BASELINE")+_spm.getStateEnergy(currStateVec, "BASELINE_PAIR"));
 			stateMCEnergies["EnergyBeforeLocalMC"] = EnergyBeforeLocalMC;
 			stateMCEnergies["Dimer"] = EnergyBeforeLocalMC;
@@ -1650,3 +1545,4 @@ map<string,map<string,map<uint, double>>> readPairParameters(string _baselineFil
 	pairReader.close();
 	return pairEnergies;
 }
+

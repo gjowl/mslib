@@ -70,8 +70,6 @@ string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum);
 string convertPolymerSeqToOneLetterSeq(Chain &_chain);
 string generateString(string _backbone, int _length);
-
-
 string getInterfaceSequence(Options &_opt, string _interface, string _sequence);
 
 /***********************************
@@ -81,6 +79,7 @@ string getInterfaceSequence(Options &_opt, string _interface, string _sequence);
 vector<int> getLinkedPositions(vector<int> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel);
 //
 vector<vector<string>> convertToLinkedFormat(System &_sys, vector<int> &_interfacialPositions, int _backboneLength);
+
 
 /***********************************
  *stateMC helper functions

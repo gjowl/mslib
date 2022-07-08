@@ -76,6 +76,7 @@ using namespace std;
 
 	//version 2: I think it should work for both versions
 	bool useElec;
+	bool useAlaAtCTerminus;
 	string backboneFile;
 	vector<string> ids;
 	int backboneLength;

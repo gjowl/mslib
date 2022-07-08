@@ -2,6 +2,7 @@
 #include <iterator>
 #include <unistd.h>
 #include "backboneOptimizerFunctions_v2.h"
+#include "SasaCalculator.h"
 #include "functions.h"
 
 using namespace std;
@@ -12,321 +13,45 @@ static SysEnv SYSENV;
 /***********************************
  *version 2 functions
  ***********************************/
-void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis,
- AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, CartesianPoint &_xAxis,
- CartesianPoint &_zAxis, Transforms &_trans) {
-	/******************************************************************************
-	 *         === COPY BACKBONE COORDINATES AND TRANSFORM TO GEOMETRY ===
-	 ******************************************************************************/
-	// initialize the gly69 backbone coordinates and transform it to the chosen geometry
-	_sys.readPdb(_opt.backboneFile);
 
-	// Set up chain A and chain B atom pointer vectors
-	Chain & chainA = _sys.getChain("A");
-	Chain & chainB = _sys.getChain("B");
-	AtomPointerVector & apvChainA = chainA.getAtomPointers();
-	AtomPointerVector & apvChainB = chainB.getAtomPointers();
-
-	// Transform to chosen geometry
-	transformation(apvChainA, apvChainB, _axisA, _axisB, _ori, _xAxis, _zAxis, _opt.zShift, _opt.axialRotation, _opt.crossingAngle, _opt.xShift, _trans);
-	moveZCenterOfCAMassToOrigin(_sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);
-}
-
-void prepareSystem(Options &_opt, System &_sys, string _polySeq, System &_helicalAxis,
- AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, CartesianPoint &_xAxis,
- CartesianPoint &_zAxis, Transforms &_trans){
-	// initialize the gly69 backbone coordinates and transform it to the chosen geometry
-	System startGly69;
-	setGly69ToStartingGeometry(_opt,startGly69,_helicalAxis,_axisA,_axisB,_ori,_xAxis,_zAxis,_trans);
-	
-	// declare system
-	CharmmSystemBuilder CSB(_sys,_opt.topFile,_opt.parFile,_opt.solvFile);
-	if (_opt.useElec == false){
-		CSB.setBuildTerm("CHARMM_ELEC", false);
-	} else {
-		CSB.setBuildTerm("CHARMM_ELEC", true);
-	}
-	CSB.setBuildTerm("CHARMM_ANGL", false);
-	CSB.setBuildTerm("CHARMM_BOND", false);
-	CSB.setBuildTerm("CHARMM_DIHE", false);
-	CSB.setBuildTerm("CHARMM_IMPR", false);
-	CSB.setBuildTerm("CHARMM_U-BR", false);
-
-	// load the membrane as solvent
-	CSB.setSolvent("MEMBRANE");
-	//
-	CSB.setIMM1Params(15, 10);
-	//
-	CSB.setBuildNonBondedInteractions(false);
-
-	// Setup polymer sequence and build the sequence using CharmmSystemBuilder
-	PolymerSequence PL(_polySeq);
-	if(!CSB.buildSystem(PL)) {
-		cerr << "Unable to build system from " << _polySeq << endl;
-		exit(0);
-	}
-
-	// get chain A and B from the _system
-	Chain & chainA = _sys.getChain("A");
-	Chain & chainB = _sys.getChain("B");
-
-	// Set up chain A and chain B atom pointer vectors
-	AtomPointerVector & apvChainA = chainA.getAtomPointers();
-	AtomPointerVector & apvChainB = chainB.getAtomPointers();
-	
-	// assign the coordinates of our system to the given geometry 
-	_sys.assignCoordinates(startGly69.getAtomPointers(),false);
-	_sys.buildAllAtoms();
-
-	// initialize the object for loading rotamers into our _system
-	SystemRotamerLoader sysRot(_sys, _opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
-
-	// Add hydrogen bond term
-	HydrogenBondBuilder hb(_sys, _opt.hbondFile);
-	hb.buildInteractions(50);//when this is here, the HB weight is correct
-
-	/******************************************************************************
-	 *                     === INITIAL VARIABLE SET UP ===
-	 ******************************************************************************/
-	// Initialize EnergySet that contains energies for the chosen terms for our design
-	EnergySet* Eset = _sys.getEnergySet();
-	// Set all terms active, besides Charmm-Elec
-	Eset->setAllTermsInactive();
-	//Eset->setTermActive("CHARMM_ELEC", false);
-	Eset->setTermActive("CHARMM_VDW", true);
-	Eset->setTermActive("SCWRL4_HBOND", true);
-	Eset->setTermActive("CHARMM_IMM1REF", true);
-	Eset->setTermActive("CHARMM_IMM1", true);
-
-	// Set weights
-	Eset->setWeight("CHARMM_VDW", _opt.weight_vdw);
-	Eset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
-	Eset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
-	Eset->setWeight("CHARMM_IMM1", _opt.weight_solv);
-
-	/******************************************************************************
-	 *                === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
-	 ******************************************************************************/
-	// removes all hydrogen bonding near the termini of our helices
-	// (remnant from CATM, but used in the code that was used to get baselines so keeping it to be consistent)
-	int firstPos = 0;
-    int lastPos = _sys.positionSize();
-    deleteTerminalHydrogenBondInteractions(_sys,firstPos,lastPos);
-
-	// Up to here is from readDPBAndCalcEnergy
-	/******************************************************************************
-	 *                === CHECK TO SEE IF ALL ATOMS ARE BUILT ===
-	 ******************************************************************************/
-	// Assign number of rotamers by residue burial
-	loadRotamersBySASABurial(_sys, sysRot, _opt);
-	CSB.updateNonBonded(10,12,50);
-	
-	// as of 2022-7-5: not sure if the above works or needs to be reworked
-	PDBWriter writer1;
-	writer1.open(_opt.outputDir + "/" + _opt.sequence + "_inputGeometry.pdb");
-	writer1.write(_sys.getAtomPointers(), true, false, true);
-	writer1.close();
-
-}
-
-void defineInterfaceAndRotamerSampling(Options &_opt, PolymerSequence _PS, string &_rotamerLevels, string &_polySeq, string &_variablePositionString, string &_rotamerSamplingString, vector<int> &_linkedPositions, vector<uint> &_allInterfacePositions, vector<uint> &_interfacePositions, vector<int> &_rotamerSamplingPerPosition, ofstream &_out, string _axis){
-	// Declare system
-	System sys;
-	CharmmSystemBuilder CSB(sys,_opt.topFile,_opt.parFile);
-	CSB.setBuildTerm("CHARMM_ELEC", false);
-	CSB.setBuildTerm("CHARMM_ANGL", false);
-	CSB.setBuildTerm("CHARMM_BOND", false);
-	CSB.setBuildTerm("CHARMM_DIHE", false);
-	CSB.setBuildTerm("CHARMM_IMPR", false);
-	CSB.setBuildTerm("CHARMM_U-BR", false);
-
-	CSB.setBuildNonBondedInteractions(false);
-	//CSB.setBuildNoTerms();
-
-	if(!CSB.buildSystem(_PS)) {
-		cout << "Unable to build system from " << _PS << endl;
-		exit(0);
-	} else {
-		//fout << "CharmmSystem built for sequence" << endl;
-	}
-
-	/******************************************************************************
-	 *                     === INITIAL VARIABLE SET UP ===
-	 ******************************************************************************/
-	EnergySet* Eset = sys.getEnergySet();
-	// Set all terms active, besides Charmm-Elec
-	Eset->setAllTermsActive();
-	Eset->setTermActive("CHARMM_ELEC", false);
-	Eset->setTermActive("CHARMM_ANGL", false);
-	Eset->setTermActive("CHARMM_BOND", false);
-	Eset->setTermActive("CHARMM_DIHE", false);
-	Eset->setTermActive("CHARMM_IMPR", false);
-	Eset->setTermActive("CHARMM_U-BR", false);
-	Eset->setTermActive("CHARMM_VDW", true);
-	Eset->setTermActive("SCWRL4_HBOND", true);
-
-	// Set weights
-	Eset->setWeight("CHARMM_VDW", 1);
-	Eset->setWeight("SCWRL4_HBOND", 1);
-
-	CSB.updateNonBonded(10,12,50);
-
-	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
-
-	// Add hydrogen bond term
-	HydrogenBondBuilder hb(sys, _opt.hbondFile);
-	hb.buildInteractions(50);//when this is here, the HB weight is correct
-
-	/******************************************************************************
-	 *                     === COPY BACKBONE COORDINATES ===
-	 ******************************************************************************/
-	System pdb;
-	pdb.readPdb(_opt.infile);//gly69 pdb file; changed from the CRD file during testing to fix a bug but both work and the bug was separate
-
-	Chain & chainA = pdb.getChain("A");
-	Chain & chainB = pdb.getChain("B");
-
-	// Set up chain A and chain B atom pointer vectors
-	AtomPointerVector & apvChainA = chainA.getAtomPointers();
-	AtomPointerVector & apvChainB = chainB.getAtomPointers();
-
-	PDBReader readAxis;
-	if(!readAxis.read(_axis)) {
-		cout << "Unable to read axis" << endl;
-		exit(0);
-	}
-
-	System helicalAxis;
-	helicalAxis.addAtoms(readAxis.getAtomPointers());
-
-	AtomPointerVector &axisA = helicalAxis.getChain("A").getAtomPointers();
-	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
-
-	// Reference points for Helices
-	CartesianPoint ori(0.0,0.0,0.0);
-	CartesianPoint zAxis(0.0,0.0,1.0);
-	CartesianPoint xAxis(1.0,0.0,0.0);
-
-	// Objects used for transformations
-	Transforms trans;
-	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
-	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
-
-	// Transformation to zShift, axialRotation, crossingAngle, and short xShift to identify potential interacting positions
-	transformation(apvChainA, apvChainB, axisA, axisB, ori, xAxis, zAxis, _opt.zShift, _opt.axialRotation, _opt.crossingAngle, _opt.xShift, trans);//one of the shortest distances given from my pdb searc
-	moveZCenterOfCAMassToOrigin(pdb.getAtomPointers(), helicalAxis.getAtomPointers(), trans);
-
-	sys.assignCoordinates(pdb.getAtomPointers(),false);
-	sys.buildAllAtoms();
-
-	//TODO: add in a comparison for the monomer at each position here instead
-	string backboneSeq = generateString(_opt.backboneAA, _opt.backboneLength);
-	vector<pair <int, double> > resiBurial = calculateResidueBurial(sys, _opt, backboneSeq);
-	sort(resiBurial.begin(), resiBurial.end(), [](auto &left, auto &right) {
-			return left.second < right.second;
-	});
-
-	//cout << "Determining interfacial residues by residue burial..." << endl;
-	int levelCounter = 0;
-	vector<int> interfacePositions;
-
-	// Output variable Set up
-	backboneSeq = generateBackboneSequence("L", _opt.backboneLength, _opt.useAlaAtCTerminus);
-	string variablePositionString = generateString("0", _opt.backboneLength);
-	string rotamerLevels = generateString("0", _opt.backboneLength);
-
-	int numberOfRotamerLevels = _opt.sasaRepackLevel.size();
-	int highestRotamerLevel = numberOfRotamerLevels-1;
-	//make into a function
-	int numAAs = 0;
-	double lvlavg = 0;
-	vector<double> avgs;
-	//cout << "lvl " << levelCounter << endl;
-	for (uint i = 0; i < resiBurial.size(); i++) {
-		double sasaPercentile = double(i) / double(resiBurial.size());
-		if (sasaPercentile > (levelCounter+1)/double(numberOfRotamerLevels)) {
-			levelCounter++;
-			lvlavg = lvlavg/numAAs;
-			avgs.push_back(lvlavg);
-			lvlavg=0;
-			numAAs=0;
-			//cout << "lvl " << levelCounter << endl;
-		}
-		//cout << resiBurial[i].first << ": " << resiBurial[i].second << endl;
-		lvlavg = lvlavg+resiBurial[i].second;
-		numAAs++;
-		int backbonePosition = resiBurial[i].first;
-		Position &pos = sys.getPosition(backbonePosition);
-		string posRot = _opt.sasaRepackLevel[levelCounter];
-		int resiNum = pos.getResidueNumber();
-		int posNum = resiNum-_opt.thread;
-		string add;
-
-		if (levelCounter < _opt.interfaceLevel){
-			add = "Add all Ids at this pos";
-			interfacePositions.push_back(resiNum);
-			if (backbonePosition > 2 && backbonePosition < _opt.backboneLength-4){//backbone position goes from 0-20, so numbers need to be 3 and 4 here instead of 4 and 5 to prevent changes at the interface like others
-				variablePositionString.replace(variablePositionString.begin()+posNum, variablePositionString.begin()+posNum+1, "1");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
+string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum) {
+	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+	// A:{32}ALA ILE GLY GLY GLY
+	string ps = "";
+	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
+		if (it == _seq.begin() || it == _seq.end()-1){
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if (it == _seq.begin()){
+				if(resName == "HIS") {
+					ps = ps + " HSE-ACE";
+				} else {
+					ps = ps + " " + resName + "-ACE";
+				}
+			} else {
+				if(resName == "HIS") {
+					ps = ps + " HSE-CT2";
+				} else {
+					ps = ps + " " + resName + "-CT2";
+				}
 			}
 		} else {
-			add = "Only 1 ID";
-		}
-		rotamerLevels.replace(rotamerLevels.begin()+posNum, rotamerLevels.begin()+posNum+1, MslTools::intToString(levelCounter));
-	}
-	lvlavg = lvlavg/numAAs;
-	avgs.push_back(lvlavg);
-	string polySeq = generateMultiIDPolymerSequence(backboneSeq, _opt.thread, _opt.Ids, interfacePositions);
-
-	vector<int> rotamerSamplingPerPosition = getRotamerSampling(rotamerLevels);
-	vector<int> linkedPositions = getLinkedPositions(rotamerSamplingPerPosition, _opt.interfaceLevel, highestRotamerLevel);
-
-	//String for the positions of the sequences that are considered interface for positions amd high rotamers
-	string rotamerSamplingString = getInterfaceString(rotamerSamplingPerPosition, _opt.backboneLength);
-
-	// Vector for linked positions in "A,25 B,25" format
-
-
-	// Define referenced output variables
-	_rotamerLevels = rotamerLevels;
-	_polySeq = polySeq;
-	_rotamerSamplingPerPosition = rotamerSamplingPerPosition;
-	_variablePositionString = variablePositionString;
-	_rotamerSamplingString = rotamerSamplingString;
-	_linkedPositions = linkedPositions;
-	_out << endl;
-	_out << "PolyLeu Backbone:   " << backboneSeq << endl;
-	_out << "Variable Positions: " << variablePositionString << endl;
-	_out << "Rotamers Levels:    " << rotamerSamplingString << endl;
-	_interfacePositions = getInterfacePositions(_opt, rotamerSamplingPerPosition);
-	_allInterfacePositions = getAllInterfacePositions(_opt, rotamerSamplingPerPosition);
-
-	//cout << endl << "Averages:\t";
-	//for (uint a=0; a<avgs.size(); a++){
-	//	cout << avgs[a] << "\t";
-	//}
-	//cout << endl;
-
-	//for (uint i=0; i<_interfacePositions.size(); i++){
-	//	cout << _interfacePositions[i] << ",";
-	//}
-	//cout << endl;
-	cout << endl;
-	cout << "PolyLeu Backbone:   " << backboneSeq << endl;
-	cout << "Variable Positions: " << variablePositionString << endl;
-	cout << "Rotamers Levels:    " << rotamerSamplingString << endl;
-
-	int numPosAtInterface = 0;
-	for(string::iterator it = variablePositionString.begin(); it != variablePositionString.end();it++ ) {
-		stringstream ss;
-		ss << *it;
-		string num = ss.str();
-		if (MslTools::toInt(num) == 1){
-			numPosAtInterface++;
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if(resName == "HIS") {
+				ps = ps + " HSE";
+			} else {
+				ps = ps + " " + resName;
+			}
 		}
 	}
+	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+	return "A" + ps;
 }
+
+
 
 /***********************************
  *output file functions
@@ -890,6 +615,8 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 	//version 2
 	opt.allowed.push_back("useElec");
 	opt.allowed.push_back("backboneFile");
+	opt.allowed.push_back("ids");
+	opt.allowed.push_back("useAlaAtCTerminus");
 
 	//Begin Parsing through the options
 	OptionParser OP;
@@ -1207,6 +934,12 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 	if (OP.fail()) {
 		opt.errorMessages += "Unable to identify alternate AA identities, make sure they are space separated\n";
 		opt.errorFlag = true;
+	}
+	opt.useAlaAtCTerminus = OP.getBool("useAlaAtCTerminus");
+	if (OP.fail()) {
+		opt.warningMessages += "useAlaAtCTerminus not specified using true\n";
+		opt.warningFlag = true;
+		opt.useAlaAtCTerminus = true;
 	}
 	return opt;
 }

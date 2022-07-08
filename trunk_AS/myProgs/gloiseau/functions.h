@@ -34,19 +34,20 @@ void backboneMovement(AtomPointerVector & _chainA, AtomPointerVector & _chainB, 
 map<string,double> getEnergyByTerm(EnergySet* _eSet);
 map<string,double> getEnergyByTermDoubled(EnergySet* _eSet);
 void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
+
 //functions from seqDesign
 string generateMonomerPolymerSequenceFromSequence(string _sequence, int _startResNum);
 string generatePolymerSequence(string _backboneAA, int _backboneLength, int _startResNum);
 string getAlternateIdString(vector<string> _alternateIds);
-vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
-vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
 string getInterfaceString(vector<int> _interface, int _seqLength);
 vector<int> getLinkedPositions(vector<int> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel);
 vector<int> getRotamerSampling(string _rotamerLevels);
 string generateBackboneSequence(string _backboneAA, int _length, bool _useAlaCap) ;
-std::vector<pair <int, double> > calculateResidueBurial (System &_sys) ;
-std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &_opt, string _seq) ;
 string generateString(string _backbone, int _length) ;
+string generateMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions);
+std::vector < std::vector < bool > > getActiveMask (System &_sys);
+string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
+
 // runs a greedy to quickly repack sidechains
 void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
 
