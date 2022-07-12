@@ -25,6 +25,7 @@
 #include "CRDWriter.h"
 #include "SysEnv.h"
 #include "catmOptions.h"
+#include "functions.h"
 
 //In no particular order at this point
 void printOptions(Options & _op, ofstream & _fout);
@@ -48,9 +49,5 @@ void clusterSolutions(vector<HelixDimerCluster*>& clusters,vector<HelixDimer*>& 
 vector<vector<vector<vector<bool> > > > createSavedEnergyFlagTable(System & _sys);
 double computeMonomerEnergy(System & _sys, Transforms & _trans, Options& _opt, System & _helicalAxis, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _fout, int _greedyCycles, int _MCCycles, int _MCMaxRejects);
 void setupOutputDirectory(Options &_opt, string &_logFile);
-
-void CATMUsage();
-void CATMHelp(Options defaults);
-Options CATMParseOptions(int _argc, char * _argv[], Options defaults);
 
 # endif

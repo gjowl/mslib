@@ -3003,7 +3003,6 @@ Options parseOptions(int _argc, char * _argv[], Options defaults) {
 		opt.weight_hbond = 1.0;
 	}
 
-
 	// return the Options structure
 
 	return opt;

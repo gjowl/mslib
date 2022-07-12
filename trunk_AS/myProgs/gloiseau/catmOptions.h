@@ -1,5 +1,5 @@
-#ifndef OPTIONS_H
-#define OPTIONS_H
+#ifndef CATMOPTIONS_H
+#define CATMOPTIONS_H
 
 #include <iostream>
 #include <fstream>

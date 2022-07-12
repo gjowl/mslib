@@ -41,7 +41,7 @@ using namespace std;
 
 	// load rotamers from SASA values (from sgfc)
 	bool keepOriginalRotamer;
-	std::vector<string> sasaRepackLevel;
+	vector<string> sasaRepackLevel;
 
 	// Monte Carlo Parameters
 	int MCCycles;
@@ -105,9 +105,6 @@ using namespace std;
 
 	string configfile;
 	bool useIMM1;
-
-
-
 };
 
 # endif

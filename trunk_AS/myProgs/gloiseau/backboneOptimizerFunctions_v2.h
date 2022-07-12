@@ -23,12 +23,15 @@
 #include "SysEnv.h"
 #include "ResidueSelection.h"
 #include "backboneOptimizerOptions.h"
+#include "SasaCalculator.h"
+
+using namespace std;
+using namespace MSL;
 
 /***********************************
  *version 2 functions
  ***********************************/
 string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum);
-
 
 /***********************************
  *output file functions
@@ -63,7 +66,6 @@ void backboneOptimizerHelp(Options defaults);
 void backboneOptimizerOutputErrorMessage(Options &_opt);
 
 // parse config file for given options
-Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options defaults);
-
+Options optimizerParseOptions(int _argc, char * _argv[], Options defaults);
 
 # endif

@@ -122,29 +122,10 @@ void computeMonomerEnergyNoIMM1(Options& _opt, map<string,map<string,double>> &_
 // helper function for computeMonomerEnergies: calculates energy for monomer with solvation energy
 void computeMonomerEnergyIMM1(Options& _opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
 
-
-/***********************************
- *other helper functions
- ***********************************/
-
-
-// other functions
-
-// helper function to ensure that all atoms are assigned coordinates (was having problems with this in the past and so I kept it in for troubleshooting)
 void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
 
 
 vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
 vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
-
-/***********************************
- *help functions
- ***********************************/
-void usage();
-void help(Options defaults);
-void outputErrorMessage(Options &_opt);
-
-// parse config file for given options
-Options parseOptions(int _argc, char * _argv[], Options defaults);
 
 #endif

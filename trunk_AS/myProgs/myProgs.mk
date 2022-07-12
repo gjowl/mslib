@@ -37,7 +37,7 @@
 #   make bin/prog2
 
 MYSOURCE  = 
-MYPROGS   = seqDesign pizza00 rotateDihedral rotateDihedral2 rotateDihedral3  testEnergyCalculation2 greedySPM_new predictDisulfideDimer localDimerSearch CATM_v24 CATM_v24_yudong EnergyTest Energiiies CSBPlayground 
+MYPROGS   = seqDesign CATM_v24.5 pizza00 rotateDihedral rotateDihedral2 rotateDihedral3  testEnergyCalculation2 greedySPM_new predictDisulfideDimer localDimerSearch CATM_v24 CATM_v24_yudong EnergyTest Energiiies CSBPlayground 
 MYHEADERS = 
 
 name = gloiseau
