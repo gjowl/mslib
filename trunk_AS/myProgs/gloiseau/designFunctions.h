@@ -128,4 +128,7 @@ void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
 vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
 vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
 
+// parse config file for given options
+Options parseOptions(int _argc, char * _argv[], Options defaults);
+
 #endif

@@ -37,8 +37,8 @@ string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum
  *output file functions
  ***********************************/
 // function to setup the output directory
-void setupOutputDirectory(Options &_opt);
-void setupOutputDirectoryChtc(Options &_opt);
+void setupOutputDirectory(BBOptions &_opt);
+void setupOutputDirectoryChtc(BBOptions &_opt);
 
 //
 void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum);
@@ -46,7 +46,7 @@ void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int
 /***********************************
  *functions from geomRepack
  ***********************************/
-void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt);
+void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOptions &_opt);
 
 /***********************************
  *repack functions
@@ -56,16 +56,12 @@ void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
 /***********************************
  *monomer functions
  ***********************************/
-double computeMonomerEnergy(System & _sys, Options& _opt, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _fout);
+double computeMonomerEnergy(System & _sys, BBOptions &_opt, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _fout);
 
 /***********************************
- *help functions
+ *option parser
  ***********************************/
-void backboneOptimizerUsage();
-void backboneOptimizerHelp(Options defaults);
-void backboneOptimizerOutputErrorMessage(Options &_opt);
-
 // parse config file for given options
-Options optimizerParseOptions(int _argc, char * _argv[], Options defaults);
+BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults);
 
 # endif

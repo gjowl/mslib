@@ -9,7 +9,7 @@ using namespace MSL;
 
 static SysEnv ENV;
 
-void printOptions(Options & _op, ofstream & _fout) {
+void printOptions(catmOptions & _op, ofstream & _fout) {
 	//TODO: when reorganizing I had to get rid of the below: can I put that info into a file that all of my code for this program inherits from?
 	//_fout << "Program " << programName << " v." << programVersion << ", " << programDate << ", (MSL v." << mslVersion << " " << mslDate << ")" << endl;
 
@@ -164,7 +164,7 @@ void reThreadResidues(vector<Position*> & positions, int offset) {
 	}
 }
 
-bool hydrogenBondCheck(System & _sys, Options &_opt, vector<string> _parsedGeoInformation, double & _xShiftStart) {
+bool hydrogenBondCheck(System & _sys, catmOptions &_opt, vector<string> _parsedGeoInformation, double & _xShiftStart) {
 
 	vector<HbondInfo*> hbondList;
 	for(unsigned k = 5; k < _parsedGeoInformation.size(); k+=5 ) {
@@ -296,7 +296,7 @@ void addStructureToTopMCRepackList(vector<vector<double> > & _topMCRepackVector,
 
 }
 
-void deleteTerminalBondInteractions(System &_sys, Options& _opt) {
+void deleteTerminalBondInteractions(System &_sys, catmOptions &_opt) {
 	// look at all hbond interactions and remove those
 	// remove any interaction that has a donor or acceptor from residues 1 2 3 and n-2 n-1 n on each chain that are not part of the TM
 
@@ -389,7 +389,7 @@ void readGeometryFile(string _filename, vector<string>& _fileVec) {
 }
 
 
-void clusterSolutions(vector<HelixDimerCluster*>& clusters,vector<HelixDimer*>& _structures, double _rmsdCutoff, string _origSeq, string _builtSeq, Options& opt) {
+void clusterSolutions(vector<HelixDimerCluster*>& clusters,vector<HelixDimer*>& _structures, double _rmsdCutoff, string _origSeq, string _builtSeq, catmOptions &_opt) {
 	for(int i  = 0; i < _structures.size(); i++) {
 		bool diff = true;
 		AtomPointerVector& a1 = _structures[i]->getAtomPointers();
@@ -410,7 +410,7 @@ void clusterSolutions(vector<HelixDimerCluster*>& clusters,vector<HelixDimer*>& 
 		}
 		if(diff) {
 			clusters.push_back(new HelixDimerCluster(_structures[i]));
-			clusters.back()->setDetails(_origSeq, _builtSeq, opt.uniprotName,opt.uniprotAccession,opt.pdbOutputDir,opt.startResNum,opt.endResNum,opt.tmStart,opt.tmEnd);
+			clusters.back()->setDetails(_origSeq, _builtSeq, _opt.uniprotName,_opt.uniprotAccession,_opt.pdbOutputDir,_opt.startResNum,_opt.endResNum,_opt.tmStart,_opt.tmEnd);
 		}
 	}
 
@@ -453,7 +453,7 @@ vector<vector<vector<vector<bool> > > > createSavedEnergyFlagTable(System & _sys
 	return savedEnergyFlagTable;
 }
 
-double computeMonomerEnergy(System & _sys, Transforms & _trans, Options& _opt, System & _helicalAxis, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _fout, int _greedyCycles, int _MCCycles, int _MCMaxRejects) {
+double computeMonomerEnergy(System & _sys, Transforms & _trans, catmOptions & _opt, System & _helicalAxis, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _fout, int _greedyCycles, int _MCCycles, int _MCMaxRejects) {
 
 	time_t startTimeMono, endTimeMono;
 	double diffTimeMono;
@@ -776,7 +776,7 @@ double computeMonomerEnergy(System & _sys, Transforms & _trans, Options& _opt, S
 
 }
 
-void setupOutputDirectory(Options &_opt, string &_logFile){
+void setupOutputDirectory(catmOptions &_opt, string &_logFile){
 	string cmd = "mkdir -p " + _opt.pdbOutputDir;
 	_logFile = _opt.pdbOutputDir + "/" + _opt.uniprotAccession + ".log";
 	if (system(cmd.c_str())){

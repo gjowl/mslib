@@ -35,7 +35,7 @@ using namespace std;
  *
  ******************************************/
 
-struct Options {
+struct catmOptions {
 	// Required
 	string fullSequence;
 

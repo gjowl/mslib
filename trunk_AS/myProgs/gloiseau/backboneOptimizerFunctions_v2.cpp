@@ -53,7 +53,7 @@ string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum
  *output file functions
  ***********************************/
 // for running on chtc
-void setupOutputDirectoryChtc(Options &_opt){
+void setupOutputDirectoryChtc(BBOptions &_opt){
 	_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.sequence;
 	string cmd = "mkdir -p " + _opt.outputDir;
 	if (system(cmd.c_str())){
@@ -62,7 +62,7 @@ void setupOutputDirectoryChtc(Options &_opt){
 	}
 }
 
-void setupOutputDirectory(Options &_opt){
+void setupOutputDirectory(BBOptions &_opt){
 	_opt.outputDir = _opt.outputDir + "/" + _opt.sequence;
 	string cmd = "mkdir -p " + _opt.outputDir;
 	if (system(cmd.c_str())){
@@ -93,7 +93,7 @@ void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int
 /***********************************
  *functions from geomRepack
  ***********************************/
-void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt){
+void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOptions &_opt){
 	//Repack side chains based on sasa scores
 	for (uint i = 0; i < _opt.rotamerSamplingVector.size()/2; i++) {
 		Position &posA = _sys.getPosition(i);
@@ -129,7 +129,7 @@ void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Option
 /***********************************
  *repack functions
  ***********************************/
-double computeMonomerEnergy(System & _sys, Options& _opt, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _mout){
+double computeMonomerEnergy(System & _sys, BBOptions & _opt, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _mout){
 
 	time_t startTimeMono, endTimeMono;
 	double diffTimeMono;
@@ -471,4 +471,408 @@ END";
 	double finalEnergy = 2.0 * monoSpm.getMinBound()[0]; // double the energy for 2 helices
 	return finalEnergy;
 
+}
+
+/****************************************
+ *
+ *  ======= CONFIG FILE OPTIONS =======
+ *
+ ****************************************/
+BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
+
+	/******************************************
+	 *  Pass the array of argument and the name of
+	 *  a configuration file to the ArgumentParser
+	 *  object.  Then ask for the value of the argument
+	 *  and collect error and warnings.
+	 *
+	 *  This function returns a BBOptions structure
+	 *  defined at the head of this file
+	 ******************************************/
+	BBOptions opt;
+
+	/******************************************
+	 *  Set the allowed and required options:
+	 *
+	 *  Example of configuration file:
+	 *
+	 *  /exports/home/gloiseau/mslib/trunk_AS/config/seqDesign.config
+	 *
+	 ******************************************/
+
+	vector<string> required;
+	vector<string> allowed;
+
+	//optional
+	//Weights
+	opt.allowed.push_back("weight_vdw");
+	opt.allowed.push_back("weight_hbond");
+	opt.allowed.push_back("weight_solv");
+	opt.allowed.push_back("verbose");
+
+	//Input Files
+	opt.allowed.push_back("topFile");
+	opt.allowed.push_back("parFile");
+	opt.allowed.push_back("solvFile");
+	opt.allowed.push_back("rotLibFile");
+	opt.allowed.push_back("hbondFile");
+	opt.allowed.push_back("outputDir");
+	opt.allowed.push_back("pdbName");
+	opt.allowed.push_back("configfile");
+
+	//
+	opt.allowed.push_back("sequence");
+	opt.allowed.push_back("rotamerSamplingString");
+	opt.allowed.push_back("rotamerSamplingVector");
+	opt.allowed.push_back("sasaRepackLevel");
+	opt.allowed.push_back("seed");
+
+	//Geometry
+	opt.allowed.push_back("xShift");
+	opt.allowed.push_back("crossingAngle");
+	opt.allowed.push_back("axialRotation");
+	opt.allowed.push_back("zShift");
+	opt.allowed.push_back("thread");
+	opt.allowed.push_back("greedyCycles");
+	
+	//Shift Size
+	opt.allowed.push_back("deltaX");
+	opt.allowed.push_back("deltaCross");
+	opt.allowed.push_back("deltaAx");
+	opt.allowed.push_back("deltaZ");
+	
+	//Monte Carlo variables
+	opt.allowed.push_back("MCCycles");
+	opt.allowed.push_back("MCMaxRejects");
+	opt.allowed.push_back("MCStartTemp");
+	opt.allowed.push_back("MCEndTemp");
+	opt.allowed.push_back("MCCurve");
+
+	opt.allowed.push_back("negAngle");
+	opt.allowed.push_back("negRot");
+
+	//version 2
+	opt.allowed.push_back("useElec");
+	opt.allowed.push_back("backboneFile");
+	opt.allowed.push_back("ids");
+	opt.allowed.push_back("useAlaAtCTerminus");
+
+	//Begin Parsing through the options
+	OptionParser OP;
+	OP.readArgv(_argc, _argv);
+	OP.setDefaultArguments(opt.defaultArgs);
+	OP.setRequired(opt.required);
+	OP.setAllowed(opt.allowed);
+	OP.autoExtendOptions();
+
+	opt.errorFlag = false;
+	opt.warningFlag = false;
+
+	opt.errorMessages = "";
+	opt.warningMessages = "";
+
+	if (OP.countOptions() == 0){
+		opt.errorMessages += "No options given!\n";
+		return opt;
+	}
+
+	/*****************************************
+	 *  CHECK THE GIVEN OPTIONS
+	 *****************************************/
+	if (!OP.checkOptions()) {
+		opt.errorFlag = true;
+		opt.OPerrors = OP.getErrors();
+		return opt;
+	}
+	
+	/*****************************************
+	 *  CHECK THE GIVEN OPTIONS
+	 *****************************************/
+	opt.configfile = OP.getString("configfile");
+	if (opt.configfile != "") {
+		OP.readFile(opt.configfile);
+		if (OP.fail()) {
+			opt.errorFlag = true;
+			opt.errorMessages += "Cannot read configuration file " + opt.configfile + "\n";
+		}
+	}
+
+	opt.verbose = OP.getBool("verbose");
+	if (OP.fail()) {
+		opt.warningMessages += "verbose not specified using false\n";
+		opt.warningFlag = true;
+		opt.verbose = false;
+	}
+	opt.negAngle = OP.getBool("negAngle");
+	if (OP.fail()) {
+		opt.warningMessages += "negAngle not specified using false\n";
+		opt.warningFlag = true;
+		opt.negAngle = false;
+	}
+	opt.negRot = OP.getBool("negRot");
+	if (OP.fail()) {
+		opt.warningMessages += "negRot not specified using false\n";
+		opt.warningFlag = true;
+		opt.negAngle = false;
+	}
+
+	// tm parameters
+	opt.sequence = OP.getString("sequence");
+	if(OP.fail()) {
+		opt.errorMessages += "sequence not specified using L\n";
+		opt.errorFlag = true;
+	}
+
+	// Geometry
+	opt.xShift = OP.getDouble("xShift");
+	if (OP.fail()) {
+		opt.warningMessages += "xShift not specified, defaulting to 9.2\n";
+		opt.warningFlag = true;
+		opt.xShift = 9.2;
+	}
+	opt.crossingAngle = OP.getDouble("crossingAngle");
+	if (OP.fail()) {
+		opt.warningMessages += "crossingAngle not specified, defaulting to 25\n";
+		opt.warningFlag = true;
+		opt.crossingAngle = 25;
+	}
+	if (opt.negAngle == true){
+		opt.crossingAngle = -opt.crossingAngle;
+	}
+	opt.axialRotation = OP.getDouble("axialRotation");
+	if (OP.fail()) {
+		opt.warningMessages += "axialRotation not specified, defaulting to 40\n";
+		opt.warningFlag = true;
+		opt.axialRotation = 40;
+	}
+	if (opt.negRot == true){
+		opt.axialRotation = -opt.axialRotation;
+	}
+	opt.zShift = OP.getDouble("zShift");
+	if (OP.fail()) {
+		opt.warningMessages += "zShift not specified, defaulting to 2\n";
+		opt.warningFlag = true;
+		opt.zShift = 2;
+	}
+	opt.thread = OP.getInt("thread");
+	if (OP.fail()) {
+		opt.warningMessages += "thread not specified, defaulting to 25\n";
+		opt.warningFlag = true;
+		opt.thread = 25;
+	}
+	//TODO: maybe not in this code, but I feel like changing the thread of a sequence to see how it interacts at different threads could be helpful?
+
+	//Monte Carlo variables
+	opt.MCCycles = OP.getInt("MCCycles");
+	if (OP.fail()) {
+		opt.warningMessages += "Number of MC cycles not specified, default to 100\n";
+		opt.warningFlag = true;
+		opt.MCCycles = 100;
+	}
+
+	opt.MCMaxRejects = OP.getInt("MCMaxRejects");
+	if (OP.fail()) {
+		opt.warningMessages += "Number of MC max rejects not specified, default to using 5\n";
+		opt.warningFlag = true;
+		opt.MCMaxRejects = 5;
+	}
+
+	opt.MCStartTemp = OP.getDouble("MCStartTemp");
+	if (OP.fail()) {
+		opt.warningMessages += "MCStartTemp not specified using 1000.0\n";
+		opt.warningFlag = true;
+		opt.MCStartTemp = 1000.0;
+	}
+	opt.MCEndTemp = OP.getDouble("MCEndTemp");
+	if (OP.fail()) {
+		opt.warningMessages += "MCEndTemp not specified using 0.5\n";
+		opt.warningFlag = true;
+		opt.MCEndTemp = 0.5;
+	}
+	opt.MCCurve = OP.getInt("MCCurve");
+	if (OP.fail()) {
+		opt.warningMessages += "MCCurve not specified using SIGMOID(3)\n";
+		opt.warningFlag = true;
+		opt.MCCurve = 3;
+	}
+	
+	//Load Rotamers using SASA values (from sgfc)
+	opt.sasaRepackLevel = OP.getMultiString("sasaRepackLevel");
+	if (OP.fail()) {
+		opt.warningMessages += "sasaRepacklevel not specified! Default to one level at SL90.00";
+		opt.sasaRepackLevel.push_back("SL90.00");
+	}
+    //Weights
+	opt.weight_vdw = OP.getDouble("weight_vdw");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_vdw not specified, default 1.0\n";
+		opt.weight_vdw = 1.0;
+	}
+	opt.weight_hbond = OP.getDouble("weight_hbond");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_hbond not specified, default 1.0\n";
+		opt.weight_hbond = 1.0;
+	}
+	opt.weight_solv = OP.getDouble("weight_solv");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_solv not specified, default 1.0\n";
+		opt.weight_solv = 1.0;
+	}
+
+	//Shift Size
+	opt.deltaX = OP.getDouble("deltaX");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaX not specified using 0.5\n";
+		opt.warningFlag = true;
+		opt.deltaX = 0.5;
+	}
+	opt.deltaCross = OP.getDouble("deltaCross");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaCross not specified using 5.0\n";
+		opt.warningFlag = true;
+		opt.deltaCross = 5.0;
+	}
+	opt.deltaAx = OP.getDouble("deltaAx");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaAx not specified using 4.0\n";
+		opt.warningFlag = true;
+		opt.deltaAx = 4.0;
+	}
+	opt.deltaZ = OP.getDouble("deltaZ");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaZ not specified using 0.5\n";
+		opt.warningFlag = true;
+		opt.deltaZ = 0.5;
+	}
+    //Parameter files
+	opt.topFile = OP.getString("topFile");
+	if (OP.fail()) {
+		string envVar = "MSL_CHARMM_TOP";
+		if(SYSENV.isDefined(envVar)) {
+			opt.topFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "topFile not specified using " + opt.topFile + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine topFile - " + envVar + " - not set\n"	;
+			opt.errorFlag = true;
+		}
+	}
+
+	opt.parFile = OP.getString("parFile");
+	if (OP.fail()) {
+		string envVar = "MSL_CHARMM_PAR";
+		if(SYSENV.isDefined(envVar)) {
+			opt.parFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "parFile not specified using " + opt.parFile + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine parFile - " + envVar + " - not set\n"	;
+			opt.errorFlag = true;
+		}
+	}
+
+	opt.solvFile = OP.getString("solvFile");
+	if (OP.fail()) {
+		string envVar = "MSL_CHARMM_SOLV";
+		if(SYSENV.isDefined(envVar)) {
+			opt.solvFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "solvFile not specified using " + opt.solvFile + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine solvFile - " + envVar + " - not set\n";
+			opt.errorFlag = true;
+		}
+	}
+	opt.rotLibFile = OP.getString("rotLibFile");
+	if (OP.fail()) {
+		string envVar = "MSL_ROTLIB";
+		if(SYSENV.isDefined(envVar)) {
+			opt.rotLibFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "rotLibFile not specified using " + opt.rotLibFile + ", defaulting to " + SYSENV.getEnv(envVar) + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine rotLibFile - " + envVar + " - not set\n";
+			opt.errorFlag = true;
+		}
+	}
+
+	opt.hbondFile = OP.getString("hbondFile");
+	if (OP.fail()) {
+		string envVar = "MSL_HBOND_CA_PAR";
+		if(SYSENV.isDefined(envVar)) {
+			opt.hbondFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "hbondFile not specified using " + opt.hbondFile + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine hbondFile - MSL_HBOND_CA_PAR - not set\n"	;
+			opt.errorFlag = true;
+		}
+	}
+
+	opt.outputDir = OP.getString("outputDir");
+	if (OP.fail()) {
+		opt.errorMessages += "Unable to determine outputDir";
+		opt.errorFlag = true;
+	}
+
+	// Monomer Options
+	opt.seed = OP.getInt("seed");
+	if (OP.fail()) {
+		opt.warningMessages += "seed not specified using 1\n";
+		opt.warningFlag = true;
+		opt.seed = 1;
+	}
+	opt.greedyCycles = OP.getInt("greedyCycles");
+	if (OP.fail()) {
+		opt.warningMessages += "greedyCycles not specified using 1\n";
+		opt.warningFlag = true;
+		opt.greedyCycles = 10;
+	}
+	opt.MCCycles = OP.getInt("MCCycles");
+	if (OP.fail()) {
+		opt.warningMessages += "MCCycles not specified using 10\n";
+		opt.warningFlag = true;
+		opt.MCCycles = 10;
+	}
+	opt.MCMaxRejects = OP.getInt("MCMaxRejects");
+	if (OP.fail()) {
+		opt.warningMessages += "MCMaxRejects not specified using 2\n";
+		opt.warningFlag = true;
+		opt.MCMaxRejects = 10;
+	}
+
+	// version 2 options
+	opt.useElec = OP.getBool("useElec");
+	if (OP.fail()) {
+		opt.warningMessages += "useElec not specified using true\n";
+		opt.warningFlag = true;
+		opt.useElec = true;
+	}
+	opt.backboneFile = OP.getString("backboneFile");
+	if (OP.fail()) {
+		opt.errorMessages += "backboneFile not specified\n";
+		opt.errorFlag = true;
+	}
+	opt.ids = OP.getStringVector("ids");
+	if (OP.fail()) {
+		opt.errorMessages += "Unable to identify alternate AA identities, make sure they are space separated\n";
+		opt.errorFlag = true;
+	}
+	opt.useAlaAtCTerminus = OP.getBool("useAlaAtCTerminus");
+	if (OP.fail()) {
+		opt.warningMessages += "useAlaAtCTerminus not specified using true\n";
+		opt.warningFlag = true;
+		opt.useAlaAtCTerminus = true;
+	}
+	opt.backboneLength = OP.getInt("backboneLength");
+	if (OP.fail()) {
+		opt.warningMessages += "backboneLength not specified using 21\n";
+		opt.warningFlag = true;
+		opt.backboneLength = 21;
+	}
+	opt.rerunConf = OP.getConfFile();
+	return opt;
 }

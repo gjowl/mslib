@@ -43,20 +43,35 @@ string mslDate = MSLDATE;
 time_t startTime, endTime, spmStart, spmEnd;
 double diffTime, spmTime;
 
-// Options Functions
-void prepareSystem(Options &_opt, System &_sys, string _polySeq, System &_helicalAxis,
+// BBOptions Functions
+void prepareSystem(BBOptions &_opt, System &_sys, string &_polySeq, System &_helicalAxis,
  AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, CartesianPoint &_xAxis,
  CartesianPoint &_zAxis, Transforms &_trans);
-void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis,
+void setGly69ToStartingGeometry(BBOptions &_opt, System &_sys, System &_helicalAxis,
  AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, 
  CartesianPoint &_xAxis, CartesianPoint &_zAxis, Transforms &_trans);
-void defineInterfaceAndRotamerSampling(Options &_opt, PolymerSequence _PS, string &_rotamerLevels,
+void defineInterfaceAndRotamerSampling(BBOptions &_opt, PolymerSequence _PS, string &_rotamerLevels,
  string &_polySeq, string &_variablePositionString, string &_rotamerSamplingString, vector<int> &_linkedPositions, 
  vector<uint> &_allInterfacePositions, vector<uint> &_interfacePositions, vector<int> &_rotamerSamplingPerPosition, ofstream &_out, string _axis);
 std::vector<pair <int, double> > calculateResidueBurial (System &_sys);
-std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &_opt, string _seq);
-vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
-vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
+std::vector<pair <int, double> > calculateResidueBurial (System &_sys, BBOptions &_opt, string _seq);
+vector<uint> getAllInterfacePositions(BBOptions &_opt, vector<int> &_rotamerSamplingPerPosition);
+vector<uint> getInterfacePositions(BBOptions &_opt, vector<int> &_rotamerSamplingPerPosition);
+void localXShiftDocking(System &_sys, BBOptions &_opt, double _bestEnergy, double _monomerEnergy, 
+ SelfPairManager &_spm, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB,
+ AtomPointerVector &_apvChainA, AtomPointerVector &_apvChainB, Transforms &_trans, double &_savedXShift);
+void backboneGeometryRepack(BBOptions &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, 
+ System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
+ AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _prevBestEnergy,
+ double _monomerEnergy, ofstream &_out);
+
+/***********************************
+ *help functions
+ ***********************************/
+void usage();
+void help(BBOptions defaults);
+void outputErrorMessage(BBOptions &_opt);
+void outputWarningMessage(BBOptions &_opt);
 
 int main(int argc, char *argv[]){
 	
@@ -72,19 +87,21 @@ int main(int argc, char *argv[]){
 	strftime(buffer,sizeof(buffer),"%m_%d_%Y",timeinfo);
 
 	string date(buffer);
-	
-    /******************************************************************************
+    
+	/******************************************************************************
 	 *                 === PARSE THE COMMAND LINE OPTIONS ===
 	 ******************************************************************************/
-	Options defaults;
+	BBOptions defaults;
 	//Add in some default options that can easily be changed here
-cout << 1 << endl;
-	Options opt = parseOptions(argc, argv, defaults);
-cout << 2 << endl;
+	BBOptions opt = BBParseOptions(argc, argv, defaults);
 	
 	if (opt.errorFlag) {
-		backboneOptimizerOutputErrorMessage(opt);
+		outputErrorMessage(opt);
 		exit(1);
+	} else if (!opt.errorFlag && !opt.warningFlag && opt.errorMessages != ""){
+		outputErrorMessage(opt);
+		usage();
+		exit(0);
 	}
 
 	/******************************************************************************
@@ -118,7 +135,7 @@ cout << 2 << endl;
 	rerun << opt.rerunConf << endl;
 	// close the rerun config file
 	rerun.close();
-
+	
 	/******************************************************************************
 	 *                     === HELICAL AXIS SET UP ===
 	 ******************************************************************************/
@@ -259,79 +276,25 @@ END";
 	 ******************************************************************************/
 	double xTranslate = 7;
 	double bestEnergy = currentEnergy-monomerEnergy;
-	double xShift = opt.xShift+xTranslate/2;
-	double savedXShift = xShift;
-	double previousEnergy = monomerEnergy;
-	double deltaXShift = -0.1;
-	double xShiftEnd = 6.5;
+	//double xShift = opt.xShift+xTranslate/2;
+	double savedXShift = opt.xShift;
 
-	// Global lowest energy found (if above monomer we won't save anyways)
-	double globalLowestE = monomerEnergy;
-
-	// while loop for x-shifts	
-	while (xShift >= xShiftEnd) {
-
-		// add the xShift change to the current xShift
-		xShift += deltaXShift;
-
-		// Move the helix
-		backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, deltaXShift, 3 );
-
-		// Run Optimization
-		repackSideChains(spm, opt.greedyCycles);
-
-		vector<unsigned int> MCOFinal;
-		MCOFinal = spm.getMinStates()[0];
-		sys.setActiveRotamers(MCOFinal);
-
-		currentEnergy = spm.getMinBound()[0];
-
-		// Check if this is the lowest energy found so far
-		if (currentEnergy < bestEnergy) {
-			bestEnergy = currentEnergy;
-			savedXShift = xShift;
-			sys.saveAltCoor("savedBestState");
-			helicalAxis.saveAltCoor("BestAxis");
-		}
-		cout << "xShift: " << xShift << " energy: " << currentEnergy-monomerEnergy << endl;
-
-		// If energy increase twice in a row, and it is above the global lowest energy, quit
-		if (currentEnergy < globalLowestE) {
-			globalLowestE = currentEnergy;
-		}
-		if (currentEnergy > (globalLowestE+10.0) && previousEnergy > (globalLowestE+10.0) && currentEnergy > previousEnergy) {
-			cout << "Energy increasing above global lowest energy... (currently " << globalLowestE-monomerEnergy << ")" << endl;
-			break;
-		} else {
-			previousEnergy = currentEnergy;
-		}
-	}
-	cout << "Best Energy at x shift: " << bestEnergy-monomerEnergy << " at " << savedXShift << endl;
-	sys.saveAltCoor("savedBestState");
-	helicalAxis.saveAltCoor("BestAxis");
-	PDBWriter writer1;
-	writer1.open(opt.outputDir + "/" + opt.sequence + "_xShifted.pdb");
-	writer1.write(sys.getAtomPointers(), true, false, true);
-	writer1.close();
+	// xShift repack to get close to best xShift
+	localXShiftDocking(sys, opt, bestEnergy, monomerEnergy, spm, helicalAxis, axisA, axisB, apvChainA, apvChainB, trans, savedXShift);
 
 	/******************************************************************************
 	 *               === LOCAL BACKBONE MONTE CARLO REPACKS ===
 	 ******************************************************************************/
 	cout << "Starting Geometry" << endl;
-	cout << setiosflags(ios::fixed) << setprecision(3) << "xShift: " << xShift << " crossingAngle: " << opt.crossingAngle << " axialRotation: " << opt.axialRotation << " zShift: " << opt.zShift << endl << endl;
+	cout << setiosflags(ios::fixed) << setprecision(3) << "xShift: " << savedXShift << " crossingAngle: " << opt.crossingAngle << " axialRotation: " << opt.axialRotation << " zShift: " << opt.zShift << endl << endl;
 	cout << "Current Best Energy: " << bestEnergy-monomerEnergy << endl;
 	cout << "Interaction Energies: " << endl;
 	cout << spm.getSummary(startStateVec) << endl;
 
-	// Local Backbone Monte Carlo Repacks Time setup	
-	time_t startTimeMC, endTimeMC;
-	double diffTimeMC;
-	time(&startTimeMC);
-		
 	double bestRepackEnergy;
 	vector<uint> bestRepackState;
 
-	double bestXShift = xShift;
+	double bestXShift = savedXShift;
 	double bestAxialRotation = opt.axialRotation;
 	double bestZShift = opt.zShift;
 	double bestCrossingAngle = opt.crossingAngle;
@@ -339,125 +302,14 @@ END";
 	double prevBestEnergy = startDimer;
 	sys.applySavedCoor("savedBestState");
 	helicalAxis.applySavedCoor("BestAxis");
-		
-	double crossingAngle = opt.crossingAngle;
-	double axialRotation = opt.axialRotation;
-	double zShift = opt.zShift;
-	
+
 	if (opt.verbose){
-		cout << "======================================" << endl;
-		cout << "Performing Local Monte Carlo Repack   " << endl;
-		cout << "======================================" << endl;
+		cout << "============================================" << endl;
+		cout << "Performing Local Monte Carlo Backbone Repack   " << endl;
+		cout << "============================================" << endl;
 	}
-	vector<unsigned int> MCOBest = startStateVec;
-		
-	//MonteCarloManager MCMngr(opt.MCStartTemp, opt.MCEndTemp, opt.MCCycles, opt.MCCurve, opt.MCMaxRejects);
-	MonteCarloManager MCMngr(100, 0.5, opt.MCCycles, opt.MCCurve, opt.MCMaxRejects);
-	// MonteCarloManager MCMngr(1000, 0.5, opt.MCCycles, opt.MCCurve, opt.MCMaxRejects, 10, 0.01);
-		
-	MCMngr.setEner(prevBestEnergy);
-		
-	writer1.open(opt.outputDir + "/" + opt.sequence + "_beforeRepack.pdb");
-	writer1.write(sys.getAtomPointers(), true, false, true);
-	writer1.close();
-	unsigned int counter = 0;
-	while(!MCMngr.getComplete()) {
-		
-		sys.applySavedCoor("savedBestState");
-		helicalAxis.applySavedCoor("BestAxis");
-		
-		int moveToPreform = RNG.getRandomInt(3);
-		
-		double deltaXShift = 0.0;
-		double deltaZShift = 0.0;
-		double deltaCrossingAngle = 0.0;
-		double deltaAxialRotation = 0.0; 
-		
-		//======================================
-		//====== Z Shift (Crossing Point) ======
-		//======================================
-		if (moveToPreform == 0) {
-			//deltaZShift = getStandardNormal(RNG1) * 0.1;
-			deltaZShift = getStandardNormal(RNG) * opt.deltaZ;
-			backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, deltaZShift, moveToPreform);
-		} else if (moveToPreform == 1) {
-		//===========================
-		//===== Axial Rotation ======
-		//===========================
-			//deltaAxialRotation = getStandardNormal(RNG1) * 1.0;
-			deltaAxialRotation = getStandardNormal(RNG) * opt.deltaAx;
-			backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, deltaAxialRotation, moveToPreform);
-		} else if (moveToPreform == 2) {
-		//==================================
-		//====== Local Crossing Angle ======
-		//==================================
-			//deltaCrossingAngle = getStandardNormal(RNG1) * 1.0;
-			deltaCrossingAngle = getStandardNormal(RNG) * opt.deltaCross;
-			backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, deltaCrossingAngle, moveToPreform);
-		} else if (moveToPreform == 3) {
-		//==============================================
-		//====== X shift (Interhelical Distance) =======
-		//==============================================
-			//deltaXShift = getStandardNormal(RNG1) * 0.1;
-			deltaXShift = getStandardNormal(RNG) * opt.deltaX;
-			backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, deltaXShift, moveToPreform);
-		}
-		
-		// Run Optimization
-		repackSideChains(spm, 10);
-
-		vector<unsigned int> MCOFinal = spm.getMinStates()[0];
-		currentEnergy = spm.getMinBound()[0];
-		
-		if (!MCMngr.accept(currentEnergy)) {
-			if (opt.verbose){
-				cout << "MCReject   xShift: " << xShift+deltaXShift << " crossingAngle: " << crossingAngle+deltaCrossingAngle << " axialRotation: " << axialRotation+deltaAxialRotation << " zShift: " << zShift+deltaZShift << " energy: " << currentEnergy-monomerEnergy << endl;
-			}
-		} else {
-			prevBestEnergy = currentEnergy;
-			sys.saveAltCoor("savedBestState");
-			helicalAxis.saveAltCoor("BestAxis");
-		
-			xShift = xShift + deltaXShift;
-			crossingAngle = crossingAngle + deltaCrossingAngle;
-			axialRotation = axialRotation + deltaAxialRotation;
-			zShift = zShift + deltaZShift;
-			MCOBest = MCOFinal;
-		
-			if (opt.verbose){
-				cout << "MCAccept " << counter <<  " xShift: " << xShift << " crossingAngle: " << crossingAngle << " axialRotation: " << axialRotation << " zShift: " << zShift << " energy: " << currentEnergy-monomerEnergy << endl;
-			}
-			counter++;
-			writer1.open(opt.outputDir + "/" + opt.sequence + "_duringRepack.pdb");
-			writer1.write(sys.getAtomPointers(), true, false, true);
-			writer1.close();
-		}
-	}
-	time(&endTimeMC);
-	diffTimeMC = difftime (endTimeMC, startTimeMC);
-		
-	sys.applySavedCoor("savedBestState");
-	double dimerEnergy = spm.getStateEnergy(MCOBest);
-	double finalEnergy = dimerEnergy-monomerEnergy;
-	double vdw = spm.getStateEnergy(MCOBest, "CHARMM_VDW");
-	double hbond = spm.getStateEnergy(MCOBest, "SCWRL4_HBOND");
-	double imm1 = spm.getStateEnergy(MCOBest, "CHARMM_IMM1")+spm.getStateEnergy(MCOBest, "CHARMM_IMM1REF");
-	double dimerDiff = dimerEnergy-startDimer;
-	double xShiftDiff = opt.xShift-xShift;
-	double angleDiff = opt.crossingAngle-crossingAngle;
-	double axialRotDiff = opt.axialRotation-axialRotation;
-	double zShiftDiff = opt.zShift-zShift;
-
-	// calculate the solvent accessible surface area
-	SasaCalculator sasa(sys.getAtomPointers());
-	sasa.calcSasa();
-	double dimerSasa = sasa.getTotalSasa();
-
-	// Print out info to the summary csv file
-	//sout << 'Sequence,Total,Dimer,Monomer,DimerDiff,VDWDimer,VDWDiff,HBONDDiff,IMM1Dimer,IMM1Diff,startXShift,xShift,xShiftDiff,startCrossingAngle,crossingAngleDiff,startAxialRotation,startZShift,zShift,zShiftDiff' << endl;
-	sout << sequence << ',' << finalEnergy << ',' << dimerEnergy << ',' << monomer << ',' << dimerDiff << ',' << dimerSasa << ',' << vdw << ',' << hbond << ',' << imm1 << ',' << opt.xShift << ',' << xShift << ',' << xShiftDiff << ',' << opt.crossingAngle << ',' << crossingAngle << ',' << angleDiff << ',' << opt.axialRotation << ',' << axialRotation << ',' << axialRotDiff << ',' << opt.zShift << ',' << zShift << ',' << zShiftDiff << endl;
-	cout << sequence << ',' << finalEnergy << ',' << dimerEnergy << ',' << monomer << ',' << dimerDiff << ',' << dimerSasa << ',' << vdw << ',' << hbond << ',' << imm1 << ',' << opt.xShift << ',' << xShift << ',' << xShiftDiff << ',' << opt.crossingAngle << ',' << crossingAngle << ',' << angleDiff << ',' << opt.axialRotation << ',' << axialRotation << ',' << axialRotDiff << ',' << opt.zShift << ',' << zShift << ',' << zShiftDiff << endl;
-	cout << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
+	
+	backboneGeometryRepack(opt, sys, savedXShift, spm, helicalAxis, axisA, axisB, apvChainA, apvChainB, trans, RNG, prevBestEnergy, monomerEnergy, sout);
 
     //outputs a pdb file for the structure 
 	// Initialize PDBWriter
@@ -473,7 +325,137 @@ END";
 }
 
 //Functions
-void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis,
+void backboneGeometryRepack(BBOptions &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, 
+ System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
+ AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _prevBestEnergy,
+ double _monomerEnergy, ofstream &_out){
+	// Local Backbone Monte Carlo Repacks Time setup	
+	time_t startTimeMC, endTimeMC;
+	double diffTimeMC;
+	time(&startTimeMC);
+
+	double xShift = _savedXShift;	
+	double crossingAngle = _opt.crossingAngle;
+	double axialRotation = _opt.axialRotation;
+	double zShift = _opt.zShift;
+
+	vector<uint> startStateVec = _spm.getMinStates()[0];
+	vector<unsigned int> MCOBest = startStateVec;
+	//MonteCarloManager MCMngr(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
+	MonteCarloManager MCMngr(100, 0.5, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
+	// MonteCarloManager MCMngr(1000, 0.5, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects, 10, 0.01);
+		
+	MCMngr.setEner(_prevBestEnergy);
+		
+	PDBWriter writer1;
+	writer1.open(_opt.outputDir + "/" + _opt.sequence + "_beforeRepack.pdb");
+	writer1.write(_sys.getAtomPointers(), true, false, true);
+	writer1.close();
+	unsigned int counter = 0;
+
+	double currentEnergy = _prevBestEnergy;
+	double startDimer = _prevBestEnergy;
+	while(!MCMngr.getComplete()) {
+		
+		_sys.applySavedCoor("savedBestState");
+		_helicalAxis.applySavedCoor("BestAxis");
+		
+		int moveToPreform = _RNG.getRandomInt(3);
+		
+		double deltaXShift = 0.0;
+		double deltaZShift = 0.0;
+		double deltaCrossingAngle = 0.0;
+		double deltaAxialRotation = 0.0; 
+		
+		//======================================
+		//====== Z Shift (Crossing Point) ======
+		//======================================
+		if (moveToPreform == 0) {
+			//deltaZShift = getStandardNormal(RNG1) * 0.1;
+			deltaZShift = getStandardNormal(_RNG) * _opt.deltaZ;
+			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPreform);
+		} else if (moveToPreform == 1) {
+		//===========================
+		//===== Axial Rotation ======
+		//===========================
+			//deltaAxialRotation = getStandardNormal(_RNG1) * 1.0;
+			deltaAxialRotation = getStandardNormal(_RNG) * _opt.deltaAx;
+			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPreform);
+		} else if (moveToPreform == 2) {
+		//==================================
+		//====== Local Crossing Angle ======
+		//==================================
+			//deltaCrossingAngle = getStandardNormal(_RNG1) * 1.0;
+			deltaCrossingAngle = getStandardNormal(_RNG) * _opt.deltaCross;
+			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPreform);
+		} else if (moveToPreform == 3) {
+		//==============================================
+		//====== X shift (Interhelical Distance) =======
+		//==============================================
+			//deltaXShift = getStandardNormal(_RNG1) * 0.1;
+			deltaXShift = getStandardNormal(_RNG) * _opt.deltaX;
+			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPreform);
+		}
+		
+		// Run _optimization
+		repackSideChains(_spm, 10);
+
+		vector<unsigned int> MCOFinal = _spm.getMinStates()[0];
+		currentEnergy = _spm.getMinBound()[0];
+		
+		if (!MCMngr.accept(currentEnergy)) {
+			if (_opt.verbose){
+				cout << "MCReject   xShift: " << xShift+deltaXShift << " crossingAngle: " << crossingAngle+deltaCrossingAngle << " axialRotation: " << axialRotation+deltaAxialRotation << " zShift: " << zShift+deltaZShift << " energy: " << currentEnergy-_monomerEnergy << endl;
+			}
+		} else {
+			_prevBestEnergy = currentEnergy;
+			_sys.saveAltCoor("savedBestState");
+			_helicalAxis.saveAltCoor("BestAxis");
+		
+			xShift = xShift + deltaXShift;
+			crossingAngle = crossingAngle + deltaCrossingAngle;
+			axialRotation = axialRotation + deltaAxialRotation;
+			zShift = zShift + deltaZShift;
+			MCOBest = MCOFinal;
+		
+			if (_opt.verbose){
+				cout << "MCAccept " << counter <<  " xShift: " << xShift << " crossingAngle: " << crossingAngle << " axialRotation: " << axialRotation << " zShift: " << zShift << " energy: " << currentEnergy-_monomerEnergy << endl;
+			}
+			counter++;
+			writer1.open(_opt.outputDir + "/" + _opt.sequence + "_duringRepack.pdb");
+			writer1.write(_sys.getAtomPointers(), true, false, true);
+			writer1.close();
+		}
+	}
+	time(&endTimeMC);
+	diffTimeMC = difftime (endTimeMC, startTimeMC);
+		
+	_sys.applySavedCoor("savedBestState");
+	// TODO: make this into a map that saves all of these to be output
+	double dimerEnergy = _spm.getStateEnergy(MCOBest);
+	double finalEnergy = dimerEnergy-_monomerEnergy;
+	double vdw = _spm.getStateEnergy(MCOBest, "CHARMM_VDW");
+	double hbond = _spm.getStateEnergy(MCOBest, "SCWRL4_HBOND");
+	double imm1 = _spm.getStateEnergy(MCOBest, "CHARMM_IMM1")+_spm.getStateEnergy(MCOBest, "CHARMM_IMM1REF");
+	double dimerDiff = dimerEnergy-startDimer;
+	double xShiftDiff = _opt.xShift-xShift;
+	double angleDiff = _opt.crossingAngle-crossingAngle;
+	double axialRotDiff = _opt.axialRotation-axialRotation;
+	double zShiftDiff = _opt.zShift-zShift;
+
+	// calculate the solvent accessible surface area
+	SasaCalculator sasa(_sys.getAtomPointers());
+	sasa.calcSasa();
+	double dimerSasa = sasa.getTotalSasa();
+
+	// Print out info to the summary csv file
+	//sout << 'Sequence,Total,Dimer,Monomer,DimerDiff,VDWDimer,VDWDiff,HBONDDiff,IMM1Dimer,IMM1Diff,startXShift,xShift,xShiftDiff,startCrossingAngle,crossingAngleDiff,startAxialRotation,startZShift,zShift,zShiftDiff' << endl;
+	_out << _opt.sequence << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',' << dimerDiff << ',' << dimerSasa << ',' << vdw << ',' << hbond << ',' << imm1 << ',' << _opt.xShift << ',' << xShift << ',' << xShiftDiff << ',' << _opt.crossingAngle << ',' << crossingAngle << ',' << angleDiff << ',' << _opt.axialRotation << ',' << axialRotation << ',' << axialRotDiff << ',' << _opt.zShift << ',' << zShift << ',' << zShiftDiff << endl;
+	cout << _opt.sequence << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',' << dimerDiff << ',' << dimerSasa << ',' << vdw << ',' << hbond << ',' << imm1 << ',' << _opt.xShift << ',' << xShift << ',' << xShiftDiff << ',' << _opt.crossingAngle << ',' << crossingAngle << ',' << angleDiff << ',' << _opt.axialRotation << ',' << axialRotation << ',' << axialRotDiff << ',' << _opt.zShift << ',' << zShift << ',' << zShiftDiff << endl;
+	cout << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
+}
+
+void setGly69ToStartingGeometry(BBOptions &_opt, System &_sys, System &_helicalAxis,
  AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, CartesianPoint &_xAxis,
  CartesianPoint &_zAxis, Transforms &_trans) {
 	/******************************************************************************
@@ -481,7 +463,7 @@ void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxi
 	 ******************************************************************************/
 	// initialize the gly69 backbone coordinates and transform it to the chosen geometry
 	_sys.readPdb(_opt.backboneFile);
-
+	
 	// Set up chain A and chain B atom pointer vectors
 	Chain & chainA = _sys.getChain("A");
 	Chain & chainB = _sys.getChain("B");
@@ -493,7 +475,7 @@ void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxi
 	moveZCenterOfCAMassToOrigin(_sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);
 }
 
-void prepareSystem(Options &_opt, System &_sys, string _polySeq, System &_helicalAxis,
+void prepareSystem(BBOptions &_opt, System &_sys, string &_polySeq, System &_helicalAxis,
  AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, CartesianPoint &_xAxis,
  CartesianPoint &_zAxis, Transforms &_trans){
 	// initialize the gly69 backbone coordinates and transform it to the chosen geometry
@@ -582,16 +564,17 @@ void prepareSystem(Options &_opt, System &_sys, string _polySeq, System &_helica
 	// Assign number of rotamers by residue burial
 	loadRotamersBySASABurial(_sys, sysRot, _opt);
 	CSB.updateNonBonded(10,12,50);
-	
+
+	// TODO: maybe calculate the energy here, then see if there's clashing. If so, then move helices away until no clashing, keeping the same
+	// other coordinates? Just for simplicity for now. And if I want to implement this in design, adding this in will likely be a good idea.	
 	// as of 2022-7-5: not sure if the above works or needs to be reworked
 	PDBWriter writer1;
 	writer1.open(_opt.outputDir + "/" + _opt.sequence + "_inputGeometry.pdb");
 	writer1.write(_sys.getAtomPointers(), true, false, true);
 	writer1.close();
-
 }
 
-void defineInterfaceAndRotamerSampling(Options &_opt, PolymerSequence _PS, string &_rotamerLevels, string &_polySeq,
+void defineInterfaceAndRotamerSampling(BBOptions &_opt, PolymerSequence _PS, string &_rotamerLevels, string &_polySeq,
  string &_variablePositionString, string &_rotamerSamplingString, vector<int> &_linkedPositions, vector<uint> &_allInterfacePositions,
  vector<uint> &_interfacePositions, vector<int> &_rotamerSamplingPerPosition, ofstream &_out, string _axis){
 	// Declare system
@@ -760,7 +743,6 @@ void defineInterfaceAndRotamerSampling(Options &_opt, PolymerSequence _PS, strin
 	_linkedPositions = linkedPositions;
 	_out << endl;
 	_out << "PolyLeu Backbone:   " << backboneSeq << endl;
-	_out << "Variable Positions: " << variablePositionString << endl;
 	_out << "Rotamers Levels:    " << rotamerSamplingString << endl;
 	_interfacePositions = getInterfacePositions(_opt, rotamerSamplingPerPosition);
 	_allInterfacePositions = getAllInterfacePositions(_opt, rotamerSamplingPerPosition);
@@ -777,7 +759,6 @@ void defineInterfaceAndRotamerSampling(Options &_opt, PolymerSequence _PS, strin
 	//cout << endl;
 	cout << endl;
 	cout << "PolyLeu Backbone:   " << backboneSeq << endl;
-	cout << "Variable Positions: " << variablePositionString << endl;
 	cout << "Rotamers Levels:    " << rotamerSamplingString << endl;
 
 	int numPosAtInterface = 0;
@@ -840,7 +821,7 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys) {
 }
 
 //Calculate Residue Burial and output a PDB that highlights the interface
-std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &_opt, string _seq) {
+std::vector<pair <int, double> > calculateResidueBurial (System &_sys, BBOptions &_opt, string _seq) {
 	string polySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, 1);
 	PolymerSequence PS(polySeq);
 
@@ -911,7 +892,7 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &
 	return residueBurial;
 }
 
-vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition){
+vector<uint> getAllInterfacePositions(BBOptions &_opt, vector<int> &_rotamerSamplingPerPosition){
 	vector<uint> variableInterfacePositions;
 	//TODO: make this variable in case I eventually decide that I actually want to mutate everything but the final Leu or something
 	//for (uint k=0; k<_opt.backboneLength; k++){
@@ -925,7 +906,7 @@ vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSampli
 	return variableInterfacePositions;
 }
 
-vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition){
+vector<uint> getInterfacePositions(BBOptions &_opt, vector<int> &_rotamerSamplingPerPosition){
 	vector<uint> variableInterfacePositions;
 	//TODO: make this variable in case I eventually decide that I actually want to mutate everything but the final Leu or something
 	//for (uint k=0; k<_opt.backboneLength; k++){
@@ -939,31 +920,97 @@ vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingP
 	return variableInterfacePositions;
 }
 
+void localXShiftDocking(System &_sys, BBOptions &_opt, double _bestEnergy, double _monomerEnergy, 
+ SelfPairManager &_spm, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB,
+ AtomPointerVector &_apvChainA, AtomPointerVector &_apvChainB, Transforms &_trans, double &_savedXShift) {
+	// xShift changes
+	double deltaXShift = -0.1;
+	// xShift to stop at
+	double xShiftEnd = 6.5;
+	// current xShift
+	double xShift = _opt.xShift;
+	// previous energy to compare to
+	double previousEnergy = _monomerEnergy;
+	// Global lowest energy found (if above monomer we won't save anyways)
+	double globalLowestE = _monomerEnergy;
+	// current energy
+	double currentEnergy = _bestEnergy;
+	// while loop for x-shifts	
+	while (xShift >= xShiftEnd) {
+		// add the xShift change to the current xShift
+		xShift += deltaXShift;
+		// Move the helix
+		backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaXShift, 3 );
+
+		// Run Optimization
+		repackSideChains(_spm, _opt.greedyCycles);
+		vector<unsigned int> MCOFinal;
+		MCOFinal = _spm.getMinStates()[0];
+		_sys.setActiveRotamers(MCOFinal);
+
+		// get current energy
+		currentEnergy = _spm.getMinBound()[0];
+
+		// Check if this is the lowest energy found so far
+		if (currentEnergy < _bestEnergy) {
+			_bestEnergy = currentEnergy;
+			_savedXShift = xShift;
+			_sys.saveAltCoor("savedBestState");
+			_helicalAxis.saveAltCoor("BestAxis");
+		}
+		cout << "xShift: " << xShift << " energy: " << currentEnergy-_monomerEnergy << endl;
+
+		// If energy increase twice in a row, and it is above the global lowest energy, quit
+		if (currentEnergy < globalLowestE) {
+			globalLowestE = currentEnergy;
+		}
+		if (currentEnergy > (globalLowestE+10.0) && previousEnergy > (globalLowestE+10.0) && currentEnergy > previousEnergy) {
+			cout << "Energy increasing above global lowest energy... (currently " << globalLowestE-_monomerEnergy << ")" << endl;
+			break;
+		} else {
+			previousEnergy = currentEnergy;
+		}
+	}
+	cout << "Best Energy at x shift: " << _bestEnergy-_monomerEnergy << " at " << _savedXShift << endl;
+	_sys.saveAltCoor("savedBestState");
+	_helicalAxis.saveAltCoor("BestAxis");
+	PDBWriter writer1;
+	writer1.open(_opt.outputDir + "/" + _opt.sequence + "_xShifted.pdb");
+	writer1.write(_sys.getAtomPointers(), true, false, true);
+	writer1.close();
+}
+
 /***********************************
  *help functions
  ***********************************/
 void usage() {
 	cout << endl;
-	cout << "Run as" << endl;
-	//TODO: make this work tomorrow; should be able to organize this usage function and all of the stuff at the top properly; unless I move usage and other things to another file?
-	//cout << "   % " << programName << " --configfile <file.config>" << endl;
-	//cout << "For help" << endl;
-	//cout << "   % " << programName << " -h" << endl;
+	cout << "Run as :" << endl;
+	cout << "   % " << programName << " --configfile <file.config>" << endl;
+	cout << "For help" << endl;
+	cout << "   % " << programName << " -h" << endl;
 	cout << endl;//TODO: add in some help options
 }
 
-void outputErrorMessage(Options &_opt){
+void outputWarningMessage(BBOptions &_opt){
+		cerr << endl;
+		cerr << "The program has the following warning:" << endl;
+		cerr << endl;
+		cerr << _opt.warningMessages << endl;
+		cerr << endl;
+}
+void outputErrorMessage(BBOptions &_opt){
 		cerr << endl;
 		cerr << "The program terminated with errors:" << endl;
 		cerr << endl;
 		cerr << _opt.errorMessages << endl;
 		cerr << endl;
 		cerr << _opt.OPerrors << endl;
-		backboneOptimizerUsage();
+		usage();
 }
 
 //TODO: finish writing up this help
-void help(Options defaults) {
+void help(BBOptions defaults) {
 	cout << "This program runs as:" << endl;
 	cout << " % seqDesign " << endl;
 	cout << "   Optional Parameters " << endl;
@@ -992,417 +1039,3 @@ void help(Options defaults) {
 	cout << setw(20) << "weight_solv " << defaults.weight_solv << endl;
 	cout << endl;
 }
-
-/****************************************
- *
- *  ======= CONFIG FILE OPTIONS =======
- *
- ****************************************/
-Options parseOptions(int _argc, char * _argv[], Options defaults){
-
-	/******************************************
-	 *  Pass the array of argument and the name of
-	 *  a configuration file to the ArgumentParser
-	 *  object.  Then ask for the value of the argument
-	 *  and collect error and warnings.
-	 *
-	 *  This function returns a Options structure
-	 *  defined at the head of this file
-	 ******************************************/
-	cout << 1 << endl;	
-	Options opt;
-
-	/******************************************
-	 *  Set the allowed and required options:
-	 *
-	 *  Example of configuration file:
-	 *
-	 *  /exports/home/gloiseau/mslib/trunk_AS/config/seqDesign.config
-	 *
-	 ******************************************/
-
-	vector<string> required;
-	vector<string> allowed;
-
-cout << 2 << endl;	
-	//optional
-	//Weights
-	opt.allowed.push_back("weight_vdw");
-	opt.allowed.push_back("weight_hbond");
-	opt.allowed.push_back("weight_solv");
-	opt.allowed.push_back("verbose");
-
-cout << 3 << endl;	
-	//Input Files
-	opt.allowed.push_back("topFile");
-	opt.allowed.push_back("parFile");
-	opt.allowed.push_back("solvFile");
-	opt.allowed.push_back("rotLibFile");
-	opt.allowed.push_back("hbondFile");
-	opt.allowed.push_back("outputDir");
-	opt.allowed.push_back("pdbName");
-	opt.allowed.push_back("configfile");
-
-	//
-	opt.allowed.push_back("sequence");
-	opt.allowed.push_back("rotamerSamplingString");
-	opt.allowed.push_back("rotamerSamplingVector");
-	opt.allowed.push_back("sasaRepackLevel");
-	opt.allowed.push_back("seed");
-
-	//Geometry
-	opt.allowed.push_back("xShift");
-	opt.allowed.push_back("crossingAngle");
-	opt.allowed.push_back("axialRotation");
-	opt.allowed.push_back("zShift");
-	opt.allowed.push_back("thread");
-	opt.allowed.push_back("greedyCycles");
-	
-	//Shift Size
-	opt.allowed.push_back("deltaX");
-	opt.allowed.push_back("deltaCross");
-	opt.allowed.push_back("deltaAx");
-	opt.allowed.push_back("deltaZ");
-	
-	//Monte Carlo variables
-	opt.allowed.push_back("MCCycles");
-	opt.allowed.push_back("MCMaxRejects");
-	opt.allowed.push_back("MCStartTemp");
-	opt.allowed.push_back("MCEndTemp");
-	opt.allowed.push_back("MCCurve");
-
-	opt.allowed.push_back("negAngle");
-	opt.allowed.push_back("negRot");
-
-	//version 2
-	opt.allowed.push_back("useElec");
-	opt.allowed.push_back("backboneFile");
-	opt.allowed.push_back("ids");
-	opt.allowed.push_back("useAlaAtCTerminus");
-
-	//Begin Parsing through the options
-	OptionParser OP;
-	OP.readArgv(_argc, _argv);
-	OP.setDefaultArguments(opt.defaultArgs);
-	OP.setRequired(opt.required);
-	OP.setAllowed(opt.allowed);
-	OP.autoExtendOptions();
-
-	if (OP.countOptions() == 0){
-		usage();
-		opt.errorMessages += "No options given!\n";
-		exit(0);
-	}
-
-cout << 4 << endl;	
-	/*****************************************
-	 *  CHECK THE GIVEN OPTIONS
-	 *****************************************/
-	if (!OP.checkOptions()) {
-		opt.errorFlag = true;
-		opt.OPerrors = OP.getErrors();
-		return opt;
-	}
-	opt.errorFlag = false;
-	opt.warningFlag = false;
-
-	opt.errorMessages = "";
-	opt.warningMessages = "";
-
-	/*****************************************
-	 *  CHECK THE GIVEN OPTIONS
-	 *****************************************/
-	opt.configfile = OP.getString("configfile");
-	if (opt.configfile != "") {
-		OP.readFile(opt.configfile);
-		if (OP.fail()) {
-			opt.errorFlag = true;
-			opt.errorMessages += "Cannot read configuration file " + opt.configfile + "\n";
-		}
-	}
-
-	opt.verbose = OP.getBool("verbose");
-	if (OP.fail()) {
-		opt.warningMessages += "verbose not specified using false\n";
-		opt.warningFlag = true;
-		opt.verbose = false;
-	}
-	opt.negAngle = OP.getBool("negAngle");
-	if (OP.fail()) {
-		opt.warningMessages += "negAngle not specified using false\n";
-		opt.warningFlag = true;
-		opt.negAngle = false;
-	}
-	opt.negRot = OP.getBool("negRot");
-	if (OP.fail()) {
-		opt.warningMessages += "negRot not specified using false\n";
-		opt.warningFlag = true;
-		opt.negAngle = false;
-	}
-
-cout << 5 << endl;	
-	// tm parameters
-	opt.sequence = OP.getString("sequence");
-	if(OP.fail()) {
-		opt.errorMessages += "sequence not specified using L\n";
-		opt.errorFlag = true;
-	}
-	opt.rotamerSamplingString = OP.getString("rotamerSamplingString");
-	if (OP.fail()) {
-		opt.errorMessages += "Unable to identify state, make sure they are space separated\n";
-		opt.errorFlag = true;
-	}
-	opt.rotamerSamplingVector = OP.getIntVector("rotamerSampling");
-	if (OP.fail()) {
-		opt.errorMessages += "Unable to identify state, make sure they are space separated\n";
-		opt.errorFlag = true;
-	}
-
-	// Geometry
-	opt.xShift = OP.getDouble("xShift");
-	if (OP.fail()) {
-		opt.warningMessages += "xShift not specified, defaulting to 9.2\n";
-		opt.warningFlag = true;
-		opt.xShift = 9.2;
-	}
-	opt.crossingAngle = OP.getDouble("crossingAngle");
-	if (OP.fail()) {
-		opt.warningMessages += "crossingAngle not specified, defaulting to 25\n";
-		opt.warningFlag = true;
-		opt.crossingAngle = 25;
-	}
-	if (opt.negAngle == true){
-		opt.crossingAngle = -opt.crossingAngle;
-	}
-	opt.axialRotation = OP.getDouble("axialRotation");
-	if (OP.fail()) {
-		opt.warningMessages += "axialRotation not specified, defaulting to 40\n";
-		opt.warningFlag = true;
-		opt.axialRotation = 40;
-	}
-	if (opt.negRot == true){
-		opt.axialRotation = -opt.axialRotation;
-	}
-	opt.zShift = OP.getDouble("zShift");
-	if (OP.fail()) {
-		opt.warningMessages += "zShift not specified, defaulting to 2\n";
-		opt.warningFlag = true;
-		opt.zShift = 2;
-	}
-	opt.thread = OP.getInt("thread");
-	if (OP.fail()) {
-		opt.warningMessages += "thread not specified, defaulting to 25\n";
-		opt.warningFlag = true;
-		opt.thread = 25;
-	}
-	//TODO: maybe not in this code, but I feel like changing the thread of a sequence to see how it interacts at different threads could be helpful?
-
-	//Monte Carlo variables
-	opt.MCCycles = OP.getInt("MCCycles");
-	if (OP.fail()) {
-		opt.warningMessages += "Number of MC cycles not specified, default to 100\n";
-		opt.warningFlag = true;
-		opt.MCCycles = 100;
-	}
-
-	opt.MCMaxRejects = OP.getInt("MCMaxRejects");
-	if (OP.fail()) {
-		opt.warningMessages += "Number of MC max rejects not specified, default to using 5\n";
-		opt.warningFlag = true;
-		opt.MCMaxRejects = 5;
-	}
-
-	opt.MCStartTemp = OP.getDouble("MCStartTemp");
-	if (OP.fail()) {
-		opt.warningMessages += "MCStartTemp not specified using 1000.0\n";
-		opt.warningFlag = true;
-		opt.MCStartTemp = 1000.0;
-	}
-	opt.MCEndTemp = OP.getDouble("MCEndTemp");
-	if (OP.fail()) {
-		opt.warningMessages += "MCEndTemp not specified using 0.5\n";
-		opt.warningFlag = true;
-		opt.MCEndTemp = 0.5;
-	}
-	opt.MCCurve = OP.getInt("MCCurve");
-	if (OP.fail()) {
-		opt.warningMessages += "MCCurve not specified using SIGMOID(3)\n";
-		opt.warningFlag = true;
-		opt.MCCurve = 3;
-	}
-	
-	//Load Rotamers using SASA values (from sgfc)
-	opt.sasaRepackLevel = OP.getMultiString("sasaRepackLevel");
-	if (OP.fail()) {
-		opt.warningMessages += "sasaRepacklevel not specified! Default to one level at SL90.00";
-		opt.sasaRepackLevel.push_back("SL90.00");
-	}
-    //Weights
-	opt.weight_vdw = OP.getDouble("weight_vdw");
-	if (OP.fail()) {
-		opt.warningFlag = true;
-		opt.warningMessages += "weight_vdw not specified, default 1.0\n";
-		opt.weight_vdw = 1.0;
-	}
-	opt.weight_hbond = OP.getDouble("weight_hbond");
-	if (OP.fail()) {
-		opt.warningFlag = true;
-		opt.warningMessages += "weight_hbond not specified, default 1.0\n";
-		opt.weight_hbond = 1.0;
-	}
-	opt.weight_solv = OP.getDouble("weight_solv");
-	if (OP.fail()) {
-		opt.warningFlag = true;
-		opt.warningMessages += "weight_solv not specified, default 1.0\n";
-		opt.weight_solv = 1.0;
-	}
-
-	//Shift Size
-	opt.deltaX = OP.getDouble("deltaX");
-	if (OP.fail()) {
-		opt.warningMessages += "deltaX not specified using 0.5\n";
-		opt.warningFlag = true;
-		opt.deltaX = 0.5;
-	}
-	opt.deltaCross = OP.getDouble("deltaCross");
-	if (OP.fail()) {
-		opt.warningMessages += "deltaCross not specified using 5.0\n";
-		opt.warningFlag = true;
-		opt.deltaCross = 5.0;
-	}
-	opt.deltaAx = OP.getDouble("deltaAx");
-	if (OP.fail()) {
-		opt.warningMessages += "deltaAx not specified using 4.0\n";
-		opt.warningFlag = true;
-		opt.deltaAx = 4.0;
-	}
-	opt.deltaZ = OP.getDouble("deltaZ");
-	if (OP.fail()) {
-		opt.warningMessages += "deltaZ not specified using 0.5\n";
-		opt.warningFlag = true;
-		opt.deltaZ = 0.5;
-	}
-    //Parameter files
-	opt.topFile = OP.getString("topFile");
-	if (OP.fail()) {
-		string envVar = "MSL_CHARMM_TOP";
-		if(SYSENV.isDefined(envVar)) {
-			opt.topFile = SYSENV.getEnv(envVar);
-			opt.warningMessages += "topFile not specified using " + opt.topFile + "\n";
-			opt.warningFlag = true;
-		} else {
-			opt.errorMessages += "Unable to determine topFile - " + envVar + " - not set\n"	;
-			opt.errorFlag = true;
-		}
-	}
-
-	opt.parFile = OP.getString("parFile");
-	if (OP.fail()) {
-		string envVar = "MSL_CHARMM_PAR";
-		if(SYSENV.isDefined(envVar)) {
-			opt.parFile = SYSENV.getEnv(envVar);
-			opt.warningMessages += "parFile not specified using " + opt.parFile + "\n";
-			opt.warningFlag = true;
-		} else {
-			opt.errorMessages += "Unable to determine parFile - " + envVar + " - not set\n"	;
-			opt.errorFlag = true;
-		}
-	}
-
-	opt.solvFile = OP.getString("solvFile");
-	if (OP.fail()) {
-		string envVar = "MSL_CHARMM_SOLV";
-		if(SYSENV.isDefined(envVar)) {
-			opt.solvFile = SYSENV.getEnv(envVar);
-			opt.warningMessages += "solvFile not specified using " + opt.solvFile + "\n";
-			opt.warningFlag = true;
-		} else {
-			opt.errorMessages += "Unable to determine solvFile - " + envVar + " - not set\n";
-			opt.errorFlag = true;
-		}
-	}
-	opt.rotLibFile = OP.getString("rotLibFile");
-	if (OP.fail()) {
-		string envVar = "MSL_ROTLIB";
-		if(SYSENV.isDefined(envVar)) {
-			opt.rotLibFile = SYSENV.getEnv(envVar);
-			opt.warningMessages += "rotLibFile not specified using " + opt.rotLibFile + ", defaulting to " + SYSENV.getEnv(envVar) + "\n";
-			opt.warningFlag = true;
-		} else {
-			opt.errorMessages += "Unable to determine rotLibFile - " + envVar + " - not set\n";
-			opt.errorFlag = true;
-		}
-	}
-
-	opt.hbondFile = OP.getString("hbondFile");
-	if (OP.fail()) {
-		string envVar = "MSL_HBOND_CA_PAR";
-		if(SYSENV.isDefined(envVar)) {
-			opt.hbondFile = SYSENV.getEnv(envVar);
-			opt.warningMessages += "hbondFile not specified using " + opt.hbondFile + "\n";
-			opt.warningFlag = true;
-		} else {
-			opt.errorMessages += "Unable to determine hbondFile - MSL_HBOND_CA_PAR - not set\n"	;
-			opt.errorFlag = true;
-		}
-	}
-
-	opt.outputDir = OP.getString("outputDir");
-	if (OP.fail()) {
-		opt.errorMessages += "Unable to determine outputDir";
-		opt.errorFlag = true;
-	}
-
-	// Monomer Options
-	opt.seed = OP.getInt("seed");
-	if (OP.fail()) {
-		opt.warningMessages += "seed not specified using 1\n";
-		opt.warningFlag = true;
-		opt.seed = 1;
-	}
-	opt.greedyCycles = OP.getInt("greedyCycles");
-	if (OP.fail()) {
-		opt.warningMessages += "greedyCycles not specified using 1\n";
-		opt.warningFlag = true;
-		opt.greedyCycles = 10;
-	}
-	opt.MCCycles = OP.getInt("MCCycles");
-	if (OP.fail()) {
-		opt.warningMessages += "MCCycles not specified using 10\n";
-		opt.warningFlag = true;
-		opt.MCCycles = 10;
-	}
-	opt.MCMaxRejects = OP.getInt("MCMaxRejects");
-	if (OP.fail()) {
-		opt.warningMessages += "MCMaxRejects not specified using 2\n";
-		opt.warningFlag = true;
-		opt.MCMaxRejects = 10;
-	}
-
-	// version 2 options
-	opt.useElec = OP.getBool("useElec");
-	if (OP.fail()) {
-		opt.warningMessages += "useElec not specified using true\n";
-		opt.warningFlag = true;
-		opt.useElec = true;
-	}
-	opt.backboneFile = OP.getString("backboneFile");
-	if (OP.fail()) {
-		opt.errorMessages += "backboneFile not specified";
-		opt.errorFlag = true;
-	}
-	opt.ids = OP.getStringVector("ids");
-	if (OP.fail()) {
-		opt.errorMessages += "Unable to identify alternate AA identities, make sure they are space separated\n";
-		opt.errorFlag = true;
-	}
-	opt.useAlaAtCTerminus = OP.getBool("useAlaAtCTerminus");
-	if (OP.fail()) {
-		opt.warningMessages += "useAlaAtCTerminus not specified using true\n";
-		opt.warningFlag = true;
-		opt.useAlaAtCTerminus = true;
-	}
-	opt.rerunConf = OP.getConfFile();
-	return opt;
-}
-	

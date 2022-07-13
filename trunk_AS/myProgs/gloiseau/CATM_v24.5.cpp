@@ -49,8 +49,8 @@ struct compareHelixDimers {
 };
 
 void usage();
-void help(Options defaults);
-Options parseOptions(int _argc, char * _argv[], Options defaults);
+void help(catmOptions defaults);
+catmOptions parseOptions(int _argc, char * _argv[], catmOptions defaults);
 
 int main(int argc, char *argv[]) {
 
@@ -59,9 +59,9 @@ int main(int argc, char *argv[]) {
 	/******************************************************************************
 	 *                 === PARSE THE COMMAND LINE OPTIONS ===
 	 ******************************************************************************/
-	Options defaults;
+	catmOptions defaults;
 
-  	Options opt = parseOptions(argc, argv, defaults);
+  	catmOptions opt = parseOptions(argc, argv, defaults);
   	if (opt.errorFlag) {
   		cerr << endl;
   		cerr << "The program terminated with errors:" << endl;
@@ -871,7 +871,7 @@ void version() {
 	cout << "Program " << programName << " v." << programVersion << ", " << programDate << ", (MSL v." << mslVersion << " " << mslDate << ")" << endl;
 }
 
-Options parseOptions(int _argc, char * _argv[], Options defaults) {
+catmOptions parseOptions(int _argc, char * _argv[], catmOptions defaults) {
 
 	/******************************************
 	 *  Pass the array of argument and the name of
@@ -879,11 +879,11 @@ Options parseOptions(int _argc, char * _argv[], Options defaults) {
 	 *  object.  Then ask for the value of the argument
 	 *  and collect error and warnings.
 	 *
-	 *  This function returns a Options structure
+	 *  This function returns a catmOptions structure
 	 *  defined at the head of this file
 	 ******************************************/
 
-	Options opt;
+	catmOptions opt;
 
 	/******************************************
 	 *  Set the allowed and required options:
@@ -1391,10 +1391,9 @@ Options parseOptions(int _argc, char * _argv[], Options defaults) {
 		opt.warningFlag = true;
 	}
 
-	// return the Options structure
+	// return the catmOptions structure
 	return opt;
 }
-
 
 void usage() {
 	cout << endl;
@@ -1405,7 +1404,7 @@ void usage() {
 	cout << endl;
 }
 
-void help(Options defaults) {
+void help(catmOptions defaults) {
 	cout << "This program runs as:" << endl;
 	cout << " % CATM " << endl;
 	cout << "   --fullSequence <1-letter sequence> " << endl;

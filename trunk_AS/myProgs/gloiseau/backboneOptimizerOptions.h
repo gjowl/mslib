@@ -11,7 +11,7 @@ using namespace std;
  *  =======  OPTIONS =======
  *
  ******************************************/
- struct Options{
+ struct BBOptions{
 	// copied all from geomRepack; only keep the ones I need
 	// input files
 	string outputDir; //output directory for all files
