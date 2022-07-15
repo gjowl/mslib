@@ -49,7 +49,6 @@ using namespace std;
 	double MCStartTemp;
 	double MCEndTemp;
 	int MCCurve;
-	int numRepacks;
 
 	// energy weights
 	double weight_vdw;
@@ -78,8 +77,10 @@ using namespace std;
 	bool useElec;
 	bool useAlaAtCTerminus;
 	string backboneFile;
+	string helicalAxis;
 	vector<string> ids;
 	int backboneLength;
+	int numRepacks;
 
 	/***** MANAGEMENT VARIABLES ******/
 	string pwd; // the present working directory obtained with a getenv

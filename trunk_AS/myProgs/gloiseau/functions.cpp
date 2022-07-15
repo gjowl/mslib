@@ -480,6 +480,26 @@ std::vector < std::vector < bool > > getActiveMask (System &_sys) {
 	return resMask;
 }
 
+string convertToPolymerSequence(string _seq, int _startResNum) {
+	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+	// A:{32}ALA ILE GLY GLY GLY
+	// B:{32}ALA ILE GLY GLY GLY
+	string ps = "";
+	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
+		stringstream ss;
+		ss << *it;
+		string resName = MslTools::getThreeLetterCode(ss.str());
+		if(resName == "HIS") {
+			ps = ps + " HSE";
+		} else {
+			ps = ps + " " + resName;
+		}
+	}
+	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+	return "A" + ps + "\nB" + ps;
+}
+
+
 string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum) {
 	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
 	// A:{32}ALA ILE GLY GLY GLY

@@ -126,6 +126,47 @@ void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOpti
 	}
 }
 
+void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOptions &_opt, vector<int> &_rotamerSampling){
+	//Repack side chains based on sasa scores
+	for (uint i = 0; i < _rotamerSampling.size()/2; i++) {
+		Position &posA = _sys.getPosition(i);
+		Position &posB = _sys.getPosition(i+_opt.backboneLength);
+		if (posA.identitySize() > 1){
+			for (uint j=0; j < posA.getNumberOfIdentities(); j++){
+				posA.setActiveIdentity(j);
+				posB.setActiveIdentity(j);
+				string posRot = _opt.sasaRepackLevel[_rotamerSampling[i]];
+				if (_opt.verbose){
+					cout << posA.getPositionId() << ", " << posA.getResidueName() << ":" << posRot << endl;
+					cout << posB.getPositionId() << ", " << posB.getResidueName() << ":" << posRot << endl;
+				}
+				if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
+					if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) {
+						cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
+					}
+					if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) {
+						cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
+					}
+				}
+			}
+		} else {
+			string posRot = _opt.sasaRepackLevel[_rotamerSampling[i]];
+			if (_opt.verbose){
+				cout << posA.getPositionId() << ", " << posA.getResidueName() << ": " << posRot << endl;
+				cout << posB.getPositionId() << ", " << posB.getResidueName() << ": " << posRot << endl;
+			}
+			if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
+				if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) {
+					cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
+				}
+				if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) {
+					cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
+				}
+			}
+		}
+	}
+}
+
 /***********************************
  *repack functions
  ***********************************/
@@ -219,7 +260,6 @@ END";
 			}
 		}
 	}
-
 
 	monoEset->setWeight("CHARMM_VDW", _opt.weight_vdw);
 	monoEset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
@@ -431,7 +471,6 @@ END";
 	diffTimeMono = difftime (endTimeMono, startTimeMono);
 	_mout << endl << "Total Monomer Time: " << setiosflags(ios::fixed) << setprecision(0) << diffTimeMono << " seconds" << endl;
 
-
 	/******************************************************************************
 	 *               === PRINT OUT MONOMER / STORE ENERGIES ===
 	 ******************************************************************************/
@@ -459,18 +498,15 @@ END";
 	}
 
 	// Store monomer energy by term
-	if(_opt.verbose) {
-		monoSys.calcEnergy();
-		_monomerEnergyByTerm = getEnergyByTermDoubled(monoSys.getEnergySet()); // must double the energy, as only computed energy for 1 helix
+	monoSys.calcEnergy();
+	_monomerEnergyByTerm = getEnergyByTermDoubled(monoSys.getEnergySet()); // must double the energy, as only computed energy for 1 helix
 
-		for(map<string,double>::iterator it = _monomerEnergyByTerm.begin(); it != _monomerEnergyByTerm.end(); it++) {
-			_mout << it->first << " " << it->second << endl;
-		}
+	for(map<string,double>::iterator it = _monomerEnergyByTerm.begin(); it != _monomerEnergyByTerm.end(); it++) {
+		_mout << it->first << " " << it->second << endl;
 	}
 
 	double finalEnergy = 2.0 * monoSpm.getMinBound()[0]; // double the energy for 2 helices
 	return finalEnergy;
-
 }
 
 /****************************************
@@ -856,6 +892,11 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 		opt.errorMessages += "backboneFile not specified\n";
 		opt.errorFlag = true;
 	}
+	opt.helicalAxis = OP.getString("helicalAxis");
+	if (OP.fail()) {
+		opt.errorMessages += "helicalAxis not specified\n";
+		opt.errorFlag = true;
+	}
 	opt.ids = OP.getStringVector("ids");
 	if (OP.fail()) {
 		opt.errorMessages += "Unable to identify alternate AA identities, make sure they are space separated\n";
@@ -872,6 +913,12 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 		opt.warningMessages += "backboneLength not specified using 21\n";
 		opt.warningFlag = true;
 		opt.backboneLength = 21;
+	}
+	opt.numRepacks = OP.getInt("numRepacks");
+	if (OP.fail()) {
+		opt.warningMessages += "Number of backbone repacks not specified, default to 5\n";
+		opt.warningFlag = true;
+		opt.numRepacks = 5;
 	}
 	opt.rerunConf = OP.getConfFile();
 	return opt;

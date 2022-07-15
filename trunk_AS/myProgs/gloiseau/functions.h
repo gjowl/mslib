@@ -46,6 +46,7 @@ string generateBackboneSequence(string _backboneAA, int _length, bool _useAlaCap
 string generateString(string _backbone, int _length) ;
 string generateMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions);
 std::vector < std::vector < bool > > getActiveMask (System &_sys);
+string convertToPolymerSequence(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
 
 // runs a greedy to quickly repack sidechains

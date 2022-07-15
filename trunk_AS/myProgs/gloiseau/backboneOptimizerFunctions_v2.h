@@ -47,6 +47,7 @@ void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int
  *functions from geomRepack
  ***********************************/
 void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOptions &_opt);
+void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOptions &_opt, vector<int> &_rotamerSampling);
 
 /***********************************
  *repack functions

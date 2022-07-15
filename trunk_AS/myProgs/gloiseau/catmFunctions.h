@@ -31,7 +31,6 @@
 void printOptions(catmOptions & _op, ofstream & _fout);
 unsigned int CAOfClosestApproach(Chain & _chainA, Chain & _chainB);
 map<string, unsigned int> interfaceResidueCheck(AtomPointerVector & _chainA, AtomPointerVector & _chainB);
-string convertToPolymerSequence(string _seq, int _startResNum);
 void reThreadResidues(vector<Position*> & positions, int offset);
 bool hydrogenBondCheck(System & _sys, catmOptions &_opt, vector<string> _parsedGeoInformation, double & _xShiftStart);
 void renumberResidues(System& _sys, int _startResNum);
