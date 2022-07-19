@@ -75,7 +75,7 @@ struct Options{
 	sasaRepackLevel.size() = 4
 	interfaceLevel = 2
 
-	All positions below level 2 are consired interfacial.
+	All positions below level 2 are considered interfacial.
 	Since there are 4 levels, there are 4 splits, each being 25% of the total SASA value. Interfacial positions are the positions with the highest burial
 	that occur in the first two splits. SASA value is added up for the first level until it passes 25%. Those positions are considered part of level 1. Values
 	are continued to add up until reaching 50%, or level 2. And so on. In this example, all the positions that end up having a SASA value in level 1 and 2 are considered interface.
@@ -95,6 +95,7 @@ struct Options{
 	double zShift; //position of the crossing point between helices
 	double crossingAngle; //crossing angle between helices
 	double axialRotation; //rotation of helices
+	bool negAngle;
 
 	// crossing point
 	int thread; //crossing point...(more detail about this and gly69?)
@@ -112,7 +113,7 @@ struct Options{
 	double weight_vdw; //weight of vdw energy contribution to total energy: default = 1
 	double weight_hbond;//weight of hbond energy contribution to total energy: default = 1
 	double weight_solv;//weight of solvation energy contribution to total energy: default = 1
-	double weight_seqEntropy;//weight of sequence entropy contribution to total energy: default = ..
+	double weight_seqEntropy;//weight of sequence entropy contribution to total energy: default = 1
 
 	// alternate identities
 	vector<string> Ids; //alternate AA identities for interfacial positions

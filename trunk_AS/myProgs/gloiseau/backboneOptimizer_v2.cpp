@@ -286,6 +286,8 @@ int main(int argc, char *argv[]){
 }
 
 //Functions
+//TODO: to add this into the design code, I think I just need to add in a mask here to the optimizer
+// set a number of cycles
 void localBackboneRepack(BBOptions &_opt, System &_sys, double _savedXShift, SelfPairManager &_spm,
  System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA, AtomPointerVector &_apvChainB,
  Transforms &_trans, RandomNumberGenerator &_RNG, map<string,double> _monomerEnergyByTerm, double _monomerEnergy, ofstream &_out){

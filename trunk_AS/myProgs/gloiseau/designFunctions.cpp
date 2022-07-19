@@ -91,16 +91,8 @@ string generateMonomerMultiIDPolymerSequence(string _seq, int _startResNum, vect
  ***********************************/
 //TODO: make changes so that this can be run locally vs external server
 void setupDesignDirectory(Options &_opt, string _date){
-	//_opt.pdbOutputDir = _opt.pdbOutputDir + "/" + _date;
-	_opt.pdbOutputDir = get_current_dir_name();
-	_opt.pdbOutputDir = _opt.pdbOutputDir + "/12_06_2021";//Had problems with dynamic date because of runs starting one day and ending another
+	_opt.pdbOutputDir = string(get_current_dir_name()) + "/design_" + _opt.runNumber;
 	string cmd = "mkdir -p " + _opt.pdbOutputDir;
-	if (system(cmd.c_str())){
-		cout << "Unable to make directory" << endl;
-		exit(0);
-	}
-	_opt.pdbOutputDir = _opt.pdbOutputDir + "/design_" + _opt.runNumber;
-	cmd = "mkdir -p " + _opt.pdbOutputDir;
 	if (system(cmd.c_str())){
 		cout << "Unable to make directory" << endl;
 		exit(0);
@@ -1273,6 +1265,7 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 	opt.allowed.push_back("sasaRepackLevel");
 	opt.allowed.push_back("interfaceLevel");
 
+	opt.allowed.push_back("negAngle");
 	//Begin Parsing through the options
 	OptionParser OP;
 	OP.readArgv(_argc, _argv);
@@ -1393,7 +1386,16 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 		opt.warningFlag = true;
 		opt.getGeoFromPDBData = true;
 	}
-
+	opt.negAngle = OP.getBool("negAngle");
+	if (OP.fail()) {
+		opt.warningMessages += "negAngle not specified using false\n";
+		opt.warningFlag = true;
+		opt.negAngle = false;
+	}
+	if (opt.negAngle == true){
+		opt.crossingAngle = -opt.crossingAngle;
+	}
+	
 	opt.thread = OP.getInt("thread");
 	if (OP.fail()) {
 		opt.warningMessages += "thread not specified, defaulting to 0\n";
