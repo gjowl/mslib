@@ -155,14 +155,22 @@ int main(int argc, char *argv[]){
 	vector<double> densities;
 	if (opt.getGeoFromPDBData){
 		getGeometry(opt, RNG, densities, sout);
+		cout << "xShift:        " << opt.xShift << "\tDensity: " << densities[0] << endl;
+		cout << "crossingAngle: " << opt.crossingAngle << "\tDensity: " << densities[0] << endl;
+		cout << "axialRotation: " << opt.axialRotation << "\tDensity: " << densities[1] << endl;
+		cout << "zShift:        " << opt.zShift << "\tDensity: " << densities[2] << endl << endl;
+	} else {
+		cout << "***STARTING GEOMETRY:***" << endl;
+		cout << "xShift:        " << opt.xShift << endl;
+		cout << "crossingAngle: " << opt.crossingAngle << endl;
+		cout << "axialRotation: " << opt.axialRotation << endl;
+		cout << "zShift:        " << opt.zShift << endl << endl;
+		// TODO: temp fix
+		densities.push_back(0);
+		densities.push_back(0);
+		densities.push_back(0);
+		densities.push_back(0);
 	}
-
-	// Output the starting geometry
-	cout << "***STARTING GEOMETRY:***" << endl;
-	cout << "xShift:        " << opt.xShift << "\tDensity: " << densities[0] << endl;
-	cout << "crossingAngle: " << opt.crossingAngle << "\tDensity: " << densities[0] << endl;
-	cout << "axialRotation: " << opt.axialRotation << "\tDensity: " << densities[1] << endl;
-	cout << "zShift:        " << opt.zShift << "\tDensity: " << densities[2] << endl << endl;
 
 	//String for the alternateIds at the interface
 	string alternateIds = getAlternateIdString(opt.Ids);
