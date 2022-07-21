@@ -1,1 +1,0 @@
-bin/coevolutionSimulation_v_0.2 --pdbFile /exports/home/scondon/mslib/trunk/myProgs/sgfc/PDBs/P02724_01-crd.pdb --varID LEU ILE VAL --rotLibFile /exports/home/scondon/mslib/trunk/library/EBL_11-2011_CHARMM22_tinySL.txt --samplingLevel SL02.00 --outputDir /data05/scondon/TM_coevolution/experiments/2014-03-26/ --rerunConfigFile rerun.config

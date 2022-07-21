@@ -1,1 +1,0 @@
-#perl makestockholomMSAsubmit.pl --submit /exports/home/scondon/Desktop/pfam_alignments/CATM_sequences.csv --inputDir /exports/home/scondon/Desktop/pfam_alignments/ --output glycineCountSubmit.sh --submitFile glycineCountSubmit.sh

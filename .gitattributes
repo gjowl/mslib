@@ -1,2 +1,0 @@
-*.gch filter=lfs diff=lfs merge=lfs -text
-trunk_AS/bin/* filter=lfs diff=lfs merge=lfs -text
