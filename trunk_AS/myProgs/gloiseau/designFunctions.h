@@ -89,10 +89,6 @@ void makeDockingConfig(Options &_opt, string _sequence, vector<uint> _state, str
 // function that writes and outputs the summarr, configuration, and energy files from this design run
 void outputDesignFiles(Options &_opt, string _interface, vector<int> _rotamerSampling, vector<pair<string,vector<uint>>> _sequenceStatePair, map<string,map<string,double>> _sequenceEnergyMap, vector<double> _densities);
 
-
-
-
-
 /***********************************
  *baseline energy helper functions
  ***********************************/
@@ -106,13 +102,6 @@ double sumEnergyVector(vector<double> _energies);
 /***********************************
  *calculate energies
  ***********************************/
-// function to setup calculating the dimer energies of a vector<pair<string(sequence),vector<uint>(rotamer state)>>
-void computeDimerEnergies(System &_sys, Options &_opt, map<string, map<string,double>> &_sequenceEnergyMap, vector<pair<string,vector<uint>>> &_sequenceStatePair, vector<int> _rotamerSamplingPerPosition, vector<vector<string>> &_linkedPos, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
-// helper function for computeDimerEnergies: calculates energy for unlinked positions (different rotamers allowed at each position on opposite helices)
-void computeDimerEnergy(System &_sys, Options& _opt, map<string,map<string,double>> &_sequenceEnergyMap, string &_sequence, vector<uint> &_stateVec, vector<int> &_rotamerSampling, vector<vector<string>> &_linkedPos, int _seqNumber, RandomNumberGenerator &_RNG, PDBWriter &_writer, ofstream &_sout, ofstream &_err);
-// helper function for computeDimerEnergies: calculates energy for linked positions (same rotamer at each position on opposite helices)
-void computeDimerEnergiesLinked(System &_sys, Options &_opt, map<string,map<string,double>> &_sequenceEnergyMap, vector<pair<string,vector<uint>>> &_sequenceStatePair, vector<int> &_rotamerSampling, vector<vector<string>> &_linkedPos, RandomNumberGenerator &_RNG, PDBWriter &_writer, ofstream &_sout, ofstream &_err);
-
 // function to setup calculating the monomer energies of a vector<pair<string(sequence),vector<uint>(rotamer state)>>
 void computeMonomerEnergies(Options &_opt, Transforms &_trans, map<string, map<string,double>> &_sequenceEnergyMap, vector<string> &_seqs, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
 // helper function for computeMonomerEnergies: calculates energy for monomer without solvation energy

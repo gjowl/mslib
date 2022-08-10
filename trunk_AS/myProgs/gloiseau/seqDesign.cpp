@@ -301,15 +301,10 @@ int main(int argc, char *argv[]){
 	Chain & chainA = sys.getChain("A");
 	Chain & chainB = sys.getChain("B");
 
-	// Set up chain A and chain B atom pointer vectors
-	//AtomPointerVector & apvChainA = chainA.getAtomPointers();
-	//AtomPointerVector & apvChainB = chainB.getAtomPointers();
-
 	/******************************************************************************
 	 *                === CHECK TO SEE IF ALL ATOMS ARE BUILT ===
 	 ******************************************************************************/
 	// check to verify that all atoms have coordinates
-	// See if this is integratable into the system that is built previously for the helix of interest
 	checkIfAtomsAreBuilt(sys, err);
 
 	/******************************************************************************
@@ -323,10 +318,12 @@ int main(int argc, char *argv[]){
 		buildBaselines(sys, opt);
 	}
 
-	// TODO: change this; I feel like this should be an option if linked is true
-	vector<vector<string>> linkedPos = convertToLinkedFormat(sys, linkedPositions, opt.backboneLength);
-	sys.setLinkedPositions(linkedPos);
-
+	// link the interfacial positions (don't do this for hetero)
+	if (opt.linkInterfacialPositions){
+		vector<vector<string>> linkedPos = convertToLinkedFormat(sys, linkedPositions, opt.backboneLength);
+		sys.setLinkedPositions(linkedPos);
+	}
+	
 	// initialize the object for loading rotamers into our _system
 	SystemRotamerLoader sysRot(sys, opt.rotLibFile);
 	sysRot.defineRotamerSamplingLevels();
@@ -359,6 +356,7 @@ int main(int argc, char *argv[]){
 	// set system to the best sequence or input sequence 
 	sys.setActiveRotamers(bestState);
 	double bestEnergy = sys.calcEnergy();
+	
 	// TODO: write in a way to set this to input sequence
 	// loop for new functino with threads begins here
 
@@ -481,7 +479,6 @@ int main(int argc, char *argv[]){
 	//	// input into the thread function for calculating energies
 	//	thread(energyFunctiog, sys, _opt, id, posIdA, posIdB, stateMCEnergies);
 	//	// save thread here (maybe just as a vector of info?)
-
 	//}
 	
 	/******************************************************************************
@@ -489,7 +486,9 @@ int main(int argc, char *argv[]){
 	 ******************************************************************************/
 	// Unlink the best state from SCMF if not using linked positions during the state Monte Carlo
 	// Will likely need to change this function for heterodimers but try and use it first
-	unlinkBestState(opt, bestState, rotamerSamplingPerPosition, opt.backboneLength);
+	if(opt.linkInterfacialPositions){
+		unlinkBestState(opt, bestState, rotamerSamplingPerPosition, opt.backboneLength);
+	}
 	stateMCUnlinked(sys, opt, interfacePolySeq, sequenceEnergyMapBest, sequenceEntropyMap, bestState, seqs, allSeqs,
 			sequenceStatePair, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, sout, err);
 
@@ -701,7 +700,6 @@ void energyFunction2(Options &_opt, SelfPairManager &_spm, string _prevSeq, vect
 	energyMap["currEntropy"] = currEntropy;
 	energyMap["prevEntropy"] = prevEntropy;
 	_seqEnergyMap[_currSeq] = energyMap;
-	//cout << _currSeq << ": " << enerAndSeqEntropy << "; Best: " << bestEnergyTotal << "; Curr: " << currEnergyTotal << endl;
 }
 
 void energyFunction(System &_startGeom, Options &_opt, SelfPairManager &_spm, PolymerSequence &_PS, string _id, string _posIdA, string _posIdB,
@@ -721,7 +719,7 @@ void energyFunction(System &_startGeom, Options &_opt, SelfPairManager &_spm, Po
 	// variable setup
 	map<string,double> energyMap;
 
-	//// Get the sequence for the random state
+	// Get the sequence for the random state
 	sys.setActiveRotamers(_currVec);
 	Chain &chain = sys.getChain("A");
 	string currSeq = convertPolymerSeqToOneLetterSeq(chain);
@@ -753,10 +751,7 @@ void energyFunction(System &_startGeom, Options &_opt, SelfPairManager &_spm, Po
 	double prevHBOND = _spm.getStateEnergy(_prevVec, "SCWRL4_HBOND");
 
 	// already outputting the sequenceEnergyMap, so may not need much below; may just need to add to energy map and then
-	// add to the sequence eneryg map after?
 	// output info
-	//TODO: instead of baseline down below, just calculate monomer energy here...? that may take awhile though...
-	// maybe readd baseline in?
 	outputEnergiesByTerm(_spm, _currVec, energyMap, _opt.energyTermList, "Dimer", true);
 	//double EnergyBeforeLocalMC = currEnergy-(_spm.getStateEnergy(_currVec, "BASELINE")+_spm.getStateEnergy(_currVec, "BASELINE_PAIR"));
 	double baseline = _spm.getStateEnergy(_currVec, "BASELINE")+_spm.getStateEnergy(_currVec, "BASELINE_PAIR");
@@ -773,7 +768,6 @@ void energyFunction(System &_startGeom, Options &_opt, SelfPairManager &_spm, Po
 	energyMap["prevEntropy"] = prevEntropy;
 	_seqEnergyMap[currSeq] = energyMap;
 	cout << currSeq << ": " << enerAndSeqEntropy << "; Best: " << bestEnergyTotal << "; Curr: " << currEnergyTotal << endl;
-	//cout << _spm.getSummary(_currVec) << endl;
 }
 
 string generateMultiIDAtSinglePosPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, int _interfacialPosition) {
@@ -1577,7 +1571,8 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			//	lout << bestEnergyTotal << "\t" << currEnergyTotal << "\t" << prevStateEntropy << "\t" << currStateEntropy << "\t" << MC.getCurrentT() << endl;
 			//}
 			if (_opt.verbose){
-				cout << "Cycle#" << cycleCounter << " State accepted, Sequence: " << currSeq << "; PrevE=  " << prevEnergy << " : CurrE= " << currEnergyTotal << "; PrevVDW: " << prevVDW << " : CurrVDW: " << currVDW << "EnergyDifference" << bestEnergyTotal-currEnergyTotal << "; CurrTemp: " << MC.getCurrentT() << endl;
+				cout << "Cycle#" << cycleCounter << " State accepted, Sequence: " << currSeq << "; PrevE=  " << prevEnergy << " : CurrE= " << currEnergyTotal;
+				cout << "; CurrTemp: " << MC.getCurrentT() << endl;
 			}
 		cycleCounter++;
 		}
