@@ -1318,7 +1318,7 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 	}
 	opt.linkInterfacialPositions = OP.getBool("linkInterfacialPositions");
 	if (OP.fail()) {
-		opt.warningMessages += "linkInterfacialPositions not specified using true for less memory intensive version of code\n";
+		opt.warningMessages += "linkInterfacialPositions not specified using true\n";
 		opt.warningFlag = true;
 		opt.linkInterfacialPositions = true;
 	}

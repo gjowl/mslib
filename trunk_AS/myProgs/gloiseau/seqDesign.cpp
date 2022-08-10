@@ -68,6 +68,10 @@ time_t startTime, endTime, spmStart, spmEnd;
 double diffTime, spmTime;
 
 // Functions
+map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
+ string _bestSeq, vector<uint> _bestState, double _bestEnergy, double _bestSeqProb, map<string,double> _sequenceEntropyMap,
+ vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList, vector<int> _rotamerSampling);
+string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap);
 void buildBaselines(System &_sys, Options &_opt);
 void getBestSequence(System &_startGeom, Options &_opt, RandomNumberGenerator &_RNG,
  vector<uint> &_bestState, string &_bestSeq, vector<uint> _interfacePositions, vector<uint> &_allInterfacePositions, vector<int> _rotamerSampling,
@@ -539,6 +543,76 @@ int main(int argc, char *argv[]){
 //	- get the best sequence 
 //	- make a backbone move (or x number of moves) for the best sequence
 //	- search for best mutant for a random position, and repeat.
+map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
+ string _bestSeq, vector<uint> _bestState, double _bestEnergy, double _bestSeqProb, map<string,double> _sequenceEntropyMap,
+ vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList, vector<int> _rotamerSampling){
+	// Get a random integer to pick through the variable positions
+	int rand = _RNG.getRandomInt(0, _interfacialPositionsList.size()-1);
+	int interfacePosA = _interfacialPositionsList[rand];
+	int interfacePosB = interfacePosA+_opt.backboneLength;
+
+	// Get the random position from the system
+	Position &randPosA = _sys.getPosition(interfacePosA);
+	Position &randPosB = _sys.getPosition(interfacePosB);
+	string posIdA = randPosA.getPositionId();
+	string posIdB = randPosB.getPositionId();
+
+	// variable setup for current state
+	map<string,map<string,double>> sequenceEnergyMap;
+	vector<thread> threads;
+	for (uint i=0; i<_opt.Ids.size()-1; i++){
+		// pick an identity for each thread 
+		int idNum = i;
+		// generate polymer sequence for each identity at the corresponding chosen position
+		string id = _opt.Ids[idNum];
+		// input into the thread function for calculating energies
+		string currAA = MslTools::getThreeLetterCode(_bestSeq.substr(interfacePosA, 1));
+		if (currAA != id){
+			// replace the id at the position in bestSeq with the current id to get current sequence
+			string currSeq = _bestSeq;
+			string oneLetterId = MslTools::getOneLetterCode(id);
+			currSeq.replace(interfacePosA, 1, oneLetterId);
+			// switch the position to the given id
+			_sys.setActiveIdentity(posIdA, id);
+			_sys.setActiveIdentity(posIdB, id);
+			// Set a mask and run a greedy to get the best state for the current sequence
+			vector<vector<bool>> mask = getActiveMask(_sys);
+			_spm.runGreedyOptimizer(_opt.greedyCycles, mask);
+			vector<uint> currVec = _spm.getMinStates()[0];
+			// start threading and calculating energies for each identity
+			threads.push_back(thread{energyFunction2, ref(_opt), ref(_spm), _bestSeq, _bestState, _bestEnergy, _bestSeqProb, currSeq, currVec, ref(_rotamerSampling), ref(_allInterfacialPositionsList), 
+			 ref(sequenceEnergyMap), ref(_sequenceEntropyMap)});
+		}
+	} 
+	// join all the threads (wait for them all to finish before continuing)
+	for (auto& th : threads){
+		th.join();
+	}
+	return sequenceEnergyMap;
+}
+
+string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap){
+	string currSeq;
+	double currEnergyComparison;
+	uint i=0;
+	for (auto& seq : _sequenceEnergyMap){
+		if (i==0){
+			currSeq = seq.first;
+			currEnergyComparison = seq.second["energyComparison"];
+			i++;
+		} else {
+			if (seq.second["energyComparison"] > currEnergyComparison){
+				// TODO: add in another check to see if the vdw is better here
+				string prevSeq = currSeq;
+				double prevEner = currEnergyComparison;
+				currSeq = seq.first;
+				currEnergyComparison = seq.second["energyComparison"];
+			}
+		}
+	}
+	return currSeq;
+}
+
 void buildBaselines(System &_sys, Options &_opt){
 		map<string, double> selfMap = readSingleParameters(_opt.selfEnergyFile);
 		map<string,map<string,map<uint,double>>> pairMap = readPairParameters(_opt.pairEnergyFile);
@@ -1439,73 +1513,14 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			cout << "Starting Seq: " << prevStateSeq << endl;
 		}
 		// get the sequence entropy probability for the current best sequence
-		double prevSeqProb = getSequenceEntropyProbability(_opt, bestSeq, _sequenceEntropyMap);
+		double bestSeqProb = getSequenceEntropyProbability(_opt, bestSeq, _sequenceEntropyMap);
 
-		// Get a random integer to pick through the variable positions
-		int rand = _RNG.getRandomInt(0, _interfacialPositionsList.size()-1);
-		int interfacePosA = _interfacialPositionsList[rand];
-		int interfacePosB = interfacePosA+_opt.backboneLength;
+		map<string,map<string,double>> sequenceEnergyMap = mutateRandomPosition(_sys, _opt, _spm, _RNG, bestSeq, currStateVec, bestEnergy, bestSeqProb, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
 
-		// Get the random position from the system
-		Position &randPosA = _sys.getPosition(interfacePosA);
-		Position &randPosB = _sys.getPosition(interfacePosB);
-		string posIdA = randPosA.getPositionId();
-		string posIdB = randPosB.getPositionId();
-
-		// variable setup for current state
-		map<string,map<string,double>> sequenceEnergyMap;
-		vector<thread> threads;
-		for (uint i=0; i<_opt.Ids.size()-1; i++){
-			// pick an identity for each thread 
-			int idNum = i;
-			// generate polymer sequence for each identity at the corresponding chosen position
-			string id = _opt.Ids[idNum];
-			// input into the thread function for calculating energies
-			string currAA = MslTools::getThreeLetterCode(bestSeq.substr(interfacePosA, 1));
-			if (currAA != id){
-				// replace the id at the position in bestSeq with the current id to get current sequence
-				string currSeq = bestSeq;
-				string oneLetterId = MslTools::getOneLetterCode(id);
-				currSeq.replace(interfacePosA, 1, oneLetterId);
-				// switch the position to the given id
-				_sys.setActiveIdentity(posIdA, id);
-				_sys.setActiveIdentity(posIdB, id);
-				// Set a mask and run a greedy to get the best state for the current sequence
-				vector<vector<bool>> mask = getActiveMask(_sys);
-				_spm.runGreedyOptimizer(_opt.greedyCycles, mask);
-				vector<uint> currVec = _spm.getMinStates()[0];
-				// start threading and calculating energies for each identity
-				threads.push_back(thread{energyFunction2, ref(_opt), ref(_spm), bestSeq, currStateVec, bestEnergy, prevSeqProb, currSeq, currVec, ref(_rotamerSampling), ref(_allInterfacialPositionsList), 
-				 ref(sequenceEnergyMap), ref(_sequenceEntropyMap)});
-			}
-		} 
-		// join all the threads (wait for them all to finish before continuing)
-		for (auto& th : threads){
-			th.join();
-		}
-		//TODO: make into a function
 		// get the best sequence and energy for the current position
 		cout << "Finding best sequence for cycle #" << cycleCounter << ": " << endl;
-		string currSeq;
-		double currEnergyComparison;
-		uint i=0;
-		for (auto& seq : sequenceEnergyMap){
-			if (i==0){
-				currSeq = seq.first;
-				currEnergyComparison = seq.second["energyComparison"];
-				i++;
-			} else {
-				if (seq.second["energyComparison"] > currEnergyComparison){
-					// TODO: add in another check to see if the vdw is better here
-					string prevSeq = currSeq;
-					double prevEner = currEnergyComparison;
-					currSeq = seq.first;
-					currEnergyComparison = seq.second["energyComparison"];
-					cout << "Switch from: " << prevSeq << " to " << currSeq << ": " << prevEner << " to " << currEnergyComparison << endl;
-				}
-			}
-		}
-		// if no change in sequence, automatically reject
+		string currSeq = getBestSequenceInMap(sequenceEnergyMap);
+		
 		// TODO: add in check step to see if sequence is already found in the best sequence list and skip if so
 		double currEnergyTotal = sequenceEnergyMap[currSeq]["currEnergyTotal"];
 		double bestEnergyTotal = sequenceEnergyMap[currSeq]["bestEnergyTotal"];//comparison for energy saved by this sequence; I think I should reset this map every run!
