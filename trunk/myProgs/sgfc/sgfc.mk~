@@ -1,0 +1,4 @@
+MYPROGS = alignBackbones rotateReturn rotateReturn_atomContainer energyFunctionTest
+#MYSOURCE = 
+MYDIR = myProgs/sgfc
+

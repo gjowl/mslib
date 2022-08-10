@@ -1,0 +1,1063 @@
+batch_name   = bitopic_test
+#baseDir      = /data02/gloiseau/Sequence_Design_Project/vdwSequenceDesign
+baseDir      = /data02/gloiseau/Sequence_Design_Project/interhelicalCoordinates
+
+
+executable   = /exports/home/gloiseau/mslib/trunk_AS/bin/interhelicalCoordinates
+output       = $(baseDir)/$(batch_name).out
+log          = $(baseDir)/$(batch_name).log
+error        = $(baseDir)/$(batch_name).err
+#requirements = TARGET.MACHINE!="cluster-0004.biochem.wisc.edu"
+
+#Info
+outputdir = /data02/gloiseau/Sequence_Design_Project/interhelicalCoordinates
+
+#Runs
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4a1u.pdb --outputdir $(outputdir)/4a1u"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6a15.pdb --outputdir $(outputdir)/6a15"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6a16.pdb --outputdir $(outputdir)/6a16"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6a17.pdb --outputdir $(outputdir)/6a17"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6a7f.pdb --outputdir $(outputdir)/6a7f"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1afo.pdb --outputdir $(outputdir)/1afo"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6aj5.pdb --outputdir $(outputdir)/6aj5"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ala.pdb --outputdir $(outputdir)/2ala"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5any.pdb --outputdir $(outputdir)/5any"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ao7.pdb --outputdir $(outputdir)/2ao7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3awr.pdb --outputdir $(outputdir)/3awr"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3ax2.pdb --outputdir $(outputdir)/3ax2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3ax3.pdb --outputdir $(outputdir)/3ax3"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3ax5.pdb --outputdir $(outputdir)/3ax5"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1ay2.pdb --outputdir $(outputdir)/1ay2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2b0m.pdb --outputdir $(outputdir)/2b0m"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2b4h.pdb --outputdir $(outputdir)/2b4h"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5b4b.pdb --outputdir $(outputdir)/5b4b"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5b4d.pdb --outputdir $(outputdir)/5b4d"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3b6h.pdb --outputdir $(outputdir)/3b6h"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6b82.pdb --outputdir $(outputdir)/6b82"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6b8s.pdb --outputdir $(outputdir)/6b8s"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3b98.pdb --outputdir $(outputdir)/3b98"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4bb5.pdb --outputdir $(outputdir)/4bb5"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4bb6.pdb --outputdir $(outputdir)/4bb6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2bc4.pdb --outputdir $(outputdir)/2bc4"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2bel.pdb --outputdir $(outputdir)/2bel"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3bea.pdb --outputdir $(outputdir)/3bea"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6bfg.pdb --outputdir $(outputdir)/6bfg"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3bia.pdb --outputdir $(outputdir)/3bia"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2bk5.pdb --outputdir $(outputdir)/2bk5"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3bkd.pdb --outputdir $(outputdir)/3bkd"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6bm8.pdb --outputdir $(outputdir)/6bm8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6bsb.pdb --outputdir $(outputdir)/6bsb"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6bsc.pdb --outputdir $(outputdir)/6bsc"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6bww.pdb --outputdir $(outputdir)/6bww"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2bxr.pdb --outputdir $(outputdir)/2bxr"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2c0x.pdb --outputdir $(outputdir)/2c0x"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4c0c.pdb --outputdir $(outputdir)/4c0c"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5c02.pdb --outputdir $(outputdir)/5c02"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4c27.pdb --outputdir $(outputdir)/4c27"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2c72.pdb --outputdir $(outputdir)/2c72"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2c73.pdb --outputdir $(outputdir)/2c73"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2c75.pdb --outputdir $(outputdir)/2c75"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2c76.pdb --outputdir $(outputdir)/2c76"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4c7k.pdb --outputdir $(outputdir)/4c7k"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3c9j.pdb --outputdir $(outputdir)/3c9j"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5c97.pdb --outputdir $(outputdir)/5c97"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6c93.pdb --outputdir $(outputdir)/6c93"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3ca7.pdb --outputdir $(outputdir)/3ca7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4cah.pdb --outputdir $(outputdir)/4cah"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2cb8.pdb --outputdir $(outputdir)/2cb8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6cjf.pdb --outputdir $(outputdir)/6cjf"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4ck8.pdb --outputdir $(outputdir)/4ck8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4clv.pdb --outputdir $(outputdir)/4clv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4coh.pdb --outputdir $(outputdir)/4coh"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6co8.pdb --outputdir $(outputdir)/6co8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2cpb.pdb --outputdir $(outputdir)/2cpb"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4cq8.pdb --outputdir $(outputdir)/4cq8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6cr2.pdb --outputdir $(outputdir)/6cr2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3csp.pdb --outputdir $(outputdir)/3csp"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6csd.pdb --outputdir $(outputdir)/6csd"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3czh.pdb --outputdir $(outputdir)/3czh"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4d6z.pdb --outputdir $(outputdir)/4d6z"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3dan.pdb --outputdir $(outputdir)/3dan"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3dax.pdb --outputdir $(outputdir)/3dax"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6dhb.pdb --outputdir $(outputdir)/6dhb"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6dhv.pdb --outputdir $(outputdir)/6dhv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3dl9.pdb --outputdir $(outputdir)/3dl9"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4do3.pdb --outputdir $(outputdir)/4do3"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4dot.pdb --outputdir $(outputdir)/4dot"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3dsi.pdb --outputdir $(outputdir)/3dsi"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3dsk.pdb --outputdir $(outputdir)/3dsk"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3duz.pdb --outputdir $(outputdir)/3duz"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4dvq.pdb --outputdir $(outputdir)/4dvq"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2dw3.pdb --outputdir $(outputdir)/2dw3"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3dwk.pdb --outputdir $(outputdir)/3dwk"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6e0b.pdb --outputdir $(outputdir)/6e0b"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6e10.pdb --outputdir $(outputdir)/6e10"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6e11.pdb --outputdir $(outputdir)/6e11"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3e6i.pdb --outputdir $(outputdir)/3e6i"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5ead.pdb --outputdir $(outputdir)/5ead"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5eaf.pdb --outputdir $(outputdir)/5eaf"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5ebb.pdb --outputdir $(outputdir)/5ebb"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5ebe.pdb --outputdir $(outputdir)/5ebe"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5eh6.pdb --outputdir $(outputdir)/5eh6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4eji.pdb --outputdir $(outputdir)/4eji"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5em4.pdb --outputdir $(outputdir)/5em4"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5ese.pdb --outputdir $(outputdir)/5ese"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5esg.pdb --outputdir $(outputdir)/5esg"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5esi.pdb --outputdir $(outputdir)/5esi"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5esj.pdb --outputdir $(outputdir)/5esj"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5esm.pdb --outputdir $(outputdir)/5esm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1ezf.pdb --outputdir $(outputdir)/1ezf"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1f16.pdb --outputdir $(outputdir)/1f16"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5f1b.pdb --outputdir $(outputdir)/5f1b"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6f46.pdb --outputdir $(outputdir)/6f46"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3f6y.pdb --outputdir $(outputdir)/3f6y"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1f76.pdb --outputdir $(outputdir)/1f76"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5f70.pdb --outputdir $(outputdir)/5f70"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5f71.pdb --outputdir $(outputdir)/5f71"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5f7f.pdb --outputdir $(outputdir)/5f7f"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2f9q.pdb --outputdir $(outputdir)/2f9q"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4fa0.pdb --outputdir $(outputdir)/4fa0"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5fc1.pdb --outputdir $(outputdir)/5fc1"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1fdm.pdb --outputdir $(outputdir)/1fdm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2fdv.pdb --outputdir $(outputdir)/2fdv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4fg0.pdb --outputdir $(outputdir)/4fg0"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1fjk.pdb --outputdir $(outputdir)/1fjk"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3flv.pdb --outputdir $(outputdir)/3flv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6fmd.pdb --outputdir $(outputdir)/6fmd"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6fmo.pdb --outputdir $(outputdir)/6fmo"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2fpv.pdb --outputdir $(outputdir)/2fpv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5frb.pdb --outputdir $(outputdir)/5frb"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6ftb.pdb --outputdir $(outputdir)/6ftb"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3fwl.pdb --outputdir $(outputdir)/3fwl"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6fw0.pdb --outputdir $(outputdir)/6fw0"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3g1q.pdb --outputdir $(outputdir)/3g1q"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4g3j.pdb --outputdir $(outputdir)/4g3j"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3g49.pdb --outputdir $(outputdir)/3g49"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1g5m.pdb --outputdir $(outputdir)/1g5m"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3g5b.pdb --outputdir $(outputdir)/3g5b"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3g7t.pdb --outputdir $(outputdir)/3g7t"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3g9w.pdb --outputdir $(outputdir)/3g9w"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ged.pdb --outputdir $(outputdir)/2ged"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3gmd.pdb --outputdir $(outputdir)/3gmd"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1gox.pdb --outputdir $(outputdir)/1gox"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4gqs.pdb --outputdir $(outputdir)/4gqs"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6gv9.pdb --outputdir $(outputdir)/6gv9"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3gw9.pdb --outputdir $(outputdir)/3gw9"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5gzn.pdb --outputdir $(outputdir)/5gzn"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5gzo.pdb --outputdir $(outputdir)/5gzo"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4h1n.pdb --outputdir $(outputdir)/4h1n"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5h37.pdb --outputdir $(outputdir)/5h37"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4h6o.pdb --outputdir $(outputdir)/4h6o"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5h73.pdb --outputdir $(outputdir)/5h73"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1h8m.pdb --outputdir $(outputdir)/1h8m"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2hac.pdb --outputdir $(outputdir)/2hac"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4hbp.pdb --outputdir $(outputdir)/4hbp"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3hd7.pdb --outputdir $(outputdir)/3hd7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3hde.pdb --outputdir $(outputdir)/3hde"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2hew.pdb --outputdir $(outputdir)/2hew"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4hfr.pdb --outputdir $(outputdir)/4hfr"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1hgv.pdb --outputdir $(outputdir)/1hgv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2hg0.pdb --outputdir $(outputdir)/2hg0"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4hho.pdb --outputdir $(outputdir)/4hho"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4hhq.pdb --outputdir $(outputdir)/4hhq"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2hi2.pdb --outputdir $(outputdir)/2hi2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2hi4.pdb --outputdir $(outputdir)/2hi4"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6hjq.pdb --outputdir $(outputdir)/6hjq"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6hjr.pdb --outputdir $(outputdir)/6hjr"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5hk1.pdb --outputdir $(outputdir)/5hk1"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5hld.pdb --outputdir $(outputdir)/5hld"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5hs1.pdb --outputdir $(outputdir)/5hs1"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2hyn.pdb --outputdir $(outputdir)/2hyn"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3hzs.pdb --outputdir $(outputdir)/3hzs"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5i2m.pdb --outputdir $(outputdir)/5i2m"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3i50.pdb --outputdir $(outputdir)/3i50"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6i55.pdb --outputdir $(outputdir)/6i55"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2i69.pdb --outputdir $(outputdir)/2i69"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3i65.pdb --outputdir $(outputdir)/3i65"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4i8v.pdb --outputdir $(outputdir)/4i8v"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5i81.pdb --outputdir $(outputdir)/5i81"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2iag.pdb --outputdir $(outputdir)/2iag"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1ifk.pdb --outputdir $(outputdir)/1ifk"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1ifp.pdb --outputdir $(outputdir)/1ifp"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2if7.pdb --outputdir $(outputdir)/2if7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ifo.pdb --outputdir $(outputdir)/2ifo"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4igh.pdb --outputdir $(outputdir)/4igh"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1iij.pdb --outputdir $(outputdir)/1iij"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3ije.pdb --outputdir $(outputdir)/3ije"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ilt.pdb --outputdir $(outputdir)/2ilt"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1ipe.pdb --outputdir $(outputdir)/1ipe"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2irw.pdb --outputdir $(outputdir)/2irw"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5irq.pdb --outputdir $(outputdir)/5irq"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ita.pdb --outputdir $(outputdir)/2ita"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6ith.pdb --outputdir $(outputdir)/6ith"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5iut.pdb --outputdir $(outputdir)/5iut"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ivd.pdb --outputdir $(outputdir)/2ivd"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4ivm.pdb --outputdir $(outputdir)/4ivm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4ivo.pdb --outputdir $(outputdir)/4ivo"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3iyw.pdb --outputdir $(outputdir)/3iyw"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1izo.pdb --outputdir $(outputdir)/1izo"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2j0k.pdb --outputdir $(outputdir)/2j0k"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3j0c.pdb --outputdir $(outputdir)/3j0c"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3j1r.pdb --outputdir $(outputdir)/3j1r"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3j27.pdb --outputdir $(outputdir)/3j27"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3j2w.pdb --outputdir $(outputdir)/3j2w"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2j58.pdb --outputdir $(outputdir)/2j58"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2j5d.pdb --outputdir $(outputdir)/2j5d"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2j7a.pdb --outputdir $(outputdir)/2j7a"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5j81.pdb --outputdir $(outputdir)/5j81"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1jdm.pdb --outputdir $(outputdir)/1jdm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5jg8.pdb --outputdir $(outputdir)/5jg8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5jhl.pdb --outputdir $(outputdir)/5jhl"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5jhm.pdb --outputdir $(outputdir)/5jhm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5jkv.pdb --outputdir $(outputdir)/5jkv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5jlc.pdb --outputdir $(outputdir)/5jlc"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2jo1.pdb --outputdir $(outputdir)/2jo1"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2jp3.pdb --outputdir $(outputdir)/2jp3"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2jwa.pdb --outputdir $(outputdir)/2jwa"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6jxr.pdb --outputdir $(outputdir)/6jxr"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2k1a.pdb --outputdir $(outputdir)/2k1a"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2k1k.pdb --outputdir $(outputdir)/2k1k"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3k1o.pdb --outputdir $(outputdir)/3k1o"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1k2w.pdb --outputdir $(outputdir)/1k2w"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2k21.pdb --outputdir $(outputdir)/2k21"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4k26.pdb --outputdir $(outputdir)/4k26"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2k3m.pdb --outputdir $(outputdir)/2k3m"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2k7y.pdb --outputdir $(outputdir)/2k7y"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2k8o.pdb --outputdir $(outputdir)/2k8o"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5k8k.pdb --outputdir $(outputdir)/5k8k"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2k9j.pdb --outputdir $(outputdir)/2k9j"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2k9y.pdb --outputdir $(outputdir)/2k9y"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3k9v.pdb --outputdir $(outputdir)/3k9v"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5k9c.pdb --outputdir $(outputdir)/5k9c"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ka1.pdb --outputdir $(outputdir)/2ka1"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3kaa.pdb --outputdir $(outputdir)/3kaa"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5kar.pdb --outputdir $(outputdir)/5kar"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2kb7.pdb --outputdir $(outputdir)/2kb7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3khm.pdb --outputdir $(outputdir)/3khm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1kil.pdb --outputdir $(outputdir)/1kil"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2kih.pdb --outputdir $(outputdir)/2kih"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2kix.pdb --outputdir $(outputdir)/2kix"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5kiu.pdb --outputdir $(outputdir)/5kiu"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2klu.pdb --outputdir $(outputdir)/2klu"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2kmz.pdb --outputdir $(outputdir)/2kmz"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2knc.pdb --outputdir $(outputdir)/2knc"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ko2.pdb --outputdir $(outputdir)/2ko2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2kog.pdb --outputdir $(outputdir)/2kog"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2kpe.pdb --outputdir $(outputdir)/2kpe"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2kpf.pdb --outputdir $(outputdir)/2kpf"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2kqt.pdb --outputdir $(outputdir)/2kqt"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4kq8.pdb --outputdir $(outputdir)/4kq8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ks1.pdb --outputdir $(outputdir)/2ks1"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5kua.pdb --outputdir $(outputdir)/5kua"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2kv5.pdb --outputdir $(outputdir)/2kv5"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2kwx.pdb --outputdir $(outputdir)/2kwx"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4kx7.pdb --outputdir $(outputdir)/4kx7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2kyt.pdb --outputdir $(outputdir)/2kyt"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2kyv.pdb --outputdir $(outputdir)/2kyv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3kyq.pdb --outputdir $(outputdir)/3kyq"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5kyh.pdb --outputdir $(outputdir)/5kyh"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5kzo.pdb --outputdir $(outputdir)/5kzo"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2l0j.pdb --outputdir $(outputdir)/2l0j"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4l1r.pdb --outputdir $(outputdir)/4l1r"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2l2t.pdb --outputdir $(outputdir)/2l2t"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2l35.pdb --outputdir $(outputdir)/2l35"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3l4d.pdb --outputdir $(outputdir)/3l4d"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2l58.pdb --outputdir $(outputdir)/2l58"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2l5b.pdb --outputdir $(outputdir)/2l5b"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2l6w.pdb --outputdir $(outputdir)/2l6w"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2l8s.pdb --outputdir $(outputdir)/2l8s"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2l91.pdb --outputdir $(outputdir)/2l91"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2l9u.pdb --outputdir $(outputdir)/2l9u"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3lbw.pdb --outputdir $(outputdir)/3lbw"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5lbj.pdb --outputdir $(outputdir)/5lbj"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5lbs.pdb --outputdir $(outputdir)/5lbs"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5lbv.pdb --outputdir $(outputdir)/5lbv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5lcv.pdb --outputdir $(outputdir)/5lcv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3ld6.pdb --outputdir $(outputdir)/3ld6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ljb.pdb --outputdir $(outputdir)/2ljb"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ljd.pdb --outputdir $(outputdir)/2ljd"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2lke.pdb --outputdir $(outputdir)/2lke"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2llm.pdb --outputdir $(outputdir)/2llm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2lp1.pdb --outputdir $(outputdir)/2lp1"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2luv.pdb --outputdir $(outputdir)/2luv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4lxj.pdb --outputdir $(outputdir)/4lxj"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ly0.pdb --outputdir $(outputdir)/2ly0"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2lz3.pdb --outputdir $(outputdir)/2lz3"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2lz4.pdb --outputdir $(outputdir)/2lz4"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2lzl.pdb --outputdir $(outputdir)/2lzl"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2m0q.pdb --outputdir $(outputdir)/2m0q"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2m20.pdb --outputdir $(outputdir)/2m20"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2m3e.pdb --outputdir $(outputdir)/2m3e"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2m59.pdb --outputdir $(outputdir)/2m59"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2m5i.pdb --outputdir $(outputdir)/2m5i"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1m6b.pdb --outputdir $(outputdir)/1m6b"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2m7g.pdb --outputdir $(outputdir)/2m7g"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6m7x.pdb --outputdir $(outputdir)/6m7x"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6m7z.pdb --outputdir $(outputdir)/6m7z"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6ma7.pdb --outputdir $(outputdir)/6ma7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mc7.pdb --outputdir $(outputdir)/2mc7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6mcw.pdb --outputdir $(outputdir)/6mcw"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3mdj.pdb --outputdir $(outputdir)/3mdj"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3mdm.pdb --outputdir $(outputdir)/3mdm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2met.pdb --outputdir $(outputdir)/2met"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2meu.pdb --outputdir $(outputdir)/2meu"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mfr.pdb --outputdir $(outputdir)/2mfr"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6mf8.pdb --outputdir $(outputdir)/6mf8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4mgj.pdb --outputdir $(outputdir)/4mgj"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mic.pdb --outputdir $(outputdir)/2mic"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6mi0.pdb --outputdir $(outputdir)/6mi0"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6mid.pdb --outputdir $(outputdir)/6mid"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mj1.pdb --outputdir $(outputdir)/2mj1"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mj2.pdb --outputdir $(outputdir)/2mj2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mjo.pdb --outputdir $(outputdir)/2mjo"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5mj6.pdb --outputdir $(outputdir)/5mj6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6mjm.pdb --outputdir $(outputdir)/6mjm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mk9.pdb --outputdir $(outputdir)/2mk9"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mkv.pdb --outputdir $(outputdir)/2mkv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mm4.pdb --outputdir $(outputdir)/2mm4"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mof.pdb --outputdir $(outputdir)/2mof"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6mpl.pdb --outputdir $(outputdir)/6mpl"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6mpm.pdb --outputdir $(outputdir)/6mpm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6mpn.pdb --outputdir $(outputdir)/6mpn"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6mqu.pdb --outputdir $(outputdir)/6mqu"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6mrg.pdb --outputdir $(outputdir)/6mrg"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1mt5.pdb --outputdir $(outputdir)/1mt5"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2muw.pdb --outputdir $(outputdir)/2muw"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5mut.pdb --outputdir $(outputdir)/5mut"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mv6.pdb --outputdir $(outputdir)/2mv6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3mvr.pdb --outputdir $(outputdir)/3mvr"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5mvd.pdb --outputdir $(outputdir)/5mvd"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mxb.pdb --outputdir $(outputdir)/2mxb"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mze.pdb --outputdir $(outputdir)/2mze"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2mzh.pdb --outputdir $(outputdir)/2mzh"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3mzs.pdb --outputdir $(outputdir)/3mzs"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2n1t.pdb --outputdir $(outputdir)/2n1t"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3n1f.pdb --outputdir $(outputdir)/3n1f"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2n2a.pdb --outputdir $(outputdir)/2n2a"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2n5s.pdb --outputdir $(outputdir)/2n5s"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6n6q.pdb --outputdir $(outputdir)/6n6q"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2n7i.pdb --outputdir $(outputdir)/2n7i"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1n8y.pdb --outputdir $(outputdir)/1n8y"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1n97.pdb --outputdir $(outputdir)/1n97"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2n90.pdb --outputdir $(outputdir)/2n90"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2n9y.pdb --outputdir $(outputdir)/2n9y"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3n9y.pdb --outputdir $(outputdir)/3n9y"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3n9z.pdb --outputdir $(outputdir)/3n9z"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2na6.pdb --outputdir $(outputdir)/2na6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2na7.pdb --outputdir $(outputdir)/2na7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2na8.pdb --outputdir $(outputdir)/2na8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2na9.pdb --outputdir $(outputdir)/2na9"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3na0.pdb --outputdir $(outputdir)/3na0"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5nam.pdb --outputdir $(outputdir)/5nam"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5nao.pdb --outputdir $(outputdir)/5nao"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6nav.pdb --outputdir $(outputdir)/6nav"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2nb7.pdb --outputdir $(outputdir)/2nb7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2nb8.pdb --outputdir $(outputdir)/2nb8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3nb6.pdb --outputdir $(outputdir)/3nb6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3nce.pdb --outputdir $(outputdir)/3nce"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ndj.pdb --outputdir $(outputdir)/2ndj"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5nda.pdb --outputdir $(outputdir)/5nda"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1neu.pdb --outputdir $(outputdir)/1neu"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5nhq.pdb --outputdir $(outputdir)/5nhq"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6nhw.pdb --outputdir $(outputdir)/6nhw"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3nks.pdb --outputdir $(outputdir)/3nks"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4nkw.pdb --outputdir $(outputdir)/4nkw"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6nk6.pdb --outputdir $(outputdir)/6nk6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6nk7.pdb --outputdir $(outputdir)/6nk7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4nmh.pdb --outputdir $(outputdir)/4nmh"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2nnj.pdb --outputdir $(outputdir)/2nnj"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2nps.pdb --outputdir $(outputdir)/2nps"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1nr6.pdb --outputdir $(outputdir)/1nr6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1nrj.pdb --outputdir $(outputdir)/1nrj"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3nw8.pdb --outputdir $(outputdir)/3nw8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3nwa.pdb --outputdir $(outputdir)/3nwa"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3nxu.pdb --outputdir $(outputdir)/3nxu"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4ny4.pdb --outputdir $(outputdir)/4ny4"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1nzn.pdb --outputdir $(outputdir)/1nzn"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4nz2.pdb --outputdir $(outputdir)/4nz2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1o0l.pdb --outputdir $(outputdir)/1o0l"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5o4u.pdb --outputdir $(outputdir)/5o4u"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1o5w.pdb --outputdir $(outputdir)/1o5w"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3oai.pdb --outputdir $(outputdir)/3oai"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5oek.pdb --outputdir $(outputdir)/5oek"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1ok8.pdb --outputdir $(outputdir)/1ok8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2olv.pdb --outputdir $(outputdir)/2olv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1om2.pdb --outputdir $(outputdir)/1om2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1oqw.pdb --outputdir $(outputdir)/1oqw"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2oqo.pdb --outputdir $(outputdir)/2oqo"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4oqv.pdb --outputdir $(outputdir)/4oqv"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2or7.pdb --outputdir $(outputdir)/2or7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2or8.pdb --outputdir $(outputdir)/2or8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4ori.pdb --outputdir $(outputdir)/4ori"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2oyp.pdb --outputdir $(outputdir)/2oyp"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3p2t.pdb --outputdir $(outputdir)/3p2t"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1p33.pdb --outputdir $(outputdir)/1p33"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4p38.pdb --outputdir $(outputdir)/4p38"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1p4c.pdb --outputdir $(outputdir)/1p4c"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1p4o.pdb --outputdir $(outputdir)/1p4o"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3p54.pdb --outputdir $(outputdir)/3p54"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3p99.pdb --outputdir $(outputdir)/3p99"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1pc2.pdb --outputdir $(outputdir)/1pc2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1pfi.pdb --outputdir $(outputdir)/1pfi"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2pg5.pdb --outputdir $(outputdir)/2pg5"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2pg6.pdb --outputdir $(outputdir)/2pg6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2pg7.pdb --outputdir $(outputdir)/2pg7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1pi7.pdb --outputdir $(outputdir)/1pi7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2pil.pdb --outputdir $(outputdir)/2pil"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4pj6.pdb --outputdir $(outputdir)/4pj6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1pko.pdb --outputdir $(outputdir)/1pko"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1pkq.pdb --outputdir $(outputdir)/1pkq"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1plp.pdb --outputdir $(outputdir)/1plp"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3pm0.pdb --outputdir $(outputdir)/3pm0"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1po5.pdb --outputdir $(outputdir)/1po5"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3ppm.pdb --outputdir $(outputdir)/3ppm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1py9.pdb --outputdir $(outputdir)/1py9"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2py0.pdb --outputdir $(outputdir)/2py0"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4q1u.pdb --outputdir $(outputdir)/4q1u"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6q4r.pdb --outputdir $(outputdir)/6q4r"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2q6n.pdb --outputdir $(outputdir)/2q6n"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1qcm.pdb --outputdir $(outputdir)/1qcm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4qgk.pdb --outputdir $(outputdir)/4qgk"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3qk5.pdb --outputdir $(outputdir)/3qk5"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4qkc.pdb --outputdir $(outputdir)/4qkc"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4qqf.pdb --outputdir $(outputdir)/4qqf"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/6qu7.pdb --outputdir $(outputdir)/6qu7"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3qw9.pdb --outputdir $(outputdir)/3qw9"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3qz1.pdb --outputdir $(outputdir)/3qz1"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4r1z.pdb --outputdir $(outputdir)/4r1z"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4r21.pdb --outputdir $(outputdir)/4r21"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1r9o.pdb --outputdir $(outputdir)/1r9o"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2rbe.pdb --outputdir $(outputdir)/2rbe"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2rgh.pdb --outputdir $(outputdir)/2rgh"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2rgo.pdb --outputdir $(outputdir)/2rgo"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2rlf.pdb --outputdir $(outputdir)/2rlf"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4rwc.pdb --outputdir $(outputdir)/4rwc"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1rz2.pdb --outputdir $(outputdir)/1rz2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1sez.pdb --outputdir $(outputdir)/1sez"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3se6.pdb --outputdir $(outputdir)/3se6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1sfc.pdb --outputdir $(outputdir)/1sfc"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3sfk.pdb --outputdir $(outputdir)/3sfk"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3sok.pdb --outputdir $(outputdir)/3sok"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1spf.pdb --outputdir $(outputdir)/1spf"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1sr3.pdb --outputdir $(outputdir)/1sr3"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3sre.pdb --outputdir $(outputdir)/3sre"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1svb.pdb --outputdir $(outputdir)/1svb"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3t3q.pdb --outputdir $(outputdir)/3t3q"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5t6q.pdb --outputdir $(outputdir)/5t6q"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3tbg.pdb --outputdir $(outputdir)/3tbg"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5tcd.pdb --outputdir $(outputdir)/5tcd"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5tce.pdb --outputdir $(outputdir)/5tce"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3tfq.pdb --outputdir $(outputdir)/3tfq"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3tgh.pdb --outputdir $(outputdir)/3tgh"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3tik.pdb --outputdir $(outputdir)/3tik"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3tk3.pdb --outputdir $(outputdir)/3tk3"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5tl8.pdb --outputdir $(outputdir)/5tl8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1tqn.pdb --outputdir $(outputdir)/1tqn"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1tv5.pdb --outputdir $(outputdir)/1tv5"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5tz1.pdb --outputdir $(outputdir)/5tz1"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3uaj.pdb --outputdir $(outputdir)/3uaj"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5uda.pdb --outputdir $(outputdir)/5uda"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5ufg.pdb --outputdir $(outputdir)/5ufg"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4uhi.pdb --outputdir $(outputdir)/4uhi"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4uhl.pdb --outputdir $(outputdir)/4uhl"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1url.pdb --outputdir $(outputdir)/1url"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1urz.pdb --outputdir $(outputdir)/1urz"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4ut6.pdb --outputdir $(outputdir)/4ut6"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4ut9.pdb --outputdir $(outputdir)/4ut9"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4uta.pdb --outputdir $(outputdir)/4uta"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4utb.pdb --outputdir $(outputdir)/4utb"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4utc.pdb --outputdir $(outputdir)/4utc"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1uum.pdb --outputdir $(outputdir)/1uum"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4uy3.pdb --outputdir $(outputdir)/4uy3"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4uym.pdb --outputdir $(outputdir)/4uym"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1uzg.pdb --outputdir $(outputdir)/1uzg"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2v1t.pdb --outputdir $(outputdir)/2v1t"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5v2s.pdb --outputdir $(outputdir)/5v2s"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1v3e.pdb --outputdir $(outputdir)/1v3e"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5v5z.pdb --outputdir $(outputdir)/5v5z"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3v66.pdb --outputdir $(outputdir)/3v66"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3v8d.pdb --outputdir $(outputdir)/3v8d"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5vbu.pdb --outputdir $(outputdir)/5vbu"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5vcc.pdb --outputdir $(outputdir)/5vcc"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5vcd.pdb --outputdir $(outputdir)/5vcd"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2ve3.pdb --outputdir $(outputdir)/2ve3"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2vj2.pdb --outputdir $(outputdir)/2vj2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3vma.pdb --outputdir $(outputdir)/3vma"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3vmt.pdb --outputdir $(outputdir)/3vmt"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1vpu.pdb --outputdir $(outputdir)/1vpu"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2vr0.pdb --outputdir $(outputdir)/2vr0"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2vya.pdb --outputdir $(outputdir)/2vya"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2w8h.pdb --outputdir $(outputdir)/2w8h"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2w8i.pdb --outputdir $(outputdir)/2w8i"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2wap.pdb --outputdir $(outputdir)/2wap"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1wck.pdb --outputdir $(outputdir)/1wck"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3wcm.pdb --outputdir $(outputdir)/3wcm"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5wda.pdb --outputdir $(outputdir)/5wda"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3wei.pdb --outputdir $(outputdir)/3wei"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3wej.pdb --outputdir $(outputdir)/3wej"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3wek.pdb --outputdir $(outputdir)/3wek"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4wgk.pdb --outputdir $(outputdir)/4wgk"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2wh5.pdb --outputdir $(outputdir)/2wh5"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4wol.pdb --outputdir $(outputdir)/4wol"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2wts.pdb --outputdir $(outputdir)/2wts"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2wv2.pdb --outputdir $(outputdir)/2wv2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2wx2.pdb --outputdir $(outputdir)/2wx2"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4wy4.pdb --outputdir $(outputdir)/4wy4"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2x2n.pdb --outputdir $(outputdir)/2x2n"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5x23.pdb --outputdir $(outputdir)/5x23"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5x24.pdb --outputdir $(outputdir)/5x24"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1x6z.pdb --outputdir $(outputdir)/1x6z"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1xeu.pdb --outputdir $(outputdir)/1xeu"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2xfo.pdb --outputdir $(outputdir)/2xfo"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2xfu.pdb --outputdir $(outputdir)/2xfu"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2xhe.pdb --outputdir $(outputdir)/2xhe"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1xse.pdb --outputdir $(outputdir)/1xse"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5xxi.pdb --outputdir $(outputdir)/5xxi"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1y8m.pdb --outputdir $(outputdir)/1y8m"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2y8p.pdb --outputdir $(outputdir)/2y8p"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4y8w.pdb --outputdir $(outputdir)/4y8w"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2yd0.pdb --outputdir $(outputdir)/2yd0"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2yew.pdb --outputdir $(outputdir)/2yew"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1yjd.pdb --outputdir $(outputdir)/1yjd"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5ylw.pdb --outputdir $(outputdir)/5ylw"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5ywo.pdb --outputdir $(outputdir)/5ywo"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4yyz.pdb --outputdir $(outputdir)/4yyz"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5z1l.pdb --outputdir $(outputdir)/5z1l"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2z5x.pdb --outputdir $(outputdir)/2z5x"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2z5y.pdb --outputdir $(outputdir)/2z5y"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4z7i.pdb --outputdir $(outputdir)/4z7i"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5zaz.pdb --outputdir $(outputdir)/5zaz"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4zdy.pdb --outputdir $(outputdir)/4zdy"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4ze3.pdb --outputdir $(outputdir)/4ze3"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4zgx.pdb --outputdir $(outputdir)/4zgx"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5zgg.pdb --outputdir $(outputdir)/5zgg"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/4zv8.pdb --outputdir $(outputdir)/4zv8"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/2zws.pdb --outputdir $(outputdir)/2zws"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3zwt.pdb --outputdir $(outputdir)/3zwt"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/3zyx.pdb --outputdir $(outputdir)/3zyx"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/1zza.pdb --outputdir $(outputdir)/1zza"
+queue
+arguments = "/exports/home/gloiseau/Downloads/pdbs_bitopic/5zzk.pdb --outputdir $(outputdir)/5zzk"
+queue

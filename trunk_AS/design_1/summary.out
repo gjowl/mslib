@@ -1,0 +1,18 @@
+08_08_2022
+
+PolyLeu Backbone:   LLLLLLLLLLLLLLLLLLILI
+Variable Positions: 000110110011011000000
+Rotamers Levels:    033012103201210230231
+Running Self Consistent Mean Field
+Initial Sequence:   LLLAGLYLLLGILIILLLILI
+Best Sequence:      LLLAGLYLLLGILIILLLILI
+Interface Sequence: L--AG-YL--GI-II--L--I
+Interface:          000110110011011000000
+Total Energy:       33.3369
+VDW:                -44.2019
+HBOND:              -57.4675
+
+End SelfPairManager Optimization: 0s
+
+End SelfPairManager Optimization: 0s
+Finding 10 sequences using membrane composition (State MonteCarlo)...

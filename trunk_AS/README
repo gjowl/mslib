@@ -1,0 +1,17 @@
+My makefile is setup a little differently than other MSL makefiles:
+
+I was getting tired of having to add in every single new program that I have into 
+my gloiseau.mk file, so I changed it. I wrote some code that runs through every file
+found within my gloiseau directory and searches for objects and programs. It identifies
+something as an object if there is both a header (h) and cpp file associated with it.
+Otherwise, it is identified as a program. One problem I run into with this method is that
+I have a lot of functions from different programs that are the same, and they cannot be
+properly made because those functions are already made for other programs. To mitigate this,
+I have a file called functions.h and functions.cpp, which are objects that contain all of 
+the generic functions that get used for multiple programs.
+
+I'm not sure if this method is helpful to others, but it's helpful to me because I no longer
+have to write file names individually into makefiles. There's likely a better way to do this,
+but with the limitations of MSL this was a solution I figured out that still allows my makefile
+to be integrated with the rest of the way that MSL runs and makes code (not having to change the 
+global makefile to get this to work in the process).

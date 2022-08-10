@@ -1,0 +1,16 @@
+#Submit file for geomSeqImager and other design code that I write will probably look similar
+batch_name   = CP8B1_relaxed_runs
+baseDir      = /exports/home/gloiseau
+
+executable   = /exports/home/gloiseau/mslib/trunk_AS/bin/readPDBAndCalcEnergy
+output       = $(baseDir)/$(pdbName).$(Process).out
+log          = $(baseDir)/$(pdbName).log
+error        = $(baseDir)/$(pdbName).$(Process).err
+scriptDir    = $(baseDir)/mslib/trunk_AS/myProgs/readPDBAndCalcEnergy
+
+#Info
+configFile = /exports/home/gloiseau/mslib/trunk_AS/config/readPDBAndCalcEnergy.config
+
+#Runs
+Arguments = "--config $(configFile) --pdbName $(pdbName) --pdbFile $(baseDir)/CP8B1/$(pdbFile)"
+queue pdbName,pdbFile from $(scriptDir)/CP81B.csv

@@ -1,0 +1,8 @@
+***STARTING GEOMETRY:***
+xShift: 9.2
+crossingAngle: 25
+axialRotation: 40
+zShift: 4
+
+Number of MCCycles: 5000
+PrevSequence	CurrSequence	Total	Dimer	Baseline	VDW	HBOND	EnergyDifferencew/prevSeq	PrevEnergy	CurrEnergy	PrevEntropy	CurrEntropy	CurrentTemp
