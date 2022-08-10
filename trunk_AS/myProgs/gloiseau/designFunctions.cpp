@@ -979,6 +979,8 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 	opt.allowed.push_back("MCStartTemp");
 	opt.allowed.push_back("MCEndTemp");
 	opt.allowed.push_back("MCCurve");
+	opt.allowed.push_back("MCConvergedSteps");
+	opt.allowed.push_back("MCConvergedE");
 
 	// Backbone Monte Carlo variables
 	opt.allowed.push_back("backboneMCCycles");
@@ -1262,6 +1264,19 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 		opt.warningFlag = true;
 		opt.MCCurve = 2;
 	}
+	opt.MCConvergedSteps = OP.getInt("MCConvergedSteps");
+	if (OP.fail()) {
+		opt.warningMessages += "MCConvergedSteps not specified using 10\n";
+		opt.warningFlag = true;
+		opt.MCConvergedSteps = 10;
+	}
+	// TODO: adding the below in here and designFunctions breaks with a std::logic_error?
+	//opt.MCConvergedE = OP.getDouble("MCConvergedE");
+	//if (OP.fail()) {
+	//	opt.warningMessages += "MCConvergedE not specified using 0.01\n";
+	//	opt.warningFlag = true;
+	//	opt.MCConvergedE = 0.01;
+	//}
 
 	// Backbone Monte Carlo variables
 	// TODO: change these defaults after testing
@@ -1303,7 +1318,7 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 		opt.warningFlag = true;
 		opt.backboneConvergedSteps = 10;
 	}
-	opt.backboneConvergedE = OP.getInt("backboneConvergedE");
+	opt.backboneConvergedE = OP.getDouble("backboneConvergedE");
 	if (OP.fail()) {
 		opt.warningMessages += "backboneConvergedE not specified using 0.01\n";
 		opt.warningFlag = true;

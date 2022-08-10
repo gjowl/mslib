@@ -142,7 +142,6 @@ int main(int argc, char *argv[]){
 	Options defaults;
 	//Add in some default options that can easily be changed here
 	Options opt = parseOptions(argc, argv, defaults);
-
 	if (opt.errorFlag) {
 		outputErrorMessage(opt);
 		exit(1);
@@ -279,10 +278,6 @@ int main(int argc, char *argv[]){
 	System sys;
 	prepareSystem(opt, sys, startGeom, interfacePolySeq);
 
-	// get chain A and B from the system
-	Chain & chainA = sys.getChain("A");
-	Chain & chainB = sys.getChain("B");
-
 	/******************************************************************************
 	 *                === CHECK TO SEE IF ALL ATOMS ARE BUILT ===
 	 ******************************************************************************/
@@ -340,10 +335,6 @@ int main(int argc, char *argv[]){
 	double bestEnergy = sys.calcEnergy();
 	
 	// TODO: write in a way to set this to input sequence
-	// loop for new functino with threads begins here
-
-	// TODO: add in monte carlo params here to repeat the below function for multiple positions
-	// Setup time variables
 	//time_t startTimeSMC, endTimeSMC;
 	//double diffTimeSMC;
 	//time(&startTimeSMC);
@@ -1415,7 +1406,8 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	time(&startTimeSMC);
 
 	// Setup MonteCarloManager
-	MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, 10);
+	MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects, _opt.MCConvergedSteps, 0.01);
+	//MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
 	MC.setRandomNumberGenerator(&_RNG);
 
 	// Start from most probable state
@@ -1493,7 +1485,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		}
 		// get the sequence entropy probability for the current best sequence
 		double bestSeqProb = getSequenceEntropyProbability(_opt, bestSeq, _sequenceEntropyMap);
-		map<string,vector<uint>> sequenceStateMap;	
+		map<string,vector<uint>> sequenceStateMap;
 		map<string,map<string,double>> sequenceEnergyMap = mutateRandomPosition(_sys, _opt, _spm, _RNG, bestSeq, prevStateVec, bestEnergy, bestSeqProb, sequenceStateMap, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
 
 		// get the best sequence and energy for the current position
@@ -1530,41 +1522,22 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			cout << "CurrEntropy       " << sequenceEnergyMap[bestSeq]["currEntropy"] << endl;
 			cout << "PrevEntropy       " << sequenceEnergyMap[bestSeq]["prevEntropy"] << endl;
 			sequenceEnergyMapBest[bestSeq] = sequenceEnergyMap[bestSeq];
-			//TODO: make these a separate function or put in comments  for them
-			//bestEnergy = currStateEnergy;
-			//MC.setEner(currEnergyTotal);
-			//prevStateSEProb = currStateSEProb;
-			//string prevStateSeq1 = prevStateSeq;
-			//prevStateSeq = currStateSeq;
-			//prevStateVec = currStateVec;
-			//_sys.setActiveRotamers(currStateVec);
-	
-			//outputEnergiesByTerm(_spm, currStateVec, stateMCEnergies, _opt.energyTermList, "Dimer", true);
-			//double EnergyBeforeLocalMC = currStateEnergy-(_spm.getStateEnergy(currStateVec, "BASELINE")+_spm.getStateEnergy(currStateVec, "BASELINE_PAIR"));
-			//stateMCEnergies["EnergyBeforeLocalMC"] = EnergyBeforeLocalMC;
-			//stateMCEnergies["Dimer"] = EnergyBeforeLocalMC;
-			//stateMCEnergies["Baseline"] = _spm.getStateEnergy(currStateVec, "BASELINE")+_spm.getStateEnergy(currStateVec, "BASELINE_PAIR");
-			//stateMCEnergies["EnergyBeforeLocalMCw/seqEntropy"] = bestEnergyTotal-currEnergyTotal;
-			//stateMCEnergies["SequenceProbability"] = currStateSEProb;
-			//stateEnergyMap[currStateVec] = stateMCEnergies;
-
-			//TODO: change this so I just save energies in the same place and easily can get vdw, hbond, etc. for each saved sequence
-			//saveSequence(_opt, energyVector, energyStateVec, currStateSeq, currStateVec, currStateEnergy);
-			//if (_opt.weight_seqEntropy == 0){
-			//	saveSequence(_opt, energyVector, energyStateVec, currSeq, currStateVec, currVDW);
-			//} else {
-			//	saveSequence(_opt, _RNG, stateEnergyMap, energyVector, energyStateVec, currSeq, currStateVec, bestEnergy, _out);
-			//}
 			double prevEnergy = bestEnergyTotal;
 
-			//if (_opt.energyLandscape){
-			//	map<string,double> energyMap = stateEnergyMap.at(currStateVec);
-			//	lout << prevStateSeq << "\t" << currSeq << "\t";
-			//	for (uint j=0; j<_opt.energyLandscapeTerms.size(); j++){
-			//		lout << energyMap.at(_opt.energyLandscapeTerms[j]) << "\t";
-			//	}
-			//	lout << bestEnergyTotal << "\t" << currEnergyTotal << "\t" << prevStateEntropy << "\t" << currStateEntropy << "\t" << MC.getCurrentT() << endl;
-			//}
+			//TODO: maybe set up something like the following:
+			// - save sequences for x cycles
+			// - do a backbone repack for the best sequence
+			// - recalculate the energy for all sequences at this new geometry
+			// - continue on to the next cycle with the current sequence
+			// repeat for x times 10 cycles
+			if (_opt.energyLandscape){
+				map<string,double> energyMap = sequenceEnergyMap.at(currSeq);
+				lout << prevStateSeq << "\t" << currSeq << "\t";
+				for (uint j=0; j<_opt.energyLandscapeTerms.size(); j++){
+					lout << energyMap.at(_opt.energyLandscapeTerms[j]) << "\t";
+				}
+				lout << bestEnergyTotal << "\t" << currEnergyTotal << "\t" << prevStateEntropy << "\t" << currStateEntropy << "\t" << MC.getCurrentT() << endl;
+			}
 			if (_opt.verbose){
 				cout << "Cycle#" << cycleCounter << " State accepted, Sequence: " << currSeq << "; PrevE=  " << prevEnergy << " : CurrE= " << currEnergyTotal;
 				cout << "; CurrTemp: " << MC.getCurrentT() << endl;
@@ -1572,9 +1545,9 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		cycleCounter++;
 		}
 		//Reset the MC to run 100 more cycles to
-		if (MC.getComplete() == true && MC.getCurrentT() < 546.4){
-			MC.reset(3649, 3649, 500, MonteCarloManager::EXPONENTIAL, 10);//Approximately 50% likely to accept within 5kcal, and 25% likely to accept within 10kcal
-		}
+		//if (MC.getComplete() == true && MC.getCurrentT() < 546.4){
+		//	MC.reset(3649, 3649, 500, MonteCarloManager::EXPONENTIAL, 10);//Approximately 50% likely to accept within 5kcal, and 25% likely to accept within 10kcal
+		//}
 	}
 	time(&endTimeSMC);
 	diffTimeSMC = difftime (endTimeSMC, startTimeSMC);
@@ -1587,7 +1560,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	getDimerSasaScores(_sys, _sequenceStatePair, _sequenceEnergyMap);\
 	uint i=0;
 	for (auto &seq: sequenceEnergyMapBest){
-		cout << "Best Sequence #" << i << ": " << seq.first << "; Energy: " << seq.second["Dimer"] << endl;
+		_out << "Best Sequence #" << i << ": " << seq.first << "; Energy: " << seq.second["Dimer"] << endl;
 		//cout << "Geometry Below" << endl;
 		//cout << "xShift:        " << opt.xShift << endl;
 		//cout << "crossingAngle: " << opt.crossingAngle << endl;
@@ -1597,6 +1570,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	}
 	cout << "End sequence optimization by membrane composition: " << diffTimeSMC << "s" << endl << endl;
 	_out << "End sequence optimization by membrane composition: " << diffTimeSMC << "s" << endl << endl;
+	_out << "Optimization end at Temp: " << MC.getCurrentT() << endl;
 }
 
 void searchForBestSequences(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs, vector<uint> &_bestState,

@@ -107,6 +107,9 @@ struct Options{
 	double MCStartTemp;
 	double MCEndTemp;
 	int MCCurve;
+	int MCConvergedSteps;
+	// TODO: adding the below in here and designFunctions breaks with a std::logic_error?
+	//double MCConvergedE;
 
 	// Backbone Monte Carlo parameters
 	int backboneMCCycles;
