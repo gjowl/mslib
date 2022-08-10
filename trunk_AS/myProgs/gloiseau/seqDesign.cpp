@@ -1,11 +1,3 @@
-/**
- g @Author: Gilbert Loiseau
- * @Date:   2022/02/11
- * @Email:  gjowl04@gmail.com
- * @Filename: seqDesign.cpp
- * @Last modified by:   Gilbert Loiseau
- * @Last modified time: 2022/02/22
- */
 #include <iostream>
 #include <sstream>
 #include <iterator>
@@ -69,8 +61,9 @@ double diffTime, spmTime;
 
 // Functions
 map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
- string _bestSeq, vector<uint> _bestState, double _bestEnergy, double _bestSeqProb, map<string,double> _sequenceEntropyMap,
- vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList, vector<int> _rotamerSampling);
+ string _bestSeq, vector<uint> _bestState, double _bestEnergy, double _bestSeqProb, map<string,vector<uint>> &_sequenceStateMap,
+ map<string,double> _sequenceEntropyMap, vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList,
+ vector<int> _rotamerSampling);
 string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap);
 void buildBaselines(System &_sys, Options &_opt);
 void getBestSequence(System &_startGeom, Options &_opt, RandomNumberGenerator &_RNG,
@@ -124,21 +117,6 @@ double computeMonomerEnergy(System & _sys, Options & _opt, RandomNumberGenerator
 void usage();
 void help(Options defaults);
 void outputErrorMessage(Options &_opt);
-
-void foo(int i){
-	cout << "foo " << i << endl;
-	this_thread::sleep_for(std::chrono::seconds(1));
-}
-static bool finished = false;
-
-void DoWork(int x)
-{
-    while (!finished)
-    {
-        cout << x << endl;
-        this_thread::sleep_for(chrono::milliseconds(1000));
-    }
-}
 
 /******************************************
  *
@@ -544,8 +522,9 @@ int main(int argc, char *argv[]){
 //	- make a backbone move (or x number of moves) for the best sequence
 //	- search for best mutant for a random position, and repeat.
 map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
- string _bestSeq, vector<uint> _bestState, double _bestEnergy, double _bestSeqProb, map<string,double> _sequenceEntropyMap,
- vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList, vector<int> _rotamerSampling){
+ string _bestSeq, vector<uint> _bestState, double _bestEnergy, double _bestSeqProb, map<string,vector<uint>> &_sequenceStateMap,
+ map<string,double> _sequenceEntropyMap, vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList,
+ vector<int> _rotamerSampling){
 	// Get a random integer to pick through the variable positions
 	int rand = _RNG.getRandomInt(0, _interfacialPositionsList.size()-1);
 	int interfacePosA = _interfacialPositionsList[rand];
@@ -579,6 +558,7 @@ map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt,
 			vector<vector<bool>> mask = getActiveMask(_sys);
 			_spm.runGreedyOptimizer(_opt.greedyCycles, mask);
 			vector<uint> currVec = _spm.getMinStates()[0];
+			_sequenceStateMap[currSeq] = currVec;
 			// start threading and calculating energies for each identity
 			threads.push_back(thread{energyFunction2, ref(_opt), ref(_spm), _bestSeq, _bestState, _bestEnergy, _bestSeqProb, currSeq, currVec, ref(_rotamerSampling), ref(_allInterfacialPositionsList), 
 			 ref(sequenceEnergyMap), ref(_sequenceEntropyMap)});
@@ -1444,7 +1424,6 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 
 	// State variable setup
 	vector<unsigned int> prevStateVec = _bestState;
-	vector<unsigned int> currStateVec = _bestState;
 	MC.setEner(bestEnergy);
 
 	// initialize map for accepting energies
@@ -1514,8 +1493,8 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		}
 		// get the sequence entropy probability for the current best sequence
 		double bestSeqProb = getSequenceEntropyProbability(_opt, bestSeq, _sequenceEntropyMap);
-
-		map<string,map<string,double>> sequenceEnergyMap = mutateRandomPosition(_sys, _opt, _spm, _RNG, bestSeq, currStateVec, bestEnergy, bestSeqProb, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
+		map<string,vector<uint>> sequenceStateMap;	
+		map<string,map<string,double>> sequenceEnergyMap = mutateRandomPosition(_sys, _opt, _spm, _RNG, bestSeq, prevStateVec, bestEnergy, bestSeqProb, sequenceStateMap, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
 
 		// get the best sequence and energy for the current position
 		cout << "Finding best sequence for cycle #" << cycleCounter << ": " << endl;
@@ -1523,20 +1502,21 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		
 		// TODO: add in check step to see if sequence is already found in the best sequence list and skip if so
 		double currEnergyTotal = sequenceEnergyMap[currSeq]["currEnergyTotal"];
-		double bestEnergyTotal = sequenceEnergyMap[currSeq]["bestEnergyTotal"];//comparison for energy saved by this sequence; I think I should reset this map every run!
-		cout << "Best Ener: " << currSeq << ": " << currEnergyTotal << endl;
-		cout << currSeq << ": " << bestEnergyTotal << endl;
+		double bestEnergyTotal = sequenceEnergyMap[currSeq]["bestEnergyTotal"];
+		vector<uint> currStateVec = sequenceStateMap[currSeq];
+		cout << "Prev Seq: " << bestSeq << ": " << bestEnergyTotal << endl;
+		cout << "Curr Seq: " << currSeq << ": " << currEnergyTotal << endl;
 		MC.setEner(bestEnergyTotal);
-
 		// MC accept and reject conditions
 		if (!MC.accept(currEnergyTotal)){
 			_sys.setActiveRotamers(prevStateVec);
-			currStateVec = prevStateVec;
 
 			if (_opt.verbose){
 				cout << "State not accepted, E= " << currEnergyTotal << "; PrevE= " << bestEnergyTotal << endl;
 			}
 		} else {
+			_sys.setActiveRotamers(currStateVec);
+			prevStateVec = currStateVec;
 			bestSeq = currSeq;
 			bestEnergy = sequenceEnergyMap[bestSeq]["Dimer"];
 			cout << "Best sequence: " << bestSeq << endl;
