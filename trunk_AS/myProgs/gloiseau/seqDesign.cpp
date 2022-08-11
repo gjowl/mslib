@@ -79,16 +79,16 @@ void energyFunction(System &_startGeom, Options &_opt, SelfPairManager &_spm,  P
 void searchForBestSequences(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs, vector<uint> &_bestState,
  map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> _sequenceEntropyMap, vector<pair<string,vector<uint>>> &_sequenceStatePair, 
  vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, ofstream &_out, ofstream &_err);
-void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs, vector<uint> &_bestState,
- map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> _sequenceEntropyMap, vector<pair<string,vector<uint>>> &_sequenceStatePair, 
+void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs,
+ vector<uint> &_bestState, map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> _sequenceEntropyMap, 
  vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, ofstream &_out, ofstream &_err);
 vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, string _rotamerSamplingString, string _variablePositionString, 
  vector<string> _seqs, map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> _sequenceEntropyMap, vector<pair<string,vector<uint>>> &_sequenceStatePair, ofstream &_out);
 void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfaceSeq, string _variablePosString, double _spmTime, ofstream &_out);
 vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
 vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
-std::vector<pair <int, double> > calculateResidueBurial (System &_sys) ;
-std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &_opt, string _seq) ;
+std::vector<pair <int, double> > calculateResidueBurial (System &_sys);
+std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &_opt, string _seq);
 //TODO: change all of the original interfacePositions to variablePositions and the allInterfacePositions to interfacePositions
 void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS);
 PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom, PolymerSequence _PS, string &_rotamerLevels,
@@ -463,7 +463,7 @@ int main(int argc, char *argv[]){
 		unlinkBestState(opt, bestState, rotamerSamplingPerPosition, opt.backboneLength);
 	}
 	stateMCUnlinked(sys, opt, interfacePolySeq, sequenceEnergyMapBest, sequenceEntropyMap, bestState, seqs, allSeqs,
-			sequenceStatePair, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, sout, err);
+		sequenceStatePair, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, sout, err);
 
 	///******************************************************************************
 	// *            === CALCULATE MONOMER ENERGIES OF EACH SEQUENCE ===
@@ -573,9 +573,7 @@ string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap){
 			i++;
 		} else {
 			if (seq.second["energyComparison"] > currEnergyComparison){
-				// TODO: add in another check to see if the vdw is better here
 				string prevSeq = currSeq;
-				double prevEner = currEnergyComparison;
 				currSeq = seq.first;
 				currEnergyComparison = seq.second["energyComparison"];
 			}
@@ -1049,7 +1047,7 @@ vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNum
 	// run and find a sequence using the chosen parameters (MCOptions, SCMF, DEE, etc.)
 	spm.runOptimizer();
 	time(&endTime);
-	diffTime = difftime (startTime, endTime);
+	diffTime = difftime (endTime, startTime);
 
 	// vector for the SCMF state after the biased monte carlo
 	vector<unsigned int> bestState = spm.getBestSCMFBiasedMCState();
@@ -1396,16 +1394,16 @@ vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNu
 	}
 	spm.calculateEnergies();
 	time(&endTime);
-	diffTime = difftime (startTime, endTime);
+	diffTime = difftime (endTime, startTime);
 	_out << "Time to calculate energies: " << diffTime << endl;
 
-	searchForBestSequencesUsingThreads(sys, _opt, spm, _RNG, _allSeqs, _bestState, _sequenceEnergyMap, _sequenceEntropyMap, _sequenceStatePair, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling, _out, _err);
+	searchForBestSequencesUsingThreads(sys, _opt, spm, _RNG, _allSeqs, _bestState, _sequenceEnergyMap, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling, _out, _err);
 	
-	_seqs = _allSeqs;
+	//_seqs = _allSeqs;
 }
 
-void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs, vector<uint> &_bestState,
- map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> _sequenceEntropyMap, vector<pair<string,vector<uint>>> &_sequenceStatePair, 
+void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs,
+ vector<uint> &_bestState, map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> _sequenceEntropyMap, 
  vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, ofstream &_out, ofstream &_err){
 	// Setup time variables
 	time_t startTimeSMC, endTimeSMC;
@@ -1559,9 +1557,9 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	lout << "Time: " << diffTimeSMC << "s" << endl;
 	lout.close();
 	_allSeqs.clear();
-	addSequencesToVector(energyVector, _allSeqs);
-	convertStateMapToSequenceMap(_sys, energyStateVec, stateEnergyMap, _sequenceEnergyMap, _sequenceStatePair, _out);
-	getDimerSasaScores(_sys, _sequenceStatePair, _sequenceEnergyMap);\
+	//addSequencesToVector(energyVector, _allSeqs);
+	//convertStateMapToSequenceMap(_sys, energyStateVec, stateEnergyMap, _sequenceEnergyMap, _sequenceStatePair, _out);
+	//getDimerSasaScores(_sys, _sequenceStatePair, _sequenceEnergyMap);
 	uint i=0;
 	for (auto &seq: sequenceEnergyMapBest){
 		_out << "Best Sequence #" << i << ": " << seq.first << "; Energy: " << seq.second["Dimer"] << endl;
@@ -1572,6 +1570,8 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		//cout << "zShift:        " << opt.zShift << endl << endl;
 		i++;
 	}
+	//TODO: take the final sequence and do a backbone repack to get the final energy
+	// - then potentially repeat this part: depending on how long the actual energy calculation takes, determine how many times seems reasonable
 	cout << "End sequence optimization by membrane composition: " << diffTimeSMC << "s" << endl << endl;
 	_out << "End sequence optimization by membrane composition: " << diffTimeSMC << "s" << endl << endl;
 	_out << "Optimization end at Temp: " << MC.getCurrentT() << endl;
@@ -2083,7 +2083,6 @@ void help(Options defaults) {
 
 void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, double _savedXShift, System &_helicalAxis, AtomPointerVector &_axisA,
  AtomPointerVector &_axisB, vector<int> _rotamerSampling, Transforms &_trans, RandomNumberGenerator &_RNG, ofstream &_out){
-	
 
 	string polySeq = convertToPolymerSequenceNeutralPatch(_sequence, _opt.thread);
 	PolymerSequence PS(polySeq);

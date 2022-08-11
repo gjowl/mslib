@@ -33,7 +33,6 @@ You should have received a copy of the GNU Lesser General Public
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <thread>
 
 #include "DeadEndElimination.h"
 #include "Enumerator.h"
@@ -143,7 +142,6 @@ class SelfPairManager {
 		void findVariablePositions();
 		void subdivideInteractions();
 
-		
 		//double computePairEbyTerm(unsigned pos1, unsigned rot1, unsigned pos2, unsigned rot2, std::string _term);
 		int getNumPositions();
 		int getNumRotamers(int _index);
@@ -227,10 +225,6 @@ class SelfPairManager {
 		int selectRandomStateAtPosition(int _position,vector<unsigned int>& _currentState) const ;
 		void getRandomState(vector<unsigned int>& _currentState ) ;
 
-		// GJL 2022-8-11: functions added in to make energy calculation faster
-		//void calculateFixedEnergiesThreadFunction(map<string, vector<Interaction*>> &k);
-		void threadGetEnergy(Interaction* l, double &E);
-		
 		// DEE Options
 		double DEEenergyOffset;
 		bool DEEdoSimpleGoldsteinSingle;
