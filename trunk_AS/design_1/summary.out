@@ -1,5 +1,42 @@
-08_10_2022
+08_11_2022
 
 PolyLeu Backbone:   LLLLLLLLLLLLLLLLLLILI
 Variable Positions: 000110110011011000000
 Rotamers Levels:    033012103201210230231
+Running Self Consistent Mean Field
+Initial Sequence:   LLLTTLTTLLGTLTTLLLILI
+Best Sequence:      LLLTTLTTLLGTLTTLLLILI
+Interface Sequence: L--TT-TT--GT-TT--L--I
+Interface:          000110110011011000000
+Total Energy:       -45.617
+VDW:                -49.2733
+HBOND:              -152.834
+
+End SelfPairManager Optimization: 0s
+
+End SelfPairManager Optimization: 0s
+Finding 10 sequences using membrane composition (State MonteCarlo)...
+
+Accepted Design Sequences
+Sequence               Energy 
+Best Sequence #0: LLLTTLTTLLGTLTTLLLILI; Energy: -47.9224
+Best Sequence #1: LLLTTLTTLLGTLTVLLLILI; Energy: -44.9636
+Best Sequence #2: LLLTTLTTLLGTLVILLLILI; Energy: -44.026
+Best Sequence #3: LLLTTLTTLLGTLVVLLLILI; Energy: -42.4543
+Best Sequence #4: LLLTTLTTLLGVLTTLLLILI; Energy: -44.5207
+Best Sequence #5: LLLTVLTTLLGTLTTLLLILI; Energy: -44.1748
+Best Sequence #6: LLLWTLSYLLGTLVTLLLILI; Energy: -38.4643
+Best Sequence #7: LLLWTLSYLLGVLVTLLLILI; Energy: -34.9124
+Best Sequence #8: LLLWTLTTLLGTLTTLLLILI; Energy: -48.9521
+Best Sequence #9: LLLWTLTTLLGTLVILLLILI; Energy: -45.0559
+Best Sequence #10: LLLWTLTTLLGTLVTLLLILI; Energy: -45.9777
+Best Sequence #11: LLLWTLTTLLGVLTTLLLILI; Energy: -45.5401
+Best Sequence #12: LLLWTLTYLLGTLTTLLLILI; Energy: -47.4089
+Best Sequence #13: LLLWTLTYLLGTLTVLLLILI; Energy: -44.4408
+Best Sequence #14: LLLWTLTYLLGTLVTLLLILI; Energy: -44.4272
+Best Sequence #15: LLLWVLTTLLGTLTTLLLILI; Energy: -45.4886
+Best Sequence #16: LLLWVLTYLLGTLTTLLLILI; Energy: -44.8508
+Best Sequence #17: LLLWVLTYLLGTLVTLLLILI; Energy: -41.869
+End sequence optimization by membrane composition: 34s
+
+Optimization end at Temp: 942.693

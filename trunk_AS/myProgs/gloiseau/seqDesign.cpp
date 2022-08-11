@@ -1058,7 +1058,7 @@ vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNum
 	string interfaceSeq = getInterfaceSequence(_opt, _rotamerSamplingString, startSequence);
 	
 	// output spm run optimizer information
-	spmRunOptimizerOutput(spm, _sys, interfaceSeq, _variablePositionString, spmTime, _out);
+	spmRunOptimizerOutput(spm, _sys, interfaceSeq, _variablePositionString, diffTime, _out);
 	
 	//Add energies for initial sequences into the sequenceEnergyMap
 	_seqs.insert(_seqs.begin(), startSequence);
@@ -1096,7 +1096,6 @@ void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfac
 	_out << "Total Energy:       " << bestEnergy << endl;
 	_out << "VDW:                " << vdwEnergy << endl;
 	_out << "HBOND:              " << hbondEnergy << endl;
-	_out << endl << "End SelfPairManager Optimization: " << _spmTime << "s" << endl;
 	_out << endl << "End SelfPairManager Optimization: " << _spmTime << "s" << endl;
 }
 
@@ -1378,6 +1377,11 @@ vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNu
 	 ******************************************************************************/
 	sys.buildAllAtoms(); //currently unsure if this is needed
 
+	// Setup time variables
+	time_t startTime, endTime;
+	double diffTime;
+	time(&startTime);
+
 	// Optimize Initial Starting Position (using Baseline to get back to original result)
 	SelfPairManager spm;
 	spm.seed(_RNG.getSeed());
@@ -1391,6 +1395,9 @@ vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNu
 		cout << "Calculating self and pair energy terms..." << endl;
 	}
 	spm.calculateEnergies();
+	time(&endTime);
+	diffTime = difftime (startTime, endTime);
+	_out << "Time to calculate energies: " << diffTime << endl;
 
 	searchForBestSequencesUsingThreads(sys, _opt, spm, _RNG, _allSeqs, _bestState, _sequenceEnergyMap, _sequenceEntropyMap, _sequenceStatePair, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling, _out, _err);
 	
@@ -1486,7 +1493,8 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		// get the sequence entropy probability for the current best sequence
 		double bestSeqProb = getSequenceEntropyProbability(_opt, bestSeq, _sequenceEntropyMap);
 		map<string,vector<uint>> sequenceStateMap;
-		map<string,map<string,double>> sequenceEnergyMap = mutateRandomPosition(_sys, _opt, _spm, _RNG, bestSeq, prevStateVec, bestEnergy, bestSeqProb, sequenceStateMap, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
+		map<string,map<string,double>> sequenceEnergyMap = mutateRandomPosition(_sys, _opt, _spm, _RNG, bestSeq, prevStateVec, bestEnergy, bestSeqProb, 
+		 sequenceStateMap, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
 
 		// get the best sequence and energy for the current position
 		cout << "Finding best sequence for cycle #" << cycleCounter << ": " << endl;
@@ -1513,11 +1521,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			bestEnergy = sequenceEnergyMap[bestSeq]["Dimer"];
 			cout << "Best sequence: " << bestSeq << endl;
 			cout << "Best sequence Info:" << endl;
-			//cout << "Curr Energy Total      " << sequenceEnergyMap[bestSeq]["currEnergyTotal"] << endl;
-			//cout << "Best Energy Total      " << sequenceEnergyMap[bestSeq]["bestEnergyTotal"] << endl;
 			cout << "Baseline          " << sequenceEnergyMap[bestSeq]["Baseline"] << endl;
-			//cout << "energy diff       " << sequenceEnergyMap[bestSeq]["EnergyBeforeLocalMCw/seqEntropy"] << endl;
-			//cout << "Sequence Entropy  " << sequenceEnergyMap[bestSeq]["SequenceProbability"] << endl;
 			cout << "Entropy           " << sequenceEnergyMap[bestSeq]["entropyDiff"] << endl;
 			cout << "CurrEntropy       " << sequenceEnergyMap[bestSeq]["currEntropy"] << endl;
 			cout << "PrevEntropy       " << sequenceEnergyMap[bestSeq]["prevEntropy"] << endl;
@@ -1531,10 +1535,10 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			// - continue on to the next cycle with the current sequence
 			// repeat for x times 10 cycles
 			if (_opt.energyLandscape){
-				map<string,double> energyMap = sequenceEnergyMap.at(currSeq);
+				map<string,double> energyMap = sequenceEnergyMap[currSeq];
 				lout << prevStateSeq << "\t" << currSeq << "\t";
 				for (uint j=0; j<_opt.energyLandscapeTerms.size(); j++){
-					lout << energyMap.at(_opt.energyLandscapeTerms[j]) << "\t";
+					lout << energyMap[_opt.energyLandscapeTerms[j]] << "\t";
 				}
 				lout << bestEnergyTotal << "\t" << currEnergyTotal << "\t" << prevStateEntropy << "\t" << currStateEntropy << "\t" << MC.getCurrentT() << endl;
 			}
