@@ -239,7 +239,7 @@ int main(int argc, char *argv[]){
 	Transforms trans;
 	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
 	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
-	
+	cout << 1 << endl;	
 	/******************************************************************************
 	 *         === COPY BACKBONE COORDINATES AND TRANSFORM TO GEOMETRY ===
 	 ******************************************************************************/
@@ -250,6 +250,7 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *       === IDENTIFY INTERFACIAL POSITIONS AND GET ROTAMER ASSIGNMENTS ===
 	 ******************************************************************************/
+	cout << 2 << endl;	
 	// Variables to output from defineInterfaceAndRotamerSampling function
 	string rotamerLevels;
 	string variablePositionString;
@@ -270,6 +271,7 @@ int main(int argc, char *argv[]){
 	PolymerSequence interfacePolySeq = getInterfacialPolymerSequence(opt, startGeom, PS, rotamerLevels, variablePositionString, rotamerSamplingString,
 	 linkedPositions, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, sout);
 
+	cout << 3 << endl;	
 	//TODO: output a polymer sequence above since the polyseq changes
 	/******************************************************************************
 	 *  === DECLARE SYSTEM FOR POLYLEU WITH ALTERNATE IDENTITIES AT INTERFACE ===
@@ -278,6 +280,7 @@ int main(int argc, char *argv[]){
 	System sys;
 	prepareSystem(opt, sys, startGeom, interfacePolySeq);
 
+	cout << 4 << endl;	
 	/******************************************************************************
 	 *                === CHECK TO SEE IF ALL ATOMS ARE BUILT ===
 	 ******************************************************************************/
@@ -1780,6 +1783,7 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
  vector<uint> &_interfacePositions, vector<int> &_rotamerSamplingPerPosition, ofstream &_out){
 	// Declare system
 	System sys;
+	cout << _opt.topFile << endl;
 	CharmmSystemBuilder CSB(sys,_opt.topFile,_opt.parFile);
 	CSB.setBuildTerm("CHARMM_ELEC", false);
 	CSB.setBuildTerm("CHARMM_ANGL", false);
@@ -1797,7 +1801,7 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 	} else {
 		//fout << "CharmmSystem built for sequence" << endl;
 	}
-
+cout << _opt.parFile << endl;
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
 	 ******************************************************************************/
