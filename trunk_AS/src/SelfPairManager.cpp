@@ -505,43 +505,14 @@ void SelfPairManager::recalculateNonSavedEnergies(vector<vector<vector<vector<bo
 	calculateSelfEnergies();
 	recalculateNonSavedPairEnergies(savedPairEnergies);
 }
-
-//void SelfPairManager::calculateFixedEnergiesThreadFunction(map<string, vector<Interaction*>> &k){
-//	if (!pESet->isTermActive(k->first)) {
-//		continue;
-//	}
-//	if(saveEbyTerm) {
-//		fixEbyTerm[k->first] = 0.0;
-//		fixCountByTerm[k->first] = k->second.size();
-//	}
-//	if(saveInteractionCount) {
-//		fixCount += k->second.size();
-//	}
-//	double E = 0.0;
-//	for (vector<Interaction*>::iterator l=k->second.begin(); l!= k->second.end(); l++) {
-//		E += (*l)->getEnergy();
-//	}
-//	E *= weights[k->first];
-//	fixE += E;
-//	if(saveEbyTerm) {
-//		fixEbyTerm[k->first] += E; 
-//	}
-//
-//}
-
-void SelfPairManager::threadGetEnergy(Interaction* l, double &E){
-	E += l->getEnergy();
-}
-
 void SelfPairManager::calculateFixedEnergies() {
 	fixE = 0.0;
 	fixEbyTerm.clear();
 	fixCount = 0;
 	fixCountByTerm.clear();
 	// fixed energy
-	vector<thread> threads;
+
 	for (map<string, vector<Interaction*> >::iterator k=subdividedInteractions[0][0][0][0].begin(); k!= subdividedInteractions[0][0][0][0].end(); k++) {
-		//threads.push_back(thread(calculateFixedEnergiesThreadFunction, ref(k));
 		if (!pESet->isTermActive(k->first)) {
 			continue;
 		}
@@ -554,24 +525,16 @@ void SelfPairManager::calculateFixedEnergies() {
 		}
 		double E = 0.0;
 		for (vector<Interaction*>::iterator l=k->second.begin(); l!= k->second.end(); l++) {
-			//threadGetEnergy(*l, E);
-			// thread the above function
-			threads.push_back(thread(threadGetEnergy, *l, ref(E)));
-			//threads.push_back(thread(threadGetEnergy, &l, ref(E)));
-			//E += (*l)->getEnergy();
-		}
-		for(auto &t : threads) {
-			t.join();
+			E += (*l)->getEnergy();
 		}
 		E *= weights[k->first];
 		fixE += E;
 		if(saveEbyTerm) {
 			fixEbyTerm[k->first] += E; 
 		}
-	}
-	
-}
 
+	}
+}
 void SelfPairManager::calculateSelfEnergies() {
 	selfE.clear();
 	selfEbyTerm.clear();
@@ -660,18 +623,13 @@ void SelfPairManager::calculateSelfEnergies() {
 					}
 					count += k->second.size();
 					double E = 0.0;
-					vector<thread> threads;
 					for (vector<Interaction*>::iterator l=k->second.begin(); l!= k->second.end(); l++) {
-						//threads.push_back(thread(threadGetEnergy, l, E));
-						//E += (*l)->getEnergy();
+						E += (*l)->getEnergy();
 						//double e = (*l)->getEnergy();
 						//energy += e;
 						//if(saveEbyTerm) {
 						//	energyByTerm[k->first] += e; 
 						//}
-					}
-					for(auto &t : threads) {
-						t.join();
 					}
 					E *= weights[k->first];
 					energy += E;
@@ -694,18 +652,13 @@ void SelfPairManager::calculateSelfEnergies() {
 						count += k->second.size();
 					}
 					double E = 0.0;
-					vector<thread> threads;
 					for (vector<Interaction*>::iterator l=k->second.begin(); l!= k->second.end(); l++) {
-						//threads.push_back(thread(threadGetEnergy, l, E));
-						//E += (*l)->getEnergy();
+						E += (*l)->getEnergy();
 						//double e = (*l)->getEnergy();
 						//energy += e;
 						//if(saveEbyTerm) {
 						//	energyByTerm[k->first] += e; 
 						//}
-					}
-					for(auto &t : threads) {
-						t.join();
 					}
 					E *= weights[k->first];
 					energy += E;
@@ -811,13 +764,9 @@ void SelfPairManager::recalculateNonSavedPairEnergies(vector<vector<vector<vecto
 
 									if(!onTheFly) {
 										double E = 0.0;
-										vector<thread> threads;
+
 										for (vector<Interaction*>::iterator l=k->second.begin(); l!= k->second.end(); l++) {
-											//threads.push_back(thread(threadGetEnergy, l, E));
-											//E += (*l)->getEnergy();
-										}
-										for (auto &t: threads){
-											t.join();
+											E += (*l)->getEnergy();
 										}
 										E *= weights[k->first];
 										pairE[i-1][rotI][j-1][rotJ] += E;
@@ -854,8 +803,6 @@ void SelfPairManager::recalculateNonSavedPairEnergies(vector<vector<vector<vecto
 	*/
 
 }
-
-
 
 void SelfPairManager::calculatePairEnergies() {
 
@@ -1005,13 +952,8 @@ void SelfPairManager::calculatePairEnergies() {
 
 									if(!onTheFly) {
 										double E = 0.0;
-										vector<thread> threads;
 										for (vector<Interaction*>::iterator l=k->second.begin(); l!= k->second.end(); l++) {
-											//threads.push_back(thread(threadGetEnergy, l, E));
-											//E += (*l)->getEnergy();
-										}
-										for(auto &t: threads) {
-											t.join();
+											E += (*l)->getEnergy();
 										}
 										E *= weights[k->first];
 										pairE[i-1][rotI][j-1][rotJ] += E;

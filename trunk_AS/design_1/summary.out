@@ -1,15 +1,1 @@
-08_11_2022
-
-PolyLeu Backbone:   LLLLLLLLLLLLLLLLLLILI
-Variable Positions: 000110110011011000000
-Rotamers Levels:    033012103201210230231
-Running Self Consistent Mean Field
-Initial Sequence:   LLLTTLTTLLGTLTTLLLILI
-Best Sequence:      LLLTTLTTLLGTLTTLLLILI
-Interface Sequence: L--TT-TT--GT-TT--L--I
-Interface:          000110110011011000000
-Total Energy:       -45.617
-VDW:                -49.2733
-HBOND:              -152.834
-
-End SelfPairManager Optimization: 1682s
+08_12_2022
