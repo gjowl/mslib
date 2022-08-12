@@ -554,8 +554,10 @@ void SelfPairManager::calculateFixedEnergies() {
 		}
 		double E = 0.0;
 		for (vector<Interaction*>::iterator l=k->second.begin(); l!= k->second.end(); l++) {
-			threadGetEnergy(*l, E);
-			threads.push_back(thread(threadGetEnergy, &l, ref(E)));
+			//threadGetEnergy(*l, E);
+			// thread the above function
+			threads.push_back(thread(threadGetEnergy, *l, ref(E)));
+			//threads.push_back(thread(threadGetEnergy, &l, ref(E)));
 			//E += (*l)->getEnergy();
 		}
 		for(auto &t : threads) {
