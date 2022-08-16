@@ -476,7 +476,8 @@ int main(int argc, char *argv[]){
 		stateMCUnlinked(sys, opt, interfacePolySeq, sequenceEnergyMapBest, sequenceEntropyMap, bestState, bestSequence, seqs, allSeqs,
 			sequenceStatePair, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, sout, err);
 		cout << bestSequence << endl;
-		localBackboneRepack(opt, sys, bestSequence, i, opt.xShift, helicalAxis, axisA, axisB, rotamerSamplingPerPosition, trans, RNG, sout);
+	cout << sys.getAtomPointers() << endl;
+		localBackboneRepack(opt, startGeom, bestSequence, i, opt.xShift, helicalAxis, axisA, axisB, rotamerSamplingPerPosition, trans, RNG, sout);
 	}
 	///******************************************************************************
 	// *            === CALCULATE MONOMER ENERGIES OF EACH SEQUENCE ===
@@ -2106,7 +2107,7 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ui
 	// set up the system for the input sequence
 	System sys;
 	prepareSystem(_opt, sys, _startGeom, PS);
-	
+	checkIfAtomsAreBuilt(sys, _out);
 	// initialize the object for loading rotamers into our _system
 	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
 	sysRot.defineRotamerSamplingLevels();

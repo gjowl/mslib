@@ -4,26 +4,33 @@ PolyLeu Backbone:   LLLLLLLLLLLLLLLLLLILI
 Variable Positions: 000110110011011000000
 Rotamers Levels:    033012103201210230231
 Running Self Consistent Mean Field
-Initial Sequence:   LLLLLLLLLLLLLLLLLLILI
-Best Sequence:      LLLLLLLLLLLLLLLLLLILI
-Interface Sequence: L--LL-LL--LL-LL--L--I
+Initial Sequence:   LLLTGLYSLLGYLIILLLILI
+Best Sequence:      LLLVVLWSLLGYLIILLLILI
+Interface Sequence: L--VV-WS--GY-II--L--I
 Interface:          000110110011011000000
-Total Energy:       0
-VDW:                0
-HBOND:              0
+Total Energy:       30.7344
+VDW:                -33.7226
+HBOND:              -74.8176
 
-End SelfPairManager Optimization: 2s
-Time to calculate energies: 2
+End SelfPairManager Optimization: 47s
+Time to calculate energies: 45
 Finding 10 sequences using membrane composition (State MonteCarlo)...
-Best Sequence #0: LLLLALLLLLLLLLLLLLILI; Energy: 0
-Best Sequence #1: LLLLILFLLLAVLLLLLLILI; Energy: 0
-Best Sequence #2: LLLLILLLLLALLLLLLLILI; Energy: 0
-Best Sequence #3: LLLLILLLLLAVLLLLLLILI; Energy: 0
-Best Sequence #4: LLLLVLLLLLALLLLLLLILI; Energy: 0
-Best Sequence #5: LLLLVLLLLLLLLLLLLLILI; Energy: 0
-Best Sequence #6: LLLSILFLLLAVLLLLLLILI; Energy: 0
-Best Sequence #7: LLLSILFLLLTALLLLLLILI; Energy: 0
-Best Sequence #8: LLLSILFLLLTVLLLLLLILI; Energy: 0
-End sequence optimization by membrane composition: 0s
+Best Sequence #0: LLLAILISLLAFLIVLLLILI; Energy: 38.1571
+Best Sequence #1: LLLAILISLLAFLVVLLLILI; Energy: 39.1464
+Best Sequence #2: LLLAILISLLAILIVLLLILI; Energy: 39.6829
+Best Sequence #3: LLLAILVSLLAFLIILLLILI; Energy: 34.8728
+Best Sequence #4: LLLAILVSLLAFLIVLLLILI; Energy: 38.8704
+Best Sequence #5: LLLAILVSLLAFLYILLLILI; Energy: 35.8943
+Best Sequence #6: LLLAILVSLLAILIVLLLILI; Energy: 40.3136
+Best Sequence #7: LLLAILVSLLGFLIILLLILI; Energy: 31.6541
+Best Sequence #8: LLLAILVSLLGFLYILLLILI; Energy: 32.6272
+Best Sequence #9: LLLAILWSLLGFLIILLLILI; Energy: 34.7179
+Best Sequence #10: LLLAILWSLLGYLIILLLILI; Energy: 33.134
+Best Sequence #11: LLLAVLWSLLGYLIILLLILI; Energy: 33.1249
+Best Sequence #12: LLLSILIALLAFLIVLLLILI; Energy: 41.8051
+Best Sequence #13: LLLSILIALLAFLVVLLLILI; Energy: 42.7712
+Best Sequence #14: LLLSILISLLAFLVVLLLILI; Energy: 41.2454
+End sequence optimization by membrane composition: 1s
 
-Optimization end at Temp: 992.084
+Optimization end at Temp: 987.644
+Time to calculate energies for backbone repack: 0
