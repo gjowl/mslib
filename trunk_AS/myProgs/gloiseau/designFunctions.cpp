@@ -872,8 +872,8 @@ END";
 	vector<uint> stateVec = monoSpm.getMinStates()[0];
 	monoSys.setActiveRotamers(stateVec);
 	double monomerEnergy = monoSpm.getStateEnergy(stateVec)*2;
-	_sout << "Monomer Energy w/ IMM1: " << monomerEnergy << endl;
-	cout << "Monomer Energy w/ IMM1: " << monomerEnergy << endl;
+	_sout << _seq << " Monomer Energy w/ IMM1: " << monomerEnergy << endl;
+	cout << _seq << " Monomer Energy w/ IMM1: " << monomerEnergy << endl;
 
 	//Setup SasaCalculator to calculate the monomer SASA
 	SasaCalculator monoSasa(monoSys.getAtomPointers());
@@ -886,6 +886,10 @@ END";
 	outputEnergiesByTerm(monoSpm, stateVec, energyMap, _opt.energyTermList, "Monomer", true);
 	_sequenceEnergyMap[_seq]["Monomer"] = monomerEnergy;
 	_sequenceEnergyMap[_seq]["MonomerSasa"] = totalMonomerSasa;
+	double dimerEnergy = _sequenceEnergyMap[_seq]["Dimer"];
+	double totalEnergy = dimerEnergy-monomerEnergy;
+	_sout << _seq << " Total Energy w/ IMM1: " << totalEnergy << endl;
+	cout << _seq << " Total Energy w/ IMM1: " << totalEnergy << endl;
 
 	// Clear saved coordinates
 	monoSys.clearSavedCoor("savedBestMonomer");
