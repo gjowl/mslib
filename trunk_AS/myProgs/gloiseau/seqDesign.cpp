@@ -75,7 +75,7 @@ void searchForBestSequences(System &_sys, Options &_opt, SelfPairManager &_spm, 
 void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs,
  vector<uint> &_bestState, string &_bestSequence, map<string, map<string,double>> &_sequenceEnergyMap, map<string, vector<uint>> &_sequenceVectorMap,
  map<string,double> _sequenceEntropyMap, vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList,
- vector<int> &_rotamerSampling, ofstream &_out, ofstream &_err);
+ vector<int> &_rotamerSampling, int _rep, ofstream &_out, ofstream &_err);
 vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, string _rotamerSamplingString,
  string _variablePositionString, vector<string> _seqs, map<string, map<string,double>> &_sequenceEnergyMap, 
  map<string, vector<uint>> &_sequenceVectorMap, map<string, double> _sequenceEntropyMap, ofstream &_out);
@@ -96,7 +96,7 @@ void stateMCUnlinked(System &_sys, Options &_opt, PolymerSequence &_PS,
  map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> &_sequenceEntropyMap,
  vector<unsigned int> &_bestState, string &_bestSequence, vector<string> &_seqs, vector<string> &_allSeqs,
  map<string,vector<uint>> &_sequenceVectorMap, vector<uint> &_allInterfacialPositionsList,
- vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNumberGenerator &_RNG, ofstream &_out, ofstream &_err);
+ vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNumberGenerator &_RNG, int _rep, ofstream &_out, ofstream &_err);
 string generateMultiIDAtSinglePosPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, int _interfacialPosition);
 void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, uint _rep, double _savedXShift, System &_helicalAxis, AtomPointerVector &_axisA,
  AtomPointerVector &_axisB, vector<int> _rotamerSampling, Transforms &_trans, RandomNumberGenerator &_RNG, ofstream &_out);
@@ -355,7 +355,7 @@ int main(int argc, char *argv[]){
 	string bestSequence;
 	for (uint i=0; i<3; i++){
 		stateMCUnlinked(sys, opt, interfacePolySeq, sequenceEnergyMapBest, sequenceEntropyMap, bestState, bestSequence, seqs, allSeqs,
-			sequenceVectorMap, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, sout, err);
+			sequenceVectorMap, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
 		localBackboneRepack(opt, sys, bestSequence, i, opt.xShift, helicalAxis, axisA, axisB, rotamerSamplingPerPosition, trans, RNG, sout);
 	}
 	///******************************************************************************
@@ -453,6 +453,11 @@ void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingP
 	eout << "Baseline" << t << "Sequence" << t << "InterfaceSeq" << t << "xShift" << t << "crossingAngle" << t; 
 	eout << "axialRotation" << t << "zShift" << t << "angleDistDensity" << t << "axialRotationDensity" << t;
 	eout << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << t;
+	cout << "Sequence" << t << "InterfaceSequence" << t;
+	cout << enerTerms.str();
+	cout << "Baseline" << t << "Sequence" << t << "InterfaceSeq" << t << "xShift" << t << "crossingAngle" << t; 
+	cout << "axialRotation" << t << "zShift" << t << "angleDistDensity" << t << "axialRotationDensity" << t;
+	cout << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << t;
 	for (uint i=0; i<energyLines.size() ; i++){
 		eout << energyLines[i] << endl;
 		cout << energyLines[i] << endl;
@@ -984,7 +989,7 @@ void stateMCUnlinked(System &_sys, Options &_opt, PolymerSequence &_PS,
 map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> &_sequenceEntropyMap,
 vector<unsigned int> &_bestState, string &_bestSequence, vector<string> &_seqs, vector<string> &_allSeqs,
 map<string,vector<uint>> &_sequenceVectorMap, vector<uint> &_allInterfacialPositionsList,
-vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNumberGenerator &_RNG, ofstream &_out, ofstream &_err){
+vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNumberGenerator &_RNG, int _rep, ofstream &_out, ofstream &_err){
 	/******************************************************************************
 	 *             === PREPARE NEW SYSTEM WITH NEW POLYMER SEQUENCE ===
 	 ******************************************************************************/
@@ -1037,7 +1042,7 @@ vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNu
 	_out << "Time to calculate energies: " << diffTime << endl;
 
 	searchForBestSequencesUsingThreads(sys, _opt, spm, _RNG, _allSeqs, _bestState, _bestSequence, _sequenceEnergyMap, _sequenceVectorMap, 
-	_sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling, _out, _err);
+	_sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling, _rep, _out, _err);
 	
 	_seqs.push_back(_bestSequence);
 }
@@ -1045,7 +1050,7 @@ vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNu
 void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs,
  vector<uint> &_bestState, string &_bestSequence, map<string, map<string,double>> &_sequenceEnergyMap, map<string, vector<uint>> &_sequenceVectorMap,
  map<string,double> _sequenceEntropyMap, vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList,
- vector<int> &_rotamerSampling, ofstream &_out, ofstream &_err){
+ vector<int> &_rotamerSampling, int _rep, ofstream &_out, ofstream &_err){
 	// Setup time variables
 	time_t startTimeSMC, endTimeSMC;
 	double diffTimeSMC;
@@ -1147,6 +1152,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			bestSeq = currSeq;
 			bestEnergy = sequenceEnergyMap[bestSeq]["Dimer"];
 			sequenceEnergyMap[bestSeq]["acceptCycleNumber"] = cycleCounter;
+			_sequenceVectorMap[bestSeq] = currStateVec;
 			cout << "Best sequence: " << bestSeq << endl;
 			cout << "Best sequence Info:" << endl;
 			cout << "Baseline          " << sequenceEnergyMap[bestSeq]["Baseline"] << endl;
@@ -1182,18 +1188,25 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	getDimerSasa(_sys, _sequenceVectorMap, _sequenceEnergyMap);
 	uint i=0;
 	double ener = 0;
+	PDBWriter writer;
+	writer.open(_opt.pdbOutputDir + "/allDesigns_" + to_string(_rep) + ".pdb");
 	for (auto &seq: allSequenceEnergyMap){
 		_out << "Best Sequence #" << i << ": " << seq.first << "; Energy: " << seq.second["Dimer"] << endl;
 		if (i == 0){
+			_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
+			writer.write(_sys.getAtomPointers(), true, false, true);
 			_bestSequence = seq.first;
 			ener = seq.second["SequenceProbability"];
 		} else if (seq.second["SequenceProbability"] > ener){
+			_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
+			writer.write(_sys.getAtomPointers(), true, false, true);
 			_bestSequence = seq.first;
 			ener = seq.second["SequenceProbability"];
 		}
 		_sequenceEnergyMap[seq.first] = seq.second;
 		i++;
 	}
+	writer.close();
 	cout << "End sequence optimization by membrane composition: " << diffTimeSMC << "s" << endl << endl;
 	_out << "End sequence optimization by membrane composition: " << diffTimeSMC << "s" << endl << endl;
 	_out << "Optimization end at Temp: " << MC.getCurrentT() << endl;

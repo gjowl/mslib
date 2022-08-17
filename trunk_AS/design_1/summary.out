@@ -5,20 +5,20 @@ Variable Positions: 000110110011011000000
 Rotamers Levels:    033012103201210230231
 Running Self Consistent Mean Field
 Initial Sequence:   LLLTGLYSLLGYLIILLLILI
-Best Sequence:      LLLVGLFSLLGYLIILLLILI
-Interface Sequence: L--VG-FS--GY-II--L--I
+Best Sequence:      LLLTGLYSLLGYLIILLLILI
+Interface Sequence: L--TG-YS--GY-II--L--I
 Interface:          000110110011011000000
-Total Energy:       31.2173
-VDW:                -30.58
+Total Energy:       31.2425
+VDW:                -26.4592
 HBOND:              -74.794
 
-End SelfPairManager Optimization: 44s
-Time to calculate energies: 45
+End SelfPairManager Optimization: 43s
+Time to calculate energies: 43
 Finding 10 sequences using membrane composition (State MonteCarlo)...
-Best Sequence #0: LLLVGLFSLLGVLIILLLILI; Energy: -342.073
-End sequence optimization by membrane composition: 5s
+Best Sequence #0: LLLTGLYSLLGYLVILLLILI; Energy: -335.895
+End sequence optimization by membrane composition: 11s
 
-Optimization end at Temp: 987.644
+Optimization end at Temp: 975.768
 Time to calculate energies for backbone repack: 1
 ***STARTING GEOMETRY***
 xShift:        9.2
@@ -27,53 +27,62 @@ axialRotation: 40
 zShift:        4
 
 ***AFTER REPACK GEOMETRY***
-xShift:        9.16836
-crossingAngle: 24.8903
-axialRotation: 41.1676
-zShift:        4
+xShift:        9.3777
+crossingAngle: 22.8585
+axialRotation: 40.7599
+zShift:        3.98702
 
-Monte Carlo repack complete. Time: 4 seconds
+Monte Carlo repack complete. Time: 24 seconds
 
-Time to calculate energies: 46
+Time to calculate energies: 43
 Finding 10 sequences using membrane composition (State MonteCarlo)...
-Best Sequence #0: LLLVGLFSLLGFLIILLLILI; Energy: -333.028
-End sequence optimization by membrane composition: 7s
+Best Sequence #0: LLLTGLYSLLGYLIVLLLILI; Energy: -334.367
+End sequence optimization by membrane composition: 12s
 
-Optimization end at Temp: 983.694
-Time to calculate energies for backbone repack: 0
-***STARTING GEOMETRY***
-xShift:        9.16836
-crossingAngle: 24.8903
-axialRotation: 41.1676
-zShift:        4
-
-***AFTER REPACK GEOMETRY***
-xShift:        8.93768
-crossingAngle: 23.516
-axialRotation: 44.7354
-zShift:        3.34292
-
-Monte Carlo repack complete. Time: 68 seconds
-
-Time to calculate energies: 46
-Finding 10 sequences using membrane composition (State MonteCarlo)...
-Best Sequence #0: LLLVGLFSLLGVLIILLLILI; Energy: -357.76
-End sequence optimization by membrane composition: 6s
-
-Optimization end at Temp: 983.694
+Optimization end at Temp: 968.764
 Time to calculate energies for backbone repack: 1
 ***STARTING GEOMETRY***
-xShift:        8.93768
-crossingAngle: 23.516
-axialRotation: 44.7354
-zShift:        3.34292
+xShift:        9.3777
+crossingAngle: 22.8585
+axialRotation: 40.7599
+zShift:        3.98702
 
 ***AFTER REPACK GEOMETRY***
-xShift:        8.85287
-crossingAngle: 24.1172
-axialRotation: 43.2589
-zShift:        2.89966
+xShift:        8.88447
+crossingAngle: 23.0336
+axialRotation: 42.9924
+zShift:        3.00177
 
-Monte Carlo repack complete. Time: 15 seconds
+Monte Carlo repack complete. Time: 126 seconds
+
+Time to calculate energies: 44
+Finding 10 sequences using membrane composition (State MonteCarlo)...
+Best Sequence #0: LLLTGLYSLLGYLVILLLILI; Energy: -350.125
+End sequence optimization by membrane composition: 9s
+
+Optimization end at Temp: 981.348
+Time to calculate energies for backbone repack: 1
+***STARTING GEOMETRY***
+xShift:        8.88447
+crossingAngle: 23.0336
+axialRotation: 42.9924
+zShift:        3.00177
+
+***AFTER REPACK GEOMETRY***
+xShift:        8.75993
+crossingAngle: 23.0528
+axialRotation: 44.8834
+zShift:        2.98622
+
+Monte Carlo repack complete. Time: 12 seconds
 
 Calculating monomer energies...
+LLLTGLYSLLGYLVILLLILI Monomer Energy w/ IMM1: -367.597
+LLLTGLYSLLGYLVILLLILI Total Energy w/ IMM1: 17.4718
+LLLTGLYSLLGYLIVLLLILI Monomer Energy w/ IMM1: -367.526
+LLLTGLYSLLGYLIVLLLILI Total Energy w/ IMM1: 33.1591
+LLLTGLYSLLGYLIILLLILI Monomer Energy w/ IMM1: -370.84
+LLLTGLYSLLGYLIILLLILI Total Energy w/ IMM1: 28.5794
+End monomer calculations: 209s
+
+Total Time: 10 minutes
