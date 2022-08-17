@@ -11,6 +11,7 @@
 #define DESIGN_H
 
 #include <sstream>
+#include <thread>
 
 #include "System.h"
 #include "CharmmSystemBuilder.h"

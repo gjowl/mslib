@@ -539,7 +539,8 @@ void computeMonomerEnergyNoIMM1(Options& _opt, map<string,map<string,double>> &_
 	//cout << "Total Energy: " << self+pair << endl;
 }
 
-void computeMonomerEnergyIMM1(Options& _opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err) {
+void computeMonomerEnergyIMM1(Options& _opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq,
+ RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err) {
 
 	//string polySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, _opt.thread);//fixed monomer calculation issue on 05_12_2021
 	string polySeq = generateMonomerPolymerSequenceFromSequence(_seq, _opt.thread);
@@ -890,6 +891,7 @@ END";
 	double totalEnergy = dimerEnergy-monomerEnergy;
 	_sout << _seq << " Total Energy w/ IMM1: " << totalEnergy << endl;
 	cout << _seq << " Total Energy w/ IMM1: " << totalEnergy << endl;
+	_sequenceEnergyMap[_seq]["Total"] = totalEnergy;
 
 	// Clear saved coordinates
 	monoSys.clearSavedCoor("savedBestMonomer");
@@ -898,23 +900,21 @@ END";
 	helicalAxis.clearSavedCoor("bestZ");
 }
 
-void computeMonomerEnergies(Options &_opt, Transforms &_trans, map<string, map<string,double>> &_sequenceEnergyMap, vector<string> &_seqs, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err){
+void computeMonomerEnergies(Options &_opt, Transforms &_trans, map<string, map<string,double>> &_sequenceEnergyMap, vector<string> &_seqs,
+ RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err){
 	time_t startTimeMono, endTimeMono;
 	double diffTimeMono;
 	time(&startTimeMono);
 
 	cout << "Calculating monomer energies..." << endl;
 	_sout << "Calculating monomer energies..." << endl;
-	for (uint m=0; m<_seqs.size(); m++){
-		cout << "Sequence " << m+1 << ": " << _seqs[m] << endl;
-		_sout << "Sequence " << m+1 << ": " << _seqs[m] << endl;
-		//TODO: make sure this works
-		if (_opt.useIMM1){
-			//TODO: how to make this work for heterodimer? another vector? a pair of vector strings? compute for both sequences...
-			computeMonomerEnergyNoIMM1(_opt, _sequenceEnergyMap, _seqs[m], _RNG, _sout, _err);
-		} else {
-			computeMonomerEnergyIMM1(_opt, _trans, _sequenceEnergyMap, _seqs[m], _RNG, _sout, _err);
-		}
+	vector<thread> threads;
+	for (auto &seq : _sequenceEnergyMap) {
+		string sequence = seq.first;
+		threads.push_back(thread(computeMonomerEnergyIMM1, ref(_opt), ref(_trans), ref(_sequenceEnergyMap), sequence, ref(_RNG), ref(_sout), ref(_err)));
+	}
+	for (auto &t: threads){
+		t.join();
 	}
 
 	time(&endTimeMono);

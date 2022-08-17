@@ -1,36 +1,79 @@
-08_16_2022
+08_17_2022
 
 PolyLeu Backbone:   LLLLLLLLLLLLLLLLLLILI
 Variable Positions: 000110110011011000000
 Rotamers Levels:    033012103201210230231
 Running Self Consistent Mean Field
 Initial Sequence:   LLLTGLYSLLGYLIILLLILI
-Best Sequence:      LLLVVLWSLLGYLIILLLILI
-Interface Sequence: L--VV-WS--GY-II--L--I
+Best Sequence:      LLLVGLFSLLGYLIILLLILI
+Interface Sequence: L--VG-FS--GY-II--L--I
 Interface:          000110110011011000000
-Total Energy:       30.7344
-VDW:                -33.7226
-HBOND:              -74.8176
+Total Energy:       31.2173
+VDW:                -30.58
+HBOND:              -74.794
 
-End SelfPairManager Optimization: 47s
+End SelfPairManager Optimization: 44s
 Time to calculate energies: 45
 Finding 10 sequences using membrane composition (State MonteCarlo)...
-Best Sequence #0: LLLAILISLLAFLIVLLLILI; Energy: 38.1571
-Best Sequence #1: LLLAILISLLAFLVVLLLILI; Energy: 39.1464
-Best Sequence #2: LLLAILISLLAILIVLLLILI; Energy: 39.6829
-Best Sequence #3: LLLAILVSLLAFLIILLLILI; Energy: 34.8728
-Best Sequence #4: LLLAILVSLLAFLIVLLLILI; Energy: 38.8704
-Best Sequence #5: LLLAILVSLLAFLYILLLILI; Energy: 35.8943
-Best Sequence #6: LLLAILVSLLAILIVLLLILI; Energy: 40.3136
-Best Sequence #7: LLLAILVSLLGFLIILLLILI; Energy: 31.6541
-Best Sequence #8: LLLAILVSLLGFLYILLLILI; Energy: 32.6272
-Best Sequence #9: LLLAILWSLLGFLIILLLILI; Energy: 34.7179
-Best Sequence #10: LLLAILWSLLGYLIILLLILI; Energy: 33.134
-Best Sequence #11: LLLAVLWSLLGYLIILLLILI; Energy: 33.1249
-Best Sequence #12: LLLSILIALLAFLIVLLLILI; Energy: 41.8051
-Best Sequence #13: LLLSILIALLAFLVVLLLILI; Energy: 42.7712
-Best Sequence #14: LLLSILISLLAFLVVLLLILI; Energy: 41.2454
-End sequence optimization by membrane composition: 1s
+Best Sequence #0: LLLVGLFSLLGVLIILLLILI; Energy: -342.073
+End sequence optimization by membrane composition: 5s
 
 Optimization end at Temp: 987.644
+Time to calculate energies for backbone repack: 1
+***STARTING GEOMETRY***
+xShift:        9.2
+crossingAngle: 25
+axialRotation: 40
+zShift:        4
+
+***AFTER REPACK GEOMETRY***
+xShift:        9.16836
+crossingAngle: 24.8903
+axialRotation: 41.1676
+zShift:        4
+
+Monte Carlo repack complete. Time: 4 seconds
+
+Time to calculate energies: 46
+Finding 10 sequences using membrane composition (State MonteCarlo)...
+Best Sequence #0: LLLVGLFSLLGFLIILLLILI; Energy: -333.028
+End sequence optimization by membrane composition: 7s
+
+Optimization end at Temp: 983.694
 Time to calculate energies for backbone repack: 0
+***STARTING GEOMETRY***
+xShift:        9.16836
+crossingAngle: 24.8903
+axialRotation: 41.1676
+zShift:        4
+
+***AFTER REPACK GEOMETRY***
+xShift:        8.93768
+crossingAngle: 23.516
+axialRotation: 44.7354
+zShift:        3.34292
+
+Monte Carlo repack complete. Time: 68 seconds
+
+Time to calculate energies: 46
+Finding 10 sequences using membrane composition (State MonteCarlo)...
+Best Sequence #0: LLLVGLFSLLGVLIILLLILI; Energy: -357.76
+End sequence optimization by membrane composition: 6s
+
+Optimization end at Temp: 983.694
+Time to calculate energies for backbone repack: 1
+***STARTING GEOMETRY***
+xShift:        8.93768
+crossingAngle: 23.516
+axialRotation: 44.7354
+zShift:        3.34292
+
+***AFTER REPACK GEOMETRY***
+xShift:        8.85287
+crossingAngle: 24.1172
+axialRotation: 43.2589
+zShift:        2.89966
+
+Monte Carlo repack complete. Time: 15 seconds
+
+Calculating monomer energies...
