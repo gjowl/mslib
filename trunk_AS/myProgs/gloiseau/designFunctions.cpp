@@ -150,230 +150,6 @@ void outputEnergyFile(Options &_opt, string _interface, vector<string> _allDesig
 	eout.close();
 }
 
-//void makeRepackConfig(Options &_opt, string _sequence, vector<uint> _state, string _designNumber, string _pdbPath, ofstream &_globalRepackOut){
-void makeRepackConfig(Options &_opt, string _sequence, string _designDir, vector<uint> _state, string _seqNumber, string _pdbPath, string _crdPath, map<string,double> _energyMap, vector<int> _rotamerSampling){
-	ofstream dout;
-	string doutfile = _opt.pdbOutputDir + "/" + _sequence +"/repack.config";
-	dout.open(doutfile.c_str());
-	//string designFileDir = "/exports/home/gloiseau/mslib/trunk_AS/designFiles/";//Running on chtc server and needed these to access the proper directories after transferring them back to our server
-	//TODO: make sure to add the designFiles directory to this directory
-	string designFileDir = "/data02/gloiseau/Sequence_Design_Project/vdwSequenceDesign/sequenceDesign/12_06_2021/";
-
-	//TODO: also when I run this locally, the output for input files is poor. I'll need to fix these outputs in the future (maybe just add an inputfile directory?
-	dout << "#Input Files" << endl;
-	dout << "topFile            " << designFileDir + _opt.topFile << endl;
-	dout << "parFile            " << designFileDir + _opt.parFile << endl;
-	dout << "solvFile           " << designFileDir + _opt.solvFile << endl;
-	dout << "hbondFile          " << designFileDir + _opt.hbondFile << endl;
-	dout << "rotLibFile         " << designFileDir + _opt.rotLibFile << endl;
-	dout << "designPdb          " << _pdbPath << endl;
-	dout << "designCrd          " << _crdPath << endl;
-	dout << "outputDir          " << _designDir << endl << endl;
-
-	dout << "#Geometry" << endl;
-	dout << "xShift             " << _opt.xShift << endl;
-	dout << "crossingAngle      " << _opt.crossingAngle << endl;
-	dout << "axialRotation      " << _opt.axialRotation << endl;
-	dout << "zShift             " << _opt.zShift << endl;
-	dout << "thread             " << _opt.thread << endl;
-	dout << "tmStart            " << _opt.tmStart << endl;
-	dout << "tmEnd              " << _opt.tmEnd << endl << endl;
-
-	dout << "#Design Parameters" << endl;
-	dout << "sequence              " << _sequence << endl;
-	dout << "rotamerSamplingString ";
-	for (uint i=0; i<_rotamerSampling.size()/2; i++){
-		if (i<(_rotamerSampling.size()/2)-1){
-			dout << _rotamerSampling[i];
-		} else {
-			dout << _rotamerSampling[i] << endl;
-		}
-	}
-	dout << "seed               " << _opt.seed << endl;
-	dout << endl;
-	dout << "#Rotamer Sampling Vector" << endl;
-	dout << "rotamerSampling           ";
-	for (uint i=0; i<_rotamerSampling.size(); i++){
-		if (i<_rotamerSampling.size()-1){
-			dout << _rotamerSampling[i] << " ";
-		} else {
-			dout << _rotamerSampling[i] << endl;
-		}
-	}
-	dout << endl;
-
-	// SASA Rotamer Values
-	dout << "#SASA Rotamers" << endl;
-	for (uint i=0; i<_opt.sasaRepackLevel.size(); i++){
-		dout << "sasaRepackLevel  " << _opt.sasaRepackLevel[i] << endl;
-	}
-	dout << endl;
-
-	// Weights
-	dout << "#Weights" << endl;
-	dout << "weight_vdw         " << _opt.weight_vdw << endl;
-	dout << "weight_hbond       " << _opt.weight_hbond << endl;
-	dout << "weight_solv        " << _opt.weight_solv << endl << endl;
-
-	// Monomer Energies
-	dout << "#Monomer Energies" << endl;
-	dout << "monomer            " << _energyMap.at("Monomer") << endl;
-	dout << "monoVdw            " << _energyMap.at("VDWMonomer") << endl;
-	dout << "monoHbond          " << _energyMap.at("HBONDMonomer") << endl;
-	dout << "monoIMM1           " << _energyMap.at("IMM1Monomer") << endl << endl;
-
-	// Energies before repack
-	dout << "#Dimer Energies" << endl;
-	dout << "dimer            " << _energyMap.at("Dimer") << endl;
-	dout << "dimerVdw         " << _energyMap.at("VDWDimer") << endl;
-	dout << "dimerHbond       " << _energyMap.at("HBONDDimer") << endl;
-	dout << "dimerIMM1        " << _energyMap.at("IMM1Dimer") << endl << endl;
-
-	dout << "#Total Energy" << endl;
-	dout << "Total            " << _energyMap.at("Total") << endl;
-	dout.close();
-}
-
-void makeDockingConfig(Options &_opt, string _sequence, string _designDir, string _pdbPath, map<string,double> _energyMap, vector<int> _rotamerSampling){
-	ofstream dout;
-	string outputDir = _opt.pdbOutputDir + "/" + _sequence;
-	string doutfile = outputDir + "/docking.config";
-	dout.open(doutfile.c_str());
-	//TODO: fix this spacing output so that it's cleaner (I think setw(21)?)
-	//TODO: also when I run this locally, the output for input files is poor. I'll need to fix these outputs in the future
-	dout << "#Design Parameters" << endl;
-	dout << "chainSeq              " << _sequence << " " << _sequence << endl;
-	dout << "rotamerSamplingString ";
-	for (uint i=0; i<_rotamerSampling.size()/2; i++){
-		if (i<(_rotamerSampling.size()/2)-1){
-			dout << _rotamerSampling[i];
-		} else {
-			dout << _rotamerSampling[i] << endl;
-		}
-	}
-	dout << "chainStartNum        " << _opt.thread << endl;
-	dout << "seed                 " << _opt.seed << endl << endl;
-
-	string designFileDir = "/data02/gloiseau/Sequence_Design_Project/vdwSequenceDesign/sequenceDesign/12_06_2021/";
-	dout << "#Input Files" << endl;
-	dout << "topFile              " << designFileDir + _opt.topFile << endl;
-	dout << "parFile              " << designFileDir + _opt.parFile << endl;
-	dout << "solvFile             " << designFileDir + _opt.solvFile << endl;
-	dout << "hbondFile            " << designFileDir + _opt.hbondFile << endl;
-	dout << "rotLibFile           " << designFileDir + _opt.rotLibFile << endl;
-	dout << "bbqFile              " << designFileDir << "PiscesBBQTable.txt" << endl;
-	dout << "designPdb            " << _pdbPath << endl;//In case I ever wnat to do an RMSD calculation against the orignal
-	dout << "outputDir            " << _designDir << endl << endl;
-
-	dout << "#Geometry" << endl;
-	dout << "xShift               " << _opt.xShift << endl;
-	dout << "crossingAngle        " << _opt.crossingAngle << endl;
-	dout << "axialRotation        " << _opt.axialRotation << endl;
-	dout << "zShift               " << _opt.zShift << endl;
-	dout << endl;
-
-	dout << "#Rotamer Sampling Vector" << endl;
-	dout << "rotamerSampling      ";
-	for (uint i=0; i<_rotamerSampling.size()/2; i++){
-		if (i<(_rotamerSampling.size()/2)-1){
-			dout << _rotamerSampling[i] << " ";
-		} else {
-			dout << _rotamerSampling[i] << endl;
-		}
-	}
-	dout << endl;
-
-	dout << "#Weights" << endl;
-	dout << "weight_vdw           " << _opt.weight_vdw << endl;
-	dout << "weight_hbond         " << _opt.weight_hbond << endl;
-	dout << "weight_solv          " << _opt.weight_solv << endl << endl;
-
-	// Monomer Energies
-	dout << "#Monomer Energies" << endl;
-	dout << "monomer              " << _energyMap.at("Monomer") << endl;
-	dout << "monoVdw              " << _energyMap.at("VDWMonomer") << endl;
-	dout << "monoHbond            " << _energyMap.at("HBONDMonomer") << endl;
-	dout << "monoIMM1             " << _energyMap.at("IMM1Monomer") << endl << endl;
-
-	// Energies before repack
-	dout << "#Dimer Energies" << endl;
-	dout << "dimer                " << _energyMap.at("Dimer") << endl;
-	dout << "dimerVdw             " << _energyMap.at("VDWDimer") << endl;
-	dout << "dimerHbond           " << _energyMap.at("HBONDDimer") << endl;
-	dout << "dimerIMM1            " << _energyMap.at("IMM1Dimer") << endl << endl;
-
-	dout << "#Total Energy" << endl;
-	dout << "Total            " << _energyMap.at("Total") << endl;
-	dout.close();
-}
-
-void outputDesignFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingPerPosition, vector<pair<string,vector<uint>>> _sequenceStatePair, map<string,map<string,double>> _sequenceEnergyMap, vector<double> _densities){
-	// Setup vector to hold energy file lines
-	vector<string> energyLines;
-
-	// Setup the parameters for this specific run
-	string tab = "\t";
-	string xShift = MslTools::doubleToString(_opt.xShift);
-	string crossingAngle = MslTools::doubleToString(_opt.crossingAngle);
-	string axialRotation = MslTools::doubleToString(_opt.axialRotation);
-	string zShift = MslTools::doubleToString(_opt.zShift);
-	string angleDistDensity = MslTools::doubleToString(_densities[0]);
-	string axialRotationDensity = MslTools::doubleToString(_densities[1]);
-	string zShiftDensity = MslTools::doubleToString(_densities[2]);
-	string thread = MslTools::intToString(_opt.thread);
-	string repackLevels = MslTools::intToString(_opt.sasaRepackLevel.size());
-	string interfaceLevel = MslTools::intToString(_opt.interfaceLevel);
-	string bbLength = MslTools::intToString(_opt.backboneLength);
-	//string runParameters = xShift+tab+crossingAngle+tab+axialRotation+tab+zShift+tab+thread+tab+repackLevels+tab+interfaceLevel;
-	string runParameters = xShift+tab+crossingAngle+tab+axialRotation+tab+zShift+tab+angleDistDensity+tab+axialRotationDensity+tab+zShiftDensity+tab+repackLevels+tab+interfaceLevel+tab+bbLength;
-	// For loop to setup the energy file
-	string startSequence = _sequenceStatePair[0].first;
-	for (uint i=0; i<_sequenceStatePair.size(); i++){
-		string sequence = _sequenceStatePair[i].first;
-		vector<uint> state = _sequenceStatePair[i].second;
-		map<string,double> energyMap = _sequenceEnergyMap.at(sequence);
-		// For adding in strings to a line for the energy file
-		string tmp = "Sequence Info: ";
-		for (uint j=0; j<_opt.energyTermsToOutput.size(); j++){
-			string energyTerm = _opt.energyTermsToOutput[j];
-			double energy = energyMap.at(energyTerm);
-			//cout << sequence << ": " << energyTerm << " = " << energy << endl;
-			tmp.append(MslTools::doubleToString(energy));
-			tmp.append(tab);
-		}
-
-		//Add in path to design PDB and make repack and docking configuration files
-		string seqNumber = MslTools::doubleToString(energyMap.at("SequenceNumber"));
-		string designDir = "/data02/gloiseau/Sequence_Design_Project/vdwSequenceDesign/sequenceDesign/12_06_2021/design_" + _opt.runNumber + "/"+ sequence;
-		string pdbPath = designDir + "/" + sequence + ".pdb";
-		string crdPath = designDir + "/" + sequence + ".crd";
-		makeRepackConfig(_opt, sequence, designDir, state, seqNumber, pdbPath, crdPath, energyMap, _rotamerSamplingPerPosition);
-		makeDockingConfig(_opt, sequence, designDir, pdbPath, energyMap, _rotamerSamplingPerPosition);
-
-		// Append other important features to the end energy files lines
-		string interfaceSequence = getInterfaceSequence(_opt,_interface, sequence);
-		tmp.append(startSequence);
-		tmp.append(tab);
-		tmp.append(sequence);
-		tmp.append(tab);
-		tmp.append(interfaceSequence);
-		tmp.append(tab);
-		tmp.append(runParameters);
-		tmp.append(tab);
-		tmp.append(pdbPath);
-		energyLines.push_back(tmp);
-		tmp.clear();
-	}
-	outputEnergyFile(_opt, _interface, energyLines);
-}
-
-
-
-
-
-
-
-
 /***********************************
  *baseline energy helper functions
  ***********************************/
@@ -1000,6 +776,7 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 	opt.allowed.push_back("weight_hbond");
 	opt.allowed.push_back("weight_solv");
 	opt.allowed.push_back("weight_seqEntropy");
+	opt.allowed.push_back("weight_elec");
 
 	//Rotamers
 	opt.allowed.push_back("SL");
@@ -1380,6 +1157,12 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 		opt.weight_seqEntropy = 1.0;
 	}
 	opt.weight_seqEntropy = opt.weight_seqEntropy;//Default allows 1 to be weighted equally to other energy terms (I should convert to actual weighting conversion used with other energy terms)
+	opt.weight_elec = OP.getDouble("weight_elec");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_elec not specified, default 1.0\n";
+		opt.weight_elec = 1.0;
+	}
 
 	//rotlevel
 	opt.SL = OP.getString("SL");

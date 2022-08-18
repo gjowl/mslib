@@ -84,10 +84,6 @@ void setupDesignDirectory(Options &_opt, string _date);
 // function for outputting and writing and energy file
 void outputEnergyFile(Options &_opt, string _interface, vector<string> _allDesigns);
 // function that writes a config file for local geometric repacks by geomRepack.cpp
-void makeRepackConfig(Options &_opt, string _sequence, string _designDir, string _designNumber, string _pdbPath, string _crdPath, map<string,double> _energyMap);
-// function that writes a config file for running docking on our
-void makeDockingConfig(Options &_opt, string _sequence, vector<uint> _state, string _pdbPath, map<string,double> _energyMap, vector<int> _rotamerSampling);
-// function that writes and outputs the summarr, configuration, and energy files from this design run
 void outputDesignFiles(Options &_opt, string _interface, vector<int> _rotamerSampling, vector<pair<string,vector<uint>>> _sequenceStatePair, map<string,map<string,double>> _sequenceEnergyMap, vector<double> _densities);
 
 /***********************************
@@ -109,10 +105,10 @@ void computeMonomerEnergies(Options &_opt, Transforms &_trans, map<string, map<s
 void computeMonomerEnergyNoIMM1(Options& _opt, map<string,map<string,double>> &_sequenceEnergyMap, string &_seq, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
 // helper function for computeMonomerEnergies: calculates energy for monomer with solvation energy
 void computeMonomerEnergyIMM1(Options& _opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
-
+// makes sure that atoms of the system are built; errors out if not
 void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
 
-
+// gets the interfacial positions from a vector
 vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
 vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
 
