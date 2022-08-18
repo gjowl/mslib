@@ -443,12 +443,12 @@ void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingP
 	eout << enerTerms.str();
 	eout << "Baseline" << t << "Sequence" << t << "InterfaceSeq" << t << "xShift" << t << "crossingAngle" << t; 
 	eout << "axialRotation" << t << "zShift" << t << "angleDistDensity" << t << "axialRotationDensity" << t;
-	eout << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << t;
+	eout << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
 	cout << "Sequence" << t << "InterfaceSequence" << t;
 	cout << enerTerms.str();
 	cout << "Baseline" << t << "Sequence" << t << "InterfaceSeq" << t << "xShift" << t << "crossingAngle" << t; 
 	cout << "axialRotation" << t << "zShift" << t << "angleDistDensity" << t << "axialRotationDensity" << t;
-	cout << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << t;
+	cout << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
 	for (uint i=0; i<energyLines.size() ; i++){
 		eout << energyLines[i] << endl;
 		cout << energyLines[i] << endl;

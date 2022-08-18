@@ -79,3 +79,10 @@ Monte Carlo repack complete. Time: 5 seconds
 Calculating monomer energies...
 LLLVGLASLLGYLIILLLILI Monomer Energy w/ IMM1: -370.189
 LLLVGLASLLGYLIILLLILI Total Energy w/ IMM1: 14.1757
+LLLVGLWSLLGYLIILLLILI Monomer Energy w/ IMM1: -377.005
+LLLVGLWSLLGYLIILLLILI Total Energy w/ IMM1: 19.4814
+LLLVALWSLLGYLIILLLILI Monomer Energy w/ IMM1: -381.546
+LLLVALWSLLGYLIILLLILI Total Energy w/ IMM1: 14.1152
+End monomer calculations: 221s
+
+Total Time: 8 minutes
