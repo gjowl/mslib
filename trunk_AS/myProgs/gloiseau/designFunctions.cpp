@@ -1028,6 +1028,7 @@ void calculateInterfaceSequenceEntropy(Options &_opt, string _prevSeq, string _c
 		cout << "New Energy: " << _currEnergyTotal << endl;
 	}
 }
+
 map<string,int> getAACountMap(vector<string> _seq){
 	map<string,int> AAcounts;
 	for (uint i=0; i<_seq.size(); i++){

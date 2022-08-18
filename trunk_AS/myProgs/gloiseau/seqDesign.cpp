@@ -513,13 +513,13 @@ string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap){
 	for (auto& seq : _sequenceEnergyMap){
 		if (i==0){
 			currSeq = seq.first;
-			currEnergyComparison = seq.second["energyComparison"];
+			currEnergyComparison = seq.second["entropyDiff"];
 			i++;
 		} else {
-			if (seq.second["energyComparison"] > currEnergyComparison){
+			if (seq.second["entropyDiff"] > currEnergyComparison){
 				string prevSeq = currSeq;
 				currSeq = seq.first;
-				currEnergyComparison = seq.second["energyComparison"];
+				currEnergyComparison = seq.second["entropyDiff"];
 			}
 		}
 	}
@@ -563,7 +563,7 @@ void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, vecto
 	energyMap["SequenceProbability"] = currSEProb;
 	energyMap["bestEnergyTotal"] = bestEnergyTotal;
 	energyMap["currEnergyTotal"] = currEnergyTotal;
-	energyMap["entropyDiff"] = currEntropy-prevEntropy;
+	energyMap["entropyDiff"] = prevEntropy-currEntropy;
 	energyMap["currEntropy"] = currEntropy;
 	energyMap["prevEntropy"] = prevEntropy;
 	_seqEnergyMap[_currSeq] = energyMap;
@@ -799,7 +799,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		map<string,map<string,double>> sequenceEnergyMap = mutateRandomPosition(_sys, _opt, _spm, _RNG, bestSeq, prevStateVec, bestEnergy, 
 		 sequenceVectorMap, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
 
-		// get the best sequence and energy for the current mutation position
+		// get the best sequence and energy for the current mutation position (picks sequence with best entropy difference between best seq and current)
 		string currSeq = getBestSequenceInMap(sequenceEnergyMap);
 		
 		// TODO: add in check step to see if sequence is already found in the best sequence list and skip if so

@@ -114,6 +114,7 @@ double calcNumberOfPermutations(map<string,int> _seqAACounts, int _seqLength);
 // and calculates the number of permutations for those AAs and the number of interfacial positions)
 void interfaceAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, vector<uint> _interfacialPositionsList);
 double getInterfaceSequenceEntropyProbability(Options &_opt, string _sequence, map<string,double> &_entropyMap, vector<uint> _interfacialPositionsList);
+
 /***********************************
  *calculate energies
  ***********************************/
