@@ -129,13 +129,6 @@ void addSequencesToVector(vector<pair<double,string>> &_energyVector, vector<str
 /***********************************
  *sequence entropy functions
  ***********************************/
-// counts the number of each AA in a sequence and outputs a map<string(AA),int(numAA)> ...
-map<string,int> getAACountMap(vector<string> _seq);
-// calculates the number of permutations possible for a sequence
-double calcNumberOfPermutations(map<string,int> _seqAACounts, int _seqLength);
-// sets up calculating sequence entropy for an interface (gets the AA counts for the interface
-// and calculates the number of permutations for those AAs and the number of interfacial positions)
-void interfaceAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, vector<uint> _interfacialPositionsList);
 // TODO: figure out if I just forgot to change these to interfacial for the starting sequence
 // function that implements the above functions to calculate the sequence entropy of the interface
 void calculateInterfaceSequenceEntropy(Options &_opt, string _prevSeq, string _currSeq,
@@ -149,7 +142,7 @@ void calculateSequenceEntropy(Options &_opt, string _prevSeq, string _currSeq,
   map<string,double> _entropyMap, double &_prevSEProb, double &_currSEProb, double &_prevEntropy,
   double &_currEntropy, double _bestEnergy, double _currEnergy, double &_bestEnergyTotal, double &_currEnergyTotal);
 double getSequenceEntropyProbability(Options &_opt, string _sequence, map<string,double> &_entropyMap);
-double getInterfaceSequenceEntropyProbability(Options &_opt, string _sequence, map<string,double> &_entropyMap, vector<uint> _interfacialPositionsList);
+
 /***********************************
  *energy builders
  ***********************************/

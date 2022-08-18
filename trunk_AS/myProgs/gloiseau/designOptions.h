@@ -83,7 +83,7 @@ struct Options{
 
 	*/
 
-	// tm: do I need these?
+	// tm start and end numbers
 	int tmStart; //specifies starting residue number
 	int tmEnd; //specifies ending residue number
 
@@ -126,7 +126,7 @@ struct Options{
 	double weight_vdw; //weight of vdw energy contribution to total energy: default = 1
 	double weight_hbond;//weight of hbond energy contribution to total energy: default = 1
 	double weight_solv;//weight of solvation energy contribution to total energy: default = 1
-	double weight_elec;//weight of electrostatic energy contribution to total energy: default = 1
+	//double weight_elec;//weight of electrostatic energy contribution to total energy: default = 1
 	double weight_seqEntropy;//weight of sequence entropy contribution to total energy: default = 1
 
 	// alternate identities

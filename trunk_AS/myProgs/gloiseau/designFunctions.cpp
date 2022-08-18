@@ -83,8 +83,157 @@ string generateMonomerMultiIDPolymerSequence(string _seq, int _startResNum, vect
 /***********************************
  *  calculate residue burial
  ***********************************/
+std::vector<pair <int, double> > calculateResidueBurial (System &_sys) {
+	/*
+	  SASA reference:
+	  Protein Engineering vol.15 no.8 pp.659–667, 2002
+	  Quantifying the accessible surface area of protein residues in their local environment
+	  Uttamkumar Samanta Ranjit P.Bahadur and  Pinak Chakrabarti
+	*/
+	map<string,double> refSasa;
+	refSasa["G"] = 83.91;
+	refSasa["A"] = 116.40;
+	refSasa["S"] = 125.68;
+	refSasa["C"] = 141.48;
+	refSasa["P"] = 144.80;
+	refSasa["T"] = 148.06;
+	refSasa["D"] = 155.37;
+	refSasa["V"] = 162.24;
+	refSasa["N"] = 168.87;
+	refSasa["E"] = 187.16;
+	refSasa["Q"] = 189.17;
+	refSasa["I"] = 189.95;
+	refSasa["L"] = 197.99;
+	refSasa["H"] = 198.51;
+	refSasa["K"] = 207.49;
+	refSasa["M"] = 210.55;
+	refSasa["F"] = 223.29;
+	refSasa["Y"] = 238.30;
+	refSasa["R"] = 249.26;
+	refSasa["W"] = 265.42;
 
-//TODO: fix this function and make it less gross
+	std::vector<pair <int, double> > residueBurial;
+	SasaCalculator b(_sys.getAtomPointers());
+	//b.setProbeRadius(3.0);
+	b.calcSasa();
+	for (uint i = 0; i < _sys.positionSize()/2; i++) {//Changed this to account for linked positions in the dimer; gives each AA same number of rotamers as correspnding chain
+		string posIdA = _sys.getPosition(i).getPositionId();
+		//string posIdB = _sys.getPosition(i+_sys.positionSize()/2).getPositionId();
+		string oneLetter = MslTools::getOneLetterCode(_sys.getPosition(i).getResidueName());
+		double resiSasa = b.getResidueSasa(posIdA);
+		double burial = resiSasa / refSasa[oneLetter];
+		residueBurial.push_back(pair<int,double>(i, burial));
+		//residueBurial.push_back(pair<string,double>(posIdB, burial));
+		//cout << posId << "\t" << resiSasa << "\t" << burial << endl;
+	}
+
+	return residueBurial;
+}
+
+//Calculate Residue Burial and output a PDB that highlights the interface
+std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &_opt, string _seq) {
+	string polySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, 1);
+	PolymerSequence PS(polySeq);
+
+	// Declare new system
+	System monoSys;
+	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile);
+	CSBMono.setBuildTerm("CHARMM_ELEC", false);
+	CSBMono.setBuildTerm("CHARMM_ANGL", false);
+	CSBMono.setBuildTerm("CHARMM_BOND", false);
+	CSBMono.setBuildTerm("CHARMM_DIHE", false);
+	CSBMono.setBuildTerm("CHARMM_IMPR", false);
+	CSBMono.setBuildTerm("CHARMM_U-BR", false);
+
+	CSBMono.setBuildNonBondedInteractions(false);
+	if (!CSBMono.buildSystem(PS)){
+		cerr << "Unable to build system from " << polySeq << endl;
+	}
+
+	/******************************************************************************
+	 *                         === INITIALIZE POLYGLY ===
+	 ******************************************************************************/
+	// Read in Gly-69 to use as backbone coordinate template
+	CRDReader cRead;
+	cRead.open(_opt.backboneCrd);
+	if(!cRead.read()) {
+		cerr << "Unable to read " << _opt.backboneCrd << endl;
+		exit(0);
+	}
+	cRead.close();
+
+	AtomPointerVector& glyAPV = cRead.getAtomPointers();//*/
+
+	/******************************************************************************
+	 *                         === INITIALIZE POLYGLY ===
+	 ******************************************************************************/
+	monoSys.assignCoordinates(glyAPV,false);
+	monoSys.buildAllAtoms();
+
+	std::vector<pair <int, double> > residueBurial;
+	SasaCalculator dimerSasa(_sys.getAtomPointers());
+	SasaCalculator monoSasa(monoSys.getAtomPointers());
+	dimerSasa.calcSasa();
+	monoSasa.calcSasa();
+	dimerSasa.setTempFactorWithSasa(true);
+
+	for (uint i = 0; i < monoSys.positionSize(); i++) {//Changed this to account for linked positions in the dimer; gives each AA same number of rotamers as correspnding chain
+		string posIdMonomer = monoSys.getPosition(i).getPositionId();
+		string posIdDimer = _sys.getPosition(i).getPositionId();
+		double resiSasaMonomer = monoSasa.getResidueSasa(posIdMonomer);
+		double resiSasaDimer = dimerSasa.getResidueSasa(posIdDimer);
+		double burial = resiSasaDimer/resiSasaMonomer;
+		residueBurial.push_back(pair<int,double>(i, burial));
+
+		//set sasa for each residue in the b-factor
+		AtomSelection selA(_sys.getPosition(i).getAtomPointers());
+		AtomSelection selB(_sys.getPosition(i+_opt.backboneLength).getAtomPointers());
+		AtomPointerVector atomsA = selA.select("all");
+		AtomPointerVector atomsB = selB.select("all");
+		for (AtomPointerVector::iterator k=atomsA.begin(); k!=atomsA.end();k++) {
+			// set the residue sasa in the b-factor
+			(*k)->setTempFactor(burial);
+		}
+		for (AtomPointerVector::iterator k=atomsB.begin(); k!=atomsB.end();k++) {
+			// set the residue sasa in the b-factor
+			(*k)->setTempFactor(burial);
+		}
+	}
+
+	PDBWriter writer;
+	writer.open(_opt.pdbOutputDir+"/interfaceSASA.pdb");
+	writer.write(_sys.getAtomPointers(), true, false, true);
+	writer.close();
+	return residueBurial;
+}
+
+vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition){
+	vector<uint> variableInterfacePositions;
+	//TODO: make this variable in case I eventually decide that I actually want to mutate everything but the final Leu or something
+	//for (uint k=0; k<_opt.backboneLength; k++){
+	for (uint k=0; k<_opt.backboneLength; k++){
+		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
+			variableInterfacePositions.push_back(k);
+		} else {
+			continue;
+		}
+	}
+	return variableInterfacePositions;
+}
+
+vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition){
+	vector<uint> variableInterfacePositions;
+	//TODO: make this variable in case I eventually decide that I actually want to mutate everything but the final Leu or something
+	//for (uint k=0; k<_opt.backboneLength; k++)void defineInterfaceAndRotamerSampling(Options &_opt, PolymerSequence _PS, string &_rotamerLevels, string &_polySeq, string &_variablePositionString, string &_rotamerSamplingString, vector<int> &_linkedPositions, vector<uint> &_allInterfacePositions, vector<uint> &_interfacePositions, vector<int> &_rotamerSamplingPerPosition, ofstream &_out, string _axis){{
+	for (uint k=3; k<_opt.backboneLength-5; k++){
+		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
+			variableInterfacePositions.push_back(k);
+		} else {
+			continue;
+		}
+	}
+	return variableInterfacePositions;
+}
 
 /***********************************
  *output file functions
@@ -205,6 +354,13 @@ double sumEnergyVector(vector<double> _energies){
 	return ener;
 }
 
+void buildBaselines(System &_sys, Options &_opt){
+		map<string, double> selfMap = readSingleParameters(_opt.selfEnergyFile);
+		map<string,map<string,map<uint,double>>> pairMap = readPairParameters(_opt.pairEnergyFile);
+		buildSelfInteractions(_sys, selfMap);
+		buildPairInteractions(_sys, pairMap);
+}
+
 /***********************************
  *calculate energies
  ***********************************/
@@ -273,7 +429,9 @@ void computeMonomerEnergyNoIMM1(Options& _opt, map<string,map<string,double>> &_
 	/*****************************************************************************
 	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
 	 ******************************************************************************/
-	deleteTerminalHydrogenBondInteractions(monoSys,_opt);
+	int firstPos = 0;
+    int lastPos = monoSys.positionSize();
+    deleteTerminalHydrogenBondInteractions(monoSys,firstPos,lastPos);
 
 	/*****************************************************************************
 	 *                 === GREEDY TO OPTIMIZE ROTAMERS ===
@@ -372,7 +530,9 @@ void computeMonomerEnergyIMM1(Options& _opt, Transforms & _trans, map<string,map
 	/*****************************************************************************
 	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
 	 ******************************************************************************/
-	deleteTerminalHydrogenBondInteractions(monoSys,_opt);
+	int firstPos = 0;
+    int lastPos = monoSys.positionSize();
+    deleteTerminalHydrogenBondInteractions(monoSys,firstPos,lastPos);
 
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
@@ -699,6 +859,453 @@ void computeMonomerEnergies(Options &_opt, Transforms &_trans, map<string, map<s
 	_sout << "End monomer calculations: " << diffTimeMono << "s" << endl << endl;
 }
 
+void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum){
+	EnergySet* pESet = _sys.getEnergySet();
+	int chainSize = _sys.chainSize();
+	AtomPointerVector atoms;
+	for(int i = 0; i < chainSize; i++) {
+		Chain & thisChain = _sys.getChain(i);
+		vector<Position*>& positions = thisChain.getPositions();
+		for(int i = 0; i < 3; i++) {
+			if(_firstResiNum > i) {
+				atoms += positions[i]->getAtomPointers();
+			}
+			if(_lastResiNum > i) {
+				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
+			}
+		}
+	}
+	pESet->deleteInteractionsWithAtoms(atoms,"SCWRL4_HBOND");
+}
+
+/***********************************
+* sequence search functions
+ ***********************************/
+vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, string _rotamerSamplingString,
+ string _variablePositionString, vector<string> _seqs, vector<uint> _interfacialPositions, map<string, map<string,double>> &_sequenceEnergyMap, 
+ map<string, vector<uint>> &_sequenceVectorMap, map<string, double> _sequenceEntropyMap, ofstream &_out){
+	// Setup time variables
+	time_t startTime, endTime;
+	double diffTime;
+	time(&startTime);
+
+	// SelfPairManager setup
+	SelfPairManager spm;
+	spm.seed(_RNG.getSeed());
+	spm.setSystem(&_sys);
+	spm.setVerbose(false);
+	spm.setRunDEE(_opt.runDEESingles, _opt.runDEEPairs);
+	spm.setOnTheFly(false);
+	spm.setMCOptions(1000, 0.5, 5000, 3, 10, 1000, 0.01);//changed to sigmoid and added up to 5000
+	spm.saveEnergiesByTerm(true); //added back in on 09_21_2021 to get the vdw and hbond energies
+	spm.calculateEnergies();
+
+	//Setup running SCMF or UnbiasedMC
+	if (_opt.runSCMF == true){
+		cout << "Running Self Consistent Mean Field" << endl;
+		_out << "Running Self Consistent Mean Field" << endl;
+		spm.setRunSCMF(true);
+		spm.setRunSCMFBiasedMC(true);
+		spm.setRunUnbiasedMC(false);
+	} else {
+		cout << "runSCMF is false; Run Unbiased Monte Carlo " << endl;
+		_out << "runSCMF is false; Run Unbiased Monte Carlo " << endl;
+		spm.setRunSCMF(false);
+		spm.setRunSCMFBiasedMC(false);
+		spm.setRunUnbiasedMC(true);
+	}
+
+	// run and find a sequence using the chosen parameters (MCOptions, SCMF, DEE, etc.)
+	spm.runOptimizer();
+	time(&endTime);
+	diffTime = difftime (endTime, startTime);
+
+	// vector for the SCMF state after the biased monte carlo
+	vector<unsigned int> bestState = spm.getBestSCMFBiasedMCState();
+	_sys.setActiveRotamers(bestState);
+	string startSequence = convertPolymerSeqToOneLetterSeq(_sys.getChain("A")); //used for outputting starting sequence
+	string interfaceSeq = getInterfaceSequence(_opt, _rotamerSamplingString, startSequence);
+	_sequenceVectorMap[startSequence] = bestState;	
+	// output spm run optimizer information
+	spmRunOptimizerOutput(spm, _sys, interfaceSeq, _variablePositionString, diffTime, _out);
+	
+	//Add energies for initial sequences into the sequenceEnergyMap
+	_seqs.insert(_seqs.begin(), startSequence);
+	pair<string,vector<uint>> startSequenceStatePair = make_pair(startSequence, bestState);
+	getEnergiesForStartingSequence(_opt, spm, startSequence, bestState, _interfacialPositions, _sequenceEnergyMap, _sequenceEntropyMap);
+	getSasaForStartingSequence(_sys, startSequence, bestState, _sequenceEnergyMap);
+
+	return bestState;
+}
+
+void getEnergiesForStartingSequence(Options &_opt, SelfPairManager &_spm, string _startSequence,
+vector<uint> &_stateVector, vector<uint> _interfacialPositions, map<string, map<string, double>> &_sequenceEnergyMap, map<string, double> &_entropyMap){
+	if (_opt.useBaseline){
+		double baseline = _spm.getStateEnergy(_stateVector, "BASELINE")+_spm.getStateEnergy(_stateVector, "BASELINE_PAIR");
+		_sequenceEnergyMap[_startSequence]["Dimer"] = _spm.getStateEnergy(_stateVector)-baseline;
+		_sequenceEnergyMap[_startSequence]["Baseline"] = baseline;
+	} else {
+		_sequenceEnergyMap[_startSequence]["Dimer"] = _spm.getStateEnergy(_stateVector);
+	}
+	_sequenceEnergyMap[_startSequence]["VDWDimer"] = _spm.getStateEnergy(_stateVector, "CHARMM_VDW");
+	_sequenceEnergyMap[_startSequence]["HBONDDimer"] = _spm.getStateEnergy(_stateVector, "SCWRL4_HBOND");
+	_sequenceEnergyMap[_startSequence]["IMM1Dimer"] = _spm.getStateEnergy(_stateVector, "CHARMM_IMM1REF")+_spm.getStateEnergy(_stateVector, "CHARMM_IMM1");
+
+	map<string,int> seqCountMap;
+	double numberOfPermutations;
+	// Found mistake on 2022-8-18: the sequence entropies for this sequence are wrong; use interfaceAASequenceEntropy instead
+	interfaceAASequenceEntropySetup(_startSequence, seqCountMap, numberOfPermutations, _interfacialPositions);
+	double SEProb = calculateSequenceProbability(seqCountMap, _entropyMap, numberOfPermutations);
+
+	_sequenceEnergyMap[_startSequence]["SequenceProbability"] = SEProb;
+}
+
+
+void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfaceSeq, string _variablePosString, double _spmTime, ofstream &_out){
+	// output this information about the SelfPairManager run below
+	// vector for the initial SCMF state
+	vector<unsigned int> initialState = _spm.getSCMFstate();
+	// vector for the SCMF state after the biased monte carlo
+	vector<unsigned int> bestState = _spm.getBestSCMFBiasedMCState();
+	
+	// checks to see if the sequence changed between the initialState and the bestState
+	_sys.setActiveRotamers(initialState);
+	string initialSeq = convertPolymerSeqToOneLetterSeq(_sys.getChain("A"));
+	_sys.setActiveRotamers(bestState);
+	string SCMFBestSeq = convertPolymerSeqToOneLetterSeq(_sys.getChain("A"));
+
+	// energy terms from the startingState
+	double bestEnergy = _spm.getStateEnergy(bestState);
+	double hbondEnergy = _spm.getStateEnergy(bestState, "SCWRL4_HBOND");
+	double vdwEnergy = _spm.getStateEnergy(bestState, "CHARMM_VDW");
+
+	// outputs	
+	_out << "Initial Sequence:   " << initialSeq << endl;
+	_out << "Best Sequence:      " << SCMFBestSeq << endl;
+	_out << "Interface Sequence: " << _interfaceSeq << endl;
+	_out << "Interface:          " << _variablePosString << endl;
+	_out << "Total Energy:       " << bestEnergy << endl;
+	_out << "VDW:                " << vdwEnergy << endl;
+	_out << "HBOND:              " << hbondEnergy << endl;
+	_out << endl << "End SelfPairManager Optimization: " << _spmTime << "s" << endl;
+}
+
+/***********************************
+ *sequence entropy functions
+ ***********************************/
+void calculateInterfaceSequenceEntropy(Options &_opt, string _prevSeq, string _currSeq,
+ map<string,double> _entropyMap, double &_prevSEProb, double &_currSEProb, double &_prevEntropy,
+ double &_currEntropy, double _bestEnergy, double _currEnergy, double &_bestEnergyTotal, double &_currEnergyTotal, vector<uint> _interfacePositionsList){
+
+	_prevSEProb = getInterfaceSequenceEntropyProbability(_opt, _prevSeq, _entropyMap, _interfacePositionsList);
+	_currSEProb = getInterfaceSequenceEntropyProbability(_opt, _currSeq, _entropyMap, _interfacePositionsList);
+
+	//Calculate the probability of each sequence compared to the other
+	//On 10_26_21: after changing to the 2021_10_25_seqEntropies.txt file with more accurate membrane composition from Liu et al. 2002, I started seeing a lot of GxxxG sequences. I also checked my runs from before this date, and there were qute a bit of GxxxG sequences as well. Uncomment the below if you would like to try running using the internal probabilities, which should give a bit more flexibiilty to choosing AAs with lower likelilhoods of being in the membrane
+	double totSEProb = _prevSEProb+_currSEProb;
+	double prevSeqProp = _prevSEProb/totSEProb;
+	double currSeqProp = _currSEProb/totSEProb;
+
+	//Convert the probability of each sequence to an entropy term that can be added to the original energy to directly compare two sequences
+	_prevEntropy = -log(prevSeqProp)*0.592*_opt.weight_seqEntropy;//Multiplies the energy (log proportion times RT in kcal/mol) by the sequence entropy weight (weight of 1 gives entropy same weight as other terms)
+	_currEntropy = -log(currSeqProp)*0.592*_opt.weight_seqEntropy;
+
+	//Calculate energy total for best sequence vs current sequence
+	//The below includes the baseline energy, which is an estimate of monomer energy
+	_bestEnergyTotal = _bestEnergy+_prevEntropy;
+	_currEnergyTotal = _currEnergy+_currEntropy;
+
+	//Output the terms if verbose
+	if (_opt.verbose){
+		cout << "Prev Prob:    " << _prevSEProb << endl;
+		cout << "New Prob:     " << _currSEProb << endl;
+		cout << "Prev Seq Proportion: " << prevSeqProp << endl;
+		cout << "New Seq Proportion:  " << currSeqProp << endl;
+		cout << "PrevEner =    " << _prevEntropy << endl;
+		cout << "NewEner =     " << _currEntropy << endl;
+		cout << "Diff =        " << (_prevEntropy-_currEntropy) << endl;
+		cout << "Best Energy: " << _bestEnergyTotal << endl;
+		cout << "New Energy: " << _currEnergyTotal << endl;
+	}
+}
+map<string,int> getAACountMap(vector<string> _seq){
+	map<string,int> AAcounts;
+	for (uint i=0; i<_seq.size(); i++){
+		try{
+			if (AAcounts.count(_seq[i]) > 0){
+				AAcounts.at(_seq[i])++;
+			} else {
+				AAcounts[_seq[i]] = 1;
+			}
+		}
+		catch(const out_of_range& e){
+			continue;
+		}
+	}
+	return AAcounts;
+}
+
+double calcNumberOfPermutations(map<string,int> _seqAACounts, int _seqLength){
+	//This function calculates number of permutations using following equation: n!/(n-r)! where n is number of positions and r is number of AAs
+	double numPermutation = 1;
+	double permutationDenominator = 1;
+	for(uint i=_seqLength; i>1; i--){
+		numPermutation = numPermutation*i;
+	}
+	map<string,int>::iterator itr;
+	for(itr = _seqAACounts.begin(); itr != _seqAACounts.end(); itr++){
+		for (uint j=itr->second; j>1; j--){
+			permutationDenominator = permutationDenominator*j;
+		}
+	}
+	numPermutation = numPermutation/permutationDenominator;
+
+	return numPermutation;
+}
+
+void interfaceAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, vector<uint> _interfacialPositionsList){
+	//Get residue name for each interfacial identity
+	vector<string> seqVector;
+	int numInterfacials = _interfacialPositionsList.size()-1;
+	for (uint i=0; i<numInterfacials; i++){
+		//Position &pos = _sys.getPosition(_interfacialPositionsList[i]);
+		//Residue &resi = pos.getCurrentIdentity();
+		//string id = resi.getResidueName();
+		stringstream tmp;
+		tmp << _seq[_interfacialPositionsList[i]];
+		string aa = tmp.str();
+		string resName = MslTools::getThreeLetterCode(aa);
+		seqVector.push_back(resName);
+		//cout << _interfacialPositionsList[i] << " : " << resName << endl;
+	}
+	_seqCountMap = getAACountMap(seqVector);
+	_numberOfPermutations = calcNumberOfPermutations(_seqCountMap, numInterfacials);
+}
+
+double getInterfaceSequenceEntropyProbability(Options &_opt, string _sequence, map<string,double> &_entropyMap, vector<uint> _interfacialPositionsList){
+	map<string,int> AACountMap;
+	double numberOfPermutations;
+	interfaceAASequenceEntropySetup(_sequence, AACountMap, numberOfPermutations, _interfacialPositionsList);
+	double seqProb = calculateSequenceProbability(AACountMap, _entropyMap, numberOfPermutations);
+	return seqProb;
+}
+
+double calculateSequenceProbability(map<string,int> &_seqCountMap, map<string,double> &_entropyMap, double _numberOfPermutations){
+	//Find AA in count map, get counts of AA, then calculate the sequence probability by multiplying each AAs membrane probability contribution
+	double seqProb = 1;
+	map<string,int>::iterator it;
+	for (it=_seqCountMap.begin(); it != _seqCountMap.end(); it++){
+		double memProb = _entropyMap.at(it->first);
+		int count = it->second;
+		seqProb = seqProb*(pow(memProb, count));
+	}
+	//cout << "pSeq = " << seqProb << endl;
+	seqProb = seqProb*_numberOfPermutations;
+	//cout << "comb = " << _numberOfPermutations << endl;
+	//cout << "pRes = " << seqProb << endl;
+	return seqProb;
+}
+
+// old version of code without threading; used for my initial runs for CHIP1 in winter 2021
+void searchForBestSequences(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs, vector<uint> &_bestState,
+ map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> _sequenceEntropyMap, vector<pair<string,vector<uint>>> &_sequenceStatePair, 
+ vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, ofstream &_out, ofstream &_err){
+	// Setup time variables
+	time_t startTimeSMC, endTimeSMC;
+	double diffTimeSMC;
+	time(&startTimeSMC);
+
+	// Setup MonteCarloManager
+	MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, 10);
+	MC.setRandomNumberGenerator(&_RNG);
+
+	// Start from most probable state
+	_sys.setActiveRotamers(_bestState);
+	double bestEnergy = _spm.getStateEnergy(_bestState);
+
+	// State variable setup
+	vector<unsigned int> prevStateVec = _bestState;
+	vector<unsigned int> currStateVec = _bestState;
+	MC.setEner(bestEnergy);
+
+	// initialize map for accepting energies
+	map<string,double> stateMCEnergies;
+	map<vector<uint>, map<string,double>> stateEnergyMap;
+	
+	// Alternate AA Ids for each of the interfacial positions
+	vector<string> ids = _opt.Ids;
+	ids.push_back("LEU");
+
+	// Variables setup for MC while loop
+	map<double, string> sequences;
+	int cycleCounter = 0;
+	Chain & chain = _sys.getChain("A");
+	string prevStateSeq = convertPolymerSeqToOneLetterSeq(chain);
+
+	// initialize energy vectors
+	vector<pair<double,string>> energyVector;
+	vector<pair<double,vector<uint>>> energyStateVec;
+
+	// Sequence Search Energy Landscape file
+	ofstream lout;
+	string loutfile  = _opt.pdbOutputDir + "/sequenceSearchEnergyLandscape.out";
+	lout.open(loutfile.c_str());
+	lout << "***STARTING GEOMETRY:***" << endl;
+	lout << "xShift: " << _opt.xShift << endl;
+	lout << "crossingAngle: " << _opt.crossingAngle << endl;
+	lout << "axialRotation: " << _opt.axialRotation << endl;
+	lout << "zShift: " << _opt.zShift << endl << endl;
+	lout << "Number of MCCycles: " << _opt.MCCycles << endl;
+	lout << "PrevSequence\tCurrSequence\tTotal\tDimer\tBaseline\tVDW\tHBOND\tEnergyDifferencew/prevSeq\tPrevEnergy\tCurrEnergy\tPrevEntropy\tCurrEntropy\tCurrentTemp" << endl;
+	if (_opt.verbose){
+		cout << "***STARTING GEOMETRY:***" << endl;
+		cout << "xShift: " << _opt.xShift << endl;
+		cout << "crossingAngle: " << _opt.crossingAngle << endl;
+		cout << "axialRotation: " << _opt.axialRotation << endl;
+		cout << "zShift: " << _opt.zShift << endl << endl;
+		cout << "Number of MCCycles: " << _opt.MCCycles << endl;
+	}
+
+	/******************************************************************************
+	 *                      === BEGIN STATE MONTE CARLO ===
+	 ******************************************************************************/
+	//TODO: I think if I ever want to run this on multiple cores, I should set it up to run those here, then just save x number from each core
+	// - could I make local changes to geometry starting from here, then get it to run on multiple cores from here?
+	// - what would multiple cores do here? Could I locally test a variety of sequences using multiple cores, and save x number per each core?
+	//		 Say save 10 and run 10 replicates, that gets me 100 sequences right away?
+	//TODO: to get the backbone optimization working, I would need to implement it here and only with one set of sidechains, not the whole set
+	// -how do I decide when to start that optimization?
+	// - can I make it an option?
+	// initialize energy variables for the MonteCarlo
+	double bestEnergyTotal = 0;
+	double currEnergyTotal = 0;
+	double currStateSEProb = 0;
+	double prevStateSEProb = 0;
+	double prevStateEntropy = 0;
+	double currStateEntropy = 0;
+	double totEnergy = 0;
+
+	cout << "Finding " << _opt.numStatesToSave << " sequences using membrane composition (State MonteCarlo)..." << endl;
+	_out << "Finding " << _opt.numStatesToSave << " sequences using membrane composition (State MonteCarlo)..." << endl;
+	while (!MC.getComplete()){
+		if (_opt.verbose){
+			cout << "Cycle #" << cycleCounter << "" << endl;
+			cout << "Starting Seq: " << prevStateSeq << endl;
+		}
+		// Get energy term and probability for the first sequence (these terms can then get replaced by future sequences that are accepted by MC)
+		if (cycleCounter == 0){
+			outputEnergiesByTerm(_spm, prevStateVec, stateMCEnergies, _opt.energyTermList, "Dimer", true);
+			stateMCEnergies["Dimer"] = bestEnergy;
+			//double prevSeqProb = getSequenceEntropyProbability(_opt, prevStateSeq, _sequenceEntropyMap); // this was a mistake; didn't matter because value isn't used after this
+			double prevSeqProb = getInterfaceSequenceEntropyProbability(_opt, prevStateSeq, _sequenceEntropyMap, _allInterfacialPositionsList); // changed to this on 2022-8-18
+			stateMCEnergies["SequenceProbability"] = prevSeqProb;
+
+			stateEnergyMap[prevStateVec] = stateMCEnergies;
+			totEnergy = stateMCEnergies["EnergyBeforeLocalMC"];
+
+			sequences[totEnergy] = prevStateSeq;
+			double prevVDW = _spm.getStateEnergy(prevStateVec, "CHARMM_VDW");
+			//saveSequence(_opt, energyVector, energyStateVec, prevStateSeq, prevStateVec, bestEnergy);
+		}
+		// Reset the energy map to save energies from new state after changing the rotamer
+		stateMCEnergies.clear();
+		randomPointMutationUnlinked(_sys, _opt, _RNG, _interfacialPositionsList, ids);
+
+		// Set a mask and run a greedy to get the best state for the sequence
+		//_sys.setActiveRotamers(currStateVec);
+		vector<vector<bool>> mask = getActiveMask(_sys);
+		_spm.runGreedyOptimizer(_opt.greedyCycles, mask);
+		currStateVec = _spm.getMinStates()[0];
+
+		// Get the sequence for the random state
+		_sys.setActiveRotamers(currStateVec);
+		string currStateSeq = convertPolymerSeqToOneLetterSeq(chain);
+
+		// Compute dimer energy
+		outputEnergiesByTerm(_spm, currStateVec, stateMCEnergies, _opt.energyTermList, "Dimer", true);
+		double currStateEnergy = _spm.getStateEnergy(currStateVec);
+
+		// Convert the energy term (which actually saves the probability of the sequence in the whole _system)
+		// to the proper comparison of proportion to energy between individual sequences (done outside of the actual energy term)
+
+		//TODO: I just realized that for heterodimers, I may need to completely remake some of these functions as with the below only taking the sequence of one helix; I may make a hetero and homo functions list?
+		calculateInterfaceSequenceEntropy(_opt, prevStateSeq, currStateSeq, _sequenceEntropyMap, prevStateSEProb, 
+		 currStateSEProb, prevStateEntropy, currStateEntropy, bestEnergy, currStateEnergy, bestEnergyTotal,
+		 currEnergyTotal, _allInterfacialPositionsList);
+		MC.setEner(bestEnergyTotal);
+
+		// MC accept and reject conditions
+		double currVDW = _spm.getStateEnergy(currStateVec, "CHARMM_VDW");
+		double prevVDW = _spm.getStateEnergy(prevStateVec, "CHARMM_VDW");
+		double currHBOND = _spm.getStateEnergy(currStateVec, "SCWRL4_HBOND");
+		double prevHBOND = _spm.getStateEnergy(prevStateVec, "SCWRL4_HBOND");
+		
+		if (!MC.accept(currEnergyTotal)){
+			_sys.setActiveRotamers(prevStateVec);
+			currStateVec = prevStateVec;
+
+			if (_opt.verbose){
+				cout << "State not accepted, E= " << currEnergyTotal << "; PrevE= " << bestEnergyTotal << endl;
+			}
+		} else {
+			//TODO: make these a separate function or put in comments  for them
+			bestEnergy = currStateEnergy;
+			MC.setEner(currEnergyTotal);
+			prevStateSEProb = currStateSEProb;
+			string prevStateSeq1 = prevStateSeq;
+			prevStateSeq = currStateSeq;
+			prevStateVec = currStateVec;
+			_sys.setActiveRotamers(currStateVec);
+	
+			outputEnergiesByTerm(_spm, currStateVec, stateMCEnergies, _opt.energyTermList, "Dimer", true);
+			double EnergyBeforeLocalMC = currStateEnergy-(_spm.getStateEnergy(currStateVec, "BASELINE")+_spm.getStateEnergy(currStateVec, "BASELINE_PAIR"));
+			stateMCEnergies["EnergyBeforeLocalMC"] = EnergyBeforeLocalMC;
+			stateMCEnergies["Dimer"] = EnergyBeforeLocalMC;
+			stateMCEnergies["Baseline"] = _spm.getStateEnergy(currStateVec, "BASELINE")+_spm.getStateEnergy(currStateVec, "BASELINE_PAIR");
+			stateMCEnergies["EnergyBeforeLocalMCw/seqEntropy"] = bestEnergyTotal-currEnergyTotal;
+			stateMCEnergies["SequenceProbability"] = currStateSEProb;
+			stateEnergyMap[currStateVec] = stateMCEnergies;
+
+			//TODO: change this so I just save energies in the same place and easily can get vdw, hbond, etc. for each saved sequence
+			//saveSequence(_opt, energyVector, energyStateVec, currStateSeq, currStateVec, currStateEnergy);
+			if (_opt.weight_seqEntropy == 0){
+				saveSequence(_opt, energyVector, energyStateVec, currStateSeq, currStateVec, currVDW);
+			} else {
+				saveSequence(_opt, _RNG, stateEnergyMap, energyVector, energyStateVec, currStateSeq, currStateVec, currStateEnergy, _out);
+			}
+			double prevEnergy = bestEnergyTotal;
+
+			if (_opt.energyLandscape){
+				map<string,double> energyMap = stateEnergyMap.at(currStateVec);
+				lout << prevStateSeq1 << "\t" << currStateSeq << "\t";
+				for (uint j=0; j<_opt.energyLandscapeTerms.size(); j++){
+					lout << energyMap.at(_opt.energyLandscapeTerms[j]) << "\t";
+				}
+				lout << bestEnergyTotal << "\t" << currEnergyTotal << "\t" << prevStateEntropy << "\t" << currStateEntropy << "\t" << MC.getCurrentT() << endl;
+			}
+			if (_opt.verbose){
+				cout << "Cycle#" << cycleCounter << " State accepted, Sequence: " << currStateSeq << "; PrevE=  " << prevEnergy << " : CurrE= " << currEnergyTotal << "; PrevVDW: " << prevVDW << " : CurrVDW: " << currVDW << "EnergyDifference" << bestEnergyTotal-currEnergyTotal << "; CurrTemp: " << MC.getCurrentT() << endl;
+			}
+		cycleCounter++;
+		}
+		//Reset the MC to run 100 more cycles to
+		if (MC.getComplete() == true && MC.getCurrentT() < 546.4){
+			MC.reset(3649, 3649, 500, MonteCarloManager::EXPONENTIAL, 10);//Approximately 50% likely to accept within 5kcal, and 25% likely to accept within 10kcal
+		}
+	}
+	time(&endTimeSMC);
+	diffTimeSMC = difftime (endTimeSMC, startTimeSMC);
+
+	lout << "Time: " << diffTimeSMC << "s" << endl;
+	lout.close();
+	_allSeqs.clear();
+	addSequencesToVector(energyVector, _allSeqs);
+	convertStateMapToSequenceMap(_sys, energyStateVec, stateEnergyMap, _sequenceEnergyMap, _sequenceStatePair, _out);
+	getDimerSasaScores(_sys, _sequenceStatePair, _sequenceEnergyMap);
+	cout << "End sequence optimization by membrane composition: " << diffTimeSMC << "s" << endl << endl;
+	_out << "End sequence optimization by membrane composition: " << diffTimeSMC << "s" << endl << endl;
+}
+
 /****************************************
  *
  *  ======= CONFIG FILE OPTIONS =======
@@ -776,7 +1383,7 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 	opt.allowed.push_back("weight_hbond");
 	opt.allowed.push_back("weight_solv");
 	opt.allowed.push_back("weight_seqEntropy");
-	opt.allowed.push_back("weight_elec");
+	//opt.allowed.push_back("weight_elec");
 
 	//Rotamers
 	opt.allowed.push_back("SL");
@@ -1156,13 +1763,12 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 		opt.warningMessages += "weight_seqEntropy not specified, default 1.0\n";
 		opt.weight_seqEntropy = 1.0;
 	}
-	opt.weight_seqEntropy = opt.weight_seqEntropy;//Default allows 1 to be weighted equally to other energy terms (I should convert to actual weighting conversion used with other energy terms)
-	opt.weight_elec = OP.getDouble("weight_elec");
-	if (OP.fail()) {
-		opt.warningFlag = true;
-		opt.warningMessages += "weight_elec not specified, default 1.0\n";
-		opt.weight_elec = 1.0;
-	}
+	//opt.weight_elec = OP.getDouble("weight_elec");
+	//if (OP.fail()) {
+	//	opt.warningFlag = true;
+	//	opt.warningMessages += "weight_elec not specified, default 1.0\n";
+	//	opt.weight_elec = 1.0;
+	//}
 
 	//rotlevel
 	opt.SL = OP.getString("SL");

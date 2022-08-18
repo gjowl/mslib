@@ -1,10 +1,9 @@
 ***STARTING GEOMETRY:***
-xShift: 8.88447
-crossingAngle: 23.0336
-axialRotation: 42.9924
-zShift: 3.00177
+xShift: 9.2
+crossingAngle: 25
+axialRotation: 40
+zShift: 4
 
 Number of MCCycles: 100
 PrevSequence	CurrSequence	PrevEnergy	CurrEnergy	PrevEntropy	CurrEntropy	CurrentTemp
-LLLTGLYSLLGYLIILLLILI	LLLTGLYSLLGYLVILLLILI	19.3798	18.5932	0	0	999.684
-Time: 9s
+LLLVGLYSLLGYLIILLLILI	LLLVGLYSLLGYLVILLLILI	31.7268	32.152	0	0	999.684

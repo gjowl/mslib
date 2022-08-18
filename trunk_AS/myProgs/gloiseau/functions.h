@@ -48,7 +48,7 @@ string generateMultiIDPolymerSequence(string _seq, int _startResNum, vector<stri
 std::vector < std::vector < bool > > getActiveMask (System &_sys);
 string convertToPolymerSequence(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
-void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum);
+
 
 // runs a greedy to quickly repack sidechains
 void repackSideChains(SelfPairManager & _spm, int _greedyCycles);

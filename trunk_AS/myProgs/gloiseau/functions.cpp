@@ -499,7 +499,6 @@ string convertToPolymerSequence(string _seq, int _startResNum) {
 	return "A" + ps + "\nB" + ps;
 }
 
-
 string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum) {
 	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
 	// A:{32}ALA ILE GLY GLY GLY
@@ -538,21 +537,3 @@ string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum) {
 	return "A" + ps + "\nB" + ps;
 }
 
-void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum){
-	EnergySet* pESet = _sys.getEnergySet();
-	int chainSize = _sys.chainSize();
-	AtomPointerVector atoms;
-	for(int i = 0; i < chainSize; i++) {
-		Chain & thisChain = _sys.getChain(i);
-		vector<Position*>& positions = thisChain.getPositions();
-		for(int i = 0; i < 3; i++) {
-			if(_firstResiNum > i) {
-				atoms += positions[i]->getAtomPointers();
-			}
-			if(_lastResiNum > i) {
-				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
-			}
-		}
-	}
-	pESet->deleteInteractionsWithAtoms(atoms,"SCWRL4_HBOND");
-}

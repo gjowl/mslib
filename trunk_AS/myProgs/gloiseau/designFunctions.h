@@ -76,6 +76,8 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys);
 // Calculate Residue Burial for use in identifying the interfacial positions and output a PDB that highlights the interface
 std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &_opt, string _seq);
 
+vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
+vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
 /***********************************
  *output file functions
  ***********************************/
@@ -95,7 +97,23 @@ vector<double> calcBaselineEnergies(System &_sys, int _seqLength);
 vector<double> calcPairBaselineEnergies(System &_sys, int _seqLength);
 // adds up all of the values in a vector<double> to get the total energy
 double sumEnergyVector(vector<double> _energies);
+// baseline builder function; must have a selfEnergyFile and a pairEnergyFile in the options
+void buildBaselines(System &_sys, Options &_opt);
 
+/***********************************
+ *sequence entropy functions
+ ***********************************/
+void calculateInterfaceSequenceEntropy(Options &_opt, string _prevSeq, string _currSeq,
+map<string,double> _entropyMap, double &_prevSEProb, double &_currSEProb, double &_prevEntropy,
+double &_currEntropy, double _bestEnergy, double _currEnergy, double &_bestEnergyTotal, double &_currEnergyTotal, vector<uint> _interfacePositionsList);
+// counts the number of each AA in a sequence and outputs a map<string(AA),int(numAA)> ...
+map<string,int> getAACountMap(vector<string> _seq);
+// calculates the number of permutations possible for a sequence
+double calcNumberOfPermutations(map<string,int> _seqAACounts, int _seqLength);
+// sets up calculating sequence entropy for an interface (gets the AA counts for the interface
+// and calculates the number of permutations for those AAs and the number of interfacial positions)
+void interfaceAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, vector<uint> _interfacialPositionsList);
+double getInterfaceSequenceEntropyProbability(Options &_opt, string _sequence, map<string,double> &_entropyMap, vector<uint> _interfacialPositionsList);
 /***********************************
  *calculate energies
  ***********************************/
@@ -105,12 +123,32 @@ void computeMonomerEnergies(Options &_opt, Transforms &_trans, map<string, map<s
 void computeMonomerEnergyNoIMM1(Options& _opt, map<string,map<string,double>> &_sequenceEnergyMap, string &_seq, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
 // helper function for computeMonomerEnergies: calculates energy for monomer with solvation energy
 void computeMonomerEnergyIMM1(Options& _opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
+// delete terminal hydrogen bonds
+void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum);
 // makes sure that atoms of the system are built; errors out if not
 void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
 
 // gets the interfacial positions from a vector
 vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
 vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
+
+/***********************************
+* sequence search functions
+ ***********************************/
+// function that runs a SelfConsistentMeanField algorithm to find the best starting sequence, only taking into account monomer energies
+vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, string _rotamerSamplingString,
+ string _variablePositionString, vector<string> _seqs, vector<uint> _interfacialPositions, map<string, map<string,double>> &_sequenceEnergyMap, 
+ map<string, vector<uint>> &_sequenceVectorMap, map<string, double> _sequenceEntropyMap, ofstream &_out);
+// outputs for runSCMFToGetStartingSequence
+void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfaceSeq, string _variablePosString, double _spmTime, ofstream &_out);
+// redacted old version without multithreading
+void searchForBestSequences(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs, vector<uint> &_bestState,
+ map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> _sequenceEntropyMap, vector<pair<string,vector<uint>>> &_sequenceStatePair, 
+ vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, ofstream &_out, ofstream &_err);
+// gets the sasa score for sequences found during monte carlo search
+void getDimerSasa(System &_sys, map<string, vector<uint>> &_sequenceVectorMap, map<string, map<string,double>> &_sequenceEnergyMap);
+void getEnergiesForStartingSequence(Options &_opt, SelfPairManager &_spm, string _startSequence,
+vector<uint> &_stateVector, vector<uint> _interfacialPositions, map<string, map<string, double>> &_sequenceEnergyMap, map<string, double> &_entropyMap);
 
 // parse config file for given options
 Options parseOptions(int _argc, char * _argv[], Options defaults);
