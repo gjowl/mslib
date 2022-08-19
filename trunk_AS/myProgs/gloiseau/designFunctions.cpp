@@ -55,6 +55,7 @@ void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Option
 }
 
 void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling){
+	// if using the SASA to identify the interface, then load the rotamers by the SASA burial
 	if (_opt.useSasa){
 		if (_opt.verbose){
 			cout << "Load rotamers by difference in residue burial..." << endl;
@@ -70,10 +71,10 @@ void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vec
 		loadInterfacialRotamers(_sys, _sysRot, _opt.SLInterface, _opt.sasaRepackLevel.size(), _rotamerSampling);
 	}
 }
+
 /***********************************
  *geometry
  ***********************************/
-
 void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out){
 	// Setup file reader
 	Reader reader(_opt.geometryDensityFile);
@@ -104,8 +105,6 @@ void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_de
 	_out << "crossingAngle: " << _opt.crossingAngle << "\tDensity: " << angleDistDensity << endl;
 	_out << "axialRotation: " << _opt.axialRotation << "\tDensity: " << axialRotationDensity << endl;
 	_out << "zShift:        " << _opt.zShift << "\tDensity: " << zShiftDensity << endl << endl;
-
-	//_out << "Geometry: " << _opt.xShift << "\t" << _opt.crossingAngle << "\tDensity: " << angleDistDensity << endl;
 }
 
 /***************************************
@@ -128,24 +127,30 @@ vector<int> getLinked(vector<int> _rotamerSampling, int _backboneLength, int _in
 // Convert positions to string for setLinkedPositions(std::vector<std::vector<std::string> > &_linkedPositions) which uses "A,19" "B,19" format!
 vector<vector<string>> convertToLinkedFormat(System &_sys, vector<int> &_interfacialPositions, int _backboneLength){
 	vector<vector<string>> stringPositions;
-	for (uint k=0; k<_backboneLength; k++){//TODO: if you want to make it possible to do sequences that are not linked, need to change this function!
+	//TODO: if you want to make it possible to do sequences that are not linked, need to change this function! 
+	for (uint k=0; k<_backboneLength; k++){
+		// search through the interface positions vector to get the interface
 		if (_interfacialPositions[k] == 1){
 			vector<string> tempPos;
 
+			// get the positions at the backbone position k
 			Position &posA = _sys.getPosition(k);
 			Position &posB = _sys.getPosition(k+_backboneLength);
 
+			// convert position to string
 			string A = posA.toString();
 			string B = posB.toString();
 
+			// find the space delimiter	
 			string delimiter = " ";
-
 			size_t p = 0;
 			p = A.find(delimiter);
 
+			// add the string without anything after the delimiter to the tempPos vector
 			tempPos.push_back(A.substr(0, p));
 			tempPos.push_back(B.substr(0, p));
-
+			
+			// add the tempPos vector to the stringPositions vector
 			stringPositions.push_back(tempPos);
 		}
 	}
@@ -227,6 +232,7 @@ string generateMonomerMultiIDPolymerSequence(string _seq, int _startResNum, vect
 	return "A" + ps;
 }
 
+// converts a polymer sequence to a string for one chain (for homodimer sequences)
 string convertPolymerSeqToOneLetterSeq(Chain &_chain) {
 	string seq = "";
 	for (uint i=0; i<_chain.positionSize(); i++){
@@ -237,6 +243,7 @@ string convertPolymerSeqToOneLetterSeq(Chain &_chain) {
 	return seq;
 }
 
+// output energies by term into a referenced energyMap
 void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
 vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
 	if (_includeIMM1 == false){//No IMM1 Energy (for the Monte Carlos, both dimer and monomer)
@@ -282,6 +289,7 @@ vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
 	}
 }
 
+// get the string of an interface sequence in 00010001 format where 1 is an interface residue and 0 is a non-interface residue
 string getInterfaceSequence(Options &_opt, string _interface, string _sequence){
 	string interfaceSequence = "";
 	for(string::iterator it = _interface.begin(); it != _interface.end(); it++) {
@@ -301,6 +309,7 @@ string getInterfaceSequence(Options &_opt, string _interface, string _sequence){
 /***********************************
  *  calculate residue burial
  ***********************************/
+// function from Samson that calculates the residue burial of a system by comparing it to the typical burial of an amino acid
 std::vector<pair <int, double> > calculateResidueBurial (System &_sys) {
 	/*
 	  SASA reference:
@@ -417,7 +426,7 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &
 			(*k)->setTempFactor(burial);
 		}
 	}
-
+	// output a pdb
 	PDBWriter writer;
 	writer.open(_opt.pdbOutputDir+"/interfaceSASA.pdb");
 	writer.write(_sys.getAtomPointers(), true, false, true);
@@ -425,10 +434,9 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &
 	return residueBurial;
 }
 
+// get a vector of all interfacial positions, including the ends
 vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition){
 	vector<uint> variableInterfacePositions;
-	//TODO: make this variable in case I eventually decide that I actually want to mutate everything but the final Leu or something
-	//for (uint k=0; k<_opt.backboneLength; k++){
 	for (uint k=0; k<_opt.backboneLength; k++){
 		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
 			variableInterfacePositions.push_back(k);
@@ -439,10 +447,9 @@ vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSampli
 	return variableInterfacePositions;
 }
 
+// get a vector of interface positions that doesn't include the ends of the sequence
 vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition){
 	vector<uint> variableInterfacePositions;
-	//TODO: make this variable in case I eventually decide that I actually want to mutate everything but the final Leu or something
-	//for (uint k=0; k<_opt.backboneLength; k++)void defineInterfaceAndRotamerSampling(Options &_opt, PolymerSequence _PS, string &_rotamerLevels, string &_polySeq, string &_variablePositionString, string &_rotamerSamplingString, vector<int> &_linkedPositions, vector<uint> &_allInterfacePositions, vector<uint> &_interfacePositions, vector<int> &_rotamerSamplingPerPosition, ofstream &_out, string _axis){{
 	for (uint k=3; k<_opt.backboneLength-5; k++){
 		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
 			variableInterfacePositions.push_back(k);
@@ -456,7 +463,6 @@ vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingP
 /***********************************
  *output file functions
  ***********************************/
-//TODO: make changes so that this can be run locally vs external server
 void setupDesignDirectory(Options &_opt, string _date){
 	_opt.pdbOutputDir = string(get_current_dir_name()) + "/design_" + _opt.runNumber;
 	string cmd = "mkdir -p " + _opt.pdbOutputDir;
@@ -464,57 +470,6 @@ void setupDesignDirectory(Options &_opt, string _date){
 		cout << "Unable to make directory" << endl;
 		exit(0);
 	}
-}
-
-void outputEnergyFile(Options &_opt, string _interface, vector<string> _allDesigns){
-	ofstream eout;
-	string eoutfile = _opt.pdbOutputDir + "/energyFile.csv";
-	eout.open(eoutfile.c_str());
-	string tab = "\t";
-
-	// Outputs
-	eout << tab << endl;
-	for (uint i=0; i<_opt.energyTermsToOutput.size(); i++){
-		eout << _opt.energyTermsToOutput[i] << tab;
-		cout << _opt.energyTermsToOutput[i] << tab;
-	}
-	eout << "Starting Sequence" << tab;
-	eout << "Baseline" << tab;
-	eout << "Sequence" << tab;
-	eout << "InterfaceSeq" << tab;
-	eout << "xShift" << tab;
-	eout << "crossingAngle" << tab;
-	eout << "axialRotation" << tab;
-	eout << "zShift" << tab;
-	eout << "angleDistDensity" << tab;
-	eout << "axialRotationDensity" << tab;
-	eout << "zShiftDensity" << tab;
-	eout << "repackLevels" << tab;
-	eout << "interfaceLevels" << tab;
-	eout << "backboneLength" << tab;
-	eout <<	"PDBPath" << endl;
-
-	cout << "Starting Sequence" << tab;
-	cout << "Baseline" << tab;
-	cout << "Sequence" << tab;
-	cout << "InterfaceSeq" << tab;
-	cout << "xShift" << tab;
-	cout << "crossingAngle" << tab;
-	cout << "axialRotation" << tab;
-	cout << "zShift" << tab;
-	cout << "angleDistDensity" << tab;
-	cout << "axialRotationDensity" << tab;
-	cout << "zShiftDensity" << tab;
-	cout << "repackLevels" << tab;
-	cout << "interfaceLevels" << tab;
-	cout << "backboneLength" << tab;
-	cout <<	"PDBPath" << endl;
-
-	for (uint i=0; i<_allDesigns.size() ; i++){
-		eout << _allDesigns[i] << endl;
-		cout << _allDesigns[i] << endl;
-	}
-	eout.close();
 }
 
 /***********************************
@@ -572,13 +527,14 @@ double sumEnergyVector(vector<double> _energies){
 	return ener;
 }
 
+// build in the baseline energies to the system EnergySet
 void buildBaselines(System &_sys, Options &_opt){
 		map<string, double> selfMap = readSingleParameters(_opt.selfEnergyFile);
 		map<string,map<string,map<uint,double>>> pairMap = readPairParameters(_opt.pairEnergyFile);
 		buildSelfInteractions(_sys, selfMap);
 		buildPairInteractions(_sys, pairMap);
 }
-
+// reads in the self energy baseline file
 map<string, double> readSingleParameters(string _baselineFile){
 	Reader selfReader(_baselineFile);
 	selfReader.open();
@@ -608,6 +564,7 @@ map<string, double> readSingleParameters(string _baselineFile){
 	return selfEnergies;
 }
 
+// reads in the pair energy baseline file
 map<string,map<string,map<uint, double>>> readPairParameters(string _baselineFile){
 	Reader pairReader(_baselineFile);
 	pairReader.open();
@@ -641,6 +598,7 @@ map<string,map<string,map<uint, double>>> readPairParameters(string _baselineFil
 	return pairEnergies;
 }
 
+// builds the self energy interactions into energy set
 void buildSelfInteractions(System &_sys, map<string, double> &_selfMap){
 	EnergySet* ESet = _sys.getEnergySet();
 
@@ -667,6 +625,7 @@ void buildSelfInteractions(System &_sys, map<string, double> &_selfMap){
 	}
 }
 
+// builds the pair energy interactions into energy set
 void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>>& _pairMap){
 	EnergySet* ESet = _sys.getEnergySet();
 	for(uint i = 0; i < _sys.chainSize(); i++) {
@@ -1352,6 +1311,7 @@ void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfac
 /***********************************
  *sequence entropy functions
  ***********************************/
+// gets the sequence entropy value for the current sequence and adds it to the energy
 void calculateInterfaceSequenceEntropy(Options &_opt, string _prevSeq, string _currSeq,
  map<string,double> _entropyMap, double &_prevSEProb, double &_currSEProb, double &_prevEntropy,
  double &_currEntropy, double _bestEnergy, double _currEnergy, double &_bestEnergyTotal, double &_currEnergyTotal, vector<uint> _interfacePositionsList){
@@ -1376,6 +1336,7 @@ void calculateInterfaceSequenceEntropy(Options &_opt, string _prevSeq, string _c
 
 	//Output the terms if verbose
 	if (_opt.verbose){
+		cout << "Previous Sequence vs Current Sequence: " << _prevSeq << " vs " << _currSeq << endl;
 		cout << "Prev Prob:    " << _prevSEProb << endl;
 		cout << "New Prob:     " << _currSEProb << endl;
 		cout << "Prev Seq Proportion: " << prevSeqProp << endl;

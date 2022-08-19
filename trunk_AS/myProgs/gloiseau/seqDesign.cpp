@@ -275,11 +275,11 @@ int main(int argc, char *argv[]){
 	System sys;
 	prepareSystem(opt, sys, startGeom, interfacePolySeq);
 
-	Chain chainA = sys.getChain("A");
-	Chain chainB = sys.getChain("B");
+	//Chain chainA = sys.getChain("A");
+	//Chain chainB = sys.getChain("B");
 
-	AtomPointerVector &apvA = chainA.getAtomPointers();
-	AtomPointerVector &apvB = chainB.getAtomPointers();
+	//AtomPointerVector &apvA = chainA.getAtomPointers();
+	//AtomPointerVector &apvB = chainB.getAtomPointers();
 
 	/******************************************************************************
 	 *                === CHECK TO SEE IF ALL ATOMS ARE BUILT ===
@@ -540,7 +540,7 @@ void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, vecto
 	outputEnergiesByTerm(_spm, _currVec, energyMap, _opt.energyTermList, "Dimer", true);
 	double baseline = _spm.getStateEnergy(_currVec, "BASELINE")+_spm.getStateEnergy(_currVec, "BASELINE_PAIR");
 	double enerAndSeqEntropy = bestEnergyTotal-currEnergyTotal;
-	energyMap["EnergyBeforeLocalMC"] = currEnergy-baseline;
+	energyMap["Dimerw/Baseline"] = currEnergy;
 	energyMap["Dimer"] = currEnergy-baseline;
 	energyMap["Baseline"] = baseline;
 	energyMap["energyComparison"] = enerAndSeqEntropy;
@@ -588,12 +588,12 @@ void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSeque
 	}
 
 	// get chain A and B from the _system
-	Chain & chainA = _sys.getChain("A");
-	Chain & chainB = _sys.getChain("B");
+	//Chain & chainA = _sys.getChain("A");
+	//Chain & chainB = _sys.getChain("B");
 
 	// Set up chain A and chain B atom pointer vectors
-	AtomPointerVector & apvChainA = chainA.getAtomPointers();
-	AtomPointerVector & apvChainB = chainB.getAtomPointers();
+	//AtomPointerVector & apvChainA = chainA.getAtomPointers();
+	//AtomPointerVector & apvChainB = chainB.getAtomPointers();
 	
 	// assign the coordinates of our system to the given geometry 
 	_sys.assignCoordinates(_startGeom.getAtomPointers(),false);
@@ -774,37 +774,34 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			cout << "Cycle #" << cycleCounter << "" << endl;
 			cout << "Starting Seq: " << prevStateSeq << endl;
 		}
-		// get the sequence entropy probability for the current bett sequence
+		// get the sequence entropy probability for the current best sequence
 		map<string,vector<uint>> sequenceVectorMap;
 		map<string,map<string,double>> sequenceEnergyMap = mutateRandomPosition(_sys, _opt, _spm, _RNG, bestSeq, prevStateVec, bestEnergy, 
 		 sequenceVectorMap, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
-
-		// get the best sequence and energy for the current mutation position (picks sequence with energy including vdw, hbond, imm1, ba)
-		string currSeq = getBestSequenceInMap(sequenceEnergyMap);
 		
+		// get the best sequence and energy for the current mutation position (picks sequence with energy including vdw, hbond, imm1, baseline, sequence entropy)
+		string currSeq = getBestSequenceInMap(sequenceEnergyMap);
 		// TODO: add in check step to see if sequence is already found in the best sequence list and skip if so
-		double currEnergyTotal = sequenceEnergyMap[currSeq]["currEnergyTotal"];
-		double bestEnergyTotal = sequenceEnergyMap[currSeq]["bestEnergyTotal"];
-		vector<uint> currStateVec = sequenceVectorMap[currSeq];
-		//cout << "Prev Seq: " << bestSeq << ": " << bestEnergyTotal << endl;
-		//cout << "Curr Seq: " << currSeq << ": " << currEnergyTotal << endl;
+		double currEnergyTotal = sequenceEnergyMap[currSeq]["currEnergyTotal"]; // energy total for current sequence
+		double bestEnergyTotal = sequenceEnergyMap[currSeq]["bestEnergyTotal"]; // energy total for previous sequence (details in energyFunction)
+		vector<uint> currStateVec = sequenceVectorMap[currSeq]; // current state vector for current sequence (best rotamers and sequence identities)
 		MC.setEner(bestEnergyTotal);
+		
 		// MC accept and reject conditions
 		if (!MC.accept(currEnergyTotal)){
-			_sys.setActiveRotamers(prevStateVec);
-
+			_sys.setActiveRotamers(prevStateVec); // set rotamers to the previous state
 			if (_opt.verbose){
 				cout << "State not accepted, E= " << currEnergyTotal << "; PrevE= " << bestEnergyTotal << endl;
 			}
 		} else {
-			_sys.setActiveRotamers(currStateVec);
-			prevStateVec = currStateVec;
-			bestSeq = currSeq;
-			bestEnergy = sequenceEnergyMap[bestSeq]["Dimer"];
-			sequenceEnergyMap[bestSeq]["acceptCycleNumber"] = cycleCounter;
-			_sequenceVectorMap[bestSeq] = currStateVec;
-			allSequenceEnergyMap[bestSeq] = sequenceEnergyMap[bestSeq];
-			double prevEnergy = bestEnergyTotal;
+			_sys.setActiveRotamers(currStateVec); // set rotamers to the current state
+			prevStateVec = currStateVec; // set the previous state vector to be the current state vector
+			prevStateSeq = currSeq; // set the previous sequence to be the current sequence
+			bestSeq = currSeq; // set the best sequence to the newly accepted current sequence
+			bestEnergy = sequenceEnergyMap[bestSeq]["Dimerw/Baseline"]; // set the best energy to the current energy (vdw, hbond, imm1, baseline)
+			sequenceEnergyMap[bestSeq]["acceptCycleNumber"] = cycleCounter; // gets the accept cycle number for the current sequence
+			_sequenceVectorMap[bestSeq] = currStateVec; // saves the current state vector to the sequence vector map
+			allSequenceEnergyMap[bestSeq] = sequenceEnergyMap[bestSeq]; // saves the current sequence energy map to the all sequence energy map
 
 			if (_opt.energyLandscape){
 				map<string,double> energyMap = sequenceEnergyMap[currSeq];
@@ -812,6 +809,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 				lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << MC.getCurrentT() << endl;
 			}
 			if (_opt.verbose){
+				double prevEnergy = bestEnergyTotal; 
 				cout << "Cycle#" << cycleCounter << " State accepted, Sequence: " << currSeq << "; PrevE=  " << prevEnergy << " : CurrE= " << currEnergyTotal;
 				cout << "; CurrTemp: " << MC.getCurrentT() << endl;
 				cout << "Best sequence: " << bestSeq << endl;
@@ -819,7 +817,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 				cout << "Baseline          " << sequenceEnergyMap[bestSeq]["Baseline"] << endl;
 				cout << "Entropy           " << sequenceEnergyMap[bestSeq]["entropyDiff"] << endl;
 				cout << "CurrEntropy       " << sequenceEnergyMap[bestSeq]["currEntropy"] << endl;
-				cout << "PrevEntropy       " << sequenceEnergyMap[bestSeq]["prevEntropy"] << endl;
+				cout << "PrevEntropy       " << sequenceEnergyMap[bestSeq]["prevEntropy"] << endl << endl;
 			}
 			cycleCounter++;
 		}
@@ -856,13 +854,13 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		_sequenceEnergyMap[seq.first] = seq.second;
 		i++;
 	}
+	//TODO: save the top x sequences during the last cycle after all backbone repacks finished; save the rest in a energy landscape file
 	writer.close();
-	cout << "End sequence optimization by membrane composition: " << diffTimeSMC << "s" << endl << endl;
-	_out << "End sequence optimization by membrane composition: " << diffTimeSMC << "s" << endl << endl;
-	_out << "Optimization end at Temp: " << MC.getCurrentT() << endl;
+	cout << "End monte carlo sequence search #" << _rep << ": " << diffTimeSMC << "s" << endl;
+	_out << "End monte carlo sequence search #" << _rep << ": " << diffTimeSMC << "s" << endl;
+	_out << "Monte Carlo ended at Temp: " << MC.getCurrentT() << endl << endl;
 	//TODO: maybe set up something like the following:
 	// - save sequences for x cycles
-	// - do a backbone repack for the best sequence
 	// - recalculate the energy for all sequences at this new geometry
 	// - continue on to the next cycle with the current sequence
 	// repeat for x times 10 cycles
