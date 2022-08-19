@@ -293,81 +293,6 @@ void buildBaselineIMM1Interactions(System &_sys, map<string, double> &_selfMap){
 	}
 }
 
-void buildSelfInteractions(System &_sys, map<string, double> &_selfMap){
-	EnergySet* ESet = _sys.getEnergySet();
-
-	for(uint i = 0; i < _sys.chainSize(); i++) {
-		Chain & thisChain = _sys.getChain(i);
-		vector<Position*>& positions = thisChain.getPositions();
-		for(vector<Position*>::iterator p = positions.begin(); p != positions.end(); p++){
-			for (uint j=0; j<(*p)->identitySize();j++){
-				Residue &res = (*p)->getIdentity(j);
-				string baseId = res.getResidueName();
-				if (p-positions.begin() < 3 || p-positions.begin() > positions.size()-5){//On 03_18_2021 I found this error; position.size() is weird, so need to use 5 instead of 4; on 11_20_2021 saw that a lot of clashing occurs at hte 4th position, so changed this to only use 3
-					baseId = baseId.append("-OUT");
-				}
-				try{
-					double ener = _selfMap.at(baseId);
-					Atom *a = &res.getAtom("CA");
-					ESet->addInteraction(new BaselineInteraction(*a,ener));
-				}
-				catch (const out_of_range& e){
-					continue;
-				}
-			}
-		}
-	}
-}
-
-void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>>& _pairMap){
-	EnergySet* ESet = _sys.getEnergySet();
-	for(uint i = 0; i < _sys.chainSize(); i++) {
-		Chain & thisChain = _sys.getChain(i);
-		vector<Position*>& positions = thisChain.getPositions();
-		for(vector<Position*>::iterator p = positions.begin(); p != positions.end(); p++){
-			for (uint j=0; j < (*p)->identitySize(); j++){
-				Residue &res1 = (*p)->getIdentity(j);
-				string baseId1 = res1.getResidueName();
-				if (p-positions.begin() < 1){
-					baseId1 = baseId1.append("-ACE");
-				}
-				//Changed this on 11_24_2021 for the designFiles/2021_11_22_IMM1Self and Pair baselines
-				//if (p-positions.begin() > positions.size()-5){//
-				//	baseId1 = baseId1.append("-CT2");
-				//}
-				//cout << "Identity " << j << ": " << baseId1 << endl;
-				for (vector<Position*>::iterator p2 = p+1; p2 != positions.end(); p2++){
-					uint d = p2-p;
-					//cout << "Position 2: " << p2-positions.begin() << endl;
-					if (d <= 10){
-						//cout << "Distance: " << d << endl;
-						for (uint k=0; k < (*p2)->identitySize(); k++){
-							Residue &res2 = (*p2)->getIdentity(k);
-							string baseId2 = res2.getResidueName();
-							//if (p2-positions.begin() < 3){
-							//	baseId2 = baseId2.append("-ACE");
-							//}
-							if (p2-positions.begin() > positions.size()-2){
-								baseId2 = baseId2.append("-CT2");
-							}
-							try{
-								map<string,map<uint,double>> AA1 = _pairMap.at(baseId1);
-								map<uint,double> AA2 = AA1.at(baseId2);
-								double ener = AA2.at(d);
-								Atom *a = &res1.getAtom("CA");
-								Atom *b = &res2.getAtom("CA");
-								ESet->addInteraction(new BaselinePairInteraction(*a,*b,-1*ener));//I forgot that this needs to be the opposite sign to actually counteract the energies of vdW and hydrogen bonding; switched it here but should eventually just switch in my baseline parameter file
-							}
-							catch (const out_of_range& e){
-								continue;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
 
 void buildSequenceEntropy(System &_sys, map<string, double> &_sequenceEntropyMap, double _weight){
 	EnergySet* ESet = _sys.getEnergySet();
@@ -506,16 +431,6 @@ void getSasaDifference(vector<pair<string,vector<uint>>> &_sequenceStatePair, ma
 }
 
 //TODO: Use this as a template for making this code more clean: when I don't have the name in the config file, it still works...how can I make it like that for everything? Should I just have one function that will get all of the values that need to be returned from a much larger map that may have more than that? And then if the value isn't there, call out illegal value that needs to be added in?
-void getSasaForStartingSequence(System &_sys, string _sequence, vector<uint> _state, map<string, map<string,double>> &_sequenceEnergyMap){
-	_sys.setActiveRotamers(_state);
-
-	//Setup SasaCalculator to calculate the monomer SASA
-	SasaCalculator sasa(_sys.getAtomPointers());
-	sasa.calcSasa();
-	double dimerSasa = sasa.getTotalSasa();
-
-	_sequenceEnergyMap[_sequence]["DimerSasa"] = dimerSasa;
-}
 
 void deleteTerminalHydrogenBondInteractions(System &_sys, Options &_opt){
 	EnergySet* pESet = _sys.getEnergySet();

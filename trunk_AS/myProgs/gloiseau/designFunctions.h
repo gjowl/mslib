@@ -124,6 +124,8 @@ double sumEnergyVector(vector<double> _energies);
 void buildBaselines(System &_sys, Options &_opt);
 map<string, double> readSingleParameters(string _baselineFile);
 map<string,map<string,map<uint, double>>> readPairParameters(string _baselineFile);
+void buildSelfInteractions(System &_sys, map<string, double> &_selfMap);
+void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>>& _pairMap);
 
 /***********************************
  *sequence entropy functions
@@ -139,6 +141,7 @@ double calcNumberOfPermutations(map<string,int> _seqAACounts, int _seqLength);
 // and calculates the number of permutations for those AAs and the number of interfacial positions)
 void interfaceAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, vector<uint> _interfacialPositionsList);
 double getInterfaceSequenceEntropyProbability(Options &_opt, string _sequence, map<string,double> &_entropyMap, vector<uint> _interfacialPositionsList);
+double calculateSequenceProbability(map<string,int> &_seqCountMap, map<string,double> &_entropyMap, double _numberOfPermutations);
 
 /***********************************
  *calculate energies
@@ -153,6 +156,8 @@ void computeMonomerEnergyIMM1(Options& _opt, Transforms & _trans, map<string,map
 void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum);
 // makes sure that atoms of the system are built; errors out if not
 void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
+//
+void getSasaForStartingSequence(System &_sys, string _sequence, vector<uint> _state, map<string, map<string,double>> &_sequenceEnergyMap);
 
 // gets the interfacial positions from a vector
 vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);

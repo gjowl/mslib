@@ -29,11 +29,6 @@ using namespace std;
 using namespace MSL;
 
 /***********************************
- *version 2 functions
- ***********************************/
-string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum);
-
-/***********************************
  *output file functions
  ***********************************/
 // function to setup the output directory

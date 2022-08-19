@@ -9,45 +9,6 @@ using namespace MSL;
 
 static SysEnv SYSENV;
 
-/***********************************
- *version 2 functions
- ***********************************/
-string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum) {
-	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
-	// A:{32}ALA ILE GLY GLY GLY
-	string ps = "";
-	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
-		if (it == _seq.begin() || it == _seq.end()-1){
-			stringstream ss;
-			ss << *it;
-			string resName = MslTools::getThreeLetterCode(ss.str());
-			if (it == _seq.begin()){
-				if(resName == "HIS") {
-					ps = ps + " HSE-ACE";
-				} else {
-					ps = ps + " " + resName + "-ACE";
-				}
-			} else {
-				if(resName == "HIS") {
-					ps = ps + " HSE-CT2";
-				} else {
-					ps = ps + " " + resName + "-CT2";
-				}
-			}
-		} else {
-			stringstream ss;
-			ss << *it;
-			string resName = MslTools::getThreeLetterCode(ss.str());
-			if(resName == "HIS") {
-				ps = ps + " HSE";
-			} else {
-				ps = ps + " " + resName;
-			}
-		}
-	}
-	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
-	return "A" + ps;
-}
 
 /***********************************
  *output file functions

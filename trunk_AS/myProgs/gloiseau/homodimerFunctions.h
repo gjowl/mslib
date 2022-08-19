@@ -120,7 +120,6 @@ void calculateInterfaceSequenceEntropy(Options &_opt, string _prevSeq, string _c
   double &_currEntropy, double _bestEnergy, double _currEnergy, double &_bestEnergyTotal, double &_currEnergyTotal, vector<uint> _interfacePositionsList);
 void internalAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, int _seqLength);
 void sequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, int _seqLength);
-double calculateSequenceProbability(map<string,int> &_seqCountMap, map<string,double> &_entropyMap, double _numberOfPermutations);
 // function that implements the above functions to calculate the sequence entropy
 void calculateSequenceEntropy(Options &_opt, string _prevSeq, string _currSeq,
   map<string,double> _entropyMap, double &_prevSEProb, double &_currSEProb, double &_prevEntropy,
@@ -131,8 +130,6 @@ double getSequenceEntropyProbability(Options &_opt, string _sequence, map<string
  *energy builders
  ***********************************/
 void buildBaselineIMM1Interactions(System &_sys, map<string, double> &_selfMap);
-void buildSelfInteractions(System &_sys, map<string, double> &_selfMap);
-void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>>& _pairMap);
 void buildSequenceEntropy(System &_sys, map<string, double> &_sequenceEntropyMap, double _weight);
 
 /***********************************
@@ -149,8 +146,6 @@ void getTotalEnergyAndWritePdbs(System &_sys, Options &_opt, map<string, map<str
 void getDimerSasaScores(System &_sys, vector<pair<string,vector<uint>>> &_sequenceStatePair, map<string, map<string,double>> &_sequenceEnergyMap);
 //
 void getSasaDifference(vector<pair<string,vector<uint>>> &_sequenceStatePair, map<string, map<string,double>> &_sequenceEnergyMap);
-//
-void getSasaForStartingSequence(System &_sys, string _sequence, vector<uint> _state, map<string, map<string,double>> &_sequenceEnergyMap);
 //
 void deleteTerminalHydrogenBondInteractions(System &_sys, Options &_opt);
 // goes through a list of ...
