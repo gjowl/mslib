@@ -19,132 +19,6 @@ using namespace MSL;
 static SysEnv SYSENV;
 
 /***********************************
- *geometry
- ***********************************/
-
-void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out){
-	// Setup file reader
-	Reader reader(_opt.geometryDensityFile);
-	reader.open();
-	if(!(reader.is_open())){
-		cerr << "WARNING: Unable to open " << _opt.geometryDensityFile << endl;
-		exit(0);
-	}
-	vector<string> lines = reader.getAllLines();
-
-	// Extract the geometries from a random line of the geometry file
-	int geometryLine = _RNG.getRandomInt(1,lines.size()-1);
-	vector<string> tokens = MslTools::tokenize(lines[geometryLine], "\t");//xShift, crossingAngle, axialRotation, zShift, angleDistDensity, axialRotationDensity, zShiftDensity
-	_opt.xShift = MslTools::toDouble(tokens[0]);
-	_opt.crossingAngle = MslTools::toDouble(tokens[1]);
-	_opt.axialRotation = MslTools::toDouble(tokens[2]);
-	_opt.zShift = MslTools::toDouble(tokens[3]);
-	double angleDistDensity = MslTools::toDouble(tokens[4]);
-	double axialRotationDensity = MslTools::toDouble(tokens[5]);
-	double zShiftDensity = MslTools::toDouble(tokens[6]);
-	_densities.push_back(angleDistDensity);
-	_densities.push_back(axialRotationDensity);
-	_densities.push_back(zShiftDensity);
-
-	// Output to summary file
-	_out << "***STARTING GEOMETRY:***" << endl;
-	_out << "xShift:        " << _opt.xShift << "\tDensity: " << angleDistDensity << endl;
-	_out << "crossingAngle: " << _opt.crossingAngle << "\tDensity: " << angleDistDensity << endl;
-	_out << "axialRotation: " << _opt.axialRotation << "\tDensity: " << axialRotationDensity << endl;
-	_out << "zShift:        " << _opt.zShift << "\tDensity: " << zShiftDensity << endl << endl;
-
-	//_out << "Geometry: " << _opt.xShift << "\t" << _opt.crossingAngle << "\tDensity: " << angleDistDensity << endl;
-}
-
-/***********************************
- *string output functions
- ***********************************/
-string convertPolymerSeqToOneLetterSeq(Chain &_chain) {
-	string seq = "";
-	for (uint i=0; i<_chain.positionSize(); i++){
-		string resName = _chain.getPosition(i).getCurrentIdentity().getResidueName();
-		string resID = MslTools::getOneLetterCode(resName);
-		seq += resID;
-	}
-	return seq;
-}
-
-string getInterfaceSequence(Options &_opt, string _interface, string _sequence){
-	string interfaceSequence = "";
-	for(string::iterator it = _interface.begin(); it != _interface.end(); it++) {
-		stringstream ss;
-		ss << *it;
-		int pos = it-_interface.begin();
-		int tmp = MslTools::toInt(ss.str());
-		if (tmp > _opt.interfaceLevel-1){//interfaceLevel counts from 1 but rotamerLevel coutns from 0
-			interfaceSequence = interfaceSequence + "-";
-		} else {
-			interfaceSequence = interfaceSequence + _sequence[pos];
-		}
-	}
-	return interfaceSequence;
-}
-
-/***********************************
- *define interface and rotamer sampling
- ***********************************/
-//Identify which positions are found at the identified interface
-//Example: Sequence:  LLLLIGLLIGLLIGLLLL
-//         Interface: 000011001100110000
-// Positions at interface are 1 and non-interfacial are 0
-vector<int> getLinked(vector<int> _rotamerSampling, int _backboneLength, int _interfaceLevel, int _highestRotamerLevel){
-	vector<int> linkedPositions;
-	for (uint i=0; i<_backboneLength; i++){
-		if (_rotamerSampling[i] < _interfaceLevel || _rotamerSampling[i] == _highestRotamerLevel){
-			linkedPositions.push_back(i);
-		}
-	}
-	return linkedPositions;
-}
-
-// Convert positions to string for setLinkedPositions(std::vector<std::vector<std::string> > &_linkedPositions) which uses "A,19" "B,19" format!
-vector<vector<string>> convertToLinkedFormat(System &_sys, vector<int> &_interfacialPositions, int _backboneLength){
-	vector<vector<string>> stringPositions;
-	for (uint k=0; k<_backboneLength; k++){//TODO: if you want to make it possible to do sequences that are not linked, need to change this function!
-		if (_interfacialPositions[k] == 1){
-			vector<string> tempPos;
-
-			Position &posA = _sys.getPosition(k);
-			Position &posB = _sys.getPosition(k+_backboneLength);
-
-			string A = posA.toString();
-			string B = posB.toString();
-
-			string delimiter = " ";
-
-			size_t p = 0;
-			p = A.find(delimiter);
-
-			tempPos.push_back(A.substr(0, p));
-			tempPos.push_back(B.substr(0, p));
-
-			stringPositions.push_back(tempPos);
-		}
-	}
-	return stringPositions;
-}
-
-//makes the best state applicable for unlinked positions by duplicating the rotamer at each interfacial position on the opposite chain
-void unlinkBestState(Options &_opt, vector<uint> &_bestState, vector<int> _rotamerSampling, int _backboneLength){
-	vector<int> linkedPositions = getLinked(_rotamerSampling, _backboneLength, _opt.interfaceLevel, _opt.sasaRepackLevel.size()-1);
-
-	for (uint i=_backboneLength; i<_backboneLength*2; i++){
-		vector<int>::iterator itr;
-		itr = find(linkedPositions.begin(), linkedPositions.end(), i-_backboneLength);
-		if (itr != linkedPositions.end()){
-			vector<uint>::iterator itPos;
-			itPos = _bestState.begin()+i;
-			_bestState.insert(itPos, _bestState[i-_backboneLength]);
-		}
-	}
-}
-
-/***********************************
  *stateMC helper functions
  ***********************************/
 void randomPointMutation(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, vector<uint> _variablePositions, vector<string> &_ids){
@@ -343,82 +217,37 @@ vector<pair<double,vector<uint>>> &_energyStateVec, string _sequence, vector<uin
 	}
 }
 
-bool convertStateMapToSequenceMap(System &_sys, vector<pair<double,vector<uint>>> &_energyStateVec,
-map<vector<uint>, map<string,double>> &_stateEnergyMap, map<string, map<string,double>> &_sequenceEnergyMap,
-vector<pair<string,vector<uint>>> &_sequenceStatePair, ofstream &_out){
-	//convert stateEnergyMap to sequenceEnergyMap
-	map<vector<uint>,map<string,double>>::iterator itr;
-	bool nonClashing = false;
-	Chain & chain = _sys.getChain("A");
-	// Setup sequence and state pair vector
-	cout << endl << "Accepted Design Sequences" << endl;
-	_out << endl << "Accepted Design Sequences" << endl;
-	cout << "Sequence               Energy " << endl;
-	_out << "Sequence               Energy " << endl;
-	for (uint i=0; i<_energyStateVec.size(); i++){
-		vector<uint> state = _energyStateVec[i].second;
-		_sys.setActiveRotamers(state);
-		string currSeq = convertPolymerSeqToOneLetterSeq(chain);
-		_sequenceEnergyMap[currSeq] = _stateEnergyMap.at(state);
-		_sequenceStatePair.push_back(make_pair(currSeq, state));
-		cout << currSeq << ": " << _sequenceEnergyMap[currSeq]["Dimer"] << endl;
-		_out << currSeq << ": " << _sequenceEnergyMap[currSeq]["Dimer"] << endl;
-		if (_sequenceEnergyMap[currSeq]["VDWDimer"] < 0){
-			nonClashing = true;
-		}
-	}
-	return nonClashing;
-}
+//bool convertStateMapToSequenceMap(System &_sys, vector<pair<double,vector<uint>>> &_energyStateVec,
+//map<vector<uint>, map<string,double>> &_stateEnergyMap, map<string, map<string,double>> &_sequenceEnergyMap,
+//vector<pair<string,vector<uint>>> &_sequenceStatePair, ofstream &_out){
+//	//convert stateEnergyMap to sequenceEnergyMap
+//	map<vector<uint>,map<string,double>>::iterator itr;
+//	bool nonClashing = false;
+//	Chain & chain = _sys.getChain("A");
+//	// Setup sequence and state pair vector
+//	cout << endl << "Accepted Design Sequences" << endl;
+//	_out << endl << "Accepted Design Sequences" << endl;
+//	cout << "Sequence               Energy " << endl;
+//	_out << "Sequence               Energy " << endl;
+//	for (uint i=0; i<_energyStateVec.size(); i++){
+//		vector<uint> state = _energyStateVec[i].second;
+//		_sys.setActiveRotamers(state);
+//		string currSeq = convertPolymerSeqToOneLetterSeq(chain);
+//		_sequenceEnergyMap[currSeq] = _stateEnergyMap.at(state);
+//		_sequenceStatePair.push_back(make_pair(currSeq, state));
+//		cout << currSeq << ": " << _sequenceEnergyMap[currSeq]["Dimer"] << endl;
+//		_out << currSeq << ": " << _sequenceEnergyMap[currSeq]["Dimer"] << endl;
+//		if (_sequenceEnergyMap[currSeq]["VDWDimer"] < 0){
+//			nonClashing = true;
+//		}
+//	}
+//	return nonClashing;
+//}
 
 void addSequencesToVector(vector<pair<double,string>> &_energyVector, vector<string> &_allSeqs){
 	for (uint i=0; i<_energyVector.size(); i++){
 		//cout << i << ": " << _energyVector[i].first << " " << _energyVector[i].second << endl;
 		checkSequenceVector(_energyVector[i].second, _allSeqs);
-	}
-}
-
-void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
-vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
-	if (_includeIMM1 == false){//No IMM1 Energy (for the Monte Carlos, both dimer and monomer)
-		for (uint i=0; i<_energyTermList.size(); i++){
-			string energyTerm = _energyTermList[i]; //CHARMM_ and SCWRL4_ terms
-			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;//Removes the CHARMM_ and SCWRL4_ before energyTerm names
-			if (energyTerm.find("IMM1") != string::npos){
-				continue;
-			} else {
-				if (_energyDescriptor.find("Monomer") != string::npos){
-					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
-				} else {
-					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
-				}
-			}
-		}
-		if (_energyDescriptor.find("Monomer") != string::npos){
-			//skip if monomer; could add calc baseline here at some point
-		} else {
-			_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
-			_energyMap["DimerSelfBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE");
-			_energyMap["DimerPairBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
-		}
-	} else if (_includeIMM1 == true){//IMM1 Energies
-		for (uint i=0; i<_energyTermList.size(); i++){
-			string energyTerm = _energyTermList[i];
-			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;
-			if (_energyDescriptor.find("Monomer") != string::npos){
-				if (energyTerm.find("IMM1") != string::npos){
-					_energyMap["IMM1Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
-				} else {
-					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
-				}
-			} else {
-				if (energyTerm.find("IMM1") != string::npos){
-					_energyMap["IMM1Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
-				} else {
-					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
-				}
-			}
-		}
-		//_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
 	}
 }
 
@@ -709,55 +538,6 @@ void deleteTerminalHydrogenBondInteractions(System &_sys, Options &_opt){
 	pESet->deleteInteractionsWithAtoms(atoms,"SCWRL4_HBOND");
 }
 
-void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling){
-	//Repack side chains based on sasa scores
-	for (uint i = 0; i < _rotamerSampling.size()/2; i++) {
-		Position &posA = _sys.getPosition(i);
-		Position &posB = _sys.getPosition(i+_opt.backboneLength);
-		if (posA.identitySize() > 1){
-			for (uint j=0; j < posA.getNumberOfIdentities(); j++){
-				posA.setActiveIdentity(j);
-				posB.setActiveIdentity(j);
-				string posRot = _opt.sasaRepackLevel[_rotamerSampling[i]];
-				if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
-					if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) {
-						cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
-					}
-					if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) {
-						cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
-					}
-				}
-			}
-		} else {
-			string posRot = _opt.sasaRepackLevel[_rotamerSampling[i]];
-			if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
-				if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) {
-					cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
-				}
-				if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) {
-					cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
-				}
-			}
-		}
-	}
-}
-
-void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling){
-	if (_opt.useSasa){
-		if (_opt.verbose){
-			cout << "Load rotamers by difference in residue burial..." << endl;
-		}
-		loadRotamersBySASABurial(_sys, _sysRot, _opt, _rotamerSampling);
-	} else {
-		if (_opt.verbose){
-			cout << "Load rotamers..." << endl;
-			cout << "Non-interface: " << _opt.SL << endl;
-			cout << "Interface:     " << _opt.SLInterface << endl;
-		}
-		loadRotamers(_sys, _sysRot, _opt.SL);
-		loadInterfacialRotamers(_sys, _sysRot, _opt.SLInterface, _opt.sasaRepackLevel.size(), _rotamerSampling);
-	}
-}
 //Other functions
 void saveEnergyDifference(Options _opt, map<string,map<string,double>> &_sequenceEnergyMap, string _sequence){
 	map<string,double> &energyMap = _sequenceEnergyMap[_sequence];
@@ -768,65 +548,4 @@ void saveEnergyDifference(Options _opt, map<string,map<string,double>> &_sequenc
 }
 
 //TODO: add the below functions to baseline files?
-map<string, double> readSingleParameters(string _baselineFile){
-	Reader selfReader(_baselineFile);
-	selfReader.open();
-	map<string, double> selfEnergies;
-
-	if(!(selfReader.is_open())){
-		cerr << "WARNING: Unable to open " << _baselineFile << endl;
-		exit(0);
-	}
-
-	vector<string> lines = selfReader.getAllLines();
-
-	for (int i=0; i<lines.size(); i++){
-		vector<string> tokens = MslTools::tokenize(lines[i], "\t");
-		if(tokens.size() < 1){
-			continue;
-		}
-		if(tokens.size() != 2){
-			cerr << "WARNING: Line\"" << lines[i] << "\" is not in FORMAT: ResName(string) Energy(double)";
-			continue;
-		}
-		selfEnergies[MslTools::toUpper(tokens[0])] = MslTools::toDouble(tokens[1]);
-		//cout << tokens[0] << " " << tokens[1] << " " << tokens[2] << " = " << tokens[3] << endl;
-	}
-
-	selfReader.close();
-	return selfEnergies;
-}
-
-map<string,map<string,map<uint, double>>> readPairParameters(string _baselineFile){
-	Reader pairReader(_baselineFile);
-	pairReader.open();
-	map<string,map<string,map<uint, double>>> pairEnergies;
-
-	if(!(pairReader.is_open())){
-		cerr << "WARNING: Unable to open " << _baselineFile << endl;
-		exit(0);
-	}
-
-	vector<string> lines = pairReader.getAllLines();
-
-	for (int i=0; i<lines.size(); i++){
-		vector<string> tokens = MslTools::tokenize(lines[i], " ");
-		if(tokens.size() < 1){
-			continue;
-		}
-		if(tokens.size() != 4){
-			cerr << "WARNING: Line\"" << lines[i] << "\" is not in FORMAT: ResName(string) ResName(string) Distance(uint) Energy(double)";
-			continue;
-		}
-		if (tokens[0].compare(tokens[1]) == 0){//Added in on 03-18-2021: apparently the code that I was using to flip the AAs in buildPairInteractions isn't good, but this adds the flips to the map which works better and is cleaner
-			pairEnergies[MslTools::toUpper(tokens[0])][MslTools::toUpper(tokens[1])][MslTools::toInt(tokens[2])] = MslTools::toDouble(tokens[3]);
-		} else {
-			pairEnergies[MslTools::toUpper(tokens[0])][MslTools::toUpper(tokens[1])][MslTools::toInt(tokens[2])] = MslTools::toDouble(tokens[3]);
-			pairEnergies[MslTools::toUpper(tokens[1])][MslTools::toUpper(tokens[0])][MslTools::toInt(tokens[2])] = MslTools::toDouble(tokens[3]);
-		}
-	}
-
-	pairReader.close();
-	return pairEnergies;
-}
 

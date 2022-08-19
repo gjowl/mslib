@@ -40,7 +40,6 @@
 #include "BaselinePermutation.h"
 #include "SasaCalculator.h"
 #include "designFunctions.h"
-#include "homodimerFunctions.h"
 #include "designOptions.h"
 #include "functions.h"
 
@@ -349,9 +348,9 @@ int main(int argc, char *argv[]){
 			sequenceVectorMap, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
 		localBackboneRepack(opt, sys, bestSequence, i, opt.xShift, helicalAxis, axisA, axisB, rotamerSamplingPerPosition, trans, RNG, sout);
 	}
-	///******************************************************************************
-	// *            === CALCULATE MONOMER ENERGIES OF EACH SEQUENCE ===
-	// ******************************************************************************/
+	/******************************************************************************
+	 *            === CALCULATE MONOMER ENERGIES OF EACH SEQUENCE ===
+	 ******************************************************************************/
 	computeMonomerEnergies(opt, trans, sequenceEnergyMapBest, seqs, RNG, sout, err);
 	//getSasaDifference(sequenceStatePair, sequenceEnergyMap);
 
@@ -361,19 +360,6 @@ int main(int argc, char *argv[]){
 	//// Initialize PDBWriter for designs
 	//PDBWriter writer;
 	//writer.open(opt.pdbOutputDir + "/allDesigns.pdb");
-
-	//// Output these energy calculations to the summary file
-	//sout << "Calculating Final Energies..." << endl;
-	//uint i = 0;
-	//for (auto &seq: sequenceVectorMap){
-	//	string sequence = seq.first;
-	//	vector<uint> state = seq.second;
-	//	sout << "Sequence " << i+1 << ": " << sequence << endl;
-	//	int seqNumber = i;
-	//	// calculates the total energy difference between monomer and dimer and outputs individual pdbs for each sequence
-	//	getTotalEnergyAndWritePdbs(sys, opt, sequenceEnergyMapBest, sequence, state, rotamerSamplingPerPosition, RNG, seqNumber, writer, sout, err);
-	//	i++;
-	//}
 	//writer.close();
 
 	///******************************************************************************
@@ -513,13 +499,13 @@ string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap){
 	for (auto& seq : _sequenceEnergyMap){
 		if (i==0){
 			currSeq = seq.first;
-			currEnergyComparison = seq.second["entropyDiff"];
+			currEnergyComparison = seq.second["currEnergyTotal"];
 			i++;
 		} else {
-			if (seq.second["entropyDiff"] > currEnergyComparison){
+			if (seq.second["currEnergyTotal"] < currEnergyComparison){
 				string prevSeq = currSeq;
 				currSeq = seq.first;
-				currEnergyComparison = seq.second["entropyDiff"];
+				currEnergyComparison = seq.second["currEnergyTotal"];
 			}
 		}
 	}
@@ -537,14 +523,12 @@ void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, vecto
 	outputEnergiesByTerm(_spm, _currVec, energyMap, _opt.energyTermList, "Dimer", true);
 	double currEnergy = _spm.getStateEnergy(_currVec);
 
-	// Convert the energy term (which actually saves the probability of the sequence in the whole system)
-	// to the proper comparison of proportion to energy between individual sequences (done outside of the actual energy term)
 	// initialize variables for this thread
 	double currEnergyTotal = 0;
+	double bestEnergyTotal = 0;
 	double currSEProb = 0;
 	double prevSEProb = 0;
 	double currEntropy = 0;
-	double bestEnergyTotal = 0;
 	double prevEntropy = 0;
 
 	//TODO: I just realized that for heterodimers, I may need to completely remake some of these functions as with the below only taking the sequence of one helix; I may make a hetero and homo functions list?
@@ -555,10 +539,10 @@ void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, vecto
 	// output info
 	outputEnergiesByTerm(_spm, _currVec, energyMap, _opt.energyTermList, "Dimer", true);
 	double baseline = _spm.getStateEnergy(_currVec, "BASELINE")+_spm.getStateEnergy(_currVec, "BASELINE_PAIR");
+	double enerAndSeqEntropy = bestEnergyTotal-currEnergyTotal;
 	energyMap["EnergyBeforeLocalMC"] = currEnergy-baseline;
 	energyMap["Dimer"] = currEnergy-baseline;
 	energyMap["Baseline"] = baseline;
-	double enerAndSeqEntropy = bestEnergyTotal-currEnergyTotal;
 	energyMap["energyComparison"] = enerAndSeqEntropy;
 	energyMap["SequenceProbability"] = currSEProb;
 	energyMap["bestEnergyTotal"] = bestEnergyTotal;
@@ -728,8 +712,8 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	time(&startTimeSMC);
 
 	// Setup MonteCarloManager
-	MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects, _opt.MCConvergedSteps, _opt.backboneConvergedE);
-	//MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
+	//MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects, _opt.MCConvergedSteps, _opt.backboneConvergedE);
+	MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
 	MC.setRandomNumberGenerator(&_RNG);
 
 	// Start from most probable state
@@ -778,17 +762,13 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	// - what would multiple cores do here? Could I locally test a variety of sequences using multiple cores, and save x number per each core?
 	//		 Say save 10 and run 10 replicates, that gets me 100 sequences right away?
 	// initialize energy variables for the MonteCarlo
-	double bestEnergyTotal = 0;
-	double currEnergyTotal = 0;
-	double currStateSEProb = 0;
-	double prevStateSEProb = 0;
 	double prevStateEntropy = 0;
 	double currStateEntropy = 0;
-	double totEnergy = 0;
 	string bestSeq = prevStateSeq;
 	map<string,map<string,double>> allSequenceEnergyMap;
-	cout << "Finding " << _opt.numStatesToSave << " sequences using membrane composition (State MonteCarlo)..." << endl;
-	_out << "Finding " << _opt.numStatesToSave << " sequences using membrane composition (State MonteCarlo)..." << endl;
+	//cout << "Finding " << _opt.numStatesToSave << " sequences using membrane composition (State MonteCarlo)..." << endl;
+	//_out << "Finding " << _opt.numStatesToSave << " sequences using membrane composition (State MonteCarlo)..." << endl;
+	// Monte Carlo while loop for finding the best sequences
 	while (!MC.getComplete()){
 		if (_opt.verbose){
 			cout << "Cycle #" << cycleCounter << "" << endl;
@@ -799,7 +779,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		map<string,map<string,double>> sequenceEnergyMap = mutateRandomPosition(_sys, _opt, _spm, _RNG, bestSeq, prevStateVec, bestEnergy, 
 		 sequenceVectorMap, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
 
-		// get the best sequence and energy for the current mutation position (picks sequence with best entropy difference between best seq and current)
+		// get the best sequence and energy for the current mutation position (picks sequence with energy including vdw, hbond, imm1, ba)
 		string currSeq = getBestSequenceInMap(sequenceEnergyMap);
 		
 		// TODO: add in check step to see if sequence is already found in the best sequence list and skip if so
@@ -823,12 +803,6 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			bestEnergy = sequenceEnergyMap[bestSeq]["Dimer"];
 			sequenceEnergyMap[bestSeq]["acceptCycleNumber"] = cycleCounter;
 			_sequenceVectorMap[bestSeq] = currStateVec;
-			cout << "Best sequence: " << bestSeq << endl;
-			cout << "Best sequence Info:" << endl;
-			cout << "Baseline          " << sequenceEnergyMap[bestSeq]["Baseline"] << endl;
-			cout << "Entropy           " << sequenceEnergyMap[bestSeq]["entropyDiff"] << endl;
-			cout << "CurrEntropy       " << sequenceEnergyMap[bestSeq]["currEntropy"] << endl;
-			cout << "PrevEntropy       " << sequenceEnergyMap[bestSeq]["prevEntropy"] << endl;
 			allSequenceEnergyMap[bestSeq] = sequenceEnergyMap[bestSeq];
 			double prevEnergy = bestEnergyTotal;
 
@@ -840,6 +814,12 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			if (_opt.verbose){
 				cout << "Cycle#" << cycleCounter << " State accepted, Sequence: " << currSeq << "; PrevE=  " << prevEnergy << " : CurrE= " << currEnergyTotal;
 				cout << "; CurrTemp: " << MC.getCurrentT() << endl;
+				cout << "Best sequence: " << bestSeq << endl;
+				cout << "Best sequence Info:" << endl;
+				cout << "Baseline          " << sequenceEnergyMap[bestSeq]["Baseline"] << endl;
+				cout << "Entropy           " << sequenceEnergyMap[bestSeq]["entropyDiff"] << endl;
+				cout << "CurrEntropy       " << sequenceEnergyMap[bestSeq]["currEntropy"] << endl;
+				cout << "PrevEntropy       " << sequenceEnergyMap[bestSeq]["prevEntropy"] << endl;
 			}
 			cycleCounter++;
 		}
@@ -866,12 +846,12 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
 			writer.write(_sys.getAtomPointers(), true, false, true);
 			_bestSequence = seq.first;
-			ener = seq.second["SequenceProbability"];
-		} else if (seq.second["SequenceProbability"] > ener){
+			ener = seq.second["entropyDiff"];
+		} else if (seq.second["entropyDiff"] > ener){
 			_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
 			writer.write(_sys.getAtomPointers(), true, false, true);
 			_bestSequence = seq.first;
-			ener = seq.second["SequenceProbability"];
+			ener = seq.second["entropyDiff"];
 		}
 		_sequenceEnergyMap[seq.first] = seq.second;
 		i++;

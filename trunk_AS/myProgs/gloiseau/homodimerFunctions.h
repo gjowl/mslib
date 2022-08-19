@@ -58,9 +58,6 @@ void c2Symmetry(AtomPointerVector & _apvA, AtomPointerVector & _apvB);
 void transformation(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA,
   AtomPointerVector & _axisB, CartesianPoint & _ori, CartesianPoint & _xAxis, CartesianPoint & _zAxis,
   double _zShift, double _axialRotation, double _crossingAngle, double _xShift, Transforms & _trans);
-// reads through geometry density file and randomly chooses a geometry for the dimer
-void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out);
-
 
 /***********************************
  *string output
@@ -68,18 +65,7 @@ void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_de
 // TODO: if possible, make some of these more multipurpose
 string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum);
-string convertPolymerSeqToOneLetterSeq(Chain &_chain);
 string generateString(string _backbone, int _length);
-string getInterfaceSequence(Options &_opt, string _interface, string _sequence);
-
-/***********************************
- *define interface and rotamer sampling
- ***********************************/
-//
-vector<int> getLinkedPositions(vector<int> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel);
-//
-vector<vector<string>> convertToLinkedFormat(System &_sys, vector<int> &_interfacialPositions, int _backboneLength);
-
 
 /***********************************
  *stateMC helper functions
@@ -101,8 +87,7 @@ void saveSequence(Options &_opt, vector<pair<double,string>> &_energyVector,
 void saveSequence(Options &_opt, RandomNumberGenerator &_RNG, map<vector<uint>,
   map<string,double>> &_stateEnergyMap, vector<pair<double,string>> &_energyVector,
   vector<pair<double,vector<uint>>> &_energyStateVec, string _sequence, vector<uint> _state, double _energy, ofstream &_out);
-//unlinks a state vector, replicating the state vector of the linked structure (i.e. for a sequence with 5 AAs and 5 rotamers each: linked: 0,1,2,3,4; unlinked: 0,1,2,3,4,0,1,2,3,4)
-void unlinkBestState(Options &_opt, vector<uint> &_bestState, vector<int> _linkedPositions, int _backboneLength);
+
 // converts the map of saved states and energies to saved sequences and energies for use through the rest of the code
 bool convertStateMapToSequenceMap(System &_sys, vector<pair<double,vector<uint>>> &_energyStateVec,
   map<vector<uint>, map<string,double>> &_stateEnergyMap, map<string, map<string,double>> &_sequenceEnergyMap,
@@ -119,8 +104,7 @@ void stateMCLinked(System &_sys, SelfPairManager &_spm, Options &_opt, PolymerSe
   vector<pair<string,vector<uint>>> &_sequenceStatePair, vector<uint> &_interfacialPositionsList,
   vector<int> &_rotamerSampling, vector<vector<string>> &_linkedPos, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
 // Unlinked version
-void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
-  vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1);
+
 void outputEnergiesByTermLinked(EnergySet *_Eset, map<string,double> &_energyMap, vector<string> _energyTermList, string _energyDescriptor);
 // adds sequences from the vector<pair<double,string>> energyVector to the vector of all sequences if it's not already in there
 void addSequencesToVector(vector<pair<double,string>> &_energyVector, vector<string> &_allSeqs);
@@ -181,7 +165,6 @@ void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Option
 void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<int> _interface);
 //Uses rotamer sampling defined by SASA values to load rotamers by position
 void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling);
-map<string, double> readSingleParameters(string _baselineFile);
-map<string,map<string,map<uint, double>>> readPairParameters(string _baselineFile);
+
 
 #endif

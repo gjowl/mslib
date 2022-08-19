@@ -50,10 +50,31 @@ using namespace std;
 using namespace MSL;
 
 /***********************************
+ *load rotamer functions
+ ***********************************/
+//load rotamers for dimer with different rotamer levels at each position
+void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling);
+//load rotamers for interfacial positions
+void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<int> _interface);
+//Uses rotamer sampling defined by SASA values to load rotamers by position
+void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling);
+
+/***********************************
+ *define interface and rotamer sampling
+ ***********************************/
+//
+vector<int> getLinkedPositions(vector<int> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel);
+//
+vector<vector<string>> convertToLinkedFormat(System &_sys, vector<int> &_interfacialPositions, int _backboneLength);
+//unlinks a state vector, replicating the state vector of the linked structure (i.e. for a sequence with 5 AAs and 5 rotamers each: linked: 0,1,2,3,4; unlinked: 0,1,2,3,4,0,1,2,3,4)
+void unlinkBestState(Options &_opt, vector<uint> &_bestState, vector<int> _linkedPositions, int _backboneLength);
+/***********************************
  *geometry
  ***********************************/
 // moves the helices to the origin in 3D space (x=0, y=0, z=0)
 void moveZCenterOfCAMassToOrigin(AtomPointerVector& _apV, AtomPointerVector& _axis, Transforms & _trans);
+// reads through geometry density file and randomly chooses a geometry for the dimer
+void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out);
 
 /***********************************
  *string output
@@ -63,6 +84,8 @@ string generateBackboneSequence(string _backbone, int _length);
 string generateMonomerMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions);
 string getInterfaceString(vector<int> _interface, int _seqLength);
 string getAlternateIdString(vector<string> _alternateIds);
+string convertPolymerSeqToOneLetterSeq(Chain &_chain);
+string getInterfaceSequence(Options &_opt, string _interface, string _sequence);
 
 /***********************************
  *define interface and rotamer sampling
@@ -99,6 +122,8 @@ vector<double> calcPairBaselineEnergies(System &_sys, int _seqLength);
 double sumEnergyVector(vector<double> _energies);
 // baseline builder function; must have a selfEnergyFile and a pairEnergyFile in the options
 void buildBaselines(System &_sys, Options &_opt);
+map<string, double> readSingleParameters(string _baselineFile);
+map<string,map<string,map<uint, double>>> readPairParameters(string _baselineFile);
 
 /***********************************
  *sequence entropy functions
@@ -150,6 +175,8 @@ void searchForBestSequences(System &_sys, Options &_opt, SelfPairManager &_spm, 
 void getDimerSasa(System &_sys, map<string, vector<uint>> &_sequenceVectorMap, map<string, map<string,double>> &_sequenceEnergyMap);
 void getEnergiesForStartingSequence(Options &_opt, SelfPairManager &_spm, string _startSequence,
 vector<uint> &_stateVector, vector<uint> _interfacialPositions, map<string, map<string, double>> &_sequenceEnergyMap, map<string, double> &_entropyMap);
+void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
+  vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1);
 
 // parse config file for given options
 Options parseOptions(int _argc, char * _argv[], Options defaults);
