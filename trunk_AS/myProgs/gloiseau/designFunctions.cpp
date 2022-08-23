@@ -1660,7 +1660,6 @@ Options parseOptions(int _argc, char * _argv[]){
 	//opt.required.push_back("");
 	//opt.allowed.push_back("");
 
-	//opt.allowed.push_back("");
 	// optional
 	opt.allowed.push_back("getGeoFromPDBData");
 
@@ -1700,10 +1699,10 @@ Options parseOptions(int _argc, char * _argv[]){
 
 	//Weights
 	opt.allowed.push_back("weight_vdw");
-	opt.allowed.push_back("weight_hbond");
 	opt.allowed.push_back("weight_solv");
+	opt.allowed.push_back("weight_elec");
+	opt.allowed.push_back("weight_hbond");
 	opt.allowed.push_back("weight_seqEntropy");
-	//opt.allowed.push_back("weight_elec");
 
 	//Rotamers
 	opt.allowed.push_back("SL");
@@ -1722,7 +1721,7 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("deleteTerminalHbonds");
 	opt.allowed.push_back("linkInterfacialPositions");
 
-	//Input Files
+	// Input Files
 	opt.allowed.push_back("topFile");
 	opt.allowed.push_back("parFile");
 	opt.allowed.push_back("geometryDensityFile");
@@ -1740,35 +1739,35 @@ Options parseOptions(int _argc, char * _argv[]){
 
 	opt.allowed.push_back("thread");
 
-	//Alternate
+	// Alternate
 	opt.allowed.push_back("Ids");
 
-	//Command Line Arguments
+	// Command Line Arguments
 	opt.allowed.push_back("runNumber");
 	opt.allowed.push_back("useIMM1");
 	opt.allowed.push_back("useElec");
 
-	//MonteCarlo Arguments
+	// MonteCarlo Arguments
 	opt.allowed.push_back("numStatesToSave");
 
-	//RNG Arguments
+	// RNG Arguments
 	opt.allowed.push_back("useTimeBasedSeed");
 
 	opt.allowed.push_back("energyLandscape");
 	opt.allowed.push_back("useAlaAtCTerminus");
 	opt.allowed.push_back("useBaseline");
 
-	//SelfPairManager Arguments
+	// SelfPairManager Arguments
 	opt.allowed.push_back("runDEESingles");
 	opt.allowed.push_back("runDEEPairs");
 	opt.allowed.push_back("runSCMF");
 
-	//Energy Terms to Output
+	// Energy Terms to Output
 	opt.allowed.push_back("energyLandscapeTerms");
 	opt.allowed.push_back("energyTermsToOutput");
 	opt.allowed.push_back("energyTermList");
 
-	//Load Rotamers from SASA values (from sgfc)
+	// Load Rotamers from SASA values (from sgfc)
 	opt.allowed.push_back("useSasa");
 	opt.allowed.push_back("sasaRepackLevel");
 	opt.allowed.push_back("interfaceLevel");
@@ -1776,14 +1775,16 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("negAngle");
 	opt.allowed.push_back("helicalAxis");
 	
-	//Shift Size
+	// Shift Size
 	opt.allowed.push_back("deltaX");
 	opt.allowed.push_back("deltaCross");
 	opt.allowed.push_back("deltaAx");
 	opt.allowed.push_back("deltaZ");
 	opt.allowed.push_back("numRepacks");
 
-	//Begin Parsing through the options
+	opt.allowed.push_back("interface");
+
+	// Begin Parsing through the options
 	OptionParser OP;
 	OP.readArgv(_argc, _argv);
 	OP.setDefaultArguments(opt.defaultArgs);
@@ -2379,6 +2380,20 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningMessages += "Number of backbone repacks not specified, default to 5\n";
 		opt.warningFlag = true;
 		opt.numRepacks = 5;
+	}
+	
+	opt.interface = OP.getString("interface");
+	if (OP.fail()) {
+		opt.warningMessages += "interface not specified\n";
+		opt.warningFlag = true;
+		opt.interface = "";
+	}
+	if (opt.interface != "") {
+		if (opt.interface.length() != opt.backboneLength) {
+			opt.errorMessages += "interface string and backbone length must be the same length\n";
+			opt.errorFlag = true;
+		}
+		opt.interface = " -interface " + opt.interface;
 	}
 	opt.rerunConf = OP.getConfFile();
 

@@ -247,14 +247,21 @@ int main(int argc, char *argv[]){
 	vector<uint> interfacePositions; // vector of positions at the interface excluding termini positions
 	vector<uint> allInterfacePositions; // vector of positions at the interface including the terminal positions
 	vector<int> rotamerSamplingPerPosition; // vector of rotamer level for each position
-
+	
 	// Defines the interfacial positions and the number of rotamers to give each position
 	// This takes poly-val helix to calculate the residue burial of every position and based on the burial and number
 	// of 'SASA interface level' decides rotamer level to assign to the position and also decides which of these positions are 'interfacial'
 	// PS is the actual polymerSeq object whereas polySeq is the string version of the polymerSeq
 	PolymerSequence interfacePolySeq = getInterfacialPolymerSequence(opt, startGeom, PS, rotamerLevels, variablePositionString, rotamerSamplingString,
 	 linkedPositions, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, sout);
+		//cout << "Interface: " << opt.interface << endl;
+		//variablePositionString = opt.interface;
 
+		// make all interface positions the top repack level, others SL 80, and others SL60?
+		// define the polymer sequence at only given interfacial positions
+		// TODO: how do i do this without using the SASA? Or should I use the SASA, but if the positions are on the given interface, 
+		// override it to be the top repack level?
+		//rotamerSamplingPerPosition = getRotamerSampling();
 	/******************************************************************************
 	 *  === DECLARE SYSTEM FOR POLYLEU WITH ALTERNATE IDENTITIES AT INTERFACE ===
 	 ******************************************************************************/
@@ -880,13 +887,7 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 	 ******************************************************************************/
 	EnergySet* Eset = sys.getEnergySet();
 	// Set all terms active, besides Charmm-Elec
-	Eset->setAllTermsActive();
-	Eset->setTermActive("CHARMM_ELEC", false);
-	Eset->setTermActive("CHARMM_ANGL", false);
-	Eset->setTermActive("CHARMM_BOND", false);
-	Eset->setTermActive("CHARMM_DIHE", false);
-	Eset->setTermActive("CHARMM_IMPR", false);
-	Eset->setTermActive("CHARMM_U-BR", false);
+	Eset->setAllTermsInactive();
 	Eset->setTermActive("CHARMM_VDW", true);
 	Eset->setTermActive("SCWRL4_HBOND", true);
 
@@ -903,6 +904,7 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 	// Add hydrogen bond term
 	HydrogenBondBuilder hb(sys, _opt.hbondFile);
 	hb.buildInteractions(50);//when this is here, the HB weight is correct
+
 	/******************************************************************************
 	 *                     === COPY BACKBONE COORDINATES ===
 	 ******************************************************************************/
@@ -911,7 +913,9 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 
 	//TODO: add in a comparison for the monomer at each position here instead
 	string backboneSeq = generateString(_opt.backboneAA, _opt.backboneLength);
+	// save into vector of backbone positions and residue burial pairs
 	vector<pair <int, double> > resiBurial = calculateResidueBurial(sys, _opt, backboneSeq);
+	// sort in descending order of burial
 	sort(resiBurial.begin(), resiBurial.end(), [](auto &left, auto &right) {
 			return left.second < right.second;
 	});
@@ -929,39 +933,52 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 	int highestRotamerLevel = numberOfRotamerLevels-1;
 	//make into a function
 	int numAAs = 0;
-	double lvlavg = 0;
+	double lvlavg = 0; // average residue burial
 	vector<double> avgs;
 	//cout << "lvl " << levelCounter << endl;
+	// loop through the residue burial values calculated above for each position
+	cout << "Interface: " << _opt.interface << endl;
+	//variablePositionString = _opt.interface;
 	for (uint i = 0; i < resiBurial.size(); i++) {
-		double sasaPercentile = double(i) / double(resiBurial.size());
+		double sasaPercentile = double(i) / double(resiBurial.size()); // calculate the SASA percentile for this position
+		// if the SASA percentile is greater than the SASA repack level for this position, then add this position to the interface
 		if (sasaPercentile > (levelCounter+1)/double(numberOfRotamerLevels)) {
+			// if percentile is greater than 
 			levelCounter++;
 			lvlavg = lvlavg/numAAs;
 			avgs.push_back(lvlavg);
 			lvlavg=0;
 			numAAs=0;
-			//cout << "lvl " << levelCounter << endl;
 		}
-		//cout << resiBurial[i].first << ": " << resiBurial[i].second << endl;
 		lvlavg = lvlavg+resiBurial[i].second;
 		numAAs++;
-		int backbonePosition = resiBurial[i].first;
-		Position &pos = sys.getPosition(backbonePosition);
-		string posRot = _opt.sasaRepackLevel[levelCounter];
-		int resiNum = pos.getResidueNumber();
-		int posNum = resiNum-_opt.thread;
-		string add;
+		int backbonePosition = resiBurial[i].first; // get the backbone position for this position
+		Position &position = sys.getPosition(backbonePosition); // get the position object for this position
+		string positionRotLevel = _opt.sasaRepackLevel[levelCounter]; // get the rotamer level for this position
+		int resiNum = position.getResidueNumber(); // get the residue number for this position
+		int positionNumber = resiNum-_opt.thread; // position number taking thread into account
 
+		// Add all Ids at this position, else only the original Id
+		// check if the current interface level is below the accepted option for interface levels (SASA repack level)
 		if (levelCounter < _opt.interfaceLevel){
-			add = "Add all Ids at this pos";
 			interfacePositions.push_back(resiNum);
+			// check to see if the position is found within the core of protein (i.e. not the first 3 residues or the last 4 residues)
 			if (backbonePosition > 2 && backbonePosition < _opt.backboneLength-4){//backbone position goes from 0-20, so numbers need to be 3 and 4 here instead of 4 and 5 to prevent changes at the interface like others
-				variablePositionString.replace(variablePositionString.begin()+posNum, variablePositionString.begin()+posNum+1, "1");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
+				// replace 0 with 1 for variable positions that are found at the interface
+				variablePositionString.replace(variablePositionString.begin()+positionNumber, variablePositionString.begin()+positionNumber+1, "1");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
 			}
-		} else {
-			add = "Only 1 ID";
 		}
-		rotamerLevels.replace(rotamerLevels.begin()+posNum, rotamerLevels.begin()+posNum+1, MslTools::intToString(levelCounter));
+		// checks if interface is given
+		if (_opt.interface == ""){
+			rotamerLevels.replace(rotamerLevels.begin()+positionNumber, rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
+		} else {
+			// if interface given, make all interfacial positions have the highest rotamer level
+			if (_opt.interface.at(positionNumber) == '1'){
+				rotamerLevels.replace(rotamerLevels.begin()+positionNumber, rotamerLevels.begin()+positionNumber+1, "0");
+			} else {
+				rotamerLevels.replace(rotamerLevels.begin()+positionNumber, rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
+			}
+		}
 	}
 	lvlavg = lvlavg/numAAs;
 	avgs.push_back(lvlavg);
@@ -987,17 +1004,6 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 	_interfacePositions = getInterfacePositions(_opt, rotamerSamplingPerPosition);
 	_allInterfacePositions = getAllInterfacePositions(_opt, rotamerSamplingPerPosition);
 
-	//cout << endl << "Averages:\t";
-	//for (uint a=0; a<avgs.size(); a++){
-	//	cout << avgs[a] << "\t";
-	//}
-	//cout << endl;
-
-	//for (uint i=0; i<_interfacePositions.size(); i++){
-	//	cout << _interfacePositions[i] << ",";
-	//}
-	//cout << endl;
-	cout << endl;
 	cout << "PolyLeu Backbone:   " << backboneSeq << endl;
 	cout << "Variable Positions: " << variablePositionString << endl;
 	cout << "Rotamers Levels:    " << rotamerSamplingString << endl;

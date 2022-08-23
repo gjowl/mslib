@@ -44,6 +44,9 @@ struct Options{
 	bool useAlaAtCTerminus; //TRUE: use ALA at C terminus of sequence FALSE: use LEU at C terminus ..TODO: do I need this?
 	bool useBaseline; //TRUE: calculate and use baseline values generated as estimates of the monomer sequence OR FALSE: don't use baselines to estimate the monomer
 
+	// interface parameters
+	string interface; //interface to design on; if empty, use SASA
+
 	// repack parameters
 	int greedyCycles;
 	int seed;
