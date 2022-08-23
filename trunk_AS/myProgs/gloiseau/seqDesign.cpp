@@ -132,9 +132,7 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *                 === PARSE COMMAND LINE OPTIONS ===
 	 ******************************************************************************/
-	Options defaults;
-	//Add in some default options that can easily be changed here
-	Options opt = parseOptions(argc, argv, defaults);
+	Options opt = parseOptions(argc, argv);
 	if (opt.errorFlag) {
 		outputErrorMessage(opt);
 		exit(1);
@@ -147,15 +145,11 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *                       === SETUP OUTPUT FILES ===
 	 ******************************************************************************/
-	// summary file output
-	ofstream sout;
-	// error file output
-	ofstream err;
-	// rerun config output
-	ofstream rerun;
+	ofstream sout; // summary file output
+	ofstream err; // error file output
+	ofstream rerun; // rerun config output
 
-	// makes a directory in the directory that you run from, with design_<runNumber> as the name
-	setupDesignDirectory(opt, date);
+	setupDesignDirectory(opt, date); // makes a directory in the directory that you run from, with design_<runNumber> as the name
 
 	// setup output files
 	string soutfile = opt.pdbOutputDir + "/summary.out";
@@ -171,8 +165,7 @@ int main(int argc, char *argv[]){
 	rerun << opt.rerunConf << endl;
 	rerun.close();
 
-	// output the date and time to the summary file
-	sout << date << endl;
+	sout << date << endl; // output the date and time to the summary file
 
 	/******************************************************************************
 	 *               === LOAD RANDOM GEOMETRY FROM GEOMETRY FILE ===
@@ -201,7 +194,6 @@ int main(int argc, char *argv[]){
 		cout << "axialRotation: " << opt.axialRotation << endl;
 		cout << "zShift:        " << opt.zShift << endl << endl;
 		// TODO: temp fix; instead should search for closest density to the one given
-		densities.push_back(0);
 		densities.push_back(0);
 		densities.push_back(0);
 		densities.push_back(0);
@@ -241,25 +233,20 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *         === COPY BACKBONE COORDINATES AND TRANSFORM TO GEOMETRY ===
 	 ******************************************************************************/
-	// get the starting geometry using poly glycine
+	// get the starting geometry using polyglycine
 	System startGeom;
 	setGly69ToStartingGeometry(opt,startGeom,helicalAxis,axisA,axisB,ori,xAxis,zAxis,trans);
 	
 	/******************************************************************************
 	 *       === IDENTIFY INTERFACIAL POSITIONS AND GET ROTAMER ASSIGNMENTS ===
 	 ******************************************************************************/
-	// Variables to output from defineInterfaceAndRotamerSampling function
-	string rotamerLevels;
-	string variablePositionString;
-	string rotamerSamplingString;
-	// vector of the positions that will be linked
-	vector<int> linkedPositions;
-	// vector of positions at the interface excluding termini positions
-	vector<uint> interfacePositions;
-	// vector of positions at the interface including the terminal positions
-	vector<uint> allInterfacePositions;
-	// vector of rotamer level for each position
-	vector<int> rotamerSamplingPerPosition;
+	string rotamerLevels; // string of rotamer levels for each position
+	string variablePositionString; // string of variable positions for each position
+	string rotamerSamplingString; // string of rotamer sampling number (if 4 rotamer levels, 0-3 for each position)
+	vector<int> linkedPositions; // vector of the positions that will be linked
+	vector<uint> interfacePositions; // vector of positions at the interface excluding termini positions
+	vector<uint> allInterfacePositions; // vector of positions at the interface including the terminal positions
+	vector<int> rotamerSamplingPerPosition; // vector of rotamer level for each position
 
 	// Defines the interfacial positions and the number of rotamers to give each position
 	// This takes poly-val helix to calculate the residue burial of every position and based on the burial and number
@@ -274,18 +261,7 @@ int main(int argc, char *argv[]){
 	// set up the system for the input sequence
 	System sys;
 	prepareSystem(opt, sys, startGeom, interfacePolySeq);
-
-	//Chain chainA = sys.getChain("A");
-	//Chain chainB = sys.getChain("B");
-
-	//AtomPointerVector &apvA = chainA.getAtomPointers();
-	//AtomPointerVector &apvB = chainB.getAtomPointers();
-
-	/******************************************************************************
-	 *                === CHECK TO SEE IF ALL ATOMS ARE BUILT ===
-	 ******************************************************************************/
-	// check to verify that all atoms have coordinates
-	checkIfAtomsAreBuilt(sys, err);
+	checkIfAtomsAreBuilt(sys, err); // check to verify that all atoms have coordinates
 
 	/******************************************************************************
 	 *                     === ADD IN BASELINE ENERGIES ===
@@ -302,7 +278,7 @@ int main(int argc, char *argv[]){
 		sys.setLinkedPositions(linkedPos);
 	}
 	
-	// initialize the object for loading rotamers into our _system
+	// initialize the object for loading rotamers into system
 	SystemRotamerLoader sysRot(sys, opt.rotLibFile);
 	sysRot.defineRotamerSamplingLevels();
 
@@ -313,16 +289,11 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *           === VARIABLES FOR SAVING ENERGIES AND SEQUENCES ===
 	 ******************************************************************************/
-	// Initialize vector to hold designed sequences
-	vector<string> seqs;
-	// Initialize vector to hold all designed sequences from the stateMC
-	vector<string> allSeqs;
-	//Initialize energyMap to hold all energies for output into a summary file
-	map<string, map<string,double>> sequenceEnergyMapBest;
-	// Initialize sequence and state pair vector: each sequence will be tied to it's state with the proper rotamers
-	map<string, vector<uint>> sequenceVectorMap;
-	// Get sequence entropy map
-	map<string, double> sequenceEntropyMap = readSingleParameters(opt.sequenceEntropyFile);
+	vector<string> seqs; // vector to hold designed sequences
+	vector<string> allSeqs; //vector to hold all designed sequences from the stateMC
+	map<string, map<string,double>> sequenceEnergyMapBest; // energyMap to hold all energies for output into a summary file
+	map<string, vector<uint>> sequenceVectorMap; //sequence and vector map: sequence will be tied vector with AAs and rotamers
+	map<string, double> sequenceEntropyMap = readSingleParameters(opt.sequenceEntropyFile); // Get sequence entropy map
 
 	/******************************************************************************
 	 *                        === SETUP SPM AND RUN SCMF ===

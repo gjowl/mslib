@@ -1,12 +1,3 @@
-/**
- * @Author: Gilbert Loiseau
- * @Date:   2022/02/13
- * @Email:  gjowl04@gmail.com
- * @Filename: design_options.h
- * @Last modified by:   Gilbert Loiseau
- * @Last modified time: 2022-02-19
- */
-
 #ifndef DESIGNOPTIONS_H
 #define DESIGNOPTIONS_H
 
@@ -20,7 +11,6 @@ using namespace std;
  *  =======  OPTIONS =======
  *
  ******************************************/
- //TODO: simplify these options and have comments for each
 struct Options{
 	// input files
 	string backboneCrd; //initial coordinates for helix backbones: crd file
@@ -65,8 +55,7 @@ struct Options{
 	// load rotamers useSasa = true
 	std::vector<string> sasaRepackLevel; //vector of levels
 	int interfaceLevel; // level for the interface
-	// Example:
-	/*
+	/* Example:
 	The number of given levels determines how many interfacial splits there are by normalized SASA value and sorted.
 
 	sasaRepackLevel.push_back("SL95.00")
@@ -77,10 +66,10 @@ struct Options{
 	interfaceLevel = 2
 
 	All positions below level 2 are considered interfacial.
-	Since there are 4 levels, there are 4 splits, each being 25% of the total SASA value. Interfacial positions are the positions with the highest burial
-	that occur in the first two splits. SASA value is added up for the first level until it passes 25%. Those positions are considered part of level 1. Values
-	are continued to add up until reaching 50%, or level 2. And so on. In this example, all the positions that end up having a SASA value in level 1 and 2 are considered interface.
-
+	Since there are 4 levels, there are 4 splits, each being 25% of the total SASA value. Interfacial positions are the positions with the
+	highest burial that occur in the first two splits. SASA value is added up for the first level until it passes 25%. Those positions are
+	considered part of level 1. Values are continued to add up until reaching 50%, or level 2. And so on. In this example, all the positions
+	that end up having a SASA value in level 1 and 2 are considered interface.
 	*/
 
 	// tm start and end numbers
@@ -119,15 +108,17 @@ struct Options{
 	int backboneMCCurve;
 	int backboneConvergedSteps;
 	double backboneConvergedE;
+
+	// use different energy parameters
 	bool useIMM1;
 	bool useElec;
 
 	// energy weights
 	double weight_vdw; //weight of vdw energy contribution to total energy: default = 1
-	double weight_hbond;//weight of hbond energy contribution to total energy: default = 1
-	double weight_solv;//weight of solvation energy contribution to total energy: default = 1
-	//double weight_elec;//weight of electrostatic energy contribution to total energy: default = 1
-	double weight_seqEntropy;//weight of sequence entropy contribution to total energy: default = 1
+	double weight_solv; //weight of solvation energy contribution to total energy: default = 1
+	double weight_elec; //weight of electrostatic energy contribution to total energy: default = 1
+	double weight_hbond; //weight of hbond energy contribution to total energy: default = 1
+	double weight_seqEntropy; //weight of sequence entropy contribution to total energy: default = 1
 
 	// alternate identities
 	vector<string> Ids; //alternate AA identities for interfacial positions
@@ -141,9 +132,6 @@ struct Options{
 	bool runSCMF;
 
 	// energy terms to output: maybe rid of and just default them?
-	vector<string> monomerEnergyTerms;
-	vector<string> monomerIMM1EnergyTerms;
-	vector<string> dimerEnergyTerms;
 	vector<string> energyLandscapeTerms;
 	vector<string> energyTermsToOutput;
 	vector<string> energyTermList;

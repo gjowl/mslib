@@ -1632,8 +1632,7 @@ double calculateSequenceProbability(map<string,int> &_seqCountMap, map<string,do
  *  ======= CONFIG FILE OPTIONS =======
  *
  ****************************************/
-Options parseOptions(int _argc, char * _argv[], Options defaults){
-
+Options parseOptions(int _argc, char * _argv[]){
 	/******************************************
 	 *  Pass the array of argument and the name of
 	 *  a configuration file to the ArgumentParser
@@ -1747,6 +1746,7 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 	//Command Line Arguments
 	opt.allowed.push_back("runNumber");
 	opt.allowed.push_back("useIMM1");
+	opt.allowed.push_back("useElec");
 
 	//MonteCarlo Arguments
 	opt.allowed.push_back("numStatesToSave");
@@ -1764,9 +1764,6 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 	opt.allowed.push_back("runSCMF");
 
 	//Energy Terms to Output
-	opt.allowed.push_back("monomerEnergyTerms");
-	opt.allowed.push_back("monomerIMM1EnergyTerms");
-	opt.allowed.push_back("dimerEnergyTerms");
 	opt.allowed.push_back("energyLandscapeTerms");
 	opt.allowed.push_back("energyTermsToOutput");
 	opt.allowed.push_back("energyTermList");
@@ -1776,7 +1773,6 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 	opt.allowed.push_back("sasaRepackLevel");
 	opt.allowed.push_back("interfaceLevel");
 
-	opt.allowed.push_back("useElec");
 	opt.allowed.push_back("negAngle");
 	opt.allowed.push_back("helicalAxis");
 	
@@ -2298,28 +2294,6 @@ Options parseOptions(int _argc, char * _argv[], Options defaults){
 		opt.useBaseline = false;
 	}
 	//Energy Terms to Output
-	opt.monomerEnergyTerms = OP.getStringVector("monomerEnergyTerms");
-	if (OP.fail()) {
-		opt.monomerEnergyTerms.push_back("Monomer");
-		opt.monomerEnergyTerms.push_back("VDWMonomer");
-		opt.monomerEnergyTerms.push_back("HbondMonomer");
-		opt.monomerEnergyTerms.push_back("MonomerSelfBaseline");
-		opt.monomerEnergyTerms.push_back("MonomerPairBaseline");
-	}
-	opt.monomerIMM1EnergyTerms = OP.getStringVector("monomerIMM1EnergyTerms");
-	if (OP.fail()) {
-		opt.monomerIMM1EnergyTerms.push_back("Monomerw/IMM1");
-		opt.monomerIMM1EnergyTerms.push_back("VDWMonomerw/IMM1");
-		opt.monomerIMM1EnergyTerms.push_back("HbondMonomerw/IMM1");
-		opt.monomerIMM1EnergyTerms.push_back("IMM1Monomer");
-	}
-	opt.dimerEnergyTerms = OP.getStringVector("dimerEnergyTerms");
-	if (OP.fail()) {
-		opt.dimerEnergyTerms.push_back("Dimer");
-		opt.dimerEnergyTerms.push_back("HbondDimer");
-		opt.dimerEnergyTerms.push_back("VDWDimer");
-		opt.dimerEnergyTerms.push_back("IMM1Dimer");
-	}
 	opt.energyLandscapeTerms = OP.getStringVector("energyLandscapeTerms");
 	if (OP.fail()) {
 		opt.energyLandscapeTerms.push_back("EnergyBeforeLocalMC");

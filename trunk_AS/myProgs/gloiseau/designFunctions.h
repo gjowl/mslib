@@ -184,6 +184,6 @@ void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<str
   vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1);
 
 // parse config file for given options
-Options parseOptions(int _argc, char * _argv[], Options defaults);
+Options parseOptions(int _argc, char * _argv[]);
 
 #endif
