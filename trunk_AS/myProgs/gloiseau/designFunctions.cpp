@@ -2393,7 +2393,6 @@ Options parseOptions(int _argc, char * _argv[]){
 			opt.errorMessages += "interface string and backbone length must be the same length\n";
 			opt.errorFlag = true;
 		}
-		opt.interface = " -interface " + opt.interface;
 	}
 	opt.rerunConf = OP.getConfFile();
 

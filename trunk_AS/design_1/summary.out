@@ -1,5 +1,144 @@
 08_23_2022
 
 PolyLeu Backbone:   LLLLLLLLLLLLLLLLLLILI
-Variable Positions: 000110110011011000000
-Rotamers Levels:    033012103201210000001
+Variable Positions: 000110110011011110000
+Rotamers Levels:    033002003200200000000
+Running Self Consistent Mean Field
+Initial Sequence:   LLLTGLWSLLGYLIIGWLILI
+Best Sequence:      LLLTGLWSLLGYLIIGWLILI
+Interface Sequence: L--TG-WS--GY-IIGWLILI
+Interface:          000110110011011110000
+Total Energy:       29.3271
+VDW:                -16.877
+HBOND:              -74.794
+
+End SelfPairManager Optimization: 69s
+Time to calculate energies: 68s
+Best Sequence #0: LLLAILIALLAFLIIIWLILI; Energy: -335.672
+Best Sequence #1: LLLAILISLLAFLIIFWLILI; Energy: -337.293
+Best Sequence #2: LLLAILISLLAFLIIIWLILI; Energy: -352.112
+Best Sequence #3: LLLAILVSLLAFLIIFWLILI; Energy: -331.703
+Best Sequence #4: LLLAILVSLLAFLIIIWLILI; Energy: -346.522
+Best Sequence #5: LLLAILVSLLAFLYIFWLILI; Energy: -319.102
+Best Sequence #6: LLLASLISLLAFLIIFWLILI; Energy: -346.049
+Best Sequence #7: LLLASLISLLAFLIIVWLILI; Energy: -355.496
+Best Sequence #8: LLLASLISLLAFLVIVWLILI; Energy: -348.969
+Best Sequence #9: LLLASLISLLAWLIIFWLILI; Energy: -361.186
+Best Sequence #10: LLLASLISLLAWLIIYWLILI; Energy: -364.604
+Best Sequence #11: LLLASLSSLLAFLVIVWLILI; Energy: -355.245
+Best Sequence #12: LLLASLSSLLAYLVIVWLILI; Energy: -359.967
+Best Sequence #13: LLLASLVSLLAWLIIFWLILI; Energy: -355.526
+Best Sequence #14: LLLAVLISLLAFLIIFWLILI; Energy: -332.913
+Best Sequence #15: LLLAVLISLLAFLYIFWLILI; Energy: -320.315
+Best Sequence #16: LLLAVLVSLLAWLIIFWLILI; Energy: -341.652
+Best Sequence #17: LLLTGLWALLAYLIIGWLILI; Energy: -321.117
+Best Sequence #18: LLLTGLWALLAYLIIIWLILI; Energy: -327.142
+Best Sequence #19: LLLTGLWALLGYLIIGWLILI; Energy: -329.54
+Best Sequence #20: LLLTGLWSLLAFLIIIWLILI; Energy: -334.623
+Best Sequence #21: LLLTGLWSLLAYLIIIWLILI; Energy: -343.23
+Best Sequence #22: LLLTSLSSLLAYLVIVWLILI; Energy: -361.64
+Best Sequence #23: LLLTVLSSLLAYLVIIWLILI; Energy: -353.994
+Best Sequence #24: LLLTVLSSLLAYLVIVWLILI; Energy: -348.641
+Best Sequence #25: LLLTVLWSLLAYLVIIWLILI; Energy: -339.38
+Best Sequence #26: LLLTYLWSLLAFLIIIWLILI; Energy: -333.741
+Best Sequence #27: LLLTYLWSLLAYLIIIWLILI; Energy: -338.729
+Best Sequence #28: LLLTYLWSLLAYLVIIWLILI; Energy: -332.437
+Best Sequence #29: LLLWILIALLAFLIIFWLILI; Energy: -327.38
+Best Sequence #30: LLLWILVSLLAFLIIFWLILI; Energy: -335.132
+Best Sequence #31: LLLWILVSLLAFLIIIWLILI; Energy: -349.949
+Best Sequence #32: LLLWILVSLLAFLYIFWLILI; Energy: -322.535
+Best Sequence #33: LLLWVLIALLAFLIIFWLILI; Energy: -322.158
+Best Sequence #34: LLLWVLIALLAFLIIIWLILI; Energy: -336.978
+Best Sequence #35: LLLWVLIALLAFLYIFWLILI; Energy: -309.559
+Best Sequence #36: LLLWVLIALLAFLYIIWLILI; Energy: -324.368
+Best Sequence #37: LLLWVLISLLAFLIIFWLILI; Energy: -336.721
+Best Sequence #38: LLLWVLISLLAFLYIFWLILI; Energy: -324.126
+Best Sequence #39: LLLWVLVSLLAFLIIFWLILI; Energy: -329.928
+Best Sequence #40: LLLWVLVSLLAFLIIIWLILI; Energy: -344.745
+Best Sequence #41: LLLWVLVSLLAFLYIFWLILI; Energy: -317.331
+Best Sequence #42: LLLWVLVSLLAWLIIFWLILI; Energy: -345.463
+End monte carlo sequence search #0: 24s
+Monte Carlo ended at Temp: 0.815777
+
+Time to calculate energies for backbone repack: 1
+***STARTING GEOMETRY***
+xShift:        9.2
+crossingAngle: 25
+axialRotation: 40
+zShift:        4
+
+***AFTER REPACK GEOMETRY***
+xShift:        9.32899
+crossingAngle: 23.3917
+axialRotation: 41.1862
+zShift:        3.93562
+
+Monte Carlo repack complete. Time: 9 seconds
+
+Time to calculate energies: 68s
+Best Sequence #0: LLLAGLISLLAVLIIGWLILI; Energy: -335.975
+Best Sequence #1: LLLAGLWSLLAVLIIGWLILI; Energy: -328.863
+Best Sequence #2: LLLAILVALLAFLIIIWLILI; Energy: -329.952
+Best Sequence #3: LLLASLIALLAFLIIIWLILI; Energy: -344.402
+Best Sequence #4: LLLASLISLLAFLIIFWLILI; Energy: -346.913
+Best Sequence #5: LLLASLVALLAFLIIIWLILI; Energy: -338.89
+Best Sequence #6: LLLASLVSLLAFLIIFWLILI; Energy: -341.353
+Best Sequence #7: LLLAVLIALLAFLIIFWLILI; Energy: -316.313
+Best Sequence #8: LLLAVLIALLAFLIIIWLILI; Energy: -331.134
+Best Sequence #9: LLLAVLISLLAFLIIFWLILI; Energy: -333.733
+Best Sequence #10: LLLAVLISLLAFLIIIWLILI; Energy: -348.552
+Best Sequence #11: LLLAVLVALLAFLIIFWLILI; Energy: -310.779
+Best Sequence #12: LLLAVLVALLAFLIIIWLILI; Energy: -325.6
+Best Sequence #13: LLLAVLVALLAFLYIFWLILI; Energy: -298.19
+Best Sequence #14: LLLAVLVALLAFLYIIWLILI; Energy: -312.999
+Best Sequence #15: LLLAVLVSLLAFLIIFWLILI; Energy: -328.158
+Best Sequence #16: LLLAVLVSLLAFLIIIWLILI; Energy: -342.977
+Best Sequence #17: LLLAVLVSLLAFLYIFWLILI; Energy: -315.572
+Best Sequence #18: LLLAVLVSLLAFLYIIWLILI; Energy: -330.379
+Best Sequence #19: LLLSGLIALLAFLIIGWLILI; Energy: -332.29
+Best Sequence #20: LLLSGLISLLAFLIIGWLILI; Energy: -343.138
+Best Sequence #21: LLLSGLISLLAVLIIGWLILI; Energy: -350.198
+Best Sequence #22: LLLSVLIALLAFLIIGWLILI; Energy: -339.27
+Best Sequence #23: LLLSVLIALLAFLYIGWLILI; Energy: -326.666
+Best Sequence #24: LLLSVLVALLAFLIIGWLILI; Energy: -333.706
+Best Sequence #25: LLLSVLVALLAFLYIGWLILI; Energy: -321.099
+Best Sequence #26: LLLTGLWSLLAVLIIGWLILI; Energy: -331.796
+Best Sequence #27: LLLTGLWSLLAYLIIGWLILI; Energy: -332.863
+Best Sequence #28: LLLWILIALLAWLYIIWLILI; Energy: -345.773
+Best Sequence #29: LLLWILISLLAFLIIFWLILI; Energy: -343.554
+Best Sequence #30: LLLWILVALLAFLIIIWLILI; Energy: -335.813
+Best Sequence #31: LLLWILVALLAFLYIGWLILI; Energy: -317.137
+Best Sequence #32: LLLWILVALLAFLYIIWLILI; Energy: -323.216
+Best Sequence #33: LLLWILVALLAWLYIIWLILI; Energy: -338.945
+Best Sequence #34: LLLWILVSLLAFLIIFWLILI; Energy: -336.769
+Best Sequence #35: LLLWILVSLLAFLIIGWLILI; Energy: -345.513
+Best Sequence #36: LLLWILVSLLAFLYIGWLILI; Energy: -332.913
+Best Sequence #37: LLLWILVSLLAFLYIIWLILI; Energy: -338.992
+Best Sequence #38: LLLWVLIALLAFLIIFWLILI; Energy: -322.552
+Best Sequence #39: LLLWVLIALLAFLIIGWLILI; Energy: -331.299
+Best Sequence #40: LLLWVLIALLAFLIIIWLILI; Energy: -337.372
+Best Sequence #41: LLLWVLIALLAFLYIGWLILI; Energy: -318.697
+Best Sequence #42: LLLWVLISLLAFLIIFWLILI; Energy: -338.382
+Best Sequence #43: LLLWVLISLLAFLIIIWLILI; Energy: -353.199
+Best Sequence #44: LLLWVLVALLAFLYIGWLILI; Energy: -311.955
+Best Sequence #45: LLLWVLVALLAFLYIIWLILI; Energy: -318.034
+Best Sequence #46: LLLWVLVSLLAFLIIFWLILI; Energy: -331.602
+Best Sequence #47: LLLWVLVSLLAFLYIIWLILI; Energy: -333.824
+End monte carlo sequence search #1: 20s
+Monte Carlo ended at Temp: 0.815777
+
+Time to calculate energies for backbone repack: 1
+***STARTING GEOMETRY***
+xShift:        9.32899
+crossingAngle: 23.3917
+axialRotation: 41.1862
+zShift:        3.93562
+
+***AFTER REPACK GEOMETRY***
+xShift:        9.19244
+crossingAngle: 23.642
+axialRotation: 41.0022
+zShift:        3.89645
+
+Monte Carlo repack complete. Time: 16 seconds
+

@@ -90,6 +90,8 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis,
  AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, 
  CartesianPoint &_xAxis, CartesianPoint &_zAxis, Transforms &_trans);
+void defineRotamerLevelsByResidueBurial(System &_sys, Options &_opt, vector<pair <int, double> > &_resiBurial, vector<int> &_interfacePositions,
+ string &_rotamerLevels, string &_variablePositionString);
 
 // backbone repack functions
 void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, uint _rep, double _savedXShift, System &_helicalAxis, AtomPointerVector &_axisA,
@@ -921,71 +923,21 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 	});
 
 	//cout << "Determining interfacial residues by residue burial..." << endl;
-	int levelCounter = 0;
 	vector<int> interfacePositions;
 
 	// Output variable Set up
 	backboneSeq = generateBackboneSequence("L", _opt.backboneLength, _opt.useAlaAtCTerminus);
 	string variablePositionString = generateString("0", _opt.backboneLength);
 	string rotamerLevels = generateString("0", _opt.backboneLength);
+	defineRotamerLevelsByResidueBurial(sys, _opt, resiBurial, interfacePositions, rotamerLevels, variablePositionString);
 
-	int numberOfRotamerLevels = _opt.sasaRepackLevel.size();
-	int highestRotamerLevel = numberOfRotamerLevels-1;
-	//make into a function
-	int numAAs = 0;
-	double lvlavg = 0; // average residue burial
-	vector<double> avgs;
-	//cout << "lvl " << levelCounter << endl;
-	// loop through the residue burial values calculated above for each position
-	cout << "Interface: " << _opt.interface << endl;
-	//variablePositionString = _opt.interface;
-	for (uint i = 0; i < resiBurial.size(); i++) {
-		double sasaPercentile = double(i) / double(resiBurial.size()); // calculate the SASA percentile for this position
-		// if the SASA percentile is greater than the SASA repack level for this position, then add this position to the interface
-		if (sasaPercentile > (levelCounter+1)/double(numberOfRotamerLevels)) {
-			// if percentile is greater than 
-			levelCounter++;
-			lvlavg = lvlavg/numAAs;
-			avgs.push_back(lvlavg);
-			lvlavg=0;
-			numAAs=0;
-		}
-		lvlavg = lvlavg+resiBurial[i].second;
-		numAAs++;
-		int backbonePosition = resiBurial[i].first; // get the backbone position for this position
-		Position &position = sys.getPosition(backbonePosition); // get the position object for this position
-		string positionRotLevel = _opt.sasaRepackLevel[levelCounter]; // get the rotamer level for this position
-		int resiNum = position.getResidueNumber(); // get the residue number for this position
-		int positionNumber = resiNum-_opt.thread; // position number taking thread into account
-
-		// Add all Ids at this position, else only the original Id
-		// check if the current interface level is below the accepted option for interface levels (SASA repack level)
-		if (levelCounter < _opt.interfaceLevel){
-			interfacePositions.push_back(resiNum);
-			// check to see if the position is found within the core of protein (i.e. not the first 3 residues or the last 4 residues)
-			if (backbonePosition > 2 && backbonePosition < _opt.backboneLength-4){//backbone position goes from 0-20, so numbers need to be 3 and 4 here instead of 4 and 5 to prevent changes at the interface like others
-				// replace 0 with 1 for variable positions that are found at the interface
-				variablePositionString.replace(variablePositionString.begin()+positionNumber, variablePositionString.begin()+positionNumber+1, "1");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
-			}
-		}
-		// checks if interface is given
-		if (_opt.interface == ""){
-			rotamerLevels.replace(rotamerLevels.begin()+positionNumber, rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
-		} else {
-			// if interface given, make all interfacial positions have the highest rotamer level
-			if (_opt.interface.at(positionNumber) == '1'){
-				rotamerLevels.replace(rotamerLevels.begin()+positionNumber, rotamerLevels.begin()+positionNumber+1, "0");
-			} else {
-				rotamerLevels.replace(rotamerLevels.begin()+positionNumber, rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
-			}
-		}
-	}
-	lvlavg = lvlavg/numAAs;
-	avgs.push_back(lvlavg);
+	// makes the polymer sequence to return basedon the interface positions
 	string polySeq = generateMultiIDPolymerSequence(backboneSeq, _opt.thread, _opt.Ids, interfacePositions);
 	PolymerSequence PS(polySeq);
 
-	vector<int> rotamerSamplingPerPosition = getRotamerSampling(rotamerLevels);
+	vector<int> rotamerSamplingPerPosition = getRotamerSampling(rotamerLevels); // converts the rotamer sampling for each position as a vector
+	int numberOfRotamerLevels = _opt.sasaRepackLevel.size();
+	int highestRotamerLevel = numberOfRotamerLevels-1;
 	vector<int> linkedPositions = getLinkedPositions(rotamerSamplingPerPosition, _opt.interfaceLevel, highestRotamerLevel);
 
 	//String for the positions of the sequences that are considered interface for positions amd high rotamers
@@ -1018,6 +970,50 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 		}
 	}
 	return PS;
+}
+
+void defineRotamerLevelsByResidueBurial(System &_sys, Options &_opt, vector<pair <int, double> > &_resiBurial, vector<int> &_interfacePositions,
+ string &_rotamerLevels, string &_variablePositionString){
+	// initialize variables
+	int levelCounter = 0;
+	int numberOfRotamerLevels = _opt.sasaRepackLevel.size();
+	int highestRotamerLevel = numberOfRotamerLevels-1;
+	// loop through the residue burial values calculated above for each position
+	cout << "Interface: " << _opt.interface << endl;
+	//variablePositionString = _opt.interface;
+	for (uint i = 0; i < _resiBurial.size(); i++) {
+		double sasaPercentile = double(i) / double(_resiBurial.size()); // calculate the SASA percentile for this position
+		// if percentile is greater, move on to the next rotamer level
+		if (sasaPercentile > (levelCounter+1)/double(numberOfRotamerLevels)) {
+			levelCounter++;
+		}
+		int backbonePosition = _resiBurial[i].first; // get the backbone position for this position
+		Position &position = _sys.getPosition(backbonePosition); // get the position object for this position
+		string positionRotLevel = _opt.sasaRepackLevel[levelCounter]; // get the rotamer level for this position
+		int resiNum = position.getResidueNumber(); // get the residue number for this position
+		int positionNumber = resiNum-_opt.thread; // position number taking thread into account
+
+		// check if the current interface level is below the accepted option for interface levels (SASA repack level)
+		if (levelCounter < _opt.interfaceLevel || _opt.interface.at(positionNumber) == '1') {
+			_interfacePositions.push_back(resiNum);
+			// check to see if the position is found within the core of protein (i.e. not the first 3 residues or the last 4 residues)
+			if (backbonePosition > 2 && backbonePosition < _opt.backboneLength-4){//backbone position goes from 0-20, so numbers need to be 3 and 4 here instead of 4 and 5 to prevent changes at the interface like others
+				// replace 0 with 1 for variable positions that are found at the interface
+				_variablePositionString.replace(_variablePositionString.begin()+positionNumber, _variablePositionString.begin()+positionNumber+1, "1");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
+			}
+		}
+		// checks if interface is defined
+		if (_opt.interface == ""){
+			_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
+		} else {
+			// if interface given, make all interfacial positions have the highest rotamer level
+			if (_opt.interface.at(positionNumber) == '1'){
+				_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, "0");
+			} else {
+				_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
+			}
+		}
+	}
 }
 
 void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis,
