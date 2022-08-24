@@ -423,14 +423,14 @@ END";
 			/******************************************************************************
 			 *                     === CHECK SEQUENCE RULES ===
 			 ******************************************************************************/
-			if(!rulesCheck(sys, parsedGeoInformation[0], rulesFileMap)) {
-				fout << "sequence does not conform with given rules" << endl;
+			//if(!rulesCheck(sys, parsedGeoInformation[0], rulesFileMap)) {
+			//	fout << "sequence does not conform with given rules" << endl;
 
-				// renumber residues - rethreading
-				//reThreadResidues(positions,-1);
-				fout << endl;
-				continue;
-			}
+			//	// renumber residues - rethreading
+			//	//reThreadResidues(positions,-1);
+			//	fout << endl;
+			//	continue;
+			//}
 
 			/******************************************************************************
 			 *                  === CALCULATE ENERGIES TO SAVE ===

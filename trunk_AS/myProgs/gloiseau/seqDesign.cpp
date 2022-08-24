@@ -203,7 +203,7 @@ int main(int argc, char *argv[]){
 
 	//String for the alternateIds at the interface
 	string alternateIds = getAlternateIdString(opt.Ids);
-	cout << "Amino acids for design: LEU " << alternateIds << endl;
+	cout << "Amino acids for design: " << alternateIds << endl;
 
 	/******************************************************************************
 	 *                      === GENERATE POLYMER SEQUENCE ===
@@ -256,14 +256,7 @@ int main(int argc, char *argv[]){
 	// PS is the actual polymerSeq object whereas polySeq is the string version of the polymerSeq
 	PolymerSequence interfacePolySeq = getInterfacialPolymerSequence(opt, startGeom, PS, rotamerLevels, variablePositionString, rotamerSamplingString,
 	 linkedPositions, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, sout);
-		//cout << "Interface: " << opt.interface << endl;
-		//variablePositionString = opt.interface;
-
-		// make all interface positions the top repack level, others SL 80, and others SL60?
-		// define the polymer sequence at only given interfacial positions
-		// TODO: how do i do this without using the SASA? Or should I use the SASA, but if the positions are on the given interface, 
-		// override it to be the top repack level?
-		//rotamerSamplingPerPosition = getRotamerSampling();
+	
 	/******************************************************************************
 	 *  === DECLARE SYSTEM FOR POLYLEU WITH ALTERNATE IDENTITIES AT INTERFACE ===
 	 ******************************************************************************/
@@ -395,7 +388,6 @@ void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingP
 				enerTerms << energyTerm << t;
 			}
 		}
-		//Add in path to design PDB and make repack and docking configuration files
 		string seqNumber = MslTools::doubleToString(energyMap.at("SequenceNumber"));
 		seqLine << seqNumber << t << runParameters;
 		string line = seqLine.str();
@@ -440,7 +432,7 @@ map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt,
 	// variable setup for current state
 	map<string,map<string,double>> sequenceEnergyMap;
 	vector<thread> threads;
-	for (uint i=0; i<_opt.Ids.size()-1; i++){
+	for (uint i=0; i<_opt.Ids.size(); i++){
 		// pick an identity for each thread 
 		int idNum = i;
 		// generate polymer sequence for each identity at the corresponding chosen position
@@ -706,7 +698,6 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 
 	// Alternate AA Ids for each of the interfacial positions
 	vector<string> ids = _opt.Ids;
-	ids.push_back("LEU");
 
 	// Variables setup for MC while loop
 	map<double, string> sequences;
@@ -716,7 +707,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 
 	// Sequence Search Energy Landscape file
 	ofstream lout;
-	string loutfile  = _opt.pdbOutputDir + "/sequenceSearchEnergyLandscape.out";
+	string loutfile  = _opt.pdbOutputDir + "/sequenceSearchEnergyLandscape_" + to_string(_rep) + ".out";
 	lout.open(loutfile.c_str());
 	lout << "***STARTING GEOMETRY:***" << endl;
 	lout << "xShift: " << _opt.xShift << endl;
@@ -742,8 +733,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	// - what would multiple cores do here? Could I locally test a variety of sequences using multiple cores, and save x number per each core?
 	//		 Say save 10 and run 10 replicates, that gets me 100 sequences right away?
 	// initialize energy variables for the MonteCarlo
-	double prevStateEntropy = 0;
-	double currStateEntropy = 0;
+	
 	string bestSeq = prevStateSeq;
 	map<string,map<string,double>> allSequenceEnergyMap;
 	//cout << "Finding " << _opt.numStatesToSave << " sequences using membrane composition (State MonteCarlo)..." << endl;
@@ -764,6 +754,8 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		// TODO: add in check step to see if sequence is already found in the best sequence list and skip if so
 		double currEnergyTotal = sequenceEnergyMap[currSeq]["currEnergyTotal"]; // energy total for current sequence
 		double bestEnergyTotal = sequenceEnergyMap[currSeq]["bestEnergyTotal"]; // energy total for previous sequence (details in energyFunction)
+		double prevStateEntropy = sequenceEnergyMap[currSeq]["prevEntropy"];
+		double currStateEntropy = sequenceEnergyMap[currSeq]["currEntropy"];
 		vector<uint> currStateVec = sequenceVectorMap[currSeq]; // current state vector for current sequence (best rotamers and sequence identities)
 		MC.setEner(bestEnergyTotal);
 		
@@ -775,6 +767,11 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			}
 		} else {
 			_sys.setActiveRotamers(currStateVec); // set rotamers to the current state
+			if (_opt.energyLandscape){
+				map<string,double> energyMap = sequenceEnergyMap[currSeq];
+				lout << prevStateSeq << "\t" << currSeq << "\t" << bestEnergyTotal << "\t" << currEnergyTotal << "\t";
+				lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << MC.getCurrentT() << endl;
+			}
 			prevStateVec = currStateVec; // set the previous state vector to be the current state vector
 			prevStateSeq = currSeq; // set the previous sequence to be the current sequence
 			bestSeq = currSeq; // set the best sequence to the newly accepted current sequence
@@ -782,12 +779,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			sequenceEnergyMap[bestSeq]["acceptCycleNumber"] = cycleCounter; // gets the accept cycle number for the current sequence
 			_sequenceVectorMap[bestSeq] = currStateVec; // saves the current state vector to the sequence vector map
 			allSequenceEnergyMap[bestSeq] = sequenceEnergyMap[bestSeq]; // saves the current sequence energy map to the all sequence energy map
-
-			if (_opt.energyLandscape){
-				map<string,double> energyMap = sequenceEnergyMap[currSeq];
-				lout << prevStateSeq << "\t" << currSeq << "\t" << bestEnergyTotal << "\t" << currEnergyTotal << "\t";
-				lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << MC.getCurrentT() << endl;
-			}
+			
 			if (_opt.verbose){
 				double prevEnergy = bestEnergyTotal; 
 				cout << "Cycle#" << cycleCounter << " State accepted, Sequence: " << currSeq << "; PrevE=  " << prevEnergy << " : CurrE= " << currEnergyTotal;
@@ -816,20 +808,24 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	getDimerSasa(_sys, _sequenceVectorMap, _sequenceEnergyMap);
 	uint i=0;
 	double ener = 0;
+	double entropy = 0;
 	PDBWriter writer;
 	writer.open(_opt.pdbOutputDir + "/allDesigns_" + to_string(_rep) + ".pdb");
+	// TODO: should I switch this to the energy total?
 	for (auto &seq: allSequenceEnergyMap){
 		_out << "Best Sequence #" << i << ": " << seq.first << "; Energy: " << seq.second["Dimer"] << endl;
 		if (i == 0){
 			_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
 			writer.write(_sys.getAtomPointers(), true, false, true);
 			_bestSequence = seq.first;
-			ener = seq.second["entropyDiff"];
-		} else if (seq.second["entropyDiff"] > ener){
+			ener = seq.second["currEnergyTotal"];
+			entropy = seq.second["entropyDiff"];
+		} else if (seq.second["entropyDiff"] > entropy && seq.second["currEnergyTotal"] < ener){
 			_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
 			writer.write(_sys.getAtomPointers(), true, false, true);
 			_bestSequence = seq.first;
-			ener = seq.second["entropyDiff"];
+			ener = seq.second["currEnergyTotal"];
+			entropy = seq.second["entropyDiff"];
 		}
 		_sequenceEnergyMap[seq.first] = seq.second;
 		i++;
@@ -980,7 +976,6 @@ void defineRotamerLevelsByResidueBurial(System &_sys, Options &_opt, vector<pair
 	int highestRotamerLevel = numberOfRotamerLevels-1;
 	// loop through the residue burial values calculated above for each position
 	cout << "Interface: " << _opt.interface << endl;
-	//variablePositionString = _opt.interface;
 	for (uint i = 0; i < _resiBurial.size(); i++) {
 		double sasaPercentile = double(i) / double(_resiBurial.size()); // calculate the SASA percentile for this position
 		// if percentile is greater, move on to the next rotamer level
@@ -993,8 +988,10 @@ void defineRotamerLevelsByResidueBurial(System &_sys, Options &_opt, vector<pair
 		int resiNum = position.getResidueNumber(); // get the residue number for this position
 		int positionNumber = resiNum-_opt.thread; // position number taking thread into account
 
+		// After a couple of tests, the below should be working now. But if I run into interface problems in the future, come here first
+		//TODO: would be nice to make this code ...better
 		// check if the current interface level is below the accepted option for interface levels (SASA repack level)
-		if (levelCounter < _opt.interfaceLevel || _opt.interface.at(positionNumber) == '1') {
+		if (levelCounter < _opt.interfaceLevel) {
 			_interfacePositions.push_back(resiNum);
 			// check to see if the position is found within the core of protein (i.e. not the first 3 residues or the last 4 residues)
 			if (backbonePosition > 2 && backbonePosition < _opt.backboneLength-4){//backbone position goes from 0-20, so numbers need to be 3 and 4 here instead of 4 and 5 to prevent changes at the interface like others
@@ -1002,16 +999,20 @@ void defineRotamerLevelsByResidueBurial(System &_sys, Options &_opt, vector<pair
 				_variablePositionString.replace(_variablePositionString.begin()+positionNumber, _variablePositionString.begin()+positionNumber+1, "1");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
 			}
 		}
-		// checks if interface is defined
-		if (_opt.interface == ""){
-			_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
-		} else {
-			// if interface given, make all interfacial positions have the highest rotamer level
+		// checks if interface is defined; if so, check the position and set those positions to the highest rotamer level
+		if (_opt.interface != ""){
 			if (_opt.interface.at(positionNumber) == '1'){
+				_interfacePositions.push_back(resiNum);
+				if (backbonePosition > 2 && backbonePosition < _opt.backboneLength-4){//backbone position goes from 0-20, so numbers need to be 3 and 4 here instead of 4 and 5 to prevent changes at the interface like others
+					_variablePositionString.replace(_variablePositionString.begin()+positionNumber, _variablePositionString.begin()+positionNumber+1, "1");
+				}
 				_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, "0");
 			} else {
+				// if interface given, make all interfacial positions have the highest rotamer level
 				_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
 			}
+		} else {
+				_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
 		}
 	}
 }
