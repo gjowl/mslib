@@ -54,7 +54,6 @@ void defineRotamerLevels(System &_sys, BBOptions &_opt, vector<pair <int, double
 void defineInterfaceAndRotamerSampling(BBOptions &_opt, System &_startGeom, PolymerSequence _PS, string &_rotamerLevels,
  string &_polySeq, string &_variablePositionString, string &_rotamerSamplingString, vector<int> &_linkedPositions, 
  vector<uint> &_allInterfacePositions, vector<uint> &_interfacePositions, vector<int> &_rotamerSamplingPerPosition, ofstream &_out);
-std::vector<pair <int, double> > calculateResidueBurial (System &_sys);
 std::vector<pair <int, double> > calculateResidueBurial (System &_sys, BBOptions &_opt, string _seq);
 vector<uint> getAllInterfacePositions(BBOptions &_opt, vector<int> &_rotamerSamplingPerPosition);
 vector<uint> getInterfacePositions(BBOptions &_opt, vector<int> &_rotamerSamplingPerPosition);
@@ -67,7 +66,7 @@ void localBackboneRepack(BBOptions &_opt, System &_sys, double _savedXShift, Sel
 void monteCarloRepack(BBOptions &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, 
  System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _prevBestEnergy,
- map<string,double> _monomerEnergyByTerm, double _monomerEnergy, uint _rep, ofstream &_out);
+ map<string,double> _monomerEnergyByTerm, double _monomerEnergy, ofstream &_out);
 void checkOptionErrors(BBOptions &_opt);	
 
 /***********************************
@@ -178,10 +177,6 @@ int main(int argc, char *argv[]){
 	cout << "axialRotation: " << opt.axialRotation << endl;
 	cout << "zShift:        " << opt.zShift << endl;
 
-	//String for the alternateIds at the interface
-	string alternateIds = getAlternateIdString(opt.ids);
-	cout << "Amino acids for design: LEU " << alternateIds << endl;
-	
 	/******************************************************************************
 	 *       === IDENTIFY INTERFACIAL POSITIONS AND GET ROTAMER ASSIGNMENTS ===
 	 ******************************************************************************/
@@ -291,11 +286,11 @@ int main(int argc, char *argv[]){
 void localBackboneRepack(BBOptions &_opt, System &_sys, double _savedXShift, SelfPairManager &_spm,
  System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA, AtomPointerVector &_apvChainB,
  Transforms &_trans, RandomNumberGenerator &_RNG, map<string,double> _monomerEnergyByTerm, double _monomerEnergy, ofstream &_out){
-	for (int i=0; i < _opt.numRepacks; i++){
+	//for (int i=0; i < _opt.numRepacks; i++){
 		if (_opt.verbose){
-			cout << "===============================================" << endl;
-			cout << "Performing Local Monte Carlo Backbone Repack " << i << endl;
-			cout << "===============================================" << endl;
+			cout << "==============================================" << endl;
+			cout << " Performing Local Monte Carlo Backbone Repack " << endl;
+			cout << "==============================================" << endl;
 		}
 		// set the system to the original xShift state
 		_sys.applySavedCoor("savedBestState");
@@ -308,21 +303,21 @@ void localBackboneRepack(BBOptions &_opt, System &_sys, double _savedXShift, Sel
 
 		// do backbone geometry repacks
 		monteCarloRepack(_opt, _sys, _savedXShift, _spm, _helicalAxis, _axisA, _axisB, _apvChainA, _apvChainB, _trans, _RNG, prevBestEnergy, 
-		 _monomerEnergyByTerm, _monomerEnergy, i, _out);
+		 _monomerEnergyByTerm, _monomerEnergy, _out);
     
  	    //outputs a pdb file for the structure 
 		// Initialize PDBWriter
 		PDBWriter writer;
-		writer.open(_opt.outputDir + "/backboneOptimized_" + to_string(i) + ".pdb");
+		writer.open(_opt.outputDir + "/backboneOptimized.pdb");
 		writer.write(_sys.getAtomPointers(), true, false, true);
 		writer.close();
-	}
+	//}
 }
 
 void monteCarloRepack(BBOptions &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, 
  System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _prevBestEnergy,
- map<string,double> _monomerEnergyByTerm, double _monomerEnergy, uint _rep, ofstream &_out){
+ map<string,double> _monomerEnergyByTerm, double _monomerEnergy, ofstream &_out){
 	// Local Backbone Monte Carlo Repacks Time setup	
 	time_t startTimeMC, endTimeMC;
 	double diffTimeMC;
@@ -344,11 +339,14 @@ void monteCarloRepack(BBOptions &_opt, System &_sys, double &_savedXShift, SelfP
 	unsigned int counter = 0;
 	double currentEnergy = _prevBestEnergy;
 	double startDimer = _prevBestEnergy;
-
+	
 	PDBWriter writer;
 	// loop through the MC cycles for backbone repacks
 	while(!MCMngr.getComplete()) {
-		
+		// R value for sigmoid function	
+		double R = 1/(1+exp(12/MCMngr.getTotalCycles() * (MCMngr.getCurrentCycle()-MCMngr.getTotalCycles()/2)));
+		double startTemp = MCMngr.getCurrentT();
+
 		_sys.applySavedCoor("savedRepackState");
 		_helicalAxis.applySavedCoor("BestRepack");
 		
@@ -409,7 +407,21 @@ void monteCarloRepack(BBOptions &_opt, System &_sys, double &_savedXShift, SelfP
 			axialRotation = axialRotation + deltaAxialRotation;
 			zShift = zShift + deltaZShift;
 			MCOBest = MCOFinal;
-		
+
+			// if accept, decrease the value of the moves by the sigmoid function
+			double endTemp = MCMngr.getCurrentT();
+			//double beta = 1.0 / (1.0 + exp(6.0)); // R(endT)
+			//double gamma = 1.0 / (1.0 + exp(-6.0)) - beta; // R(startT) - R(endT)
+			//double decreaseMultiplier = ((startTemp-endTemp)/(gamma) * (R * MCMngr.getCurrentCycle() - beta) + endTemp)/startTemp;
+			//cout << "Start Temp: " << startTemp << " End Temp: " << endTemp << " R: " << R << " beta: " << beta << " gamma: " << gamma << endl;
+			double decreaseMultiplier = endTemp/startTemp;
+			_opt.deltaAx *= decreaseMultiplier;
+			_opt.deltaX *= decreaseMultiplier;
+			_opt.deltaZ *= decreaseMultiplier;
+			_opt.deltaCross *= decreaseMultiplier;
+			//cout << decreaseMultiplier << endl; // although this rounds when I print, the value still holds when I multiply, so should be good here
+			//cout << _opt.deltaAx << " " << _opt.deltaX << " " << _opt.deltaZ << " " << _opt.deltaCross << endl;
+			
 			if (_opt.verbose){
 				cout << "MCAccept " << counter <<  " xShift: " << xShift << " crossingAngle: " << crossingAngle << " axialRotation: " << axialRotation << " zShift: " << zShift << " energy: " << currentEnergy-_monomerEnergy << endl;
 			}
@@ -441,11 +453,11 @@ void monteCarloRepack(BBOptions &_opt, System &_sys, double &_savedXShift, SelfP
 	double dimerSasa = sasa.getTotalSasa();
 
 	// Print out info to the summary csv file
-	_out << to_string(_rep) << ',' << _opt.sequence << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',';
+	_out << _opt.sequence << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',';
 	_out << dimerDiff << ',' << dimerSasa << ',' << vdw << ',' << monomerVdw << ',' << hbond << ',' << monomerHbond << ',' << imm1 << ',' << monomerImm1 << ',';
 	_out << _opt.xShift << ',' << xShift << ',' << _opt.crossingAngle << ',' << crossingAngle << ',';
 	_out << _opt.axialRotation << ',' << axialRotation << ',' << _opt.zShift << ',' << zShift << endl;
-	cout << to_string(_rep) << ',' << _opt.sequence << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',';
+	cout << ',' << _opt.sequence << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',';
 	cout << dimerDiff << ',' << dimerSasa << ',' << vdw << ',' << monomerVdw << ',' << hbond << ',' << monomerHbond << ',' << imm1 << ',' << monomerImm1 << ',';
 	cout << _opt.xShift << ',' << xShift << ',' << _opt.crossingAngle << ',' << crossingAngle << ',';
 	cout << _opt.axialRotation << ',' << axialRotation << ',' << _opt.zShift << ',' << zShift << endl;
@@ -545,6 +557,10 @@ void prepareSystem(BBOptions &_opt, System &_sys, System &_startGeom, string &_p
 	Eset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
 	Eset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
 	Eset->setWeight("CHARMM_IMM1", _opt.weight_solv);
+	if (_opt.useElec == true){
+		Eset->setTermActive("CHARMM_ELEC", true);
+		Eset->setWeight("CHARMM_ELEC", _opt.weight_elec);
+	}
 
 	/******************************************************************************
 	 *                === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
@@ -693,7 +709,6 @@ void defineInterfaceAndRotamerSampling(BBOptions &_opt, System &_startGeom, Poly
 	defineRotamerLevels(sys, _opt, resiBurial, _interfacePositions, variablePositionString, rotamerLevels);
 	backboneSeq = generateBackboneSequence("V", _opt.backboneLength, _opt.useAlaAtCTerminus);
 
-	//string polySeq = generateMultiIDPolymerSequence(backboneSeq, _opt.thread, _opt.ids, _interfacePositions);
 	int numberOfRotamerLevels = _opt.sasaRepackLevel.size();
 	int highestRotamerLevel = numberOfRotamerLevels-1;
 
@@ -734,54 +749,6 @@ void defineInterfaceAndRotamerSampling(BBOptions &_opt, System &_startGeom, Poly
 	//	cout << _interfacePositions[i] << ",";
 	//}
 	//cout << endl;
-}
-
-// calculate the SASA burial for each residue
-std::vector<pair <int, double> > calculateResidueBurial (System &_sys) {
-	/*
-	  SASA reference:
-	  Protein Engineering vol.15 no.8 pp.659–667, 2002
-	  Quantifying the accessible surface area of protein residues in their local environment
-	  Uttamkumar Samanta Ranjit P.Bahadur and  Pinak Chakrabarti
-	*/
-	map<string,double> refSasa;
-	refSasa["G"] = 83.91;
-	refSasa["A"] = 116.40;
-	refSasa["S"] = 125.68;
-	refSasa["C"] = 141.48;
-	refSasa["P"] = 144.80;
-	refSasa["T"] = 148.06;
-	refSasa["D"] = 155.37;
-	refSasa["V"] = 162.24;
-	refSasa["N"] = 168.87;
-	refSasa["E"] = 187.16;
-	refSasa["Q"] = 189.17;
-	refSasa["I"] = 189.95;
-	refSasa["L"] = 197.99;
-	refSasa["H"] = 198.51;
-	refSasa["K"] = 207.49;
-	refSasa["M"] = 210.55;
-	refSasa["F"] = 223.29;
-	refSasa["Y"] = 238.30;
-	refSasa["R"] = 249.26;
-	refSasa["W"] = 265.42;
-
-	std::vector<pair <int, double> > residueBurial;
-	SasaCalculator b(_sys.getAtomPointers());
-	//b.setProbeRadius(3.0);
-	b.calcSasa();
-	for (uint i = 0; i < _sys.positionSize()/2; i++) {//Changed this to account for linked positions in the dimer; gives each AA same number of rotamers as correspnding chain
-		string posIdA = _sys.getPosition(i).getPositionId();
-		//string posIdB = _sys.getPosition(i+_sys.positionSize()/2).getPositionId();
-		string oneLetter = MslTools::getOneLetterCode(_sys.getPosition(i).getResidueName());
-		double resiSasa = b.getResidueSasa(posIdA);
-		double burial = resiSasa / refSasa[oneLetter];
-		residueBurial.push_back(pair<int,double>(i, burial));
-		//residueBurial.push_back(pair<string,double>(posIdB, burial));
-		//cout << posId << "\t" << resiSasa << "\t" << burial << endl;
-	}
-
-	return residueBurial;
 }
 
 //Calculate Residue Burial and output a PDB that highlights the interface
@@ -887,18 +854,12 @@ vector<uint> getInterfacePositions(BBOptions &_opt, vector<int> &_rotamerSamplin
 void localXShiftDocking(System &_sys, BBOptions &_opt, double &_bestEnergy, double _monomerEnergy, 
  SelfPairManager &_spm, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB,
  AtomPointerVector &_apvChainA, AtomPointerVector &_apvChainB, Transforms &_trans, double &_savedXShift) {
-	// xShift changes
-	double deltaXShift = -0.1;
-	// xShift to stop at
-	double xShiftEnd = 6.5;
-	// current xShift
-	double xShift = _opt.xShift;
-	// previous energy to compare to
-	double previousEnergy = _monomerEnergy;
-	// Global lowest energy found (if above monomer we won't save anyways)
-	double globalLowestE = _monomerEnergy;
-	// current energy
-	double currentEnergy = _bestEnergy;
+	double deltaXShift = -0.1; // xShift changes
+	double xShiftEnd = 6.5; // xShift to stop at
+	double xShift = _opt.xShift; // current xShift
+	double previousEnergy = _monomerEnergy; // previous energy to compare to
+	double globalLowestE = _monomerEnergy; // Global lowest energy found (if above monomer we won't save anyways)
+	double currentEnergy = _bestEnergy; // current energy
 	// while loop for x-shifts	
 	while (xShift >= xShiftEnd) {
 		// add the xShift change to the current xShift

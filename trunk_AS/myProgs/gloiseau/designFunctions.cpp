@@ -2081,12 +2081,12 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningMessages += "weight_seqEntropy not specified, default 1.0\n";
 		opt.weight_seqEntropy = 1.0;
 	}
-	//opt.weight_elec = OP.getDouble("weight_elec");
-	//if (OP.fail()) {
-	//	opt.warningFlag = true;
-	//	opt.warningMessages += "weight_elec not specified, default 1.0\n";
-	//	opt.weight_elec = 1.0;
-	//}
+	opt.weight_elec = OP.getDouble("weight_elec");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_elec not specified, default 1.0\n";
+		opt.weight_elec = 1.0;
+	}
 
 	//rotlevel
 	opt.SL = OP.getString("SL");
@@ -2230,8 +2230,8 @@ Options parseOptions(int _argc, char * _argv[]){
 
 	opt.pdbOutputDir = OP.getString("pdbOutputDir");
 	if (OP.fail()) {
-		opt.errorMessages += "Unable to determine pdbOutputDir";
-		opt.errorFlag = true;
+		opt.warningMessages += "Unable to determine pdbOutputDir, default to current directory\n";
+		opt.warningFlag = true;
 	}
 
 	opt.Ids = OP.getStringVector("Ids");

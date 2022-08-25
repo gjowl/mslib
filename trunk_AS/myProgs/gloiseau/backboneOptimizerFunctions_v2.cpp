@@ -35,39 +35,6 @@ void setupOutputDirectory(BBOptions &_opt){
 /***********************************
  *functions from geomRepack
  ***********************************/
-void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOptions &_opt){
-	//Repack side chains based on sasa scores
-	for (uint i = 0; i < _opt.rotamerSamplingVector.size()/2; i++) {
-		Position &posA = _sys.getPosition(i);
-		Position &posB = _sys.getPosition(i+_opt.sequence.length());
-		if (posA.identitySize() > 1){
-			for (uint j=0; j < posA.getNumberOfIdentities(); j++){
-				posA.setActiveIdentity(j);
-				posB.setActiveIdentity(j);
-				string posRot = _opt.sasaRepackLevel[_opt.rotamerSamplingVector[i]];
-				if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
-					if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) { 
-						cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
-					}
-					if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) { 
-						cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
-					}
-				}
-			}
-		} else {
-			string posRot = _opt.sasaRepackLevel[_opt.rotamerSamplingVector[i]];
-			if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
-				if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) { 
-					cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
-				}
-				if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) { 
-					cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
-				}
-			}
-		}
-	}
-}
-
 void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOptions &_opt, vector<int> &_rotamerSampling){
 	//Repack side chains based on sasa scores
 	for (uint i = 0; i < _rotamerSampling.size()/2; i++) {
@@ -486,6 +453,7 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 	opt.allowed.push_back("weight_vdw");
 	opt.allowed.push_back("weight_hbond");
 	opt.allowed.push_back("weight_solv");
+	opt.allowed.push_back("weight_elec");
 	opt.allowed.push_back("verbose");
 
 	//Input Files
@@ -500,8 +468,6 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 
 	//
 	opt.allowed.push_back("sequence");
-	opt.allowed.push_back("rotamerSamplingString");
-	opt.allowed.push_back("rotamerSamplingVector");
 	opt.allowed.push_back("sasaRepackLevel");
 	opt.allowed.push_back("seed");
 
@@ -533,7 +499,6 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 	opt.allowed.push_back("useElec");
 	opt.allowed.push_back("backboneFile");
 	opt.allowed.push_back("helicalAxis");
-	opt.allowed.push_back("ids");
 	opt.allowed.push_back("useAlaAtCTerminus");
 
 	//Begin Parsing through the options
@@ -700,6 +665,12 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 		opt.warningMessages += "weight_solv not specified, default 1.0\n";
 		opt.weight_solv = 1.0;
 	}
+	opt.weight_elec = OP.getDouble("weight_elec");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_elec not specified, default 1.0\n";
+		opt.weight_elec = 1.0;
+	}
 
 	//Shift Size
 	opt.deltaX = OP.getDouble("deltaX");
@@ -793,8 +764,8 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 
 	opt.outputDir = OP.getString("outputDir");
 	if (OP.fail()) {
-		opt.errorMessages += "Unable to determine outputDir";
-		opt.errorFlag = true;
+		opt.warningMessages += "Unable to determine outputDir, using current directory\n";
+		opt.warningFlag = true;
 	}
 
 	// Monomer Options
@@ -840,11 +811,6 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 		opt.errorMessages += "helicalAxis not specified\n";
 		opt.errorFlag = true;
 	}
-	opt.ids = OP.getStringVector("ids");
-	if (OP.fail()) {
-		opt.errorMessages += "Unable to identify alternate AA identities, make sure they are space separated\n";
-		opt.errorFlag = true;
-	}
 	opt.useAlaAtCTerminus = OP.getBool("useAlaAtCTerminus");
 	if (OP.fail()) {
 		opt.warningMessages += "useAlaAtCTerminus not specified using true\n";
@@ -856,12 +822,6 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 		opt.warningMessages += "backboneLength not specified using 21\n";
 		opt.warningFlag = true;
 		opt.backboneLength = 21;
-	}
-	opt.numRepacks = OP.getInt("numRepacks");
-	if (OP.fail()) {
-		opt.warningMessages += "Number of backbone repacks not specified, default to 5\n";
-		opt.warningFlag = true;
-		opt.numRepacks = 5;
 	}
 	opt.rerunConf = OP.getConfFile();
 	return opt;

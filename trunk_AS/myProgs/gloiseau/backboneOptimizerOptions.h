@@ -35,9 +35,6 @@ using namespace std;
 
 	// Design parameters
 	string sequence;
-	string rotamerSamplingString;
-	vector<uint> state;
-	vector<int> rotamerSamplingVector;
 
 	// load rotamers from SASA values (from sgfc)
 	bool keepOriginalRotamer;
@@ -54,6 +51,7 @@ using namespace std;
 	double weight_vdw;
 	double weight_hbond;
 	double weight_solv;
+	double weight_elec;
 	
 	// input monomerEnergy
 	double monomer;
@@ -78,9 +76,7 @@ using namespace std;
 	bool useAlaAtCTerminus;
 	string backboneFile;
 	string helicalAxis;
-	vector<string> ids;
 	int backboneLength;
-	int numRepacks;
 
 	/***** MANAGEMENT VARIABLES ******/
 	string pwd; // the present working directory obtained with a getenv

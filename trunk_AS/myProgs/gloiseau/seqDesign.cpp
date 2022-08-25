@@ -321,6 +321,9 @@ int main(int argc, char *argv[]){
 			sequenceVectorMap, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
 		localBackboneRepack(opt, sys, bestSequence, i, opt.xShift, helicalAxis, axisA, axisB, rotamerSamplingPerPosition, trans, RNG, sout);
 	}
+	// TODO: make a decision; should I try to calculate the energies for every sequence on the final backbone? Or should I just
+	// say what the geometry is?
+	// I think first I need to look at the geometries, the pds, etc. to make sure it looks reasonable
 	/******************************************************************************
 	 *            === CALCULATE MONOMER ENERGIES OF EACH SEQUENCE ===
 	 ******************************************************************************/
@@ -595,7 +598,7 @@ void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSeque
 
 	if (_opt.useElec == true){
 		Eset->setTermActive("CHARMM_ELEC", true);
-		//Eset->setWeight("CHARMM_ELEC", _opt.weight_elec);
+		Eset->setWeight("CHARMM_ELEC", _opt.weight_elec);
 	}
 
 	/******************************************************************************
@@ -1210,9 +1213,9 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ui
 	// do backbone geometry repacks
 	//for (int i=0; i < _opt.numRepacks; i++){
 		if (_opt.verbose){
-			cout << "===============================================" << endl;
-			cout << "Performing Local Monte Carlo Backbone Repack   " << endl;
-			cout << "===============================================" << endl;
+			cout << "==============================================" << endl;
+			cout << " Performing Local Monte Carlo Backbone Repack " << endl;
+			cout << "==============================================" << endl;
 		}
 		//monteCarloRepack(_opt, sys, _savedXShift, spm, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, prevBestEnergy, 
 		//i, _out);
@@ -1249,8 +1252,8 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 	double zShift = _opt.zShift;
 
 	// Monte Carlo Repack Manager Setup
-	//MonteCarloManager MCMngr(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
-	MonteCarloManager MCMngr(_opt.backboneMCStartTemp, _opt.backboneMCEndTemp, _opt.backboneMCCycles, _opt.backboneMCCurve, _opt.backboneMCMaxRejects, _opt.backboneConvergedSteps, _opt.backboneConvergedE);
+	MonteCarloManager MCMngr(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
+	//MonteCarloManager MCMngr(_opt.backboneMCStartTemp, _opt.backboneMCEndTemp, _opt.backboneMCCycles, _opt.backboneMCCurve, _opt.backboneMCMaxRejects, _opt.backboneConvergedSteps, _opt.backboneConvergedE);
 	MCMngr.setEner(_prevBestEnergy);
 
 	vector<uint> startStateVec = _spm.getMinStates()[0];
@@ -1263,6 +1266,8 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 	PDBWriter writer;
 	// loop through the MC cycles for backbone repacks
 	while(!MCMngr.getComplete()) {
+		// get the current temperature of the MC
+		double startTemp = MCMngr.getCurrentT();
 		
 		_sys.applySavedCoor("savedRepackState");
 		_helicalAxis.applySavedCoor("BestRepack");
@@ -1324,6 +1329,16 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 			axialRotation = axialRotation + deltaAxialRotation;
 			zShift = zShift + deltaZShift;
 			MCOBest = MCOFinal;
+			
+			// if accept, decrease the value of the moves by the sigmoid function
+			double endTemp = MCMngr.getCurrentT();
+			double decreaseMultiplier = endTemp/startTemp;
+			_opt.deltaAx *= decreaseMultiplier;
+			_opt.deltaX *= decreaseMultiplier;
+			_opt.deltaZ *= decreaseMultiplier;
+			_opt.deltaCross *= decreaseMultiplier;
+			//cout << decreaseMultiplier << endl; // although this rounds when I print, the value still holds when I multiply, so should be good here
+			//cout << _opt.deltaAx << " " << _opt.deltaX << " " << _opt.deltaZ << " " << _opt.deltaCross << endl;
 		
 			if (_opt.verbose){
 				cout << "MCAccept " << counter <<  " xShift: " << xShift << " crossingAngle: " << crossingAngle << " axialRotation: " << axialRotation << " zShift: " << zShift << " energy: " << currentEnergy << endl;
