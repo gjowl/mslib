@@ -38,7 +38,6 @@ using namespace std;
 
 	// load rotamers from SASA values (from sgfc)
 	bool keepOriginalRotamer;
-	vector<string> sasaRepackLevel;
 
 	// Monte Carlo Parameters
 	int MCCycles;
@@ -77,6 +76,8 @@ using namespace std;
 	string backboneFile;
 	string helicalAxis;
 	int backboneLength;
+	vector<string> deleteTerminalInteractions;
+	string uniprotName;
 
 	/***** MANAGEMENT VARIABLES ******/
 	string pwd; // the present working directory obtained with a getenv

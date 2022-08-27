@@ -264,6 +264,7 @@ int main(int argc, char *argv[]){
 	System sys;
 	prepareSystem(opt, sys, startGeom, interfacePolySeq);
 	checkIfAtomsAreBuilt(sys, err); // check to verify that all atoms have coordinates
+	moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), helicalAxis.getAtomPointers(), trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
 
 	/******************************************************************************
 	 *                     === ADD IN BASELINE ENERGIES ===

@@ -1,0 +1,124 @@
+Monomer - VDW weight: 1 HB weight: 1 IMM1REF weight: 1 IMM1 weight: 1
+current Z: -5 Energy: -451.684
+current Z: -4 Energy: -458.736
+current Z: -3 Energy: -465.117
+current Z: -2 Energy: -469.967
+current Z: -1 Energy: -472.594
+current Z: 0 Energy: -472.495
+current Z: 1 Energy: -469.068
+current Z: 2 Energy: -462.265
+current Z: 3 Energy: -453.005
+current Z: 4 Energy: -442.49
+current Z: 5 Energy: -431.907
+current Z: 6 Energy: -422.611
+current tilt: 15 current rotation: 0 Energy: -486.274
+current tilt: 15 current rotation: 90 Energy: -464.116
+current tilt: 15 current rotation: 180 Energy: -438.165
+current tilt: 15 current rotation: 270 Energy: -467.099
+current tilt: 30 current rotation: 0 Energy: -488.121
+current tilt: 30 current rotation: 90 Energy: -445.566
+current tilt: 30 current rotation: 180 Energy: -381.322
+current tilt: 30 current rotation: 270 Energy: -446.346
+current tilt: 45 current rotation: 0 Energy: -478.686
+current tilt: 45 current rotation: 90 Energy: -414.947
+current tilt: 45 current rotation: 180 Energy: -373.06
+current tilt: 45 current rotation: 270 Energy: -412.62
+MCAccept   axial Tilt: 28.861 zShift: -1.000 axialRot: 0.000 energy: -488.306
+MCAccept   axial Tilt: 28.834 zShift: -1.000 axialRot: 0.000 energy: -488.310
+MCAccept   axial Tilt: 28.834 zShift: -1.000 axialRot: 1.189 energy: -488.344
+MCAccept   axial Tilt: 28.834 zShift: -1.000 axialRot: 1.519 energy: -488.351
+MCAccept   axial Tilt: 28.834 zShift: -1.000 axialRot: 1.448 energy: -488.350
+MCAccept   axial Tilt: 28.834 zShift: -0.892 axialRot: 1.448 energy: -488.409
+MCAccept   axial Tilt: 28.834 zShift: -0.729 axialRot: 1.448 energy: -488.417
+MCAccept   axial Tilt: 28.834 zShift: -0.729 axialRot: 5.465 energy: -488.516
+MCAccept   axial Tilt: 28.375 zShift: -0.729 axialRot: 5.465 energy: -488.573
+MCAccept   axial Tilt: 28.375 zShift: -0.729 axialRot: 5.176 energy: -488.572
+MCAccept   axial Tilt: 28.375 zShift: -0.682 axialRot: 5.176 energy: -488.575
+MCAccept   axial Tilt: 28.375 zShift: -0.682 axialRot: 5.118 energy: -488.574
+MCAccept   axial Tilt: 28.361 zShift: -0.682 axialRot: 5.118 energy: -488.576
+MCAccept   axial Tilt: 28.361 zShift: -0.682 axialRot: 5.944 energy: -488.580
+MCAccept   axial Tilt: 26.752 zShift: -0.682 axialRot: 5.944 energy: -488.700
+MCAccept   axial Tilt: 26.841 zShift: -0.682 axialRot: 5.944 energy: -488.696
+MCAccept   axial Tilt: 26.841 zShift: -0.658 axialRot: 5.944 energy: -488.697
+MCAccept   axial Tilt: 26.841 zShift: -0.658 axialRot: 5.982 energy: -488.706
+MCAccept   axial Tilt: 26.374 zShift: -0.658 axialRot: 5.982 energy: -488.725
+MCAccept   axial Tilt: 25.731 zShift: -0.658 axialRot: 5.982 energy: -488.736
+MCAccept   axial Tilt: 25.191 zShift: -0.658 axialRot: 5.982 energy: -488.733
+MCAccept   axial Tilt: 25.191 zShift: -0.649 axialRot: 5.982 energy: -488.733
+MCAccept   axial Tilt: 25.191 zShift: -0.649 axialRot: 6.993 energy: -488.729
+MCAccept   axial Tilt: 25.191 zShift: -0.605 axialRot: 6.993 energy: -488.727
+MCAccept   axial Tilt: 25.191 zShift: -0.605 axialRot: 6.358 energy: -488.729
+MCAccept   axial Tilt: 25.736 zShift: -0.605 axialRot: 6.358 energy: -488.732
+MCAccept   axial Tilt: 25.736 zShift: -0.601 axialRot: 6.358 energy: -488.731
+MCAccept   axial Tilt: 25.736 zShift: -0.681 axialRot: 6.358 energy: -488.735
+MCAccept   axial Tilt: 25.736 zShift: -0.681 axialRot: 5.263 energy: -488.734
+MCAccept   axial Tilt: 25.736 zShift: -0.718 axialRot: 5.263 energy: -488.731
+MCAccept   axial Tilt: 25.360 zShift: -0.718 axialRot: 5.263 energy: -488.731
+MCAccept   axial Tilt: 25.360 zShift: -0.718 axialRot: 5.663 energy: -488.731
+MCAccept   axial Tilt: 25.360 zShift: -0.674 axialRot: 5.663 energy: -488.735
+MCAccept   axial Tilt: 25.360 zShift: -0.671 axialRot: 5.663 energy: -488.735
+MCAccept   axial Tilt: 25.544 zShift: -0.671 axialRot: 5.663 energy: -488.736
+MCAccept   axial Tilt: 25.544 zShift: -0.671 axialRot: 6.296 energy: -488.736
+MCAccept   axial Tilt: 25.544 zShift: -0.671 axialRot: 6.568 energy: -488.735
+MCAccept   axial Tilt: 25.534 zShift: -0.671 axialRot: 6.568 energy: -488.735
+MCAccept   axial Tilt: 25.973 zShift: -0.671 axialRot: 6.568 energy: -488.732
+MCAccept   axial Tilt: 25.973 zShift: -0.658 axialRot: 6.568 energy: -488.733
+MCAccept   axial Tilt: 25.973 zShift: -0.658 axialRot: 6.597 energy: -488.733
+MCAccept   axial Tilt: 26.063 zShift: -0.658 axialRot: 6.597 energy: -488.731
+MCAccept   axial Tilt: 26.063 zShift: -0.658 axialRot: 5.813 energy: -488.732
+MCAccept   axial Tilt: 26.063 zShift: -0.672 axialRot: 5.813 energy: -488.732
+MCAccept   axial Tilt: 26.252 zShift: -0.672 axialRot: 5.813 energy: -488.728
+MCAccept   axial Tilt: 26.252 zShift: -0.672 axialRot: 6.118 energy: -488.728
+MCAccept   axial Tilt: 25.363 zShift: -0.672 axialRot: 6.118 energy: -488.735
+MCAccept   axial Tilt: 25.384 zShift: -0.672 axialRot: 6.118 energy: -488.735
+MCAccept   axial Tilt: 25.384 zShift: -0.652 axialRot: 6.118 energy: -488.736
+MCAccept   axial Tilt: 25.384 zShift: -0.652 axialRot: 6.009 energy: -488.736
+MCAccept   axial Tilt: 25.384 zShift: -0.660 axialRot: 6.009 energy: -488.736
+MCAccept   axial Tilt: 25.713 zShift: -0.660 axialRot: 6.009 energy: -488.737
+MCAccept   axial Tilt: 25.713 zShift: -0.669 axialRot: 6.009 energy: -488.736
+MCAccept   axial Tilt: 25.713 zShift: -0.661 axialRot: 6.009 energy: -488.737
+MCAccept   axial Tilt: 25.713 zShift: -0.663 axialRot: 6.009 energy: -488.737
+MCAccept   axial Tilt: 25.713 zShift: -0.663 axialRot: 6.208 energy: -488.736
+MCAccept   axial Tilt: 25.409 zShift: -0.663 axialRot: 6.208 energy: -488.736
+MCAccept   axial Tilt: 25.512 zShift: -0.663 axialRot: 6.208 energy: -488.736
+MCAccept   axial Tilt: 25.512 zShift: -0.664 axialRot: 6.208 energy: -488.736
+MCAccept   axial Tilt: 25.512 zShift: -0.664 axialRot: 5.913 energy: -488.737
+MCAccept   axial Tilt: 25.211 zShift: -0.664 axialRot: 5.913 energy: -488.734
+MCAccept   axial Tilt: 25.211 zShift: -0.664 axialRot: 6.454 energy: -488.733
+MCAccept   axial Tilt: 25.211 zShift: -0.640 axialRot: 6.454 energy: -488.733
+MCAccept   axial Tilt: 25.211 zShift: -0.632 axialRot: 6.454 energy: -488.732
+MCAccept   axial Tilt: 25.211 zShift: -0.650 axialRot: 6.454 energy: -488.733
+MCAccept   axial Tilt: 25.211 zShift: -0.688 axialRot: 6.454 energy: -488.730
+MCAccept   axial Tilt: 25.660 zShift: -0.688 axialRot: 6.454 energy: -488.733
+MCAccept   axial Tilt: 25.666 zShift: -0.688 axialRot: 6.454 energy: -488.733
+MCAccept   axial Tilt: 25.666 zShift: -0.644 axialRot: 6.454 energy: -488.736
+MCAccept   axial Tilt: 25.666 zShift: -0.644 axialRot: 6.439 energy: -488.736
+MCAccept   axial Tilt: 25.561 zShift: -0.644 axialRot: 6.439 energy: -488.736
+MCAccept   axial Tilt: 25.561 zShift: -0.644 axialRot: 5.921 energy: -488.736
+MCAccept   axial Tilt: 25.561 zShift: -0.714 axialRot: 5.921 energy: -488.732
+MCAccept   axial Tilt: 25.561 zShift: -0.714 axialRot: 6.216 energy: -488.730
+MCAccept   axial Tilt: 25.561 zShift: -0.624 axialRot: 6.216 energy: -488.735
+MCAccept   axial Tilt: 25.561 zShift: -0.623 axialRot: 6.216 energy: -488.735
+MCAccept   axial Tilt: 25.561 zShift: -0.625 axialRot: 6.216 energy: -488.735
+MCAccept   axial Tilt: 25.561 zShift: -0.657 axialRot: 6.216 energy: -488.737
+MCAccept   axial Tilt: 25.561 zShift: -0.657 axialRot: 5.538 energy: -488.735
+MCAccept   axial Tilt: 25.561 zShift: -0.657 axialRot: 5.802 energy: -488.736
+MCAccept   axial Tilt: 25.561 zShift: -0.657 axialRot: 6.596 energy: -488.735
+MCAccept   axial Tilt: 25.561 zShift: -0.657 axialRot: 5.495 energy: -488.735
+
+Total Monomer Time: 296 seconds
+================  ======================  ===============
+Interaction Type  Energy                  Interactions   
+================  ======================  ===============
+CHARMM_IMM1                    18.726596          32396
+CHARMM_IMM1REF               -203.526275            172
+CHARMM_VDW                    -23.313134          73972
+SCWRL4_HBOND                  -36.254810            759
+================  ======================  ===============
+Total                        -244.367622         107299
+================  ======================  ===============
+
+CHARMM_IMM1 37
+CHARMM_IMM1REF -407
+CHARMM_VDW -47
+SCWRL4_HBOND -73

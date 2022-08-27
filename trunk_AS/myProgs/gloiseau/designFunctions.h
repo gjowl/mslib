@@ -153,7 +153,8 @@ void computeMonomerEnergyNoIMM1(Options& _opt, map<string,map<string,double>> &_
 // helper function for computeMonomerEnergies: calculates energy for monomer with solvation energy
 void computeMonomerEnergyIMM1(Options& _opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
 // delete terminal hydrogen bonds
-void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum);
+//void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum);
+void deleteTerminalBondInteractions(System &_sys, Options &_opt, int _firstResiNum, int _lastResiNum);
 // makes sure that atoms of the system are built; errors out if not
 void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
 //

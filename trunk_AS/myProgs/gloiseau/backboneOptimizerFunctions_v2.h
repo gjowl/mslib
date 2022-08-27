@@ -36,7 +36,7 @@ void setupOutputDirectory(BBOptions &_opt);
 void setupOutputDirectoryChtc(BBOptions &_opt);
 
 //
-void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum);
+void deleteTerminalInteractions(System &_sys, BBOptions &_opt, int _firstResiNum, int _lastResiNum);
 
 /***********************************
  *functions from geomRepack

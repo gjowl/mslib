@@ -207,28 +207,28 @@ void loadMonomerRotamers(System &_sys, SystemRotamerLoader &_sysRot){
 		}
 	}
 }
-void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
-	for (uint k=0; k<_sys.positionSize(); k++) {
-		Position &pos = _sys.getPosition(k);
-		if (pos.identitySize() > 1){
-			for (uint j=0; j < pos.getNumberOfIdentities(); j++){
-				pos.setActiveIdentity(j);
-				if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-					if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
-						cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
-					}
-				}
-				pos.setActiveIdentity(0);
-			}
-		} else {
-			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-				if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
-					cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
-				}
-			}
-		}
-	}
-}
+//void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
+//	for (uint k=0; k<_sys.positionSize(); k++) {
+//		Position &pos = _sys.getPosition(k);
+//		if (pos.identitySize() > 1){
+//			for (uint j=0; j < pos.getNumberOfIdentities(); j++){
+//				pos.setActiveIdentity(j);
+//				if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+//					if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
+//						cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+//					}
+//				}
+//				pos.setActiveIdentity(0);
+//			}
+//		} else {
+//			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+//				if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
+//					cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+//				}
+//			}
+//		}
+//	}
+//}
 
 //below function only loads rotamers onto the interfacial positions by interfacialPositions (01 where 0 = non-interfacial and 1 = interfacial)
 void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<int> _interface){

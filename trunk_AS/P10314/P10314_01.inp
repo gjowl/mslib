@@ -1,0 +1,31 @@
+bg_color white
+load P10314_01.pdb
+rotate X, 90, all, 0
+color green, chain B and element C
+color cyan, chain B and element C
+show cartoon
+select interfaceA, chain A and resi 4+7+8+11+12+14+15+16+18+19+23
+select interfaceB, chain B and resi 4+7+8+11+12+14+15+16+18+19+23
+show stick, interfaceA interfaceB
+distance hb000, ///B/12/HA, ///A/11/O
+color black, hb000
+distance hb001, ///B/15/1HA, ///A/12/O
+color black, hb001
+distance hb002, ///B/16/HA, ///A/15/O
+color black, hb002
+distance hb003, ///A/12/HA, ///B/11/O
+color black, hb003
+distance hb004, ///A/15/1HA, ///B/12/O
+color black, hb004
+distance hb005, ///A/16/HA, ///B/15/O
+color black, hb005
+zoom all, 3
+set label_color, black
+save P10314_01.pse
+hide labels
+set ray_opaque_background, false
+ray 400,600
+png P10314_01_view1.png
+rotate Y, 90, all, 0
+ray 500,600
+png P10314_01_view2.png

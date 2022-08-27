@@ -10,12 +10,38 @@ using namespace MSL;
 static SysEnv SYSENV;
 
 
+void deleteTerminalInteractions(System &_sys, BBOptions &_opt, int _firstResiNum, int _lastResiNum){
+	EnergySet* pESet = _sys.getEnergySet();
+	int chainSize = _sys.chainSize();
+	AtomPointerVector atoms;
+	for(int i = 0; i < chainSize; i++) {
+		Chain & thisChain = _sys.getChain(i);
+		vector<Position*>& positions = thisChain.getPositions();
+		for(int i = 0; i < 3; i++) {
+			// rid of hbonds from first 3 positions
+			if(_firstResiNum <= i) {
+				atoms += positions[i]->getAtomPointers();
+				cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
+			}
+			// rid of hbonds from last 3 positions
+			if(_lastResiNum > i) {
+				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
+				cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
+			}
+		}
+	}
+	for (uint i=0; i<_opt.deleteTerminalInteractions.size(); i++){
+		pESet->deleteInteractionsWithAtoms(atoms,_opt.deleteTerminalInteractions[i]);
+	}
+}
 /***********************************
  *output file functions
  ***********************************/
 // for running on chtc
 void setupOutputDirectoryChtc(BBOptions &_opt){
-	_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.sequence;
+	//_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.sequence;
+	_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.uniprotName;
+	//_opt.outputDir = "/exports/home/gloiseau/mslib/trunk_AS/" + _opt.sequence + "_" + to_string(_opt.seed);
 	string cmd = "mkdir -p " + _opt.outputDir;
 	if (system(cmd.c_str())){
 		cout << "Unable to make directory" << endl;
@@ -35,46 +61,47 @@ void setupOutputDirectory(BBOptions &_opt){
 /***********************************
  *functions from geomRepack
  ***********************************/
-void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOptions &_opt, vector<int> &_rotamerSampling){
-	//Repack side chains based on sasa scores
-	for (uint i = 0; i < _rotamerSampling.size()/2; i++) {
-		Position &posA = _sys.getPosition(i);
-		Position &posB = _sys.getPosition(i+_opt.backboneLength);
-		if (posA.identitySize() > 1){
-			for (uint j=0; j < posA.getNumberOfIdentities(); j++){
-				posA.setActiveIdentity(j);
-				posB.setActiveIdentity(j);
-				string posRot = _opt.sasaRepackLevel[_rotamerSampling[i]];
-				if (_opt.verbose){
-					cout << posA.getPositionId() << ", " << posA.getResidueName() << ":" << posRot << endl;
-					cout << posB.getPositionId() << ", " << posB.getResidueName() << ":" << posRot << endl;
-				}
-				if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
-					if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) {
-						cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
-					}
-					if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) {
-						cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
-					}
-				}
-			}
-		} else {
-			string posRot = _opt.sasaRepackLevel[_rotamerSampling[i]];
-			if (_opt.verbose){
-				cout << posA.getPositionId() << ", " << posA.getResidueName() << ": " << posRot << endl;
-				cout << posB.getPositionId() << ", " << posB.getResidueName() << ": " << posRot << endl;
-			}
-			if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
-				if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) {
-					cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
-				}
-				if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) {
-					cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
-				}
-			}
-		}
-	}
-}
+//void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOptions &_opt, vector<int> &_rotamerSampling){
+//	//Repack side chains based on sasa scores
+//	for (uint i = 0; i < _rotamerSampling.size()/2; i++) {
+//		Position &posA = _sys.getPosition(i);
+//		//Position &posB = _sys.getPosition(i+_opt.backboneLength);
+//		Position &posB = _sys.getPosition(i+_opt.sequence.length());
+//		if (posA.identitySize() > 1){
+//			for (uint j=0; j < posA.getNumberOfIdentities(); j++){
+//				posA.setActiveIdentity(j);
+//				posB.setActiveIdentity(j);
+//				string posRot = _opt.sasaRepackLevel[_rotamerSampling[i]];
+//				if (_opt.verbose){
+//					cout << posA.getPositionId() << ", " << posA.getResidueName() << ":" << posRot << endl;
+//					cout << posB.getPositionId() << ", " << posB.getResidueName() << ":" << posRot << endl;
+//				}
+//				if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
+//					if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) {
+//						cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
+//					}
+//					if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) {
+//						cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
+//					}
+//				}
+//			}
+//		} else {
+//			string posRot = _opt.sasaRepackLevel[_rotamerSampling[i]];
+//			if (_opt.verbose){
+//				cout << posA.getPositionId() << ", " << posA.getResidueName() << ": " << posRot << endl;
+//				cout << posB.getPositionId() << ", " << posB.getResidueName() << ": " << posRot << endl;
+//			}
+//			if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
+//				if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) {
+//					cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
+//				}
+//				if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) {
+//					cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
+//				}
+//			}
+//		}
+//	}
+//}
 
 /***********************************
  *repack functions
@@ -119,7 +146,11 @@ END";
 	// Declare new system
 	System monoSys;
 	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile, _opt.solvFile);
-	CSBMono.setBuildTerm("CHARMM_ELEC", false);
+	if (_opt.useElec){
+		CSBMono.setBuildTerm("CHARMM_ELEC", true);
+	} else {
+		CSBMono.setBuildTerm("CHARMM_ELEC", false);
+	}
 	CSBMono.setBuildTerm("CHARMM_ANGL", false);
 	CSBMono.setBuildTerm("CHARMM_BOND", false);
 	CSBMono.setBuildTerm("CHARMM_DIHE", false);
@@ -142,7 +173,6 @@ END";
 	 ******************************************************************************/
 	EnergySet* monoEset = monoSys.getEnergySet();
 	monoEset->setAllTermsActive();
-	monoEset->setTermActive("CHARMM_ELEC", false);
 	monoEset->setTermActive("CHARMM_ANGL", false);
 	monoEset->setTermActive("CHARMM_BOND", false);
 	monoEset->setTermActive("CHARMM_DIHE", false);
@@ -151,7 +181,7 @@ END";
 
 	int firstPos = 0;
     int lastPos = monoSys.positionSize();
-	deleteTerminalHydrogenBondInteractions(monoSys, firstPos, lastPos);
+	deleteTerminalInteractions(monoSys,_opt, firstPos, lastPos);
 
 	/******************************************************************************
 	 *              === LOAD ROTAMERS FOR MONOMER & SET-UP SPM ===
@@ -175,7 +205,10 @@ END";
 	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
 	monoEset->setWeight("CHARMM_IMM1", _opt.weight_solv);
 	_mout << "Monomer - VDW weight: " << monoEset->getWeight("CHARMM_VDW") << " HB weight: " << monoEset->getWeight("SCWRL4_HBOND") << " IMM1REF weight: " << monoEset->getWeight("CHARMM_IMM1REF") << " IMM1 weight: " << monoEset->getWeight("CHARMM_IMM1") << endl;
-
+	if (_opt.useElec == true){
+		monoEset->setTermActive("CHARMM_ELEC", true);
+		monoEset->setWeight("CHARMM_ELEC", _opt.weight_elec);
+	}
 	monoSpm.setSystem(&monoSys);
 	monoSpm.updateWeights();
 
@@ -468,7 +501,6 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 
 	//
 	opt.allowed.push_back("sequence");
-	opt.allowed.push_back("sasaRepackLevel");
 	opt.allowed.push_back("seed");
 
 	//Geometry
@@ -500,6 +532,8 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 	opt.allowed.push_back("backboneFile");
 	opt.allowed.push_back("helicalAxis");
 	opt.allowed.push_back("useAlaAtCTerminus");
+	opt.allowed.push_back("deleteTerminalInteractions");
+	opt.allowed.push_back("uniprotName");
 
 	//Begin Parsing through the options
 	OptionParser OP;
@@ -640,12 +674,6 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 		opt.MCCurve = 3;
 	}
 	
-	//Load Rotamers using SASA values (from sgfc)
-	opt.sasaRepackLevel = OP.getMultiString("sasaRepackLevel");
-	if (OP.fail()) {
-		opt.warningMessages += "sasaRepacklevel not specified! Default to one level at SL90.00";
-		opt.sasaRepackLevel.push_back("SL90.00");
-	}
     //Weights
 	opt.weight_vdw = OP.getDouble("weight_vdw");
 	if (OP.fail()) {
@@ -677,25 +705,25 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 	if (OP.fail()) {
 		opt.warningMessages += "deltaX not specified using 0.5\n";
 		opt.warningFlag = true;
-		opt.deltaX = 0.5;
+		opt.deltaX = 0.1;
 	}
 	opt.deltaCross = OP.getDouble("deltaCross");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaCross not specified using 5.0\n";
 		opt.warningFlag = true;
-		opt.deltaCross = 5.0;
+		opt.deltaCross = 1.0;
 	}
 	opt.deltaAx = OP.getDouble("deltaAx");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaAx not specified using 4.0\n";
 		opt.warningFlag = true;
-		opt.deltaAx = 4.0;
+		opt.deltaAx = 1.0;
 	}
 	opt.deltaZ = OP.getDouble("deltaZ");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaZ not specified using 0.5\n";
 		opt.warningFlag = true;
-		opt.deltaZ = 0.5;
+		opt.deltaZ = 0.1;
 	}
     //Parameter files
 	opt.topFile = OP.getString("topFile");
@@ -822,6 +850,18 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 		opt.warningMessages += "backboneLength not specified using 21\n";
 		opt.warningFlag = true;
 		opt.backboneLength = 21;
+	}
+	opt.deleteTerminalInteractions = OP.getMultiString("deleteTerminalInteractions");
+	if (OP.fail()) {
+		opt.deleteTerminalInteractions.push_back("");
+		opt.warningMessages += "deleteTerminalInteractions not specified\n";
+		opt.warningFlag = true;
+	}
+	opt.uniprotName = OP.getString("uniprotName");
+	if (OP.fail()) {
+		opt.uniprotName = "PROTEIN_UNK";
+		opt.warningMessages += "uniprotName not specified using " + opt.uniprotName + "\n";
+		opt.warningFlag = true;
 	}
 	opt.rerunConf = OP.getConfFile();
 	return opt;

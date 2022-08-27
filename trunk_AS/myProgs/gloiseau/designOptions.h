@@ -146,6 +146,9 @@ struct Options{
 	double deltaCross;
 	double deltaX;
 
+
+	vector<string> deleteTerminalInteractions;
+
 	/***** MANAGEMENT VARIABLES ******/
 	string pwd; // the present working directory obtained with a getenv
 	string host; // the host name obtained with a getenv

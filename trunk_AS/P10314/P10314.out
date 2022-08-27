@@ -1,0 +1,12 @@
+uniprotName P10314
+uniprotAccession P10314
+sequence RASLLLVLLLAMLLGALLAALILI
+sequenceStart 1
+originalSeq RASLLLVLLLAMLLGALLAALILI
+modelledSeq RASLLLVLLLAMLLGALLAALILI
+prolineMask 000000000000000000000000
+resStart 1
+resEnd 24
+tmStart 4
+tmEnd 21
+CATMversion 0.0.24

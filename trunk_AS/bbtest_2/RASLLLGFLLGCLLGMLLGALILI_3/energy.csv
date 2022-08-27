@@ -1,0 +1,7 @@
+Sequence:           RASLLLGFLLGCLLGMLLGALILI
+Rotamers Levels:    123032003200210121033112
+Sequence, Energy, Dimer, Monomer, SASA, vdw, monoVdw, hbond, monoHbond, imm1, monoImm1, imm1Ref, monoImm1Ref, startXShift, finalXShift, startCrossingAngle, finalCrossingAngle, startAxialRot, finalAxialRot, startZShift, finalZShift
+RASLLLGFLLGCLLGMLLGALILI,-28.6987,-496.867,-468.168,4108.22,-85.0352,-37.9003,-69.4694,-57.181,57.8424,36.9895,-400.205,-410.078,7.454,6.41725,-31,-31.0421,-95,-97.1165,6.843,6.84477
+Monte Carlo repack complete. Time: 5120 seconds
+
+Total Time: 101 minutes

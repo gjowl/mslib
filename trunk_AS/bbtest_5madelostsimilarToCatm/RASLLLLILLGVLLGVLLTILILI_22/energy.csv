@@ -1,0 +1,27 @@
+Best: ================  ======================
+Interaction Type    Energy                
+================  ======================
+CHARMM_IMM1                    24.973840
+CHARMM_IMM1REF               -384.528099
+CHARMM_VDW                    -83.411348
+SCWRL4_HBOND                  -69.320549
+================  ======================
+Total                        -512.286156
+================  ======================
+
+Test: ================  ======================
+Interaction Type    Energy                
+================  ======================
+CHARMM_IMM1                    24.982112
+CHARMM_IMM1REF               -384.528099
+CHARMM_VDW                    -83.411343
+SCWRL4_HBOND                  -69.320549
+================  ======================
+Total                        -512.277879
+================  ======================
+
+Sequence, Energy, EnergyMinBound, Dimer, Monomer, SASA, vdw, monoVdw, hbond, monoHbond, imm1, monoImm1, imm1Ref, monoImm1Ref, startXShift, finalXShift, startCrossingAngle, finalCrossingAngle, startAxialRot, finalAxialRot, startZShift, finalZShift
+RASLLLLILLGVLLGVLLTILILI,-8.13002,-512.269,-512.278,-504.148,4208.33,-83.4113,-53.6947,-69.3205,-71.1329,24.9738,38.0444,-384.528,-417.372,7.326,6.53614,-50.942,-50.9389,-93.276,-93.1378,5.665,5.67052
+Monte Carlo repack complete. Time: 2055 seconds
+
+Total Time: 41 minutes

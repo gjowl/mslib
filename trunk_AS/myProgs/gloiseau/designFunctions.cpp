@@ -746,7 +746,7 @@ void computeMonomerEnergyNoIMM1(Options& _opt, map<string,map<string,double>> &_
 	 ******************************************************************************/
 	int firstPos = 0;
     int lastPos = monoSys.positionSize();
-    deleteTerminalHydrogenBondInteractions(monoSys,firstPos,lastPos);
+    deleteTerminalBondInteractions(monoSys,_opt,firstPos,lastPos);
 
 	/*****************************************************************************
 	 *                 === GREEDY TO OPTIMIZE ROTAMERS ===
@@ -847,7 +847,7 @@ void computeMonomerEnergyIMM1(Options& _opt, Transforms & _trans, map<string,map
 	 ******************************************************************************/
 	int firstPos = 0;
     int lastPos = monoSys.positionSize();
-    deleteTerminalHydrogenBondInteractions(monoSys,firstPos,lastPos);
+    deleteTerminalBondInteractions(monoSys,_opt,firstPos,lastPos);
 
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
@@ -1166,7 +1166,7 @@ void computeMonomerEnergies(Options &_opt, Transforms &_trans, map<string, map<s
 	_sout << "End monomer calculations: " << diffTimeMono << "s" << endl << endl;
 }
 
-void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum){
+void deleteTerminalBondInteractions(System &_sys, Options &_opt, int _firstResiNum, int _lastResiNum){
 	EnergySet* pESet = _sys.getEnergySet();
 	int chainSize = _sys.chainSize();
 	AtomPointerVector atoms;
@@ -1174,15 +1174,21 @@ void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int
 		Chain & thisChain = _sys.getChain(i);
 		vector<Position*>& positions = thisChain.getPositions();
 		for(int i = 0; i < 3; i++) {
-			if(_firstResiNum > i) {
+			// rid of hbonds from first 3 positions
+			if(_firstResiNum <= i) {
 				atoms += positions[i]->getAtomPointers();
+				cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
 			}
+			// rid of hbonds from last 3 positions
 			if(_lastResiNum > i) {
 				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
+				cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
 			}
 		}
 	}
-	pESet->deleteInteractionsWithAtoms(atoms,"SCWRL4_HBOND");
+	for (uint i=0; i<_opt.deleteTerminalInteractions.size(); i++){
+		pESet->deleteInteractionsWithAtoms(atoms,_opt.deleteTerminalInteractions[i]);
+	}
 }
 
 void getSasaForStartingSequence(System &_sys, string _sequence, vector<uint> _state, map<string, map<string,double>> &_sequenceEnergyMap){
@@ -1719,6 +1725,7 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("printAxes");
 	opt.allowed.push_back("printTermEnergies");
 	opt.allowed.push_back("deleteTerminalHbonds");
+	opt.allowed.push_back("deleteTerminalInteractions");
 	opt.allowed.push_back("linkInterfacialPositions");
 
 	// Input Files
