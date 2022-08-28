@@ -23,9 +23,11 @@ static SysEnv SYSENV;
  ***********************************/
 void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling){
 	//Repack side chains based on sasa scores
+	// get backbone length
+	int backboneLength = _sys.getChain("A").positionSize();
 	for (uint i = 0; i < _rotamerSampling.size()/2; i++) {
 		Position &posA = _sys.getPosition(i);
-		Position &posB = _sys.getPosition(i+_opt.backboneLength);
+		Position &posB = _sys.getPosition(i+backboneLength);
 		if (posA.identitySize() > 1){
 			for (uint j=0; j < posA.getNumberOfIdentities(); j++){
 				posA.setActiveIdentity(j);
@@ -435,9 +437,9 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &
 }
 
 // get a vector of all interfacial positions, including the ends
-vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition){
+vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition, int _backboneLength){
 	vector<uint> variableInterfacePositions;
-	for (uint k=0; k<_opt.backboneLength; k++){
+	for (uint k=3; k<_backboneLength; k++){//TODO: make this not hardcoded to skip RAS
 		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
 			variableInterfacePositions.push_back(k);
 		} else {
@@ -448,9 +450,9 @@ vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSampli
 }
 
 // get a vector of interface positions that doesn't include the ends of the sequence
-vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition){
+vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition, int _backboneLength){
 	vector<uint> variableInterfacePositions;
-	for (uint k=3; k<_opt.backboneLength-5; k++){
+	for (uint k=6; k<_backboneLength-5; k++){
 		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
 			variableInterfacePositions.push_back(k);
 		} else {
@@ -1177,12 +1179,12 @@ void deleteTerminalBondInteractions(System &_sys, Options &_opt, int _firstResiN
 			// rid of hbonds from first 3 positions
 			if(_firstResiNum <= i) {
 				atoms += positions[i]->getAtomPointers();
-				cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
+				//cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
 			}
 			// rid of hbonds from last 3 positions
 			if(_lastResiNum > i) {
 				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
-				cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
+				//cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
 			}
 		}
 	}
@@ -1724,7 +1726,7 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("printAllCrds");
 	opt.allowed.push_back("printAxes");
 	opt.allowed.push_back("printTermEnergies");
-	opt.allowed.push_back("deleteTerminalHbonds");
+	opt.allowed.push_back("deleteTerminalBonds");
 	opt.allowed.push_back("deleteTerminalInteractions");
 	opt.allowed.push_back("linkInterfacialPositions");
 
@@ -1852,10 +1854,16 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.useIMM1 = true;
 	}
 
-	opt.deleteTerminalHbonds = OP.getBool("deleteTerminalHbonds");
+	opt.deleteTerminalBonds = OP.getBool("deleteTerminalBonds");
 	if (OP.fail()) {
-		opt.deleteTerminalHbonds = true;
-		opt.warningMessages += "deleteTerminalHbonds not specified using true\n";
+		opt.deleteTerminalBonds = true;
+		opt.warningMessages += "deleteTerminalBonds not specified using true\n";
+		opt.warningFlag = true;
+	}
+	opt.deleteTerminalInteractions = OP.getMultiString("deleteTerminalInteractions");
+	if (OP.fail()) {
+		opt.deleteTerminalInteractions.push_back("SCWRL4_HBOND");
+		opt.warningMessages += "deleteTerminalInteractions not specified, defaulting to delete SCWRL4_HBOND\n";
 		opt.warningFlag = true;
 	}
 
@@ -2362,25 +2370,25 @@ Options parseOptions(int _argc, char * _argv[]){
 	if (OP.fail()) {
 		opt.warningMessages += "deltaX not specified using 0.5\n";
 		opt.warningFlag = true;
-		opt.deltaX = 0.5;
+		opt.deltaX = 0.1;
 	}
 	opt.deltaCross = OP.getDouble("deltaCross");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaCross not specified using 5.0\n";
 		opt.warningFlag = true;
-		opt.deltaCross = 5.0;
+		opt.deltaCross = 1.0;
 	}
 	opt.deltaAx = OP.getDouble("deltaAx");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaAx not specified using 4.0\n";
 		opt.warningFlag = true;
-		opt.deltaAx = 4.0;
+		opt.deltaAx = 1.0;
 	}
 	opt.deltaZ = OP.getDouble("deltaZ");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaZ not specified using 0.5\n";
 		opt.warningFlag = true;
-		opt.deltaZ = 0.5;
+		opt.deltaZ = 0.1;
 	}
 	opt.numRepacks = OP.getInt("numRepacks");
 	if (OP.fail()) {

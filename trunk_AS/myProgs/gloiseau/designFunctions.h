@@ -99,8 +99,8 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys);
 // Calculate Residue Burial for use in identifying the interfacial positions and output a PDB that highlights the interface
 std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &_opt, string _seq);
 
-vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
-vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
+vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition, int _backboneLength);
+vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition, int _backboneLength);
 /***********************************
  *output file functions
  ***********************************/

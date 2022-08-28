@@ -57,6 +57,7 @@ string mslDate = MSLDATE;
 
 time_t startTime, endTime;
 double diffTime, spmTime;
+auto start = chrono::system_clock::now();
 
 // Functions
 /*
@@ -106,6 +107,20 @@ void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingP
  vector<double> _densities);
 string getRunParameters(Options &_opt, vector<double> _densities);
 
+void outputTime(auto _start, string _descriptor, bool _beginFunction){
+	auto end = chrono::system_clock::now();
+	time_t endTimeFormatted = chrono::system_clock::to_time_t(end); 
+	chrono::duration<double> elapsedTime = end-_start;
+	if (_beginFunction == true){
+		cout << _descriptor << " started. Time: " << ctime(&endTimeFormatted);
+		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
+	} else {
+		cout << _descriptor << " finished. Time: " << ctime(&endTimeFormatted);
+		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
+	}
+	
+}
+
 // help functions
 void usage();
 void help(Options defaults);
@@ -117,6 +132,9 @@ void outputErrorMessage(Options &_opt);
  *
  ******************************************/
 int main(int argc, char *argv[]){
+	time_t startRealTime = chrono::system_clock::to_time_t(start); 
+	cout << "Program Start time: " << ctime(&startRealTime) << endl;
+	
 	// initialize time variables
 	time_t rawtime;
 	struct tm * timeinfo;
@@ -257,6 +275,8 @@ int main(int argc, char *argv[]){
 	PolymerSequence interfacePolySeq = getInterfacialPolymerSequence(opt, startGeom, PS, rotamerLevels, variablePositionString, rotamerSamplingString,
 	 linkedPositions, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, sout);
 	
+	outputTime(start, "Identify Interface", false);
+
 	/******************************************************************************
 	 *  === DECLARE SYSTEM FOR POLYLEU WITH ALTERNATE IDENTITIES AT INTERFACE ===
 	 ******************************************************************************/
@@ -266,6 +286,8 @@ int main(int argc, char *argv[]){
 	checkIfAtomsAreBuilt(sys, err); // check to verify that all atoms have coordinates
 	moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), helicalAxis.getAtomPointers(), trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
 
+	Chain &chainA = sys.getChain("A");
+	int seqLength = chainA.positionSize();
 	/******************************************************************************
 	 *                     === ADD IN BASELINE ENERGIES ===
 	 ******************************************************************************/
@@ -277,7 +299,7 @@ int main(int argc, char *argv[]){
 	// link the interfacial positions (for quicker calculation of initial sequence for homodimers)
 	//if (opt.linkInterfacialPositions && !opt.hetero){
 	if (opt.linkInterfacialPositions){
-		vector<vector<string>> linkedPos = convertToLinkedFormat(sys, linkedPositions, opt.backboneLength);
+		vector<vector<string>> linkedPos = convertToLinkedFormat(sys, linkedPositions, seqLength);
 		sys.setLinkedPositions(linkedPos);
 	}
 	
@@ -302,8 +324,10 @@ int main(int argc, char *argv[]){
 	 *                        === SETUP SPM AND RUN SCMF ===
 	 ******************************************************************************/
 	//TODO: make it so that this part is optional: if I submit a sequence to start, don't even do this. Just find the interface, greedy for best sequence, and continue
+	outputTime(start, "Self Consistent Mean Field", true);
 	vector<uint> bestState = runSCMFToGetStartingSequence(sys, opt, RNG, rotamerSamplingString, variablePositionString,
 	 seqs, allInterfacePositions, sequenceEnergyMapBest, sequenceVectorMap, sequenceEntropyMap, sout);
+	outputTime(start, "Self Consistent Mean Field", false);
 
 	// set system to the best sequence or input sequence 
 	sys.setActiveRotamers(bestState);
@@ -314,13 +338,17 @@ int main(int argc, char *argv[]){
 	 ******************************************************************************/
 	// Unlink the best state from SCMF if not using linked positions during the state Monte Carlo
 	if(opt.linkInterfacialPositions){
-		unlinkBestState(opt, bestState, rotamerSamplingPerPosition, opt.backboneLength);
+		unlinkBestState(opt, bestState, rotamerSamplingPerPosition, seqLength);
 	}
 	string bestSequence;
 	for (uint i=0; i<3; i++){
+		outputTime(start, "Sequence search replicate " + to_string(i), true);
 		stateMCUnlinked(sys, opt, interfacePolySeq, sequenceEnergyMapBest, sequenceEntropyMap, bestState, bestSequence, seqs, allSeqs,
 			sequenceVectorMap, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
+		outputTime(start, "Sequence search replicate " + to_string(i), false);
+		outputTime(start, "Backbone repack replicate " + to_string(i), true);
 		localBackboneRepack(opt, sys, bestSequence, i, opt.xShift, helicalAxis, axisA, axisB, rotamerSamplingPerPosition, trans, RNG, sout);
+		outputTime(start, "Backbone repack replicate " + to_string(i), false);
 	}
 	// TODO: make a decision; should I try to calculate the energies for every sequence on the final backbone? Or should I just
 	// say what the geometry is?
@@ -328,7 +356,9 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *            === CALCULATE MONOMER ENERGIES OF EACH SEQUENCE ===
 	 ******************************************************************************/
+	outputTime(start, "Monomer energy calculations ", true);
 	computeMonomerEnergies(opt, trans, sequenceEnergyMapBest, seqs, RNG, sout, err);
+	outputTime(start, "Monomer energy calculations ", false);
 	//getSasaDifference(sequenceStatePair, sequenceEnergyMap);
 
 	///******************************************************************************
@@ -425,7 +455,7 @@ map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt,
 	// Get a random integer to pick through the variable positions
 	int rand = _RNG.getRandomInt(0, _interfacialPositionsList.size()-1);
 	int interfacePosA = _interfacialPositionsList[rand];
-	int interfacePosB = interfacePosA+_opt.backboneLength;
+	int interfacePosB = interfacePosA+_bestSeq.length();
 
 	// Get the random position from the system
 	Position &randPosA = _sys.getPosition(interfacePosA);
@@ -609,7 +639,7 @@ void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSeque
 	// (remnant from CATM, but used in the code that was used to get baselines so keeping it to be consistent)
 	int firstPos = 0;// should this be based on the thread and the
     int lastPos = _sys.positionSize();
-    deleteTerminalHydrogenBondInteractions(_sys,firstPos,lastPos);
+    deleteTerminalBondInteractions(_sys,_opt,firstPos,lastPos);
 
 	/******************************************************************************
 	 *                === CHECK TO SEE IF ALL ATOMS ARE BUILT ===
@@ -667,10 +697,12 @@ vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNu
 	if (_opt.verbose){
 		cout << "Calculating self and pair energy terms..." << endl;
 	}
+	outputTime(start, "Self and Pair of all amino acids calculation " + to_string(_rep), true);
 	spm.calculateEnergies();
 	time(&endTime);
 	diffTime = difftime (endTime, startTime);
 	_out << "Time to calculate energies: " << diffTime  << "s" << endl;
+	outputTime(start, "Self and Pair of all amino acids calculation " + to_string(_rep), false);
 
 	searchForBestSequencesUsingThreads(sys, _opt, spm, _RNG, _allSeqs, _bestState, _bestSequence, _sequenceEnergyMap, _sequenceVectorMap, 
 	_sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling, _rep, _out, _err);
@@ -927,13 +959,14 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 
 	// Output variable Set up
 	backboneSeq = generateBackboneSequence("L", _opt.backboneLength, _opt.useAlaAtCTerminus);
-	string variablePositionString = generateString("0", _opt.backboneLength);
-	string rotamerLevels = generateString("0", _opt.backboneLength);
+	string variablePositionString = generateString("0", backboneSeq.length());
+	string rotamerLevels = generateString("0", backboneSeq.length());
 	defineRotamerLevelsByResidueBurial(sys, _opt, resiBurial, interfacePositions, rotamerLevels, variablePositionString);
 
 	// makes the polymer sequence to return basedon the interface positions
 	string polySeq = generateMultiIDPolymerSequence(backboneSeq, _opt.thread, _opt.Ids, interfacePositions);
 	PolymerSequence PS(polySeq);
+	cout << PS << endl;
 
 	vector<int> rotamerSamplingPerPosition = getRotamerSampling(rotamerLevels); // converts the rotamer sampling for each position as a vector
 	int numberOfRotamerLevels = _opt.sasaRepackLevel.size();
@@ -941,7 +974,7 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 	vector<int> linkedPositions = getLinkedPositions(rotamerSamplingPerPosition, _opt.interfaceLevel, highestRotamerLevel);
 
 	//String for the positions of the sequences that are considered interface for positions amd high rotamers
-	string rotamerSamplingString = getInterfaceString(rotamerSamplingPerPosition, _opt.backboneLength);
+	string rotamerSamplingString = getInterfaceString(rotamerSamplingPerPosition, backboneSeq.length());
 
 	// Define referenced output variables
 	_rotamerLevels = rotamerLevels;
@@ -953,8 +986,8 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 	_out << "PolyLeu Backbone:   " << backboneSeq << endl;
 	_out << "Variable Positions: " << variablePositionString << endl;
 	_out << "Rotamers Levels:    " << rotamerSamplingString << endl;
-	_interfacePositions = getInterfacePositions(_opt, rotamerSamplingPerPosition);
-	_allInterfacePositions = getAllInterfacePositions(_opt, rotamerSamplingPerPosition);
+	_interfacePositions = getInterfacePositions(_opt, rotamerSamplingPerPosition, backboneSeq.length());
+	_allInterfacePositions = getAllInterfacePositions(_opt, rotamerSamplingPerPosition, backboneSeq.length());
 
 	cout << "PolyLeu Backbone:   " << backboneSeq << endl;
 	cout << "Variable Positions: " << variablePositionString << endl;
@@ -998,7 +1031,7 @@ void defineRotamerLevelsByResidueBurial(System &_sys, Options &_opt, vector<pair
 		if (levelCounter < _opt.interfaceLevel) {
 			_interfacePositions.push_back(resiNum);
 			// check to see if the position is found within the core of protein (i.e. not the first 3 residues or the last 4 residues)
-			if (backbonePosition > 2 && backbonePosition < _opt.backboneLength-4){//backbone position goes from 0-20, so numbers need to be 3 and 4 here instead of 4 and 5 to prevent changes at the interface like others
+			if (backbonePosition > 5 && backbonePosition < _opt.backboneLength-4){//backbone position goes from 0-20, so numbers need to be 3 and 4 here instead of 4 and 5 to prevent changes at the interface like others
 				// replace 0 with 1 for variable positions that are found at the interface
 				_variablePositionString.replace(_variablePositionString.begin()+positionNumber, _variablePositionString.begin()+positionNumber+1, "1");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
 			}
@@ -1007,7 +1040,7 @@ void defineRotamerLevelsByResidueBurial(System &_sys, Options &_opt, vector<pair
 		if (_opt.interface != ""){
 			if (_opt.interface.at(positionNumber) == '1'){
 				_interfacePositions.push_back(resiNum);
-				if (backbonePosition > 2 && backbonePosition < _opt.backboneLength-4){//backbone position goes from 0-20, so numbers need to be 3 and 4 here instead of 4 and 5 to prevent changes at the interface like others
+				if (backbonePosition > 5 && backbonePosition < _opt.backboneLength-4){//backbone position goes from 0-20, so numbers need to be 3 and 4 here instead of 4 and 5 to prevent changes at the interface like others
 					_variablePositionString.replace(_variablePositionString.begin()+positionNumber, _variablePositionString.begin()+positionNumber+1, "1");
 				}
 				_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, "0");
@@ -1102,7 +1135,7 @@ void help(Options defaults) {
 
 	cout << "#Booleans" << endl;
 	cout << setw(20) << "verbose " << defaults.verbose << endl;
-	cout << setw(20) << "deleteTerminalHbonds" << defaults.deleteTerminalHbonds << endl;
+	cout << setw(20) << "deleteTerminalBonds" << defaults.deleteTerminalBonds << endl;
 	cout << setw(20) << "useSasa" << defaults.useSasa << endl;
 	cout << setw(20) << "getGeoFromPDBData" << false << endl;//Since we already have the geometry output here, default to false in the rerun config
 	cout << setw(20) << "runDEESingles" << defaults.runDEESingles << endl;
@@ -1157,13 +1190,14 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ui
 	// set up the system for the input sequence
 	System sys;
 	prepareSystem(_opt, sys, _startGeom, PS);
+	moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
 	
 	// initialize the object for loading rotamers into our _system
 	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
 	sysRot.defineRotamerSamplingLevels();
 
 	//decided to try loading low number of rotamers for this instead of high
-	loadRotamers(sys, sysRot, _opt, _rotamerSampling);
+	loadRotamers(sys, sysRot, _opt.SL);
 
 	// get chain A and B from the system
 	Chain & chainA = sys.getChain("A");
@@ -1202,32 +1236,30 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ui
 	spm.setVerbose(false);
 	spm.getMinStates()[0];
 	//spm.updateWeights();
-	spm.setOnTheFly(false);
+	spm.setOnTheFly(true);
 	spm.saveEnergiesByTerm(true);
-	spm.calculateEnergies();
+	//spm.calculateEnergies();
 	spm.runGreedyOptimizer(_opt.greedyCycles);
 
 	time(&endTime);
 	diffTime = difftime (endTime, startTime);
 	_out << "Time to calculate energies for backbone repack: " << diffTime << endl;
-	//TODO: seg faults below	
 	// do backbone geometry repacks
-	//for (int i=0; i < _opt.numRepacks; i++){
-		if (_opt.verbose){
-			cout << "==============================================" << endl;
-			cout << " Performing Local Monte Carlo Backbone Repack " << endl;
-			cout << "==============================================" << endl;
-		}
-		//monteCarloRepack(_opt, sys, _savedXShift, spm, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, prevBestEnergy, 
-		//i, _out);
-		monteCarloRepack(_opt, sys, _savedXShift, spm, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, prevBestEnergy, 
-		_rep, _out);
-		// Initialize PDBWriter
-		PDBWriter writer;
-		writer.open(_opt.pdbOutputDir + "/backboneOptimized_" + to_string(_rep) + ".pdb");
-		writer.write(sys.getAtomPointers(), true, false, true);
-		writer.close();
-	//}
+	if (_opt.verbose){
+		cout << "==============================================" << endl;
+		cout << " Performing Local Monte Carlo Backbone Repack " << endl;
+		cout << "==============================================" << endl;
+	}
+	monteCarloRepack(_opt, sys, _savedXShift, spm, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, prevBestEnergy, 
+	_rep, _out);
+
+	// Initialize PDBWriter
+	PDBWriter writer;
+	writer.open(_opt.pdbOutputDir + "/backboneOptimized_" + to_string(_rep) + ".pdb");
+	writer.write(sys.getAtomPointers(), true, false, true);
+	writer.close();
+
+	moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
 	// TODO: set the startGeom to the repacked geom at sys
 	// assign the coordinates of our system to the given geometry 
 	_startGeom.assignCoordinates(sys.getAtomPointers(),false);
@@ -1311,10 +1343,10 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 		}
 		
 		// Run _optimization
-		repackSideChains(_spm, 10);
-
+		repackSideChains(_spm, _opt.greedyCycles);
 		vector<unsigned int> MCOFinal = _spm.getMinStates()[0];
 		currentEnergy = _spm.getMinBound()[0];
+		_sys.setActiveRotamers(MCOFinal);//THIS WAS NOT HERE BEFORE 2022-8-26 NIGHT! MAKE SURE IT'S IN ALL OTHER CODE, IT'S CRUCIAL TO SAVING THE STATE
 		
 		if (!MCMngr.accept(currentEnergy)) {
 			if (_opt.verbose){
@@ -1386,15 +1418,6 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 	_out << "axialRotation: " << _opt.axialRotation << endl;
 	_out << "zShift:        " << _opt.zShift << endl << endl;
 	
-	// Print out info to the summary csv file
-	//_out << to_string(_rep) << ',' << _opt.sequence << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',';
-	//_out << dimerDiff << ',' << dimerSasa << ',' << vdw << ',' << monomerVdw << ',' << hbond << ',' << monomerHbond << ',' << imm1 << ',' << monomerImm1 << ',';
-	//_out << _opt.xShift << ',' << xShift << ',' << _opt.crossingAngle << ',' << crossingAngle << ',';
-	//_out << _opt.axialRotation << ',' << axialRotation << ',' << _opt.zShift << ',' << zShift << endl;
-	//cout << to_string(_rep) << ',' << _opt.sequence << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',';
-	//cout << dimerDiff << ',' << dimerSasa << ',' << vdw << ',' << monomerVdw << ',' << hbond << ',' << monomerHbond << ',' << imm1 << ',' << monomerImm1 << ',';
-	//cout << _opt.xShift << ',' << xShift << ',' << _opt.crossingAngle << ',' << crossingAngle << ',';
-	//cout << _opt.axialRotation << ',' << axialRotation << ',' << _opt.zShift << ',' << zShift << endl;
 	cout << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
 	_out << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
 }

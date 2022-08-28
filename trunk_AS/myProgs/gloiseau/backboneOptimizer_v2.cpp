@@ -69,18 +69,6 @@ void monteCarloRepack(BBOptions &_opt, System &_sys, double &_savedXShift, SelfP
  map<string,double> _monomerEnergyByTerm, double _monomerEnergy, ofstream &_out);
 void checkOptionErrors(BBOptions &_opt);	
 
-void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
-	for (uint k=0; k < _sys.positionSize(); k++) {
-		Position &pos = _sys.getPosition(k);
-
-		if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-			if (!_sysRot.loadRotamers(&pos, pos.getResidueName(),_SL)) {
-				cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
-			}
-		}
-	}
-}
-
 /***********************************
  *help functions
  ***********************************/

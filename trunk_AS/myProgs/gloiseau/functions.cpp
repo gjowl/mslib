@@ -207,6 +207,18 @@ void loadMonomerRotamers(System &_sys, SystemRotamerLoader &_sysRot){
 		}
 	}
 }
+void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
+	for (uint k=0; k < _sys.positionSize(); k++) {
+		Position &pos = _sys.getPosition(k);
+
+		if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+			if (!_sysRot.loadRotamers(&pos, pos.getResidueName(),_SL)) {
+				cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+			}
+		}
+	}
+}
+
 //void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
 //	for (uint k=0; k<_sys.positionSize(); k++) {
 //		Position &pos = _sys.getPosition(k);
@@ -318,7 +330,8 @@ vector<int> getRotamerSampling(string _rotamerLevels){
 
 // get a backbone sequence with an alanine cap at the beginning and end as an option
 string generateBackboneSequence(string _backboneAA, int _length, bool _useAlaCap) {
-	string str = "";
+	// initial start of sequence
+	string str = "RAS";
 	//2021-09-21: add in an alanine cap to allow for more variable positions at the leucine region
 	for (uint i=0; i<_length-4; i++){
 		if (i<4){
@@ -374,7 +387,7 @@ string generateMultiIDPolymerSequence(string _seq, int _startResNum, vector<stri
 				}
 			}
 			counter++;
-		} else if (pos < startPos+3 || pos > endPos-5){
+		} else if (pos < startPos+6 || pos > endPos-5){//TODO: how to make this better for polySeq not hardcoded
 			stringstream ss;
 			ss << *it;
 			string resName = MslTools::getThreeLetterCode(ss.str());
