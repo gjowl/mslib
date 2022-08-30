@@ -1,0 +1,11 @@
+Starting Geometry
+xShift: 9.091 crossingAngle: -45.000 axialRotation: -44.676 zShift: 0.844
+
+Current Best Energy: 4.382
+==============================================
+ Performing Local Monte Carlo Backbone Repack 
+==============================================
+Sequence, thread, Energy, Dimer, Monomer, SASA, vdw, monoVdw, hbond, monoHbond, imm1, monoImm1, imm1Ref, monoImm1Ref, startXShift, finalXShift, startCrossingAngle, finalCrossingAngle, startAxialRot, finalAxialRot, startZShift, finalZShift
+RASLLLWLLLGALLIALLAVLILI,20,4.382,-322.926,-327.308,4608.515,-72.521,-58.407,-57.236,-57.236,4.099,22.412,-197.268,-234.307,10.491,9.089,-45.000,-44.993,-44.676,-44.624,0.844,0.844
+Monte Carlo repack complete. Time: 606.000 seconds
+

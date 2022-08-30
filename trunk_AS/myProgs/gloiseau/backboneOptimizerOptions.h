@@ -28,6 +28,8 @@ using namespace std;
 	double axialRotation;
 	double zShift;
 	int thread;
+	int threadStart;
+	int threadEnd;
 
 	// tm
 	int tmStart;
@@ -60,6 +62,11 @@ using namespace std;
 	double deltaCross;
 	double deltaAx;
 	double deltaZ;
+	double deltaXLimit; 
+	double deltaCrossLimit;
+	double deltaAxLimit;
+	double deltaZLimit;
+	bool decreaseMoveSize;
 
 	// Other options
 	bool verbose;
@@ -78,6 +85,9 @@ using namespace std;
 	int backboneLength;
 	vector<string> deleteTerminalInteractions;
 	string uniprotName;
+	bool dockHelices;
+
+	// 
 
 	/***** MANAGEMENT VARIABLES ******/
 	string pwd; // the present working directory obtained with a getenv

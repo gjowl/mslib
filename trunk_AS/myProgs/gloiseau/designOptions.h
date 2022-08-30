@@ -43,6 +43,7 @@ struct Options{
 	bool energyLandscape; //TRUE: collect all sequences and their respective monomer and dimer energies ..TODO: add more here
 	bool useAlaAtCTerminus; //TRUE: use ALA at C terminus of sequence FALSE: use LEU at C terminus ..TODO: do I need this?
 	bool useBaseline; //TRUE: calculate and use baseline values generated as estimates of the monomer sequence OR FALSE: don't use baselines to estimate the monomer
+	bool getRandomAxRotAndZShift; //TRUE: get random from geometry file OR FALSE: use given axRot and zShift
 
 	// interface parameters
 	string interface; //interface to design on; if empty, use SASA

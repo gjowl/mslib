@@ -331,7 +331,7 @@ vector<int> getRotamerSampling(string _rotamerLevels){
 // get a backbone sequence with an alanine cap at the beginning and end as an option
 string generateBackboneSequence(string _backboneAA, int _length, bool _useAlaCap) {
 	// initial start of sequence
-	string str = "RAS";
+	string str = "";
 	//2021-09-21: add in an alanine cap to allow for more variable positions at the leucine region
 	for (uint i=0; i<_length-4; i++){
 		if (i<4){
@@ -403,11 +403,6 @@ string generateMultiIDPolymerSequence(string _seq, int _startResNum, vector<stri
 			//cout << pos << endl;
 			if (find(_interfacialPositions.begin(), _interfacialPositions.end(), pos) != _interfacialPositions.end()){
 				ps = ps + " [";
-				if(resName == "HIS") {
-					ps = ps + " HSE";
-				} else {
-					ps = ps + " " + resName;
-				}
 				for (uint i=0; i<_alternateIds.size(); i++){
 					if(_alternateIds[i] == "HIS") {
 						ps = ps + " HSE";

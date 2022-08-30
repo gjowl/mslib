@@ -1,0 +1,18 @@
+#Submit file for backboneOptimizer and other design code that I write will probably look similar
+batch_name   = backboneOptimizer
+baseDir      = /exports/home/gloiseau
+outDir       = /exports/home/gloiseau/mslib/trunk_AS
+
+executable   = /exports/home/gloiseau/mslib/trunk_AS/bin/backboneOptimizer_v2ThreadSearch
+output       = $(outDir)/$(sequence).out
+log          = $(outDir)/$(sequence).log
+error        = $(outDir)/$(sequence).err
+inputFileDir = /exports/home/gloiseau/mslib/trunk_AS/myProgs/parameterFiles
+stream_output = TRUE
+stream_error  = TRUE
+#Info
+configFile = /exports/home/gloiseau/mslib/trunk_AS/config/backboneOptimizer_v2.config
+
+#Runs
+Arguments = "--config $(configFile) --seed $(seed) --thread $(thread) --MCCycles $(MCCycles) --negAngle true --negRot true --sequence $(sequence) --xShift $(xShift) --crossingAngle $(crossingAngle) --axialRotation $(axialRotation) --zShift $(zShift) --topFile $(inputFileDir)/top_all22_prot.inp --solvFile $(inputFileDir)/solvpar22.inp --parFile $(inputFileDir)/par_all22_prot.inp --hbondFile $(inputFileDir)/par_hbond_CA_2.txt --rotLibFile $(inputFileDir)/rotlib_combined_-60_-40.txt --verbose true"
+queue seed,sequence,thread,xShift,zShift,axialRotation,crossingAngle,MCCycles from /exports/home/gloiseau/mslib/trunk_AS/backboneOptimizerThreadSearch_test.csv

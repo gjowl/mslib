@@ -1,0 +1,14 @@
+Thread 29 energy 1381.97 is higher than cutoff (100), skip
+Thread 20 energy 95.3621 is lower than cutoff (100), continue
+Thread 18 energy 1391.21 is higher than cutoff (100), skip
+Thread 23 energy 42.7724 is lower than cutoff (100), continue
+Thread 22 energy 1387.26 is higher than cutoff (100), skip
+Thread 17 energy 1385.56 is higher than cutoff (100), skip
+Thread 19 energy 46.1841 is lower than cutoff (100), continue
+Thread 24 energy 24.9194 is lower than cutoff (100), continue
+Thread 28 energy 1381.77 is higher than cutoff (100), skip
+Thread 26 energy 1389.33 is higher than cutoff (100), skip
+Thread 25 energy 1385.34 is higher than cutoff (100), skip
+Thread 21 energy 1387.43 is higher than cutoff (100), skip
+Thread 27 energy 109.387 is higher than cutoff (100), skip
+Total Time: 37 minutes

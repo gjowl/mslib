@@ -107,14 +107,18 @@ void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingP
  vector<double> _densities);
 string getRunParameters(Options &_opt, vector<double> _densities);
 
-void outputTime(auto _start, string _descriptor, bool _beginFunction){
+void outputTime(auto _start, string _descriptor, bool _beginFunction, ofstream &_out){
 	auto end = chrono::system_clock::now();
 	time_t endTimeFormatted = chrono::system_clock::to_time_t(end); 
 	chrono::duration<double> elapsedTime = end-_start;
 	if (_beginFunction == true){
+		_out << _descriptor << " started. Time: " << ctime(&endTimeFormatted);
+		_out << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
 		cout << _descriptor << " started. Time: " << ctime(&endTimeFormatted);
 		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
 	} else {
+		_out << _descriptor << " started. Time: " << ctime(&endTimeFormatted);
+		_out << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
 		cout << _descriptor << " finished. Time: " << ctime(&endTimeFormatted);
 		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
 	}
@@ -208,15 +212,24 @@ int main(int argc, char *argv[]){
 		cout << "axialRotation: " << opt.axialRotation << "\tDensity: " << densities[1] << endl;
 		cout << "zShift:        " << opt.zShift << "\tDensity: " << densities[2] << endl << endl;
 	} else {
-		cout << "***STARTING GEOMETRY:***" << endl;
-		cout << "xShift:        " << opt.xShift << endl;
-		cout << "crossingAngle: " << opt.crossingAngle << endl;
-		cout << "axialRotation: " << opt.axialRotation << endl;
-		cout << "zShift:        " << opt.zShift << endl << endl;
-		// TODO: temp fix; instead should search for closest density to the one given
-		densities.push_back(0);
-		densities.push_back(0);
-		densities.push_back(0);
+		if (opt.getRandomAxRotAndZShift){
+			getAxialRotAndZShift(opt, RNG, densities, sout);
+			cout << "***STARTING GEOMETRY:***" << endl;
+			cout << "xShift:        " << opt.xShift << endl;
+			cout << "crossingAngle: " << opt.crossingAngle << endl;
+			cout << "axialRotation: " << opt.axialRotation << "\tDensity: " << densities[1] << endl;
+			cout << "zShift:        " << opt.zShift << "\tDensity: " << densities[2] << endl << endl;
+		} else {
+			cout << "***STARTING GEOMETRY:***" << endl;
+			cout << "xShift:        " << opt.xShift << endl;
+			cout << "crossingAngle: " << opt.crossingAngle << endl;
+			cout << "axialRotation: " << opt.axialRotation << endl;
+			cout << "zShift:        " << opt.zShift << endl << endl;
+			densities.push_back(0);
+			densities.push_back(0);
+			densities.push_back(0);
+		}
+		
 	}
 
 	//String for the alternateIds at the interface
@@ -256,6 +269,10 @@ int main(int argc, char *argv[]){
 	// get the starting geometry using polyglycine
 	System startGeom;
 	setGly69ToStartingGeometry(opt,startGeom,helicalAxis,axisA,axisB,ori,xAxis,zAxis,trans);
+	PDBWriter writer;
+	writer.open(opt.pdbOutputDir + "/startGeom.pdb");
+	writer.write(startGeom.getAtomPointers(), true, false, true);
+	writer.close();
 	
 	/******************************************************************************
 	 *       === IDENTIFY INTERFACIAL POSITIONS AND GET ROTAMER ASSIGNMENTS ===
@@ -275,7 +292,7 @@ int main(int argc, char *argv[]){
 	PolymerSequence interfacePolySeq = getInterfacialPolymerSequence(opt, startGeom, PS, rotamerLevels, variablePositionString, rotamerSamplingString,
 	 linkedPositions, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, sout);
 	
-	outputTime(start, "Identify Interface", false);
+	outputTime(start, "Identify Interface", false, sout);
 
 	/******************************************************************************
 	 *  === DECLARE SYSTEM FOR POLYLEU WITH ALTERNATE IDENTITIES AT INTERFACE ===
@@ -284,8 +301,8 @@ int main(int argc, char *argv[]){
 	System sys;
 	prepareSystem(opt, sys, startGeom, interfacePolySeq);
 	checkIfAtomsAreBuilt(sys, err); // check to verify that all atoms have coordinates
-	moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), helicalAxis.getAtomPointers(), trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
-
+	moveZCenterOfCAMassToOrigin(sys.getAllAtomPointers(), helicalAxis.getAtomPointers(), trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
+	
 	Chain &chainA = sys.getChain("A");
 	int seqLength = chainA.positionSize();
 	/******************************************************************************
@@ -310,7 +327,6 @@ int main(int argc, char *argv[]){
 	// load rotamers for each amino acid at each position into the system
 	loadRotamers(sys, sysRot, opt, rotamerSamplingPerPosition);
 	//CSB.updateNonBonded(10,12,50);//This for some reason updates the energy terms and makes the IMM1 terms active (still need to check where, but did a couple of calcEnergy and outputs
-	
 	/******************************************************************************
 	 *           === VARIABLES FOR SAVING ENERGIES AND SEQUENCES ===
 	 ******************************************************************************/
@@ -324,10 +340,10 @@ int main(int argc, char *argv[]){
 	 *                        === SETUP SPM AND RUN SCMF ===
 	 ******************************************************************************/
 	//TODO: make it so that this part is optional: if I submit a sequence to start, don't even do this. Just find the interface, greedy for best sequence, and continue
-	outputTime(start, "Self Consistent Mean Field", true);
+	outputTime(start, "Self Consistent Mean Field", true, sout);
 	vector<uint> bestState = runSCMFToGetStartingSequence(sys, opt, RNG, rotamerSamplingString, variablePositionString,
 	 seqs, allInterfacePositions, sequenceEnergyMapBest, sequenceVectorMap, sequenceEntropyMap, sout);
-	outputTime(start, "Self Consistent Mean Field", false);
+	outputTime(start, "Self Consistent Mean Field", false, sout);
 
 	// set system to the best sequence or input sequence 
 	sys.setActiveRotamers(bestState);
@@ -342,13 +358,13 @@ int main(int argc, char *argv[]){
 	}
 	string bestSequence;
 	for (uint i=0; i<3; i++){
-		outputTime(start, "Sequence search replicate " + to_string(i), true);
+		outputTime(start, "Sequence search replicate " + to_string(i), true, sout);
 		stateMCUnlinked(sys, opt, interfacePolySeq, sequenceEnergyMapBest, sequenceEntropyMap, bestState, bestSequence, seqs, allSeqs,
 			sequenceVectorMap, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
-		outputTime(start, "Sequence search replicate " + to_string(i), false);
-		outputTime(start, "Backbone repack replicate " + to_string(i), true);
+		outputTime(start, "Sequence search replicate " + to_string(i), false, sout);
+		outputTime(start, "Backbone repack replicate " + to_string(i), true, sout);
 		localBackboneRepack(opt, sys, bestSequence, i, opt.xShift, helicalAxis, axisA, axisB, rotamerSamplingPerPosition, trans, RNG, sout);
-		outputTime(start, "Backbone repack replicate " + to_string(i), false);
+		outputTime(start, "Backbone repack replicate " + to_string(i), false, sout);
 	}
 	// TODO: make a decision; should I try to calculate the energies for every sequence on the final backbone? Or should I just
 	// say what the geometry is?
@@ -356,9 +372,9 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *            === CALCULATE MONOMER ENERGIES OF EACH SEQUENCE ===
 	 ******************************************************************************/
-	outputTime(start, "Monomer energy calculations ", true);
+	outputTime(start, "Monomer energy calculations ", true, sout);
 	computeMonomerEnergies(opt, trans, sequenceEnergyMapBest, seqs, RNG, sout, err);
-	outputTime(start, "Monomer energy calculations ", false);
+	outputTime(start, "Monomer energy calculations ", false, sout);
 	//getSasaDifference(sequenceStatePair, sequenceEnergyMap);
 
 	///******************************************************************************
@@ -388,9 +404,8 @@ int main(int argc, char *argv[]){
 string getRunParameters(Options &_opt, vector<double> _densities){
 	stringstream ss;
 	string t = "\t";
-	ss << _opt.xShift << t << _opt.crossingAngle << t << _opt.axialRotation << t << _opt.zShift << t << _densities[0] << t << _densities[1];
-	ss << t << _densities[2] << t << _opt.thread << t << _opt.sasaRepackLevel.size() << t << _opt.interfaceLevel << t << _opt.backboneLength;
-	string runParameters = ss.str(); 
+	ss <<  _densities[0] << t << _densities[1] << t << _densities[2] << t << _opt.thread << t << _opt.sasaRepackLevel.size() << t << _opt.interfaceLevel << t << _opt.backboneLength;
+	string runParameters = ss.str();
 	return runParameters;
 }
 
@@ -409,7 +424,7 @@ void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingP
 		string sequence = seq.first;
 		// get the interface sequence
 		string interfaceSequence = getInterfaceSequence(_opt,_interface, sequence);
-		seqLine << sequence << t << interfaceSequence << t;
+		seqLine << sequence << t << _interface << t << interfaceSequence << t;
 		map<string,double> energyMap = _sequenceEnergyMap[sequence];
 		// For adding in strings to a line for the energy file
 		for (uint j=0; j<_opt.energyTermsToOutput.size(); j++){
@@ -431,16 +446,12 @@ void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingP
 	ofstream eout;
 	string eoutfile = _opt.pdbOutputDir + "/energyFile.csv";
 	eout.open(eoutfile.c_str());
-	eout << "Sequence" << t << "InterfaceSequence" << t;
+	eout << "Sequence" << t << "Interface" << t << "InterfaceSequence" << t;
 	eout << enerTerms.str();
-	eout << "Baseline" << t << "Sequence" << t << "InterfaceSeq" << t << "xShift" << t << "crossingAngle" << t; 
-	eout << "axialRotation" << t << "zShift" << t << "angleDistDensity" << t << "axialRotationDensity" << t;
-	eout << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
-	cout << "Sequence" << t << "InterfaceSequence" << t;
+	eout << "angleDistDensity" << t << "axialRotationDensity" << t << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
+	cout << "Sequence" << t << "Interface" << t << "InterfaceSequence" << t;
 	cout << enerTerms.str();
-	cout << "Baseline" << t << "Sequence" << t << "InterfaceSeq" << t << "xShift" << t << "crossingAngle" << t; 
-	cout << "axialRotation" << t << "zShift" << t << "angleDistDensity" << t << "axialRotationDensity" << t;
-	cout << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
+	eout << "angleDistDensity" << t << "axialRotationDensity" << t << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
 	for (uint i=0; i<energyLines.size() ; i++){
 		eout << energyLines[i] << endl;
 		cout << energyLines[i] << endl;
@@ -697,12 +708,12 @@ vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNu
 	if (_opt.verbose){
 		cout << "Calculating self and pair energy terms..." << endl;
 	}
-	outputTime(start, "Self and Pair of all amino acids calculation " + to_string(_rep), true);
+	outputTime(start, "Self and Pair of all amino acids calculation " + to_string(_rep), true, _out);
 	spm.calculateEnergies();
 	time(&endTime);
 	diffTime = difftime (endTime, startTime);
 	_out << "Time to calculate energies: " << diffTime  << "s" << endl;
-	outputTime(start, "Self and Pair of all amino acids calculation " + to_string(_rep), false);
+	outputTime(start, "Self and Pair of all amino acids calculation " + to_string(_rep), false, _out);
 
 	searchForBestSequencesUsingThreads(sys, _opt, spm, _RNG, _allSeqs, _bestState, _bestSequence, _sequenceEnergyMap, _sequenceVectorMap, 
 	_sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling, _rep, _out, _err);
@@ -813,6 +824,10 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			bestSeq = currSeq; // set the best sequence to the newly accepted current sequence
 			bestEnergy = sequenceEnergyMap[bestSeq]["Dimerw/Baseline"]; // set the best energy to the current energy (vdw, hbond, imm1, baseline)
 			sequenceEnergyMap[bestSeq]["acceptCycleNumber"] = cycleCounter; // gets the accept cycle number for the current sequence
+			sequenceEnergyMap[bestSeq]["xShift"] = _opt.xShift; // gets the accept cycle number for the current sequence
+			sequenceEnergyMap[bestSeq]["crossingAngle"] = _opt.crossingAngle; // gets the accept cycle number for the current sequence
+			sequenceEnergyMap[bestSeq]["axialRotation"] = _opt.axialRotation; // gets the accept cycle number for the current sequence
+			sequenceEnergyMap[bestSeq]["zShift"] = _opt.zShift; // gets the accept cycle number for the current sequence
 			_sequenceVectorMap[bestSeq] = currStateVec; // saves the current state vector to the sequence vector map
 			allSequenceEnergyMap[bestSeq] = sequenceEnergyMap[bestSeq]; // saves the current sequence energy map to the all sequence energy map
 			
@@ -1054,6 +1069,7 @@ void defineRotamerLevelsByResidueBurial(System &_sys, Options &_opt, vector<pair
 	}
 }
 
+// sets the gly69 backbone to starting geometry
 void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis,
  AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, CartesianPoint &_xAxis,
  CartesianPoint &_zAxis, Transforms &_trans) {
@@ -1073,8 +1089,6 @@ void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxi
 	transformation(apvChainA, apvChainB, _axisA, _axisB, _ori, _xAxis, _zAxis, _opt.zShift, _opt.axialRotation, _opt.crossingAngle, _opt.xShift, _trans);
 	moveZCenterOfCAMassToOrigin(_sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);
 }
-
-// sets the gly69 backbone to starting geometry
 
 // help functions
 void usage() {

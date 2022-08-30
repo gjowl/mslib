@@ -75,6 +75,8 @@ void unlinkBestState(Options &_opt, vector<uint> &_bestState, vector<int> _linke
 void moveZCenterOfCAMassToOrigin(AtomPointerVector& _apV, AtomPointerVector& _axis, Transforms & _trans);
 // reads through geometry density file and randomly chooses a geometry for the dimer
 void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out);
+// reads through geometry density file and chooses random axial rotation and zShift only
+void getAxialRotAndZShift(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out);
 
 /***********************************
  *string output

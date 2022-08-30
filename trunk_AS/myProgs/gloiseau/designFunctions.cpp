@@ -25,6 +25,9 @@ void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Option
 	//Repack side chains based on sasa scores
 	// get backbone length
 	int backboneLength = _sys.getChain("A").positionSize();
+	cout << "bblength: " << backboneLength << endl;
+	cout << "rotsize: " << _rotamerSampling.size() << endl;
+	cout << "rotsize/2: " << _rotamerSampling.size()/2 << endl;
 	for (uint i = 0; i < _rotamerSampling.size()/2; i++) {
 		Position &posA = _sys.getPosition(i);
 		Position &posB = _sys.getPosition(i+backboneLength);
@@ -98,6 +101,36 @@ void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_de
 	double axialRotationDensity = MslTools::toDouble(tokens[5]);
 	double zShiftDensity = MslTools::toDouble(tokens[6]);
 	_densities.push_back(angleDistDensity);
+	_densities.push_back(axialRotationDensity);
+	_densities.push_back(zShiftDensity);
+
+	// Output to summary file
+	_out << "***STARTING GEOMETRY:***" << endl;
+	_out << "xShift:        " << _opt.xShift << "\tDensity: " << angleDistDensity << endl;
+	_out << "crossingAngle: " << _opt.crossingAngle << "\tDensity: " << angleDistDensity << endl;
+	_out << "axialRotation: " << _opt.axialRotation << "\tDensity: " << axialRotationDensity << endl;
+	_out << "zShift:        " << _opt.zShift << "\tDensity: " << zShiftDensity << endl << endl;
+}
+
+void getAxialRotAndZShift(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out){
+	// Setup file reader
+	Reader reader(_opt.geometryDensityFile);
+	reader.open();
+	if(!(reader.is_open())){
+		cerr << "WARNING: Unable to open " << _opt.geometryDensityFile << endl;
+		exit(0);
+	}
+	vector<string> lines = reader.getAllLines();
+
+	// Extract the geometries from a random line of the geometry file
+	int geometryLine = _RNG.getRandomInt(1,lines.size()-1);
+	vector<string> tokens = MslTools::tokenize(lines[geometryLine], "\t");//xShift, crossingAngle, axialRotation, zShift, angleDistDensity, axialRotationDensity, zShiftDensity
+	_opt.axialRotation = MslTools::toDouble(tokens[2]);
+	_opt.zShift = MslTools::toDouble(tokens[3]);
+	double angleDistDensity = MslTools::toDouble(tokens[4]);
+	double axialRotationDensity = MslTools::toDouble(tokens[5]);
+	double zShiftDensity = MslTools::toDouble(tokens[6]);
+	_densities.push_back(0);//temp 0 for now; need to determine density of given geometry later
 	_densities.push_back(axialRotationDensity);
 	_densities.push_back(zShiftDensity);
 
@@ -439,7 +472,7 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &
 // get a vector of all interfacial positions, including the ends
 vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition, int _backboneLength){
 	vector<uint> variableInterfacePositions;
-	for (uint k=3; k<_backboneLength; k++){//TODO: make this not hardcoded to skip RAS
+	for (uint k=2; k<_backboneLength; k++){//TODO: make this not hardcoded to skip RAS
 		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
 			variableInterfacePositions.push_back(k);
 		} else {
@@ -452,7 +485,7 @@ vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSampli
 // get a vector of interface positions that doesn't include the ends of the sequence
 vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition, int _backboneLength){
 	vector<uint> variableInterfacePositions;
-	for (uint k=6; k<_backboneLength-5; k++){
+	for (uint k=5; k<_backboneLength-5; k++){//TODO: make this not hardcoded to skip RAS
 		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
 			variableInterfacePositions.push_back(k);
 		} else {
@@ -1765,6 +1798,7 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("energyLandscape");
 	opt.allowed.push_back("useAlaAtCTerminus");
 	opt.allowed.push_back("useBaseline");
+	opt.allowed.push_back("getRandomAxRotAndZShift");
 
 	// SelfPairManager Arguments
 	opt.allowed.push_back("runDEESingles");
@@ -2308,6 +2342,13 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningMessages += "useBaseline not specified, defaulting to false";
 		opt.warningFlag = true;
 		opt.useBaseline = false;
+	}
+
+	opt.getRandomAxRotAndZShift = OP.getBool("getRandomAxRotAndZShift");
+	if (OP.fail()) {
+		opt.warningMessages += "getRandomAxRotAndZShift not specified, defaulting to false";
+		opt.warningFlag = true;
+		opt.getRandomAxRotAndZShift = false;
 	}
 	//Energy Terms to Output
 	opt.energyLandscapeTerms = OP.getStringVector("energyLandscapeTerms");

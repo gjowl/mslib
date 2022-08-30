@@ -40,8 +40,8 @@ void deleteTerminalInteractions(System &_sys, BBOptions &_opt, int _firstResiNum
 // for running on chtc
 void setupOutputDirectoryChtc(BBOptions &_opt){
 	//_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.sequence;
-	_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.uniprotName;
-	//_opt.outputDir = "/exports/home/gloiseau/mslib/trunk_AS/" + _opt.sequence + "_" + to_string(_opt.seed);
+	//_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.uniprotName;
+	_opt.outputDir = "/exports/home/gloiseau/mslib/trunk_AS/" + _opt.sequence + "_" + to_string(_opt.seed);
 	string cmd = "mkdir -p " + _opt.outputDir;
 	if (system(cmd.c_str())){
 		cout << "Unable to make directory" << endl;
@@ -509,6 +509,8 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 	opt.allowed.push_back("axialRotation");
 	opt.allowed.push_back("zShift");
 	opt.allowed.push_back("thread");
+	opt.allowed.push_back("threadStart");
+	opt.allowed.push_back("threadEnd");
 	opt.allowed.push_back("greedyCycles");
 	
 	//Shift Size
@@ -516,6 +518,11 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 	opt.allowed.push_back("deltaCross");
 	opt.allowed.push_back("deltaAx");
 	opt.allowed.push_back("deltaZ");
+	opt.allowed.push_back("deltaXLimit");
+	opt.allowed.push_back("deltaCrossLimit");
+	opt.allowed.push_back("deltaAxLimit");
+	opt.allowed.push_back("deltaZLimit");
+	opt.allowed.push_back("decreaseMoveSize");
 	
 	//Monte Carlo variables
 	opt.allowed.push_back("MCCycles");
@@ -534,6 +541,7 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 	opt.allowed.push_back("useAlaAtCTerminus");
 	opt.allowed.push_back("deleteTerminalInteractions");
 	opt.allowed.push_back("uniprotName");
+	opt.allowed.push_back("dockHelices");
 
 	//Begin Parsing through the options
 	OptionParser OP;
@@ -632,11 +640,24 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 		opt.warningFlag = true;
 		opt.zShift = 2;
 	}
+	// thread parameters
 	opt.thread = OP.getInt("thread");
 	if (OP.fail()) {
 		opt.warningMessages += "thread not specified, defaulting to 25\n";
 		opt.warningFlag = true;
 		opt.thread = 25;
+	}
+	opt.threadStart = OP.getInt("threadStart");
+	if (OP.fail()) {
+		opt.warningMessages += "threadStart not specified, defaulting to 17\n";
+		opt.warningFlag = true;
+		opt.threadStart = 17;
+	}
+	opt.threadEnd = OP.getInt("threadEnd");
+	if (OP.fail()) {
+		opt.warningMessages += "threadEnd not specified, defaulting to 30\n";
+		opt.warningFlag = true;
+		opt.threadEnd = 30;
 	}
 	//TODO: maybe not in this code, but I feel like changing the thread of a sequence to see how it interacts at different threads could be helpful?
 
@@ -701,29 +722,70 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 	}
 
 	//Shift Size
+	opt.dockHelices = OP.getBool("dockHelices");
+	if (OP.fail()) {
+		opt.warningMessages += "dockHelices not specified using true\n";
+		opt.warningFlag = true;
+		opt.dockHelices = true;
+	}
 	opt.deltaX = OP.getDouble("deltaX");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaX not specified using 0.5\n";
 		opt.warningFlag = true;
-		opt.deltaX = 0.1;
+		opt.deltaX = 0.5;
 	}
+	
 	opt.deltaCross = OP.getDouble("deltaCross");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaCross not specified using 5.0\n";
 		opt.warningFlag = true;
-		opt.deltaCross = 1.0;
+		opt.deltaCross = 5.0;
 	}
 	opt.deltaAx = OP.getDouble("deltaAx");
 	if (OP.fail()) {
-		opt.warningMessages += "deltaAx not specified using 4.0\n";
+		opt.warningMessages += "deltaAx not specified using 5.0\n";
 		opt.warningFlag = true;
-		opt.deltaAx = 1.0;
+		opt.deltaAx = 5.0;
 	}
 	opt.deltaZ = OP.getDouble("deltaZ");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaZ not specified using 0.5\n";
 		opt.warningFlag = true;
-		opt.deltaZ = 0.1;
+		opt.deltaZ = 0.5;
+	}
+	opt.deltaXLimit = OP.getDouble("deltaXLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaXLimit not specified using 0.1\n";
+		opt.warningFlag = true;
+		opt.deltaXLimit = 0.1;
+	}
+	opt.deltaCrossLimit = OP.getDouble("deltaCrossLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaCrossLimit not specified using 1.0\n";
+		opt.warningFlag = true;
+		opt.deltaCrossLimit = 1.0;
+	}
+	opt.deltaAxLimit = OP.getDouble("deltaAxLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaAxLimit not specified using 1.0\n";
+		opt.warningFlag = true;
+		opt.deltaAxLimit = 1.0;
+	}
+	opt.deltaZLimit = OP.getDouble("deltaZLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaZLimit not specified using 0.1\n";
+		opt.warningFlag = true;
+		opt.deltaZLimit = 0.1;
+	}
+	opt.decreaseMoveSize = OP.getBool("decreaseMoveSize");
+	if (OP.fail()) {
+		opt.warningMessages += "decreaseMoveSize not specified using true\n";
+		opt.warningFlag = true;
+		opt.decreaseMoveSize = true;
+	}
+	if (opt.dockHelices == false){
+		opt.deltaX = opt.deltaX*(-1);
+		opt.deltaXLimit = opt.deltaXLimit*(-1);
 	}
     //Parameter files
 	opt.topFile = OP.getString("topFile");
@@ -863,6 +925,7 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 		opt.warningMessages += "uniprotName not specified using " + opt.uniprotName + "\n";
 		opt.warningFlag = true;
 	}
+	
 	opt.rerunConf = OP.getConfFile();
 	return opt;
 }
