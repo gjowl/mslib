@@ -60,10 +60,10 @@ vector<uint> getAllInterfacePositions(BBOptions &_opt, vector<int> &_rotamerSamp
 vector<uint> getInterfacePositions(BBOptions &_opt, vector<int> &_rotamerSamplingPerPosition);
 void localXShiftDocking(System &_sys, BBOptions &_opt, double &_bestEnergy, double _monomerEnergy, SelfPairManager &_spm, 
  System &_helicalAxis, Transforms &_trans, int _thread, double &_savedXShift, ofstream &_out);
-void localBackboneRepack(BBOptions &_opt, System &_sys, map<string,double> _geometries, SelfPairManager &_spm,
+void localBackboneRepack(BBOptions &_opt, System &_sys, map<string,double> _geometries, vector<double> _densities, SelfPairManager &_spm,
  System &_helicalAxis, Transforms &_trans, RandomNumberGenerator &_RNG, map<string,double> _monomerEnergyByTerm,
  double _monomerEnergy, int _thread, ofstream &_out, ofstream &_eout);
-void monteCarloRepack(BBOptions &_opt, System &_sys, SelfPairManager &_spm, map<string,double> _geometries,
+void monteCarloRepack(BBOptions &_opt, System &_sys, SelfPairManager &_spm, map<string,double> _geometries, vector<double> _densities,
  System &_helicalAxis, Transforms &_trans, RandomNumberGenerator &_RNG, double _prevBestEnergy,
  map<string,double> _monomerEnergyByTerm, double _monomerEnergy, int _thread, ofstream &_out, ofstream &_eout);
 void checkOptionErrors(BBOptions &_opt);	
@@ -71,9 +71,8 @@ void getCurrentMoveSizes(BBOptions &_opt, double &_currTemp, double &_endTemp, d
  bool &_decreaseMoveSize);
 double increaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease);
 double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease);
-void threadDocking(BBOptions &_opt, System &_helicalAxis, int _thread, double _crossingAngle, double _monomerEnergy, 
-map<double, map<double, map<string, double>>> &_threadGeometries, map<double, map<double, vector<uint>>> &_threadStateVector,
-map<string,double> _monomerEnergyByTerm, ofstream &_eout);
+void threadDocking(BBOptions &_opt, System &_helicalAxis, int _thread, int _repackNumber, double _crossingAngle, double _monomerEnergy, 
+ map<string,double> _monomerEnergyByTerm, ofstream &_eout);
 void getAxialRotAndZShift(BBOptions &_opt, map<string,double> &_geometries);
 
 /***********************************
@@ -136,6 +135,8 @@ int main(int argc, char *argv[]){
 	rerun << opt.rerunConf << endl;
 	rerun.close();
 
+	eout << "Energy,Thread,xShift,CrossingAngle,AxialRotation,zShift,axialRotDensity,zShiftDensity" << endl;
+
 	/******************************************************************************
 	 *                     === HELICAL AXIS SET UP ===
 	 ******************************************************************************/
@@ -152,8 +153,6 @@ int main(int argc, char *argv[]){
 	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
 	
 	// threading for docking at all threads
-	map<double, map<double, map<string, double>>> threadGeometries;
-	map<double, map<double, vector<uint>>> threadStateVector;
 	
 	PDBWriter writer;
 	/******************************************************************************
@@ -171,17 +170,25 @@ int main(int argc, char *argv[]){
     map<string,double> monomerEnergyByTerm;
     double monomerEnergy = computeMonomerEnergy(sys, opt, RNG, monomerEnergyByTerm, mout);
     //double monomerEnergy = computeMonomerEnergy1(opt, startGeom, 25, monomerEnergyByTerm, mout);
-	for (uint i=opt.threadStart; i<opt.threadEnd; i++){
-		vector<thread> dockThreads;
-		//cout << "Docking Thread: " << i << endl;
-		for (uint j=0; j<opt.crossAngle.size();j++){
-			double crossingAngle = opt.crossAngle[j]; 
-			//cout << "Angle: " << crossingAngle << endl;
-			dockThreads.push_back(thread(threadDocking, ref(opt), ref(helicalAxis), i, crossingAngle, monomerEnergy,
-			 ref(threadGeometries), ref(threadStateVector), ref(monomerEnergyByTerm), ref(eout)));
+	for (uint n=0; n<opt.numRepacks; n++){
+		// make directory for repack summaries
+		string cmd = "mkdir -p " + opt.outputDir + "/RepackSummaries_" + to_string(n);
+		if (system(cmd.c_str())){
+			cout << "Unable to make directory" << endl;
+			exit(0);
 		}
-		for (auto &t : dockThreads){
-			t.join();
+		for (uint i=opt.threadStart; i<opt.threadEnd; i++){
+			vector<thread> dockThreads;
+			//cout << "Docking Thread: " << i << endl;
+			for (uint j=0; j<opt.crossAngle.size();j++){
+				double crossingAngle = opt.crossAngle[j]; 
+				//cout << "Angle: " << crossingAngle << endl;
+				dockThreads.push_back(thread(threadDocking, ref(opt), ref(helicalAxis), i, n, crossingAngle, monomerEnergy,
+				 ref(monomerEnergyByTerm), ref(eout)));
+			}
+			for (auto &t : dockThreads){
+				t.join();
+			}
 		}
 	}
 	// use this instead, rid of anything with too high of an energy before here to trim how much of the backbone space to search here
@@ -229,10 +236,10 @@ int main(int argc, char *argv[]){
 //Functions
 //TODO: to add this into the design code, I think I just need to add in a mask here to the optimizer
 // set a number of cycles
-void getAxialRotAndZShift(BBOptions &_opt, map<string,double> &_geometries){
+void getAxialRotAndZShift(BBOptions &_opt, map<string,double> &_geometries, vector<double> &_densities){
 	// setup random number generator object
 	RandomNumberGenerator RNG;
-	RNG.setSeed(_opt.seed); 
+	RNG.setSeed(_opt.seed);// not sure if this works without the seed 0 (time based seed)
 	// Setup file reader
 	Reader reader(_opt.geometryDensityFile);
 	reader.open();
@@ -247,16 +254,17 @@ void getAxialRotAndZShift(BBOptions &_opt, map<string,double> &_geometries){
 	vector<string> tokens = MslTools::tokenize(lines[geometryLine], "\t");//xShift, crossingAngle, axialRotation, zShift, angleDistDensity, axialRotationDensity, zShiftDensity
 	_geometries["axialRotation"] = MslTools::toDouble(tokens[2]);
 	_geometries["zShift"] = MslTools::toDouble(tokens[3]);
-	//double axialRotationDensity = MslTools::toDouble(tokens[5]);
-	//double zShiftDensity = MslTools::toDouble(tokens[6]);
+	double axialRotationDensity = MslTools::toDouble(tokens[5]);
+	double zShiftDensity = MslTools::toDouble(tokens[6]);
+	_densities.push_back(axialRotationDensity);
+	_densities.push_back(zShiftDensity);
 }
 
-void threadDocking(BBOptions &_opt, System &_helicalAxis, int _thread, double _crossingAngle, double _monomerEnergy, 
- map<double, map<double, map<string, double>>> &_threadGeometries, map<double, map<double, vector<uint>>> &_threadStateVector,
+void threadDocking(BBOptions &_opt, System &_helicalAxis, int _thread, int _repackNumber, double _crossingAngle, double _monomerEnergy, 
  map<string,double> _monomerEnergyByTerm, ofstream &_eout){
 	// setup the output file
 	ofstream sout;  // summary file output
-	string soutfile = _opt.outputDir + "/repackSummary_" + to_string(_thread) + "_" + to_string(_crossingAngle) + ".out";
+	string soutfile = _opt.outputDir + "/RepackSummaries_" + to_string(_repackNumber) + "/repackSummary_" + to_string(_thread) + "_" + to_string(_crossingAngle) + ".out";
 	sout.open(soutfile.c_str());
 	
 	// Set up object used for transformations
@@ -269,11 +277,14 @@ void threadDocking(BBOptions &_opt, System &_helicalAxis, int _thread, double _c
 	System helicalAxis;
 	helicalAxis.readPdb(_opt.helicalAxis);
 
+	vector<double> densities;
 	if (_opt.getRandomAxAndZ){
-		getAxialRotAndZShift(_opt, geometries);
+		getAxialRotAndZShift(_opt, geometries, densities);
 	} else {
 		geometries["axialRotation"] = _opt.axialRotation;
 		geometries["zShift"] = _opt.zShift;
+		densities.push_back(0);
+		densities.push_back(0);
 	}
 	geometries["xShift"] = _opt.xShift;
 	geometries["crossingAngle"] = _crossingAngle;
@@ -343,6 +354,7 @@ void threadDocking(BBOptions &_opt, System &_helicalAxis, int _thread, double _c
 	sout << spm.getSummary(startStateVec) << endl;
 	
 	double savedXShift = _opt.xShift;
+	sys.saveAltCoor("savedBestState");
 	localXShiftDocking(sys, _opt, totalEnergy, _monomerEnergy, spm, helicalAxis, trans, _thread, savedXShift, sout);
 	//localCrossingAngleSearch(sys, _opt, totalEnergy, _monomerEnergy, spm, _helicalAxis, trans, _thread, savedXShift);
 	//localAxialRotSearch(sys, _opt, totalEnergy, _monomerEnergy, spm, _helicalAxis, trans, _thread, savedXShift);
@@ -355,9 +367,9 @@ void threadDocking(BBOptions &_opt, System &_helicalAxis, int _thread, double _c
 	double crossingAngle = geometries["crossingAngle"];
 	double axialRotation = geometries["axialRotation"];
 	if (totalEnergy > _opt.energyCutoff){
-		sout << "Thread " << _thread << " energy " << totalEnergy << " at crossingAngle " << crossingAngle << " and xShift " << xShift << " is higher than cutoff (100), skip" << endl;
+		sout << "Thread " << _thread << " energy " << totalEnergy << " at crossingAngle " << crossingAngle << " and xShift " << xShift << " is higher than cutoff " << _opt.energyCutoff << ", skip" << endl;
 	} else {
-		sout << "Thread " << _thread << " energy " << totalEnergy << " at crossingAngle " << crossingAngle << " and xShift " << xShift << " is lower than cutoff (100), continue" << endl;
+		sout << "Thread " << _thread << " energy " << totalEnergy << " at crossingAngle " << crossingAngle << " and xShift " << xShift << " is lower than cutoff " << _opt.energyCutoff << ", continue" << endl;
 		double bestEnergy = startDimer-_monomerEnergy;
 
 		/******************************************************************************
@@ -365,134 +377,15 @@ void threadDocking(BBOptions &_opt, System &_helicalAxis, int _thread, double _c
 		 ******************************************************************************/
 		sout << "Starting Geometry" << endl;
 		sout << setiosflags(ios::fixed) << setprecision(3) << "xShift: " << xShift << " crossingAngle: " << crossingAngle << " axialRotation: " << axialRotation << " zShift: " << zShift << endl << endl;
-		sout << "Current Best Energy: " << bestEnergy-_monomerEnergy << endl;
-
-		double bestRepackEnergy = sys.calcEnergy();
-		vector<uint> bestRepackState;
+		sout << "Current Best Energy: " << bestEnergy << endl;
 
 		// Local backbone monte carlo repacks
-		localBackboneRepack(_opt, sys, geometries, spm, helicalAxis, trans, RNG, _monomerEnergyByTerm, _monomerEnergy, _thread, sout, _eout);
+		localBackboneRepack(_opt, sys, geometries, densities, spm, helicalAxis, trans, RNG, _monomerEnergyByTerm, _monomerEnergy, _thread, sout, _eout);
 	}
 	sout.close();
 }
 
-void threadSearchBackboneOptimization(BBOptions &_opt, System &_helicalAxis, int _thread, map<string,double> _geometries, vector<uint> _stateVector,
- map<string,double> &_monomerEnergyByTerm, double _monomerEnergy, ofstream &_sout, ofstream &_eout){
-	
-	// Set up object used for transformations
-	Transforms trans;
-	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
-	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
-	
-	System helicalAxis;
-	helicalAxis.readPdb(_opt.helicalAxis);
-	// get the starting geometry using poly glycine
-	System startGeom;
-	setGly69ToStartingGeometry(_opt,_geometries,startGeom,helicalAxis,trans);
-	
-	double xShift = _geometries["xShift"];
-	double zShift = _geometries["zShift"];
-	double crossingAngle = _geometries["crossingAngle"];
-	double axialRotation = _geometries["axialRotation"];
-	
-	// setup the output file
-	ofstream sout;  // summary file output
-	string soutfile = _opt.outputDir + "/backboneOptimizerSummary_" + to_string(_thread) + "_" + to_string(crossingAngle) + ".out";
-	sout.open(soutfile.c_str());
-	sout << "Geometry: " << endl;
-	sout << " -xShift: " << xShift << endl;
-	sout << " -zShift: " << zShift << endl;
-	sout << " -crossingAngle: " << crossingAngle << endl;
-	sout << " -axialRotation: " << axialRotation << endl << endl;
-
-	/******************************************************************************
-	 *                       === SETUP STARTING GEOMETRY ===
-	 ******************************************************************************/
-	// set up the system for the input sequence
-	System sys;
-	string polySeq = convertToPolymerSequence(_opt.sequence, _thread);
-	prepareSystem(_opt, sys, startGeom, polySeq);
-	moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), _helicalAxis.getAtomPointers(), trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
-
-	// Initialize PDBWriter
-	PDBWriter writer;
-	writer.open(_opt.outputDir + "/geom_" + to_string(_thread) + "_" + to_string(crossingAngle) + "_" + to_string(xShift) + ".pdb");
-	writer.write(sys.getAtomPointers(), true, false, true);
-	writer.close();
-
-	/******************************************************************************
-	 *       === IDENTIFY INTERFACIAL POSITIONS AND GET ROTAMER ASSIGNMENTS ===
-	 ******************************************************************************/
-	// initialize the object for loading rotamers into our _system
-	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
-
-	// Assign number of rotamers by residue burial
-	loadRotamers(sys, sysRot, _opt.SL);
-	
-	// setup random number generator object
-	RandomNumberGenerator RNG;
-	RNG.setSeed(_opt.seed); 
-
-	sys.buildAtoms();
-	// _optimize Initial Starting Position 
-	SelfPairManager spm;
-	spm.seed(RNG.getSeed());
-	spm.setSystem(&sys);
-	spm.setVerbose(false);
-	//spm.getMinStates()[0];
-	spm.updateWeights();
-	spm.setOnTheFly(true);// changed to make more similar to CATM
-	spm.saveEnergiesByTerm(true);
-	//spm.calculateEnergies();
-	
-	// Repack dimer
-	//repackSideChains(spm, _opt.greedyCycles);
-	//vector<uint> startStateVec = spm.getMinStates()[0];
-	//double currentEnergy = spm.getMinBound()[0];
-	sys.setActiveRotamers(_stateVector);
-
-	// calculate the energy of the system
-	double startDimer = sys.calcEnergy();
-	double totalEnergy = startDimer-_monomerEnergy;
-	sout << "Energies " << _thread << endl;
-	sout << " -Dimer Energy: " << startDimer << endl;
-	sout << " -Monomer Energy: " << _monomerEnergy << endl;
-	sout << " -Total Energy: " << totalEnergy << endl;
-	sout << spm.getSummary(_stateVector) << endl;
-	if (totalEnergy > _opt.energyCutoff){
-		sout << "Thread " << _thread << " energy " << totalEnergy << " at crossingAngle " << crossingAngle << " and xShift " << xShift << " is higher than cutoff (100), skip" << endl;
-	} else {
-		sout << "Thread " << _thread << " energy " << totalEnergy << " at crossingAngle " << crossingAngle << " and xShift " << xShift << " is lower than cutoff (100), continue" << endl;
-	
-		sys.saveAltCoor("startingState");
-		//_helicalAxis.saveAltCoor("startingAxis");
-		sys.saveAltCoor("savedBestState");
-		//_helicalAxis.saveAltCoor("BestAxis");
-	
-		/******************************************************************************
-		 *                     === X SHIFT REPACKS ===
-		 ******************************************************************************/
-		double bestEnergy = startDimer-_monomerEnergy;
-		double savedXShift = xShift;
-
-		/******************************************************************************
-		 *               === LOCAL BACKBONE MONTE CARLO REPACKS ===
-		 ******************************************************************************/
-		sout << "Starting Geometry" << endl;
-		sout << setiosflags(ios::fixed) << setprecision(3) << "xShift: " << savedXShift << " crossingAngle: " << crossingAngle << " axialRotation: " << axialRotation << " zShift: " << zShift << endl << endl;
-		sout << "Current Best Energy: " << bestEnergy-_monomerEnergy << endl;
-
-		double bestRepackEnergy = sys.calcEnergy();
-		vector<uint> bestRepackState;
-
-		// Local backbone monte carlo repacks
-		localBackboneRepack(_opt, sys, _geometries, spm, helicalAxis, trans, RNG, _monomerEnergyByTerm, _monomerEnergy, _thread, sout, _eout);
-	}
-	sout.close();
-}
-
-void localBackboneRepack(BBOptions &_opt, System &_sys, map<string,double> _geometries, SelfPairManager &_spm,
+void localBackboneRepack(BBOptions &_opt, System &_sys, map<string,double> _geometries, vector<double> _densities, SelfPairManager &_spm,
  System &_helicalAxis, Transforms &_trans, RandomNumberGenerator &_RNG, map<string,double> _monomerEnergyByTerm,
  double _monomerEnergy, int _thread, ofstream &_out, ofstream &_eout){
 	_out << "==============================================" << endl;
@@ -508,7 +401,7 @@ void localBackboneRepack(BBOptions &_opt, System &_sys, map<string,double> _geom
 	double prevBestEnergy = _sys.calcEnergy();
 
 	// do backbone geometry repacks
-	monteCarloRepack(_opt, _sys, _spm, _geometries, _helicalAxis, _trans, _RNG, prevBestEnergy, 
+	monteCarloRepack(_opt, _sys, _spm, _geometries, _densities, _helicalAxis, _trans, _RNG, prevBestEnergy, 
 	 _monomerEnergyByTerm, _monomerEnergy, _thread, _out, _eout);
   
     //outputs a pdb file for the structure 
@@ -519,7 +412,7 @@ void localBackboneRepack(BBOptions &_opt, System &_sys, map<string,double> _geom
 	writer.close();
 }
 
-void monteCarloRepack(BBOptions &_opt, System &_sys, SelfPairManager &_spm, map<string,double> _geometries,
+void monteCarloRepack(BBOptions &_opt, System &_sys, SelfPairManager &_spm, map<string,double> _geometries, vector<double> _densities,
  System &_helicalAxis, Transforms &_trans, RandomNumberGenerator &_RNG, double _prevBestEnergy,
  map<string,double> _monomerEnergyByTerm, double _monomerEnergy, int _thread, ofstream &_out, ofstream &_eout){
 	// Local Backbone Monte Carlo Repacks Time setup	
@@ -667,7 +560,9 @@ void monteCarloRepack(BBOptions &_opt, System &_sys, SelfPairManager &_spm, map<
 	SasaCalculator sasa(_sys.getAtomPointers());
 	sasa.calcSasa();
 	double dimerSasa = sasa.getTotalSasa();
-	
+
+	double axialRotDensity = _densities[0];
+	double zShiftDensity = _densities[1];	
 	if (_opt.useElec == false){
 		_out << "Sequence, thread, Energy, Dimer, Monomer, SASA, vdw, monoVdw, hbond, monoHbond, imm1, monoImm1, imm1Ref, monoImm1Ref, startXShift, finalXShift, startCrossingAngle, finalCrossingAngle, startAxialRot, finalAxialRot, startZShift, finalZShift" << endl;
 		_out << _opt.sequence << ',' << _thread << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',';
@@ -690,7 +585,7 @@ void monteCarloRepack(BBOptions &_opt, System &_sys, SelfPairManager &_spm, map<
 		sout << _opt.axialRotation << ',' << axialRotation << ',' << _opt.zShift << ',' << zShift << endl;
 		sout << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
 		sout << MCMngr.getReasonCompleted() << endl;
-		_eout << finalEnergy << ',' << _thread << ',' << xShift << ',' << crossingAngle << endl;
+		_eout << finalEnergy << ',' << _thread << ',' << xShift << ',' << crossingAngle << ',' << axialRotation << ',' << zShift << ',' << axialRotDensity << ',' << zShiftDensity << endl;
 	} else {
 		double elec = _spm.getStateEnergy(MCOBest, "CHARMM_ELEC");
 		double monomerElec =_monomerEnergyByTerm.find("CHARMM_ELEC")->second;
@@ -715,7 +610,7 @@ void monteCarloRepack(BBOptions &_opt, System &_sys, SelfPairManager &_spm, map<
 		sout << _opt.axialRotation << ',' << axialRotation << ',' << _opt.zShift << ',' << zShift << endl;
 		sout << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
 		sout << MCMngr.getReasonCompleted() << endl;
-		_eout << finalEnergy << ',' << _thread << ',' << xShift << ',' << crossingAngle << endl;
+		_eout << finalEnergy << ',' << _thread << ',' << xShift << ',' << crossingAngle << ',' << axialRotation << ',' << zShift << ',' << axialRotDensity << ',' << zShiftDensity << endl;
 	}
 	sout << "Thread " << _thread << " finished. Energy: " << finalEnergy << endl;
 	sout.close();
@@ -1053,7 +948,7 @@ void localXShiftDocking(System &_sys, BBOptions &_opt, double &_bestEnergy, doub
 		// get current energy
 		currentEnergy = _spm.getMinBound()[0]-_monomerEnergy;
 
-		// Check if this is the lowest energvoid threadDocking(BBOptions &_opt, System &_helicalAxis, int _thread, double _crossingAngle, double _monomerEnergy, 
+		// Check if this is the lowest energy
 		if (currentEnergy < _bestEnergy) {
 			_bestEnergy = currentEnergy;
 			_savedXShift = xShift;

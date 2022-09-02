@@ -93,6 +93,7 @@ using namespace std;
 	vector<double> crossAngle;
 	bool getRandomAxAndZ;
 	double energyCutoff;
+	int numRepacks;
 
 	// 
 

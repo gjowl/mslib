@@ -193,3 +193,37 @@
 	   Disk (KB)            :   375000   375000    489246
 	   Memory (MB)          :     1281      367       367
 ...
+000 (246.001.000) 09/02 11:43:26 Job submitted from host: <128.104.119.249:9618?addrs=128.104.119.249-9618+[--1]-9618&noUDP&sock=1398_7d7d_3>
+...
+001 (246.001.000) 09/02 11:43:44 Job executing on host: <192.168.1.107:9618?CCBID=128.104.119.253:9618%3faddrs%3d128.104.119.253-9618+[--1]-9618%26noUDP%26sock%3dcollector#228&addrs=192.168.1.107-9618+[--1]-9618&noUDP&sock=878_d03e_3>
+...
+006 (246.001.000) 09/02 11:43:53 Image size of job updated: 375000
+	131  -  MemoryUsage of job (MB)
+	133136  -  ResidentSetSize of job (KB)
+...
+006 (246.001.000) 09/02 11:48:54 Image size of job updated: 1312404
+	1282  -  MemoryUsage of job (MB)
+	1312404  -  ResidentSetSize of job (KB)
+...
+006 (246.001.000) 09/02 11:53:55 Image size of job updated: 1312800
+	1283  -  MemoryUsage of job (MB)
+	1312800  -  ResidentSetSize of job (KB)
+...
+006 (246.001.000) 09/02 11:58:55 Image size of job updated: 1312932
+	1283  -  MemoryUsage of job (MB)
+	1312932  -  ResidentSetSize of job (KB)
+...
+004 (246.001.000) 09/02 15:00:29 Job was evicted.
+	(0) Job was not checkpointed.
+		Usr 0 05:50:09, Sys 0 00:00:11  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	378685728  -  Run Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated
+	   Cpus                 :                 1         1
+	   Disk (KB)            :   375000   375000    489246
+	   Memory (MB)          :     1283      367       367
+...
+009 (246.001.000) 09/02 15:00:29 Job was aborted by the user.
+	via condor_rm (by user gloiseau)
+...

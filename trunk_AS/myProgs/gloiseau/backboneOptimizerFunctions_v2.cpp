@@ -901,6 +901,7 @@ BBOptions BBParseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("crossAngle");
 	opt.allowed.push_back("getRandomAxAndZ");
 	opt.allowed.push_back("energyCutoff");
+	opt.allowed.push_back("numRepacks");
 	
 	//Rotamers
 	opt.allowed.push_back("SL");
@@ -1321,6 +1322,12 @@ BBOptions BBParseOptions(int _argc, char * _argv[]){
 		opt.warningMessages += "energyCutoff not specified, defaulting to 100\n";
 		opt.warningFlag = true;
 		opt.energyCutoff = 100;
+	}
+	opt.numRepacks = OP.getInt("numRepacks");
+	if (OP.fail()) {
+		opt.warningMessages += "numRepacks not specified, defaulting to 5\n";
+		opt.warningFlag = true;
+		opt.numRepacks = 5;
 	}
 	opt.rerunConf = OP.getConfFile();
 	return opt;

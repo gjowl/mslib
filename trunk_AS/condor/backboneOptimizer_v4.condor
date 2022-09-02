@@ -13,5 +13,5 @@ configFile = /exports/home/gloiseau/mslib/trunk_AS/config/backboneOptimizer_v4.c
 #request_cpus = 4
 
 #Runs
-Arguments = "--config $(configFile) --seed $(seed) --energyCutoff 10 --thread $(thread) --negRot true --threadStart 20 --threadEnd 21 --MCCycles $(MCCycles) --getRandomAxAndZ $(randAxAndZ) --negAngle true --negRot true --sequence $(sequence) --xShift $(xShift) --crossingAngle $(crossingAngle) --axialRotation $(axialRotation) --zShift $(zShift) --verbose true"
-queue seed,sequence,thread,xShift,zShift,axialRotation,crossingAngle,MCCycles,randAxAndZ from /exports/home/gloiseau/mslib/trunk_AS/backboneOptimizerThreadSearch_test2.csv
+Arguments = "--config $(configFile) --seed $(seed) --energyCutoff 0 --thread $(thread) --negRot true --threadStart 20 --threadEnd 21 --MCCycles $(MCCycles) --getRandomAxAndZ $(randAxAndZ) --negAngle true --negRot true --sequence $(sequence) --xShift $(xShift) --crossingAngle $(crossingAngle) --axialRotation $(axialRotation) --zShift $(zShift) --verbose true"
+queue seed,sequence,thread,xShift,zShift,axialRotation,crossingAngle,MCCycles,randAxAndZ from /exports/home/gloiseau/mslib/trunk_AS/backboneOptimizerThreadSearch_testSingle.csv
