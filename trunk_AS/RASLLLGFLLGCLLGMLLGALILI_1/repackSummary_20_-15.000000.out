@@ -1,0 +1,27 @@
+***STARTING GEOMETRY:***
+axialRotation: -95
+crossingAngle: -15
+xShift: 9.454
+zShift: 6.843
+SL: SL95.00
+Thread 20
+ -Dimer Energy: 133664
+ -Monomer Energy: -321.096
+ -Total Energy: 133985
+================  ======================
+Interaction Type    Energy                
+================  ======================
+CHARMM_IMM1                     8.732737
+CHARMM_IMM1REF               -192.708501
+CHARMM_VDW                 133905.004561
+SCWRL4_HBOND                  -57.181008
+================  ======================
+Total                      133663.847789
+================  ======================
+
+xShift: 9.354 energy: 1.6081e+06
+xShift: 9.254 energy: 283225
+xShift: 9.154 energy: 4.71236e+06
+Energy increasing above global lowest energy... (currently -321.096)
+Thread 20 Best Energy at x shift: 133985 at 9.454
+Thread 20 energy 133985 at crossingAngle -15 and xShift 9.454 is higher than cutoff (100), skip

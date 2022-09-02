@@ -101,6 +101,9 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
  System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _prevBestEnergy,
  uint _rep, ofstream &_out);
+void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
+ bool &_decreaseMoveSize);
+double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease);
 
 // output functions
 void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingPerPosition, map<string,map<string,double>> _sequenceEnergyMap,
@@ -117,12 +120,11 @@ void outputTime(auto _start, string _descriptor, bool _beginFunction, ofstream &
 		cout << _descriptor << " started. Time: " << ctime(&endTimeFormatted);
 		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
 	} else {
-		_out << _descriptor << " started. Time: " << ctime(&endTimeFormatted);
+		_out << _descriptor << " finished. Time: " << ctime(&endTimeFormatted);
 		_out << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
 		cout << _descriptor << " finished. Time: " << ctime(&endTimeFormatted);
 		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
 	}
-	
 }
 
 // help functions
@@ -269,10 +271,10 @@ int main(int argc, char *argv[]){
 	// get the starting geometry using polyglycine
 	System startGeom;
 	setGly69ToStartingGeometry(opt,startGeom,helicalAxis,axisA,axisB,ori,xAxis,zAxis,trans);
-	PDBWriter writer;
-	writer.open(opt.pdbOutputDir + "/startGeom.pdb");
-	writer.write(startGeom.getAtomPointers(), true, false, true);
-	writer.close();
+	//PDBWriter writer;
+	//writer.open(opt.pdbOutputDir + "/startGeom.pdb");
+	//writer.write(startGeom.getAtomPointers(), true, false, true);
+	//writer.close();
 	
 	/******************************************************************************
 	 *       === IDENTIFY INTERFACIAL POSITIONS AND GET ROTAMER ASSIGNMENTS ===
@@ -301,7 +303,9 @@ int main(int argc, char *argv[]){
 	System sys;
 	prepareSystem(opt, sys, startGeom, interfacePolySeq);
 	checkIfAtomsAreBuilt(sys, err); // check to verify that all atoms have coordinates
-	moveZCenterOfCAMassToOrigin(sys.getAllAtomPointers(), helicalAxis.getAtomPointers(), trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
+	// redacted on 2022-9-1: printed the pdbs of the helical axis and doing this moves
+	// it a small bit more down that is unnecessary and slightly out of membrane 
+	//moveZCenterOfCAMassToOrigin(sys.getAllAtomPointers(), helicalAxis.getAtomPointers(), trans);
 	
 	Chain &chainA = sys.getChain("A");
 	int seqLength = chainA.positionSize();
@@ -344,11 +348,15 @@ int main(int argc, char *argv[]){
 	vector<uint> bestState = runSCMFToGetStartingSequence(sys, opt, RNG, rotamerSamplingString, variablePositionString,
 	 seqs, allInterfacePositions, sequenceEnergyMapBest, sequenceVectorMap, sequenceEntropyMap, sout);
 	outputTime(start, "Self Consistent Mean Field", false, sout);
-
+	
 	// set system to the best sequence or input sequence 
 	sys.setActiveRotamers(bestState);
 	double bestEnergy = sys.calcEnergy();
-	
+	sys.getEnergySet()->eraseTerm("CHARMM_VDW");
+	sys.getEnergySet()->eraseTerm("CHARMM_IMM1");
+	sys.getEnergySet()->eraseTerm("CHARMM_IMM1REF");
+	sys.getEnergySet()->eraseTerm("SCWRL4_HBOND");
+
 	/******************************************************************************
 	 *      === MONTE CARLO TO RANDOMIZE SEQUENCES FROM BEST SCMF STATE ===
 	 ******************************************************************************/
@@ -1204,7 +1212,7 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ui
 	// set up the system for the input sequence
 	System sys;
 	prepareSystem(_opt, sys, _startGeom, PS);
-	moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
+	//moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
 	
 	// initialize the object for loading rotamers into our _system
 	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
@@ -1310,6 +1318,13 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 	double currentEnergy = _prevBestEnergy;
 	double startDimer = _prevBestEnergy;
 
+	// setup variables for shifts: ensures that they start from the proper values for every repack and not just the final value from the initial repack
+	bool decreaseMoveSize = _opt.decreaseMoveSize;
+	double deltaX = _opt.deltaX;
+	double deltaCross = _opt.deltaCross;
+	double deltaAx = _opt.deltaAx;
+	double deltaZ = _opt.deltaZ;
+
 	PDBWriter writer;
 	// loop through the MC cycles for backbone repacks
 	while(!MCMngr.getComplete()) {
@@ -1331,28 +1346,28 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 		//======================================
 		if (moveToPreform == 0) {
 			//deltaZShift = getStandardNormal(RNG1) * 0.1;
-			deltaZShift = getStandardNormal(_RNG) * _opt.deltaZ;
+			deltaZShift = getStandardNormal(_RNG) * deltaZ;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPreform);
 		} else if (moveToPreform == 1) {
 		//===========================
 		//===== Axial Rotation ======
 		//===========================
 			//deltaAxialRotation = getStandardNormal(_RNG1) * 1.0;
-			deltaAxialRotation = getStandardNormal(_RNG) * _opt.deltaAx;
+			deltaAxialRotation = getStandardNormal(_RNG) * deltaAx;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPreform);
 		} else if (moveToPreform == 2) {
 		//==================================
 		//====== Local Crossing Angle ======
 		//==================================
 			//deltaCrossingAngle = getStandardNormal(_RNG1) * 1.0;
-			deltaCrossingAngle = getStandardNormal(_RNG) * _opt.deltaCross;
+			deltaCrossingAngle = getStandardNormal(_RNG) * deltaCross;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPreform);
 		} else if (moveToPreform == 3) {
 		//==============================================
 		//====== X shift (Interhelical Distance) =======
 		//==============================================
 			//deltaXShift = getStandardNormal(_RNG1) * 0.1;
-			deltaXShift = getStandardNormal(_RNG) * _opt.deltaX;
+			deltaXShift = getStandardNormal(_RNG) * deltaX;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPreform);
 		}
 		
@@ -1378,15 +1393,10 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 			MCOBest = MCOFinal;
 			
 			// if accept, decrease the value of the moves by the sigmoid function
-			double endTemp = MCMngr.getCurrentT();
-			double decreaseMultiplier = endTemp/startTemp;
-			_opt.deltaAx *= decreaseMultiplier;
-			_opt.deltaX *= decreaseMultiplier;
-			_opt.deltaZ *= decreaseMultiplier;
-			_opt.deltaCross *= decreaseMultiplier;
-			//cout << decreaseMultiplier << endl; // although this rounds when I print, the value still holds when I multiply, so should be good here
-			//cout << _opt.deltaAx << " " << _opt.deltaX << " " << _opt.deltaZ << " " << _opt.deltaCross << endl;
-		
+			if (_opt.decreaseMoveSize == true){
+				double endTemp = MCMngr.getCurrentT();
+				getCurrentMoveSizes(_opt, startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, decreaseMoveSize);
+			}
 			if (_opt.verbose){
 				cout << "MCAccept " << counter <<  " xShift: " << xShift << " crossingAngle: " << crossingAngle << " axialRotation: " << axialRotation << " zShift: " << zShift << " energy: " << currentEnergy << endl;
 			}
@@ -1436,3 +1446,31 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 	_out << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
 }
 
+void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
+ bool &_decreaseMoveSize) {
+	double decreaseMultiplier = _endTemp/_currTemp;
+	bool decreaseX = true;
+	bool decreaseCross = true;
+	bool decreaseAx = true;
+	bool decreaseZ = true;
+	_deltaX = decreaseMoveSize(_deltaX, _opt.deltaXLimit, decreaseMultiplier, decreaseX);
+	_deltaCross = decreaseMoveSize(_deltaCross, _opt.deltaCrossLimit, decreaseMultiplier, decreaseCross);
+	_deltaAx = decreaseMoveSize(_deltaAx, _opt.deltaAxLimit, decreaseMultiplier, decreaseAx);
+	_deltaZ = decreaseMoveSize(_deltaZ, _opt.deltaZLimit, decreaseMultiplier, decreaseZ);	
+	if (decreaseX == false && decreaseCross == false && decreaseAx == false && decreaseZ == false){
+		_decreaseMoveSize = false;
+	}
+}
+
+double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease) {
+	// edited to make sure that the move size is decreasing properly down to the move limit: add in detail here
+	double diffMoveSize = _moveSize - _moveLimit;
+	double moveDecrease = diffMoveSize * _decreaseMultiplier;
+	double newMoveSize = _moveSize - moveDecrease;
+	if (newMoveSize > _moveLimit){
+		return newMoveSize;
+	} else {
+		_decrease = false;
+		return _moveSize;
+	}
+}

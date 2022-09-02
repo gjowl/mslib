@@ -1,0 +1,67 @@
+***STARTING GEOMETRY:***
+axialRotation: -95
+crossingAngle: -30
+xShift: 9.454
+zShift: 6.843
+SL: SL95.00
+Thread 20
+ -Dimer Energy: -305.754
+ -Monomer Energy: -321.096
+ -Total Energy: 15.3421
+================  ======================
+Interaction Type    Energy                
+================  ======================
+CHARMM_IMM1                     3.239655
+CHARMM_IMM1REF               -192.407317
+CHARMM_VDW                    -59.405562
+SCWRL4_HBOND                  -57.181008
+================  ======================
+Total                        -305.754232
+================  ======================
+
+xShift: 9.354 energy: 16.3211
+xShift: 9.254 energy: 13.6107
+xShift: 9.154 energy: 12.5194
+xShift: 9.054 energy: 11.8853
+xShift: 8.954 energy: 11.1577
+xShift: 8.854 energy: 10.3485
+xShift: 8.754 energy: 9.65342
+xShift: 8.654 energy: 8.82749
+xShift: 8.554 energy: 8.00217
+xShift: 8.454 energy: 7.12289
+xShift: 8.354 energy: 6.0442
+xShift: 8.254 energy: 5.09395
+xShift: 8.154 energy: 4.22923
+xShift: 8.054 energy: 3.41493
+xShift: 7.954 energy: 2.25147
+xShift: 7.854 energy: 1.64029
+xShift: 7.754 energy: -0.228083
+xShift: 7.654 energy: -0.594307
+xShift: 7.554 energy: -1.50583
+xShift: 7.454 energy: -3.0467
+xShift: 7.354 energy: -4.57325
+xShift: 7.254 energy: -9.58404
+xShift: 7.154 energy: -12.8368
+xShift: 7.054 energy: -15.6251
+xShift: 6.954 energy: -18.0919
+xShift: 6.854 energy: -20.2421
+xShift: 6.754 energy: -22.013
+xShift: 6.654 energy: -23.2903
+xShift: 6.554 energy: -24.3777
+xShift: 6.454 energy: -25.1542
+xShift: 6.354 energy: -24.2298
+Energy increasing above global lowest energy... (currently -321.096)
+Thread 20 Best Energy at x shift: -25.1542 at 6.454
+Thread 20 energy -25.1542 at crossingAngle -30 and xShift 6.454 is lower than cutoff (100), continue
+Starting Geometry
+xShift: 6.454 crossingAngle: -30.000 axialRotation: -95.000 zShift: 6.843
+
+Current Best Energy: 336.439
+==============================================
+ Performing Local Monte Carlo Backbone Repack 
+==============================================
+Sequence, thread, Energy, Dimer, Monomer, SASA, vdw, monoVdw, hbond, monoHbond, imm1, monoImm1, imm1Ref, monoImm1Ref, startXShift, finalXShift, startCrossingAngle, finalCrossingAngle, startAxialRot, finalAxialRot, startZShift, finalZShift
+RASLLLGFLLGCLLGMLLGALILI,20,-28.511,-349.608,-321.096,3951.157,-89.805,-47.059,-69.654,-57.181,3.145,23.934,-193.293,-240.790,9.454,6.552,-31.000,-29.687,-95.000,-96.044,6.843,7.201
+Monte Carlo repack complete. Time: 2458.000 seconds
+
+Completed all cycles. Accepted 500/532

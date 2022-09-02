@@ -1,0 +1,27 @@
+current tilt: 15 current rotation: 0 Energy: -313.886
+current tilt: 15 current rotation: 90 Energy: -311.471
+current tilt: 15 current rotation: 180 Energy: -313.421
+current tilt: 15 current rotation: 270 Energy: -315.672
+current tilt: 30 current rotation: 0 Energy: -308.406
+current tilt: 30 current rotation: 90 Energy: -298.112
+current tilt: 30 current rotation: 180 Energy: -300.906
+current tilt: 30 current rotation: 270 Energy: -311.291
+current tilt: 45 current rotation: 0 Energy: -299.641
+current tilt: 45 current rotation: 90 Energy: -290.229
+current tilt: 45 current rotation: 180 Energy: -290.671
+current tilt: 45 current rotation: 270 Energy: -302.523
+================  ======================  ===============
+Interaction Type  Energy                  Interactions   
+================  ======================  ===============
+CHARMM_IMM1                    12.966699          16709
+CHARMM_IMM1REF               -121.651034            126
+CHARMM_VDW                    -23.529421          37166
+SCWRL4_HBOND                  -28.590504            738
+================  ======================  ===============
+Total                        -160.804261          54739
+================  ======================  ===============
+
+CHARMM_IMM1 25.9334
+CHARMM_IMM1REF -243.302
+CHARMM_VDW -47.0588
+SCWRL4_HBOND -57.181

@@ -21,6 +21,7 @@ using namespace std;
 	string hbondFile; //hydrogen bonding energy file
 	string rotLibFile; //rotamer library file
 	string pdbFile; //initial coordinates for helix backbone: pdb file
+	string geometryDensityFile; //geometries to choose for design with...density
 
 	// Geometry
 	double xShift;
@@ -76,6 +77,9 @@ using namespace std;
 	string runNumber;
 	bool negAngle;
 	bool negRot;
+	
+	// load rotamers
+	string SL; //number of rotamers
 
 	//version 2: I think it should work for both versions
 	bool useElec;
@@ -84,8 +88,11 @@ using namespace std;
 	string helicalAxis;
 	int backboneLength;
 	vector<string> deleteTerminalInteractions;
-	string uniprotName;
+	string uniprotAccession;
 	bool dockHelices;
+	vector<double> crossAngle;
+	bool getRandomAxAndZ;
+	double energyCutoff;
 
 	// 
 

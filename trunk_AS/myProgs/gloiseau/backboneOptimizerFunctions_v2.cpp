@@ -21,12 +21,12 @@ void deleteTerminalInteractions(System &_sys, BBOptions &_opt, int _firstResiNum
 			// rid of hbonds from first 3 positions
 			if(_firstResiNum <= i) {
 				atoms += positions[i]->getAtomPointers();
-				cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
+				//cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
 			}
 			// rid of hbonds from last 3 positions
 			if(_lastResiNum > i) {
 				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
-				cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
+				//cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
 			}
 		}
 	}
@@ -40,8 +40,8 @@ void deleteTerminalInteractions(System &_sys, BBOptions &_opt, int _firstResiNum
 // for running on chtc
 void setupOutputDirectoryChtc(BBOptions &_opt){
 	//_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.sequence;
-	//_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.uniprotName;
-	_opt.outputDir = "/exports/home/gloiseau/mslib/trunk_AS/" + _opt.sequence + "_" + to_string(_opt.seed);
+	_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.uniprotAccession;
+	//_opt.outputDir = "/exports/home/gloiseau/mslib/trunk_AS/" + _opt.sequence + "_" + to_string(_opt.seed);
 	string cmd = "mkdir -p " + _opt.outputDir;
 	if (system(cmd.c_str())){
 		cout << "Unable to make directory" << endl;
@@ -106,6 +106,360 @@ void setupOutputDirectory(BBOptions &_opt){
 /***********************************
  *repack functions
  ***********************************/
+double computeMonomerEnergy1(BBOptions& _opt, System &_sys, int _thread, map<string,double> &_monomerEnergyByTerm, ofstream &_mout) {
+	Transforms trans;
+	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
+	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
+
+	//string polySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, _opt.thread);//fixed monomer calculation issue on 05_12_2021
+	string polySeq = generateMonomerPolymerSequenceFromSequence(_opt.sequence, _thread);
+	PolymerSequence PS(polySeq);
+
+	// Declare new system
+	System monoSys;
+	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile, _opt.solvFile);
+	CSBMono.setBuildTerm("CHARMM_ELEC", false);
+	CSBMono.setBuildTerm("CHARMM_ANGL", false);
+	CSBMono.setBuildTerm("CHARMM_BOND", false);
+	CSBMono.setBuildTerm("CHARMM_DIHE", false);
+	CSBMono.setBuildTerm("CHARMM_IMPR", false);
+	CSBMono.setBuildTerm("CHARMM_U-BR", false);
+	CSBMono.setBuildTerm("CHARMM_IMM1REF", true);
+	CSBMono.setBuildTerm("CHARMM_IMM1", true);
+
+	CSBMono.setSolvent("MEMBRANE");
+	CSBMono.setIMM1Params(15, 10);
+
+	CSBMono.setBuildNonBondedInteractions(false);
+	if (!CSBMono.buildSystem(PS)){
+		cerr << "Unable to build system from " << polySeq << endl;
+	}
+
+	/******************************************************************************
+	 *                         === INITIALIZE POLYGLY ===
+	 ******************************************************************************/
+	// Read in Gly-69 to use as backbone coordinate template
+	//CRDReader cRead;
+	//cRead.open(_opt.backboneCrd);
+	//if(!cRead.read()) {
+	//	cerr << "Unable to read " << _opt.backboneCrd << endl;
+	//	exit(0);
+	//}
+	//cRead.close();
+	PDBReader reader;
+	reader.open(_opt.backboneFile);
+	if (!reader.read()){
+		cerr << "Unable to read " << _opt.backboneFile << endl;
+		exit(0);
+	}
+	reader.close();
+
+	AtomPointerVector& glyAPV = reader.getAtomPointers();//*/
+
+	/******************************************************************************
+	 *                         === INITIALIZE POLYGLY ===
+	 ******************************************************************************/
+	monoSys.assignCoordinates(glyAPV,false);
+	monoSys.buildAllAtoms();
+
+	SystemRotamerLoader monoRot(monoSys, _opt.rotLibFile);
+	monoRot.defineRotamerSamplingLevels();
+
+	// Add hydrogen bond term
+	HydrogenBondBuilder monohb(monoSys, _opt.hbondFile);
+	monohb.buildInteractions(50);
+
+	/*****************************************************************************
+	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
+	 ******************************************************************************/
+	int firstPos = 0;
+    int lastPos = monoSys.positionSize();
+    deleteTerminalInteractions(monoSys,_opt,firstPos,lastPos);
+
+	/******************************************************************************
+	 *                     === INITIAL VARIABLE SET UP ===
+	 ******************************************************************************/
+	EnergySet* monoEset = monoSys.getEnergySet();
+	monoEset->setAllTermsInactive();
+	monoEset->setTermActive("CHARMM_IMM1REF", true);
+	monoEset->setTermActive("CHARMM_IMM1", true);
+	monoEset->setTermActive("CHARMM_VDW", true);
+	monoEset->setTermActive("SCWRL4_HBOND", true);
+
+	monoEset->setWeight("CHARMM_VDW", 1);
+	monoEset->setWeight("SCWRL4_HBOND", 1);
+	monoEset->setWeight("CHARMM_IMM1REF", 1);
+	monoEset->setWeight("CHARMM_IMM1", 1);
+
+	/******************************************************************************
+	 *                     === HELICAL AXIS SET UP ===
+	 ******************************************************************************/
+	string axis = "\
+ATOM      1  O   DUM A   1       0.000   0.000   0.000  1.00  0.00           P\n\
+ATOM      2  Z   DUM A   1       0.000   0.000   1.000  1.00  0.00           O\n\
+TER\n\
+ATOM      3  O   DUM B   1       0.000   0.000   0.000  1.00  0.00           P\n\
+ATOM      4  Z   DUM B   1       0.000   0.000   1.000  1.00  0.00           O\n\
+TER\n\
+END";
+
+	PDBReader readAxis;
+	if(!readAxis.read(axis)) {
+		cout << "Unable to read axis" << endl;
+		exit(0);
+	}
+
+	System helicalAxis;
+	helicalAxis.addAtoms(readAxis.getAtomPointers());
+
+	AtomPointerVector &axisA = helicalAxis.getChain("A").getAtomPointers();
+	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
+
+	/*****************************************************************************
+	 *              === LOAD ROTAMERS FOR MONOMER & SET-UP SPM ===
+	 ******************************************************************************/
+	loadRotamers(monoSys, monoRot, "SL95.00");
+	CSBMono.updateNonBonded(10,12,50);
+	
+	// setup random number generator object
+	RandomNumberGenerator RNG;
+	RNG.setSeed(_opt.seed); 
+
+	// Optimize Initial Starting Position (using Baseline to get back to original result)
+	SelfPairManager monoSpm;
+	monoSpm.seed(RNG.getSeed());
+	monoSpm.setSystem(&monoSys);
+	monoSpm.setVerbose(false);
+	monoSpm.getMinStates()[0];
+	monoSpm.updateWeights();
+	monoSpm.setOnTheFly(true);
+	monoSpm.saveEnergiesByTerm(true);
+	monoSpm.calculateEnergies();
+
+	repackSideChains(monoSpm, _opt.greedyCycles);
+	monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
+
+	monoSys.saveAltCoor("savedBestState");
+	helicalAxis.saveAltCoor("BestAxis");
+
+	/******************************************************************************
+	 *                     === INITIAL VARIABLE SET UP ===
+	 ******************************************************************************/
+	AtomPointerVector &chainA = monoSys.getAtomPointers();
+
+	/******************************************************************************
+	 *                     === SHIFT HELICES INTO MEMBRANE ===
+	 ******************************************************************************/
+	CartesianPoint moveAxisBOneAngstrom;
+	moveAxisBOneAngstrom.setCoor(1.0, 0.0, 0.0);
+	trans.translate(axisB, moveAxisBOneAngstrom);
+
+	monoSys.calcEnergy();
+
+	// move center of mass to origin
+	//moveZCenterOfCAMassToOrigin(chainA, helicalAxis.getAtomPointers(), trans);
+	AtomSelection sel(chainA);
+	monoSys.calcEnergy();
+
+	// move center of mass to origin
+	AtomPointerVector & caApV = sel.select("name CA");
+	double centerHelix = 0.0;
+	for(int i = 0; i < caApV.size(); i++) {
+		centerHelix += (caApV[i]->getCoor()).getZ();
+	}
+	centerHelix = -1.0 * centerHelix/double(caApV.size());
+
+	CartesianPoint interDistVect;
+	interDistVect.setCoor(0.0, 0.0, centerHelix);
+	trans.translate(chainA, interDistVect);
+
+	// Initial Z Shift move -5A down
+	CartesianPoint zUnitVector;
+	zUnitVector.setCoor(0.0, 0.0, 1.0);
+
+	CartesianPoint move5Down = zUnitVector * -5.0;
+	trans.translate(chainA, move5Down);
+	double bestZ = -5.0;
+
+	monoSys.calcEnergy();
+
+	// Repack side chains
+	monoSpm.setOnTheFly(1);
+	monoSpm.calculateEnergies();
+    monoSpm.runGreedyOptimizer(_opt.greedyCycles);
+
+	double currentEnergy = monoSpm.getMinBound()[0];
+	double bestEnergy = currentEnergy;
+	monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
+	monoSys.saveAltCoor("savedBestMonomer");
+	helicalAxis.saveAltCoor("BestMonomerAxis");
+	//_fout << "current Z: -5 Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
+
+	// Test -5 to +5A shifts in Membrane
+	for(int i=0; i<=10; i++) {
+
+		trans.translate(chainA, zUnitVector);
+
+		//double currentZ = -5.0 + ((i+1)*1.0);
+		monoSpm.calculateEnergies();
+		monoSpm.runGreedyOptimizer(_opt.greedyCycles);
+		currentEnergy = monoSpm.getMinBound()[0];
+		//_fout << "current Z: " << currentZ << " Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
+
+		if(currentEnergy < bestEnergy) {
+			bestEnergy = currentEnergy;
+			monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
+			monoSys.saveAltCoor("savedBestMonomer");
+			bestZ = -5.0 + ((i+1)*1.0);
+		}
+	}
+
+	// Test at different tilts and rotations
+	monoSys.applySavedCoor("savedBestMonomer");
+	helicalAxis.applySavedCoor("BestMonomerAxis");
+
+	monoSys.saveAltCoor("bestZ");
+	helicalAxis.saveAltCoor("bestZ");
+
+	double bestTilt = 0.0;
+	double bestRotation = 0.0;
+	double monoTilt = 0.0;
+	double monoAxialRotation = 0.0;
+	for(int i=1; i<=3; i++) { // test at 3 tilts: 15, 30 and 45 degrees
+		//==================================
+		//====== Membrane Tilt ======
+		//==================================
+		monoSys.applySavedCoor("bestZ");
+		helicalAxis.applySavedCoor("bestZ");
+
+		monoTilt = i * 15;
+		trans.rotate(chainA, monoTilt, axisA(0).getCoor(), axisB(0).getCoor());
+		trans.rotate(axisA, monoTilt, axisA(0).getCoor(), axisB(0).getCoor());
+		for(int j=0; j<=3; j++) { // test at 4 rotations 0, 90, 180 and 270 degrees
+			//==================================
+			//====== Axial Rot ======
+			//==================================
+			monoAxialRotation = j * 90.0;
+
+			monoSpm.calculateEnergies();
+			monoSpm.runGreedyOptimizer(_opt.greedyCycles);
+			currentEnergy = monoSpm.getMinBound()[0];
+			//_fout << "current tilt: " << monoTilt << " current rotation: " << monoAxialRotation << " Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
+			//monoSys.writePdb("mono_" + MslTools::doubleToString(monoTilt) + "_" + MslTools::doubleToString(monoAxialRotation) + ".pdb");
+
+			if(currentEnergy < bestEnergy) {
+				bestEnergy = currentEnergy;
+				bestTilt = monoTilt;
+				bestRotation = monoAxialRotation;
+				monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
+				monoSys.saveAltCoor("savedBestMonomer");
+				helicalAxis.saveAltCoor("BestMonomerAxis");
+			}
+
+			trans.rotate(chainA, 90.0, axisA(0).getCoor(), axisA(1).getCoor());
+
+		}
+	}
+
+	//MonteCarloManager MCMngr(1000.0, 0.5, _opt.MCCycles, MonteCarloManager::EXPONENTIAL, _opt.MCMaxRejects);
+	MonteCarloManager MCMngr(0.5, 0.5, 100, MonteCarloManager::EXPONENTIAL, 5);
+	MCMngr.setEner(bestEnergy);
+
+	double zShift = bestZ;
+	double crossingAngle = bestTilt;
+	double axialRotation = bestRotation;
+	unsigned int counter = 0;
+
+	while(!MCMngr.getComplete()) {
+
+		monoSys.applySavedCoor("savedBestMonomer");
+		helicalAxis.applySavedCoor("BestMonomerAxis");
+
+		int moveToPreform = RNG.getRandomInt(2);
+
+		double deltaZShift = 0.0;
+		double deltaTilt = 0.0;
+		double deltaAxialRotation = 0.0;
+
+		//======================================
+		//====== Z Shift ======
+		//======================================
+		if (moveToPreform == 0) {
+			deltaZShift = getStandardNormal(RNG) * 1.0;
+			CartesianPoint translateA = axisA(1).getCoor() - axisA(0).getCoor(); // vector minus helical center
+			translateA = translateA.getUnit() * deltaZShift; // unit vector of helical _axis times the amount to shift by
+			trans.translate(chainA, translateA);
+			//_fout << setiosflags(ios::fixed) << setprecision(3)<< "Zshift: " << deltaZShift << endl;
+
+		} else if (moveToPreform == 1) {
+		//==================================
+		//====== Axial Rot ======
+		//==================================
+			deltaAxialRotation = getStandardNormal(RNG) * 20.0;
+			trans.rotate(chainA, deltaAxialRotation, axisA(0).getCoor(), axisA(1).getCoor());
+			//_fout << setiosflags(ios::fixed) << setprecision(3)<< "axial: " << deltaAxialRotation << endl;
+
+		} else if (moveToPreform == 2) {
+		//==================================
+		//====== Membrane Tilt ======
+		//==================================
+			deltaTilt = getStandardNormal(RNG) * 10;
+			trans.rotate(chainA, deltaTilt, axisA(0).getCoor(), axisB(0).getCoor());
+			trans.rotate(axisA, deltaTilt, axisA(0).getCoor(), axisB(0).getCoor());
+			//_fout << setiosflags(ios::fixed) << setprecision(3)<< "tilt: " << deltaTilt << endl;
+		}
+
+		// Run Optimization
+		// Run repack every N steps
+		if (counter % 10 == 0) {
+			//_fout << "repack." << endl;
+			monoSpm.calculateEnergies();
+			monoSpm.runGreedyOptimizer(_opt.greedyCycles);
+
+			currentEnergy = monoSpm.getMinBound()[0];
+		} else {
+			currentEnergy = monoSys.calcEnergy();
+			//_fout << monoEset->getSummary() << endl;
+		}
+
+		if (!MCMngr.accept(currentEnergy)) {
+			//_fout << "state rejected   energy: " << currentEnergy << endl;
+		} else {
+			monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
+			monoSys.saveAltCoor("savedBestMonomer");
+			helicalAxis.saveAltCoor("BestMonomerAxis");
+			bestEnergy = currentEnergy;
+
+			crossingAngle = crossingAngle + deltaTilt;
+			axialRotation = axialRotation + deltaAxialRotation;
+			zShift = zShift +  deltaZShift;
+
+			//_fout << setiosflags(ios::fixed) << setprecision(3) << "MCAccept   axial Tilt: " << crossingAngle << " zShift: " << zShift << " axialRot: " << axialRotation << " energy: " << currentEnergy*2 << endl;
+		}
+		counter++;
+	}
+
+	/******************************************************************************
+	 *               === PRINT OUT MONOMER / STORE ENERGIES ===
+	 ******************************************************************************/
+	//Calculate Monomer energy for output
+	monoSys.applySavedCoor("savedBestMonomer");
+	helicalAxis.applySavedCoor("BestMonomerAxis");
+        monoSpm.runGreedyOptimizer(_opt.greedyCycles);
+	vector<uint> stateVec = monoSpm.getMinStates()[0];
+	monoSys.setActiveRotamers(stateVec);
+	double monomerEnergy = monoSpm.getStateEnergy(stateVec)*2;
+
+	_mout << "Monomer = " << monomerEnergy << endl;
+	
+	_monomerEnergyByTerm = getEnergyByTermDoubled(monoSys.getEnergySet()); // must double the energy, as only computed energy for 1 helix
+
+	for(map<string,double>::iterator it = _monomerEnergyByTerm.begin(); it != _monomerEnergyByTerm.end(); it++) {
+		_mout << it->first << " " << it->second << endl;
+	}
+	return monomerEnergy;
+}
+
 double computeMonomerEnergy(System & _sys, BBOptions & _opt, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _mout){
 
 	time_t startTimeMono, endTimeMono;
@@ -160,6 +514,7 @@ END";
 	CSBMono.setSolvent("MEMBRANE");
 	CSBMono.setIMM1Params(15, 10);
 	CSBMono.buildSystemFromPDB(inputChain.getAtomPointers());
+	
 
 	SystemRotamerLoader monoRot(monoSys, _opt.rotLibFile);
 	monoRot.defineRotamerSamplingLevels();
@@ -204,7 +559,7 @@ END";
 	monoEset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
 	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
 	monoEset->setWeight("CHARMM_IMM1", _opt.weight_solv);
-	_mout << "Monomer - VDW weight: " << monoEset->getWeight("CHARMM_VDW") << " HB weight: " << monoEset->getWeight("SCWRL4_HBOND") << " IMM1REF weight: " << monoEset->getWeight("CHARMM_IMM1REF") << " IMM1 weight: " << monoEset->getWeight("CHARMM_IMM1") << endl;
+	//_mout << "Monomer - VDW weight: " << monoEset->getWeight("CHARMM_VDW") << " HB weight: " << monoEset->getWeight("SCWRL4_HBOND") << " IMM1REF weight: " << monoEset->getWeight("CHARMM_IMM1REF") << " IMM1 weight: " << monoEset->getWeight("CHARMM_IMM1") << endl;
 	if (_opt.useElec == true){
 		monoEset->setTermActive("CHARMM_ELEC", true);
 		monoEset->setWeight("CHARMM_ELEC", _opt.weight_elec);
@@ -261,7 +616,7 @@ END";
 	monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
 	monoSys.saveAltCoor("savedBestMonomer");
 	helicalAxis.saveAltCoor("BestMonomerAxis");
-	_mout << "current Z: -5 Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
+	//_mout << "current Z: -5 Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
 
 	// Test -5 to +5A shifts in Membrane
 	for(int i=0; i<=10; i++) {
@@ -272,7 +627,7 @@ END";
 		monoSpm.calculateEnergies();
 		monoSpm.runGreedyOptimizer(_opt.greedyCycles);
 		currentEnergy = monoSpm.getMinBound()[0];
-		_mout << "current Z: " << currentZ << " Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
+		//_mout << "current Z: " << currentZ << " Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
 
 		if(currentEnergy < bestEnergy) {
 			bestEnergy = currentEnergy;
@@ -403,7 +758,7 @@ END";
 			axialRotation = axialRotation + deltaAxialRotation;
 			zShift = zShift +  deltaZShift;
 
-			_mout << setiosflags(ios::fixed) << setprecision(3) << "MCAccept   axial Tilt: " << crossingAngle << " zShift: " << zShift << " axialRot: " << axialRotation << " energy: " << currentEnergy*2 << endl;
+			//_mout << setiosflags(ios::fixed) << setprecision(3) << "MCAccept   axial Tilt: " << crossingAngle << " zShift: " << zShift << " axialRot: " << axialRotation << " energy: " << currentEnergy*2 << endl;
 		}
 
 		counter++;
@@ -411,7 +766,7 @@ END";
 
 	time(&endTimeMono);
 	diffTimeMono = difftime (endTimeMono, startTimeMono);
-	_mout << endl << "Total Monomer Time: " << setiosflags(ios::fixed) << setprecision(0) << diffTimeMono << " seconds" << endl;
+	//_mout << endl << "Total Monomer Time: " << setiosflags(ios::fixed) << setprecision(0) << diffTimeMono << " seconds" << endl;
 
 	/******************************************************************************
 	 *               === PRINT OUT MONOMER / STORE ENERGIES ===
@@ -456,7 +811,7 @@ END";
  *  ======= CONFIG FILE OPTIONS =======
  *
  ****************************************/
-BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
+BBOptions BBParseOptions(int _argc, char * _argv[]){
 
 	/******************************************
 	 *  Pass the array of argument and the name of
@@ -492,6 +847,7 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 	//Input Files
 	opt.allowed.push_back("topFile");
 	opt.allowed.push_back("parFile");
+	opt.allowed.push_back("geometryDensityFile");
 	opt.allowed.push_back("solvFile");
 	opt.allowed.push_back("rotLibFile");
 	opt.allowed.push_back("hbondFile");
@@ -534,14 +890,20 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 	opt.allowed.push_back("negAngle");
 	opt.allowed.push_back("negRot");
 
-	//version 2
+	//version 2 and up
 	opt.allowed.push_back("useElec");
 	opt.allowed.push_back("backboneFile");
 	opt.allowed.push_back("helicalAxis");
 	opt.allowed.push_back("useAlaAtCTerminus");
 	opt.allowed.push_back("deleteTerminalInteractions");
-	opt.allowed.push_back("uniprotName");
+	opt.allowed.push_back("uniprotAccession");
 	opt.allowed.push_back("dockHelices");
+	opt.allowed.push_back("crossAngle");
+	opt.allowed.push_back("getRandomAxAndZ");
+	opt.allowed.push_back("energyCutoff");
+	
+	//Rotamers
+	opt.allowed.push_back("SL");
 
 	//Begin Parsing through the options
 	OptionParser OP;
@@ -814,6 +1176,13 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 		}
 	}
 
+	opt.geometryDensityFile = OP.getString("geometryDensityFile");
+	if (OP.fail()) {
+		opt.warningMessages += "Unable to determine geometryDensityFile, defaulting to original density file\n";
+		opt.warningFlag = true;
+		opt.geometryDensityFile = "/exports/home/gloiseau/mslib/trunk_AS/designFiles/2021_09_28_geometryDensityFile.txt";
+	}
+
 	opt.solvFile = OP.getString("solvFile");
 	if (OP.fail()) {
 		string envVar = "MSL_CHARMM_SOLV";
@@ -919,13 +1288,40 @@ BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 		opt.warningMessages += "deleteTerminalInteractions not specified\n";
 		opt.warningFlag = true;
 	}
-	opt.uniprotName = OP.getString("uniprotName");
+	opt.uniprotAccession = OP.getString("uniprotAccession");
 	if (OP.fail()) {
-		opt.uniprotName = "PROTEIN_UNK";
-		opt.warningMessages += "uniprotName not specified using " + opt.uniprotName + "\n";
+		opt.uniprotAccession = "PROTEIN_UNK";
+		opt.warningMessages += "uniprotAccession not specified using " + opt.uniprotAccession + "\n";
+		opt.warningFlag = true;
+	}
+	opt.crossAngle = OP.getMultiDouble("crossAngle");
+	if (OP.fail()) {
+		opt.crossAngle.push_back(opt.crossingAngle);
+		opt.warningMessages += "crossAngle not specified\n";
 		opt.warningFlag = true;
 	}
 	
+	//rotlevel
+	opt.SL = OP.getString("SL");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "SL not specified, default to SL70\n";
+		opt.SL = "SL70.00";
+	} else {
+		opt.SL = "SL"+opt.SL;
+	}
+	opt.getRandomAxAndZ = OP.getBool("getRandomAxAndZ");
+	if (OP.fail()) {
+		opt.warningMessages += "getRandomAxAndZ not specified using false\n";
+		opt.warningFlag = true;
+		opt.getRandomAxAndZ = false;
+	}
+	opt.energyCutoff = OP.getDouble("energyCutoff");
+	if (OP.fail()) {
+		opt.warningMessages += "energyCutoff not specified, defaulting to 100\n";
+		opt.warningFlag = true;
+		opt.energyCutoff = 100;
+	}
 	opt.rerunConf = OP.getConfFile();
 	return opt;
 }

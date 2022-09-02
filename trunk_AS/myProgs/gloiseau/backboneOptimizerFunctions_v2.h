@@ -53,11 +53,12 @@ void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
  *monomer functions
  ***********************************/
 double computeMonomerEnergy(System & _sys, BBOptions &_opt, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _fout);
+double computeMonomerEnergy1(BBOptions& _opt, System &_sys, int _thread, map<string,double> &_monomerEnergyByTerm, ofstream &_mout);
 
 /***********************************
  *option parser
  ***********************************/
 // parse config file for given options
-BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults);
+BBOptions BBParseOptions(int _argc, char * _argv[]);
 
 # endif

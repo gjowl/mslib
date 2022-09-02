@@ -1,0 +1,31 @@
+Program Start time: Wed Aug 31 16:10:59 2022
+
+***STARTING GEOMETRY:***
+xShift:        9.2
+crossingAngle: 25
+axialRotation: 40
+zShift:        4
+
+Amino acids for design: LEU ALA SER VAL ILE THR TRP TYR PHE GLY
+Interface: 
+A: {25}LEU-ACE LEU LEU LEU LEU LEU [LEU ALA SER VAL ILE THR TRP TYR PHE GLY] [LEU ALA SER VAL ILE THR TRP TYR PHE GLY] LEU LEU [LEU ALA SER VAL ILE THR TRP TYR PHE GLY] [LEU ALA SER VAL ILE THR TRP TYR PHE GLY] LEU [LEU ALA SER VAL ILE THR TRP TYR PHE GLY] [LEU ALA SER VAL ILE THR TRP TYR PHE GLY] LEU LEU LEU ILE LEU {45}ILE-CT2
+B: {25}LEU-ACE LEU LEU LEU LEU LEU [LEU ALA SER VAL ILE THR TRP TYR PHE GLY] [LEU ALA SER VAL ILE THR TRP TYR PHE GLY] LEU LEU [LEU ALA SER VAL ILE THR TRP TYR PHE GLY] [LEU ALA SER VAL ILE THR TRP TYR PHE GLY] LEU [LEU ALA SER VAL ILE THR TRP TYR PHE GLY] [LEU ALA SER VAL ILE THR TRP TYR PHE GLY] LEU LEU LEU ILE LEU {45}ILE-CT2
+
+PolyLeu Backbone:   LLLLLLLLLLLLLLLLLLILI
+Variable Positions: 000000110011011000000
+Rotamers Levels:    033012103201210230231
+Identify Interface finished. Time: Wed Aug 31 16:11:03 2022
+Elapsed time of program: 4.88842s/0.0814737min
+
+bblength: 21
+rotsize: 42
+rotsize/2: 21
+Self Consistent Mean Field started. Time: Wed Aug 31 16:11:13 2022
+Elapsed time of program: 14.5199s/0.241998min
+
+Running Self Consistent Mean Field
+SCMF Time: 16 seconds
+Final Combinations: 5.99984e+58
+Self Consistent Mean Field finished. Time: Wed Aug 31 16:51:27 2022
+Elapsed time of program: 2428.79s/40.4798min
+

@@ -1,4 +1,0 @@
-Sequence, thread, Energy, Dimer, Monomer, SASA, vdw, monoVdw, hbond, monoHbond, imm1, monoImm1, imm1Ref, monoImm1Ref, startXShift, finalXShift, startCrossingAngle, finalCrossingAngle, startAxialRot, finalAxialRot, startZShift, finalZShift
-RASLLLSLLLGALLILLLAALILI,25,82.8348,-270.507,-353.342,4642.09,-7.64546,-68.0728,-72.4802,-72.4802,2.4178,20.8544,-192.799,-233.643,10.4,10.2874,-40.998,-40.781,-81.951,-82.055,6.245,6.26415
-Monte Carlo repack complete. Time: 2293 seconds
-

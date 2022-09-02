@@ -1,0 +1,17 @@
+#Submit file for backboneOptimizer and other design code that I write will probably look similar
+batch_name   = backboneOptimizer
+outDir       = /exports/home/gloiseau/mslib/trunk_AS
+
+executable   = /exports/home/gloiseau/mslib/trunk_AS/bin/backboneOptimizer_v4
+output       = $(outDir)/$(sequence)_$(seed).out
+log          = $(outDir)/$(sequence)_$(seed).log
+error        = $(outDir)/$(sequence)_$(seed).err
+stream_output = TRUE
+stream_error  = TRUE
+#Info
+configFile = /exports/home/gloiseau/mslib/trunk_AS/config/backboneOptimizer_v4.config
+#request_cpus = 4
+
+#Runs
+Arguments = "--config $(configFile) --seed $(seed) --energyCutoff 10 --thread $(thread) --negRot true --threadStart 20 --threadEnd 21 --MCCycles $(MCCycles) --getRandomAxAndZ $(randAxAndZ) --negAngle true --negRot true --sequence $(sequence) --xShift $(xShift) --crossingAngle $(crossingAngle) --axialRotation $(axialRotation) --zShift $(zShift) --verbose true"
+queue seed,sequence,thread,xShift,zShift,axialRotation,crossingAngle,MCCycles,randAxAndZ from /exports/home/gloiseau/mslib/trunk_AS/backboneOptimizerThreadSearch_test2.csv

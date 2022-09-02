@@ -146,6 +146,11 @@ struct Options{
 	double deltaAx;
 	double deltaCross;
 	double deltaX;
+	double deltaXLimit; 
+	double deltaCrossLimit;
+	double deltaAxLimit;
+	double deltaZLimit;
+	bool decreaseMoveSize;
 
 
 	vector<string> deleteTerminalInteractions;

@@ -1,11 +1,11 @@
 #Submit file for a large scale design test
-batch_name   = sequenceDesign
-baseDir      = /data02/gloiseau/Sequence_Design_Project/vdwSequenceDesign/$(batch_name)
+batch_name   = seqDesign
+outDir       = /exports/home/gloiseau/mslib/trunk_AS
 
 executable   = /exports/home/gloiseau/mslib/trunk_AS/bin/seqDesign
-output       = $(baseDir)/out/$(Process).out
-log          = $(baseDir)/log/$(Process).log
-error        = $(baseDir)/err/$(Process).err
+output       = $(outDir)/1.out
+log          = $(outDir)/1.log
+error        = $(outDir)/1.err
 stream_output = TRUE
 stream_error  = TRUE
 
@@ -13,3 +13,5 @@ stream_error  = TRUE
 configFile = /exports/home/gloiseau/mslib/trunk_AS/config/seqDesign.config
 
 #Runs
+arguments = "--config $(configFile)"
+queue

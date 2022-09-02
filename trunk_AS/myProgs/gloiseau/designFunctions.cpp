@@ -1823,6 +1823,11 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("deltaCross");
 	opt.allowed.push_back("deltaAx");
 	opt.allowed.push_back("deltaZ");
+	opt.allowed.push_back("deltaXLimit");
+	opt.allowed.push_back("deltaCrossLimit");
+	opt.allowed.push_back("deltaAxLimit");
+	opt.allowed.push_back("deltaZLimit");
+	opt.allowed.push_back("decreaseMoveSize");
 	opt.allowed.push_back("numRepacks");
 
 	opt.allowed.push_back("interface");
@@ -2436,6 +2441,36 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningMessages += "Number of backbone repacks not specified, default to 5\n";
 		opt.warningFlag = true;
 		opt.numRepacks = 5;
+	}
+	opt.deltaXLimit = OP.getDouble("deltaXLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaXLimit not specified using 0.1\n";
+		opt.warningFlag = true;
+		opt.deltaXLimit = 0.1;
+	}
+	opt.deltaCrossLimit = OP.getDouble("deltaCrossLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaCrossLimit not specified using 1.0\n";
+		opt.warningFlag = true;
+		opt.deltaCrossLimit = 1.0;
+	}
+	opt.deltaAxLimit = OP.getDouble("deltaAxLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaAxLimit not specified using 1.0\n";
+		opt.warningFlag = true;
+		opt.deltaAxLimit = 1.0;
+	}
+	opt.deltaZLimit = OP.getDouble("deltaZLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaZLimit not specified using 0.1\n";
+		opt.warningFlag = true;
+		opt.deltaZLimit = 0.1;
+	}
+	opt.decreaseMoveSize = OP.getBool("decreaseMoveSize");
+	if (OP.fail()) {
+		opt.warningMessages += "decreaseMoveSize not specified using true\n";
+		opt.warningFlag = true;
+		opt.decreaseMoveSize = true;
 	}
 	
 	opt.interface = OP.getString("interface");

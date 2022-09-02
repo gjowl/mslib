@@ -1,0 +1,50 @@
+000 (206.000.000) 08/31 12:13:35 Job submitted from host: <128.104.119.249:9618?addrs=128.104.119.249-9618+[--1]-9618&noUDP&sock=1398_7d7d_3>
+...
+001 (206.000.000) 08/31 12:13:40 Job executing on host: <127.0.0.1:9618?CCBID=128.104.119.253:9618%3faddrs%3d128.104.119.253-9618+[--1]-9618%26noUDP%26sock%3dcollector#222&addrs=127.0.0.1-9618+[--1]-9618&noUDP&sock=749_5486_3>
+...
+006 (206.000.000) 08/31 12:13:40 Image size of job updated: 375000
+	0  -  MemoryUsage of job (MB)
+	0  -  ResidentSetSize of job (KB)
+...
+005 (206.000.000) 08/31 12:13:40 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	378443776  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	378443776  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated
+	   Cpus                 :                 1         1
+	   Disk (KB)            :   375000   375000    480460
+	   Memory (MB)          :        0      367       367
+...
+000 (207.000.000) 08/31 12:19:18 Job submitted from host: <128.104.119.249:9618?addrs=128.104.119.249-9618+[--1]-9618&noUDP&sock=1398_7d7d_3>
+...
+001 (207.000.000) 08/31 12:19:26 Job executing on host: <127.0.0.1:9618?CCBID=128.104.119.253:9618%3faddrs%3d128.104.119.253-9618+[--1]-9618%26noUDP%26sock%3dcollector#222&addrs=127.0.0.1-9618+[--1]-9618&noUDP&sock=749_5486_3>
+...
+006 (207.000.000) 08/31 12:19:35 Image size of job updated: 1077264
+	1053  -  MemoryUsage of job (MB)
+	1077264  -  ResidentSetSize of job (KB)
+...
+006 (207.000.000) 08/31 12:20:52 Image size of job updated: 1789800
+	1053  -  MemoryUsage of job (MB)
+	1077660  -  ResidentSetSize of job (KB)
+...
+005 (207.000.000) 08/31 12:20:52 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:01:24, Sys 0 00:00:01  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:01:24, Sys 0 00:00:01  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	379409504  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	379409504  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated
+	   Cpus                 :                 1         1
+	   Disk (KB)            :   375000   375000    480460
+	   Memory (MB)          :     1053      367       367
+...

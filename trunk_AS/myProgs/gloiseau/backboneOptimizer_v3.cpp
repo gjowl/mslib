@@ -141,7 +141,6 @@ int main(int argc, char *argv[]){
 	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
 	helicalAxis.saveCoor("originState");
 	
-
 	// Set up object used for transformations
 	Transforms trans;
 	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
@@ -195,7 +194,7 @@ void threadSearchBackboneOptimization(BBOptions &_opt, System &_helicalAxis, Sys
 	System sys;
 	string polySeq = convertToPolymerSequence(_opt.sequence, _thread);
 	prepareSystem(_opt, sys, _startGeom, polySeq);
-	moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), _helicalAxis.getAtomPointers(), trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
+	//moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), _helicalAxis.getAtomPointers(), trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
 
 	/******************************************************************************
 	 *       === IDENTIFY INTERFACIAL POSITIONS AND GET ROTAMER ASSIGNMENTS ===
@@ -239,7 +238,7 @@ void threadSearchBackboneOptimization(BBOptions &_opt, System &_helicalAxis, Sys
 	double startDimer = sys.calcEnergy();
 	double totalEnergy = startDimer-monomerEnergy;
 	cout << "Thread " << _thread << endl;
-    cout << " -Dimer Energy: " << monomerEnergy << endl;
+    cout << " -Dimer Energy: " << startDimer << endl;
     cout << " -Monomer Energy: " << monomerEnergy << endl;
     cout << " -Total Energy: " << totalEnergy << endl;
 	cout << spm.getSummary(startStateVec) << endl;
@@ -479,18 +478,21 @@ void monteCarloRepack(BBOptions &_opt, System &_sys, double &_savedXShift, SelfP
 		_out << _opt.xShift << ',' << xShift << ',' << _opt.crossingAngle << ',' << crossingAngle << ',';
 		_out << _opt.axialRotation << ',' << axialRotation << ',' << _opt.zShift << ',' << zShift << endl;
 		_out << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
+		_out << MCMngr.getReasonCompleted() << endl;
 		_eout << "Sequence, thread, Energy, Dimer, Monomer, SASA, vdw, monoVdw, hbond, monoHbond, imm1, monoImm1, imm1Ref, monoImm1Ref, startXShift, finalXShift, startCrossingAngle, finalCrossingAngle, startAxialRot, finalAxialRot, startZShift, finalZShift" << endl;
 		_eout << _opt.sequence << ',' << _thread << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',';
 		_eout << dimerSasa << ',' << vdw << ',' << monomerVdw << ',' << hbond << ',' << monomerHbond << ',' << imm1 << ',' << monomerImm1 << ',' << imm1Ref << ',' << monomerImm1Ref << ',';
 		_eout << _opt.xShift << ',' << xShift << ',' << _opt.crossingAngle << ',' << crossingAngle << ',';
 		_eout << _opt.axialRotation << ',' << axialRotation << ',' << _opt.zShift << ',' << zShift << endl;
 		_eout << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
+		_eout << MCMngr.getReasonCompleted() << endl;
 		sout << "Sequence, thread, Energy, Dimer, Monomer, SASA, vdw, monoVdw, hbond, monoHbond, imm1, monoImm1, imm1Ref, monoImm1Ref, startXShift, finalXShift, startCrossingAngle, finalCrossingAngle, startAxialRot, finalAxialRot, startZShift, finalZShift" << endl;
 		sout << _opt.sequence << ',' << _thread << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',';
 		sout << dimerSasa << ',' << vdw << ',' << monomerVdw << ',' << hbond << ',' << monomerHbond << ',' << imm1 << ',' << monomerImm1 << ',' << imm1Ref << ',' << monomerImm1Ref << ',';
 		sout << _opt.xShift << ',' << xShift << ',' << _opt.crossingAngle << ',' << crossingAngle << ',';
 		sout << _opt.axialRotation << ',' << axialRotation << ',' << _opt.zShift << ',' << zShift << endl;
 		sout << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
+		sout << MCMngr.getReasonCompleted() << endl;
 	} else {
 		double elec = _spm.getStateEnergy(MCOBest, "CHARMM_ELEC");
 		double monomerElec =_monomerEnergyByTerm.find("CHARMM_ELEC")->second;
@@ -500,18 +502,21 @@ void monteCarloRepack(BBOptions &_opt, System &_sys, double &_savedXShift, SelfP
 		_out << _opt.xShift << ',' << xShift << ',' << _opt.crossingAngle << ',' << crossingAngle << ',';
 		_out << _opt.axialRotation << ',' << axialRotation << ',' << _opt.zShift << ',' << zShift << endl;
 		_out << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
+		_out << MCMngr.getReasonCompleted() << endl;
 		_eout << "Sequence, thread, Energy, Dimer, Monomer, SASA, vdw, monoVdw, hbond, monoHbond, imm1, monoImm1, imm1Ref, monoImm1Ref, elec, monoElec, startXShift, finalXShift, startCrossingAngle, finalCrossingAngle, startAxialRot, finalAxialRot, startZShift, finalZShift" << endl;
 		_eout << _opt.sequence << ',' << _thread << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',';
 		_eout << dimerSasa << ',' << vdw << ',' << monomerVdw << ',' << hbond << ',' << monomerHbond << ',' << imm1 << ',' << monomerImm1 << ',' << imm1Ref << ',' << monomerImm1Ref << ',' << elec << ',' << monomerElec << ',';
 		_eout << _opt.xShift << ',' << xShift << ',' << _opt.crossingAngle << ',' << crossingAngle << ',';
 		_eout << _opt.axialRotation << ',' << axialRotation << ',' << _opt.zShift << ',' << zShift << endl;
 		_eout << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
+		_eout << MCMngr.getReasonCompleted() << endl;
 		sout << "Sequence, thread, Energy, Dimer, Monomer, SASA, vdw, monoVdw, hbond, monoHbond, imm1, monoImm1, imm1Ref, monoImm1Ref, elec, monoElec, startXShift, finalXShift, startCrossingAngle, finalCrossingAngle, startAxialRot, finalAxialRot, startZShift, finalZShift" << endl;
 		sout << _opt.sequence << ',' << _thread << ',' << finalEnergy << ',' << dimerEnergy << ',' << _monomerEnergy << ',';
 		sout << dimerSasa << ',' << vdw << ',' << monomerVdw << ',' << hbond << ',' << monomerHbond << ',' << imm1 << ',' << monomerImm1 << ',' << imm1Ref << ',' << monomerImm1Ref << ',' << elec << ',' << monomerElec << ',';
 		sout << _opt.xShift << ',' << xShift << ',' << _opt.crossingAngle << ',' << crossingAngle << ',';
 		sout << _opt.axialRotation << ',' << axialRotation << ',' << _opt.zShift << ',' << zShift << endl;
 		sout << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
+		sout << MCMngr.getReasonCompleted() << endl;
 	}
 	cout << "Thread " << _thread << " finished. Energy: " << finalEnergy << endl;
 	sout.close();
@@ -541,7 +546,9 @@ void getCurrentMoveSizes(BBOptions &_opt, double &_currTemp, double &_endTemp) {
 }
 
 double increaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease) {
-	double newMoveSize = _moveSize * _decreaseMultiplier;
+	double diffMoveSize = _moveSize - _moveLimit;
+	double moveDecrease = diffMoveSize * _decreaseMultiplier;
+	double newMoveSize = _moveSize - moveDecrease;
 	if (newMoveSize < _moveLimit){
 		return newMoveSize;
 	} else {
@@ -551,7 +558,10 @@ double increaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMul
 }
 
 double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease) {
-	double newMoveSize = _moveSize * _decreaseMultiplier;
+	// edited to make sure that the move size is decreasing properly down to the move limit: add in detail here
+	double diffMoveSize = _moveSize - _moveLimit;
+	double moveDecrease = diffMoveSize * _decreaseMultiplier;
+	double newMoveSize = _moveSize - moveDecrease;
 	if (newMoveSize > _moveLimit){
 		return newMoveSize;
 	} else {

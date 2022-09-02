@@ -1,30 +1,11 @@
-08_28_2022
+08_31_2022
 
 PolyLeu Backbone:   LLLLLLLLLLLLLLLLLLILI
-Variable Positions: 000000110011001100000
-Rotamers Levels:    131032002200230123131
-Identify Interface started. Time: Sun Aug 28 22:14:07 2022
-Elapsed time of program: 3.10765s/0.0517942min
+Variable Positions: 000000110011011000000
+Rotamers Levels:    033012103201210230231
+Identify Interface finished. Time: Wed Aug 31 11:07:14 2022
+Elapsed time of program: 2.41206s/0.0402009min
 
-Self Consistent Mean Field started. Time: Sun Aug 28 22:14:12 2022
-Elapsed time of program: 8.21335s/0.136889min
-
-Running Self Consistent Mean Field
-Initial Sequence:   LLLLLLGTLLGTLLATLLILI
-Best Sequence:      LLLLLLGTLLGTLLATLLILI
-Interface Sequence: L-LL--GT--GT--AT--I-I
-Interface:          000000110011001100000
-Total Energy:       -11.6702
-VDW:                -78.9732
-HBOND:              -84.5626
-
-End SelfPairManager Optimization: 1257s
-Self Consistent Mean Field started. Time: Sun Aug 28 22:35:15 2022
-Elapsed time of program: 1270.62s/21.1771min
-
-Sequence search replicate 0 started. Time: Sun Aug 28 22:35:15 2022
-Elapsed time of program: 1270.79s/21.1798min
-
-Self and Pair of all amino acids calculation 0 started. Time: Sun Aug 28 22:35:20 2022
-Elapsed time of program: 1276.16s/21.2694min
+Self Consistent Mean Field started. Time: Wed Aug 31 11:07:18 2022
+Elapsed time of program: 6.75194s/0.112532min
 
