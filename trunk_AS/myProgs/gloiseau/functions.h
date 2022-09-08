@@ -34,6 +34,17 @@ void backboneMovement(AtomPointerVector & _chainA, AtomPointerVector & _chainB, 
 map<string,double> getEnergyByTerm(EnergySet* _eSet);
 map<string,double> getEnergyByTermDoubled(EnergySet* _eSet);
 void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
+// decrease the move size for an accepted move
+double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease);
+
+// runs a greedy to quickly repack sidechains
+void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
+//load rotamers for a monomer
+void loadMonomerRotamers(System &_sys, SystemRotamerLoader &_sysRot);
+//load rotamers for non-interfacial positions
+void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL);
+//below function only loads rotamers onto the interfacial positions by interfacialPositions (01 where 0 = non-interfacial and 1 = interfacial)
+void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<int> _interface);
 
 //functions from seqDesign
 string generateMonomerPolymerSequenceFromSequence(string _sequence, int _startResNum);
@@ -50,16 +61,4 @@ string convertToPolymerSequence(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum);
 
-// runs a greedy to quickly repack sidechains
-void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
-
-/***********************************
- *load rotamer functions
- ***********************************/
-//load rotamers for a monomer
-void loadMonomerRotamers(System &_sys, SystemRotamerLoader &_sysRot);
-//load rotamers for non-interfacial positions
-void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL);
-//below function only loads rotamers onto the interfacial positions by interfacialPositions (01 where 0 = non-interfacial and 1 = interfacial)
-void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<int> _interface);
 # endif

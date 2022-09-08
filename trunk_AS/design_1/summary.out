@@ -1,11 +1,5 @@
-08_31_2022
+09_08_2022
 
 PolyLeu Backbone:   LLLLLLLLLLLLLLLLLLILI
-Variable Positions: 000000110011011000000
-Rotamers Levels:    033012103201210230231
-Identify Interface finished. Time: Wed Aug 31 11:07:14 2022
-Elapsed time of program: 2.41206s/0.0402009min
-
-Self Consistent Mean Field started. Time: Wed Aug 31 11:07:18 2022
-Elapsed time of program: 6.75194s/0.112532min
-
+Variable Positions: 000110011001100110000
+Rotamers Levels:    033002100200010000231

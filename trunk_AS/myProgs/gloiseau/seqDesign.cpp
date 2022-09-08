@@ -103,7 +103,6 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
  uint _rep, ofstream &_out);
 void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
  bool &_decreaseMoveSize);
-double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease);
 
 // output functions
 void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingPerPosition, map<string,map<string,double>> _sequenceEnergyMap,
@@ -124,6 +123,28 @@ void outputTime(auto _start, string _descriptor, bool _beginFunction, ofstream &
 		_out << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
 		cout << _descriptor << " finished. Time: " << ctime(&endTimeFormatted);
 		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
+	}
+}
+
+void useInputInterface(Options &_opt, string &_variablePositionString, string &_rotamerLevels, vector<int> &_interfacePositions){
+	for (uint i=3; i<_opt.interface.length()-4; i++){
+		if (_opt.interface[i] == '0'){
+			if (_variablePositionString[i] != '0'){
+				_variablePositionString.replace(_variablePositionString.begin()+i, _variablePositionString.begin()+i+1, "0");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
+			}
+		} else if (_opt.interface[i] == '1'){
+			if (_rotamerLevels[i] != '0'){
+				_rotamerLevels.replace(_rotamerLevels.begin()+i, _rotamerLevels.begin()+i+1, "0");
+			}
+			if (_variablePositionString[i] == '0'){
+				_variablePositionString.replace(_variablePositionString.begin()+i, _variablePositionString.begin()+i+1, "1");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
+			}
+		}
+	}
+	for (uint i=0; i<_variablePositionString.length(); i++){
+		if (_variablePositionString[i] == '1'){
+			_interfacePositions.push_back(i+_opt.thread);
+		}
 	}
 }
 
@@ -231,7 +252,6 @@ int main(int argc, char *argv[]){
 			densities.push_back(0);
 			densities.push_back(0);
 		}
-		
 	}
 
 	//String for the alternateIds at the interface
@@ -293,7 +313,7 @@ int main(int argc, char *argv[]){
 	// PS is the actual polymerSeq object whereas polySeq is the string version of the polymerSeq
 	PolymerSequence interfacePolySeq = getInterfacialPolymerSequence(opt, startGeom, PS, rotamerLevels, variablePositionString, rotamerSamplingString,
 	 linkedPositions, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, sout);
-	
+
 	outputTime(start, "Identify Interface", false, sout);
 
 	/******************************************************************************
@@ -986,6 +1006,12 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 	string rotamerLevels = generateString("0", backboneSeq.length());
 	defineRotamerLevelsByResidueBurial(sys, _opt, resiBurial, interfacePositions, rotamerLevels, variablePositionString);
 
+	// checks if interface is defined; if so, check the position and set those positions to the highest rotamer level
+	if (_opt.interface != ""){
+		interfacePositions.clear(); // reset the interface from the defineRotamerLevelsByResidueBurial function
+		useInputInterface(_opt, variablePositionString, rotamerLevels, interfacePositions);
+	}	
+
 	// makes the polymer sequence to return basedon the interface positions
 	string polySeq = generateMultiIDPolymerSequence(backboneSeq, _opt.thread, _opt.Ids, interfacePositions);
 	PolymerSequence PS(polySeq);
@@ -1011,6 +1037,26 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 	_out << "Rotamers Levels:    " << rotamerSamplingString << endl;
 	_interfacePositions = getInterfacePositions(_opt, rotamerSamplingPerPosition, backboneSeq.length());
 	_allInterfacePositions = getAllInterfacePositions(_opt, rotamerSamplingPerPosition, backboneSeq.length());
+
+	if (_opt.interface != ""){
+		_interfacePositions.clear();
+		_allInterfacePositions.clear();
+		for (uint k=0; k<interfacePositions.size(); k++){//TODO: make this not hardcoded to skip RAS
+			int pos = interfacePositions[k];
+			_interfacePositions.push_back(pos-_opt.thread);
+		}
+		for (uint k=0; k<backboneSeq.length(); k++){//TODO: make this not hardcoded to skip RAS
+			if (k < 3 || k > backboneSeq.length()-5){
+				if (rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
+					_allInterfacePositions.push_back(k);
+				}
+			} else {
+		 		if (_opt.interface[k] == '1'){
+					_allInterfacePositions.push_back(k);
+				}
+			}
+		}
+	}
 
 	cout << "PolyLeu Backbone:   " << backboneSeq << endl;
 	cout << "Variable Positions: " << variablePositionString << endl;
@@ -1059,21 +1105,8 @@ void defineRotamerLevelsByResidueBurial(System &_sys, Options &_opt, vector<pair
 				_variablePositionString.replace(_variablePositionString.begin()+positionNumber, _variablePositionString.begin()+positionNumber+1, "1");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
 			}
 		}
-		// checks if interface is defined; if so, check the position and set those positions to the highest rotamer level
-		if (_opt.interface != ""){
-			if (_opt.interface.at(positionNumber) == '1'){
-				_interfacePositions.push_back(resiNum);
-				if (backbonePosition > 5 && backbonePosition < _opt.backboneLength-4){//backbone position goes from 0-20, so numbers need to be 3 and 4 here instead of 4 and 5 to prevent changes at the interface like others
-					_variablePositionString.replace(_variablePositionString.begin()+positionNumber, _variablePositionString.begin()+positionNumber+1, "1");
-				}
-				_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, "0");
-			} else {
-				// if interface given, make all interfacial positions have the highest rotamer level
-				_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
-			}
-		} else {
-				_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
-		}
+		_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
+		
 	}
 }
 
@@ -1281,7 +1314,7 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ui
 	writer.write(sys.getAtomPointers(), true, false, true);
 	writer.close();
 
-	moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
+	//moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
 	// TODO: set the startGeom to the repacked geom at sys
 	// assign the coordinates of our system to the given geometry 
 	_startGeom.assignCoordinates(sys.getAtomPointers(),false);
@@ -1444,6 +1477,11 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 	
 	cout << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
 	_out << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
+	//TODO: there may be a better way to resolve this, but as of 2022-9-8, I want to get the most data I can before a lab meeting, so putting this here
+	if (finalEnergy > 100){
+		_out << "Final energy is " << finalEnergy << " after repack, indicating clashes. Choose a different geometry" << endl;
+		exit(0);
+	}
 }
 
 void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
@@ -1459,18 +1497,5 @@ void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, dou
 	_deltaZ = decreaseMoveSize(_deltaZ, _opt.deltaZLimit, decreaseMultiplier, decreaseZ);	
 	if (decreaseX == false && decreaseCross == false && decreaseAx == false && decreaseZ == false){
 		_decreaseMoveSize = false;
-	}
-}
-
-double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease) {
-	// edited to make sure that the move size is decreasing properly down to the move limit: add in detail here
-	double diffMoveSize = _moveSize - _moveLimit;
-	double moveDecrease = diffMoveSize * _decreaseMultiplier;
-	double newMoveSize = _moveSize - moveDecrease;
-	if (newMoveSize > _moveLimit){
-		return newMoveSize;
-	} else {
-		_decrease = false;
-		return _moveSize;
 	}
 }

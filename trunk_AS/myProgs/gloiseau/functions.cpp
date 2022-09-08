@@ -18,6 +18,19 @@ double getStandardNormal(RandomNumberGenerator& RNG) {
 	return (retVal/10.0 - 0.5) * 1.2;
 }
 
+double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease) {
+	// edited to make sure that the move size is decreasing properly down to the move limit: add in detail here
+	double diffMoveSize = _moveSize - _moveLimit;
+	double moveDecrease = diffMoveSize * _decreaseMultiplier;
+	double newMoveSize = _moveSize - moveDecrease;
+	if (newMoveSize > _moveLimit){
+		return newMoveSize;
+	} else {
+		_decrease = false;
+		return _moveSize;
+	}
+}
+
 /***********************************
  *geometry
  ***********************************/
@@ -387,7 +400,7 @@ string generateMultiIDPolymerSequence(string _seq, int _startResNum, vector<stri
 				}
 			}
 			counter++;
-		} else if (pos < startPos+6 || pos > endPos-5){//TODO: how to make this better for polySeq not hardcoded
+		} else if (pos < startPos+3 || pos > endPos-5){
 			stringstream ss;
 			ss << *it;
 			string resName = MslTools::getThreeLetterCode(ss.str());

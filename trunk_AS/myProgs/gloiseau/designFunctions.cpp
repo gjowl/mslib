@@ -472,7 +472,7 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &
 // get a vector of all interfacial positions, including the ends
 vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition, int _backboneLength){
 	vector<uint> variableInterfacePositions;
-	for (uint k=2; k<_backboneLength; k++){//TODO: make this not hardcoded to skip RAS
+	for (uint k=0; k<_backboneLength; k++){//TODO: make this not hardcoded to skip RAS
 		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
 			variableInterfacePositions.push_back(k);
 		} else {
@@ -485,7 +485,7 @@ vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSampli
 // get a vector of interface positions that doesn't include the ends of the sequence
 vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition, int _backboneLength){
 	vector<uint> variableInterfacePositions;
-	for (uint k=5; k<_backboneLength-5; k++){//TODO: make this not hardcoded to skip RAS
+	for (uint k=3; k<_backboneLength-5; k++){//TODO: make this not hardcoded to skip RAS
 		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
 			variableInterfacePositions.push_back(k);
 		} else {
