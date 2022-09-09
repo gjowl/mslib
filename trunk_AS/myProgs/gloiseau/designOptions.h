@@ -47,6 +47,7 @@ struct Options{
 
 	// interface parameters
 	string interface; //interface to design on; if empty, use SASA
+	string sequence; //sequence to start with; if empty, use PolyLeucine
 
 	// repack parameters
 	int greedyCycles;

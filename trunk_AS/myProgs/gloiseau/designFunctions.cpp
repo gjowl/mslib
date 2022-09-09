@@ -25,9 +25,6 @@ void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Option
 	//Repack side chains based on sasa scores
 	// get backbone length
 	int backboneLength = _sys.getChain("A").positionSize();
-	cout << "bblength: " << backboneLength << endl;
-	cout << "rotsize: " << _rotamerSampling.size() << endl;
-	cout << "rotsize/2: " << _rotamerSampling.size()/2 << endl;
 	for (uint i = 0; i < _rotamerSampling.size()/2; i++) {
 		Position &posA = _sys.getPosition(i);
 		Position &posB = _sys.getPosition(i+backboneLength);
@@ -393,9 +390,61 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys) {
 }
 
 //Calculate Residue Burial and output a PDB that highlights the interface
-std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &_opt, string _seq) {
-	string polySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, 1);
+std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &_startGeom, string _seq) {
+	// polymer sequences have: chain, starting position of chain residue, three letter AA code
+	string polySeq = generatePolymerSequence(_opt.backboneAA, _opt.backboneLength, _opt.thread);
 	PolymerSequence PS(polySeq);
+
+	// Declare system for dimer
+	System sys;
+	CharmmSystemBuilder CSB(sys,_opt.topFile,_opt.parFile);
+	CSB.setBuildTerm("CHARMM_ELEC", false);
+	CSB.setBuildTerm("CHARMM_ANGL", false);
+	CSB.setBuildTerm("CHARMM_BOND", false);
+	CSB.setBuildTerm("CHARMM_DIHE", false);
+	CSB.setBuildTerm("CHARMM_IMPR", false);
+	CSB.setBuildTerm("CHARMM_U-BR", false);
+
+	CSB.setBuildNonBondedInteractions(false);
+	//CSB.setBuildNoTerms();
+
+	if(!CSB.buildSystem(PS)) {
+		cout << "Unable to build system from " << PS << endl;
+		exit(0);
+	} else {
+		//fout << "CharmmSystem built for sequence" << endl;
+	}
+	/******************************************************************************
+	 *                     === INITIAL VARIABLE SET UP ===
+	 ******************************************************************************/
+	EnergySet* Eset = sys.getEnergySet();
+	// Set all terms active, besides Charmm-Elec
+	Eset->setAllTermsInactive();
+	Eset->setTermActive("CHARMM_VDW", true);
+	Eset->setTermActive("SCWRL4_HBOND", true);
+
+	// Set weights
+	Eset->setWeight("CHARMM_VDW", 1);
+	Eset->setWeight("SCWRL4_HBOND", 1);
+
+	CSB.updateNonBonded(10,12,50);
+
+	// initialize the object for loading rotamers into our _system
+	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
+	sysRot.defineRotamerSamplingLevels();
+
+	// Add hydrogen bond term
+	HydrogenBondBuilder hb(sys, _opt.hbondFile);
+	hb.buildInteractions(50);//when this is here, the HB weight is correct
+
+	/******************************************************************************
+	 *                     === COPY BACKBONE COORDINATES ===
+	 ******************************************************************************/
+	sys.assignCoordinates(_startGeom.getAtomPointers(),false);
+	sys.buildAllAtoms();
+
+	string monoPolySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, 1);
+	PolymerSequence MPS(monoPolySeq);
 
 	// Declare new system
 	System monoSys;
@@ -408,8 +457,8 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &
 	CSBMono.setBuildTerm("CHARMM_U-BR", false);
 
 	CSBMono.setBuildNonBondedInteractions(false);
-	if (!CSBMono.buildSystem(PS)){
-		cerr << "Unable to build system from " << polySeq << endl;
+	if (!CSBMono.buildSystem(MPS)){
+		cerr << "Unable to build system from " << monoPolySeq << endl;
 	}
 
 	/******************************************************************************
@@ -433,7 +482,7 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &
 	monoSys.buildAllAtoms();
 
 	std::vector<pair <int, double> > residueBurial;
-	SasaCalculator dimerSasa(_sys.getAtomPointers());
+	SasaCalculator dimerSasa(sys.getAtomPointers());
 	SasaCalculator monoSasa(monoSys.getAtomPointers());
 	dimerSasa.calcSasa();
 	monoSasa.calcSasa();
@@ -441,15 +490,15 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &
 
 	for (uint i = 0; i < monoSys.positionSize(); i++) {//Changed this to account for linked positions in the dimer; gives each AA same number of rotamers as correspnding chain
 		string posIdMonomer = monoSys.getPosition(i).getPositionId();
-		string posIdDimer = _sys.getPosition(i).getPositionId();
+		string posIdDimer = sys.getPosition(i).getPositionId();
 		double resiSasaMonomer = monoSasa.getResidueSasa(posIdMonomer);
 		double resiSasaDimer = dimerSasa.getResidueSasa(posIdDimer);
 		double burial = resiSasaDimer/resiSasaMonomer;
 		residueBurial.push_back(pair<int,double>(i, burial));
 
 		//set sasa for each residue in the b-factor
-		AtomSelection selA(_sys.getPosition(i).getAtomPointers());
-		AtomSelection selB(_sys.getPosition(i+_opt.backboneLength).getAtomPointers());
+		AtomSelection selA(sys.getPosition(i).getAtomPointers());
+		AtomSelection selB(sys.getPosition(i+_opt.backboneLength).getAtomPointers());
 		AtomPointerVector atomsA = selA.select("all");
 		AtomPointerVector atomsB = selB.select("all");
 		for (AtomPointerVector::iterator k=atomsA.begin(); k!=atomsA.end();k++) {
@@ -461,10 +510,14 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys, Options &
 			(*k)->setTempFactor(burial);
 		}
 	}
+	// sort in descending order of burial
+	sort(residueBurial.begin(), residueBurial.end(), [](auto &left, auto &right) {
+			return left.second < right.second;
+	});
 	// output a pdb
 	PDBWriter writer;
 	writer.open(_opt.pdbOutputDir+"/interfaceSASA.pdb");
-	writer.write(_sys.getAtomPointers(), true, false, true);
+	writer.write(sys.getAtomPointers(), true, false, true);
 	writer.close();
 	return residueBurial;
 }
@@ -2484,6 +2537,12 @@ Options parseOptions(int _argc, char * _argv[]){
 			opt.errorMessages += "interface string and backbone length must be the same length\n";
 			opt.errorFlag = true;
 		}
+	}
+	opt.sequence = OP.getString("sequence");
+	if (OP.fail()) {
+		opt.warningMessages += "sequence not specified, defaulting to polyleu\n";
+		opt.warningFlag = true;
+		opt.sequence = "";
 	}
 	opt.rerunConf = OP.getConfFile();
 
