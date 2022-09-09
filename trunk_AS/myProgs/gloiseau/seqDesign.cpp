@@ -258,13 +258,19 @@ int main(int argc, char *argv[]){
 	string alternateIds = getAlternateIdString(opt.Ids);
 	cout << "Amino acids for design: " << alternateIds << endl;
 
+	// check if sequence is empty
+	//if (opt.sequence == ""){
+
 	/******************************************************************************
 	 *                      === GENERATE POLYMER SEQUENCE ===
 	 ******************************************************************************/
 	// polymer sequences have: chain, starting position of chain residue, three letter AA code
 	string polySeq = generatePolymerSequence(opt.backboneAA, opt.backboneLength, opt.thread);
 	PolymerSequence PS(polySeq);
-
+	//} else {
+	//	// make a new function that generates a polymer sequence for sequence
+	//	generateMultiIDPolymerSequence(opt.sequence, opt.backboneLength, opt.thread, );
+	//}
 	/******************************************************************************
 	 *                         === HELICAL AXIS SET UP ===
 	 ******************************************************************************/
@@ -1106,8 +1112,9 @@ void defineRotamerLevelsByResidueBurial(System &_sys, Options &_opt, vector<pair
 			}
 		}
 		_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
-		
+	cout << i << " Position: " << positionNumber << "; Residue Number: " << resiNum << endl;	
 	}
+	exit(0);
 }
 
 // sets the gly69 backbone to starting geometry
