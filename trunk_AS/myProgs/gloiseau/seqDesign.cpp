@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <thread>
 #include <chrono>
-#include <functional>
 
 // MSL Functions
 #include "System.h"
@@ -19,6 +18,8 @@
 #include "MonteCarloManager.h"
 #include "CRDReader.h"
 #include "SasaCalculator.h"
+
+// My functions
 #include "designFunctions.h"
 #include "designOptions.h"
 #include "functions.h"
@@ -44,12 +45,17 @@ auto start = chrono::system_clock::now();
 	I have left the most important functions within this code in case they need to be looked at or changed.
 	Many of the auxiliary functions are found within the designFunctions.cpp file.
 */
+
 // sequence search functions
 void stateMCUnlinked(System &_startGeom, Options &_opt, PolymerSequence &_PS,
  map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> &_sequenceEntropyMap,
  vector<unsigned int> &_bestState, string &_bestSequence, vector<string> &_seqs, vector<string> &_allSeqs,
  map<string,vector<uint>> &_sequenceVectorMap, vector<uint> &_allInterfacialPositionsList,
  vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNumberGenerator &_RNG, int _rep, ofstream &_out, ofstream &_err);
+void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs,
+ vector<uint> &_bestState, string &_bestSequence, map<string, map<string,double>> &_sequenceEnergyMap, map<string, vector<uint>> &_sequenceVectorMap,
+ map<string,double> _sequenceEntropyMap, vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList,
+ vector<int> &_rotamerSampling, int _rep, ofstream &_out, ofstream &_err);
 map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
  string _bestSeq, vector<uint> _bestState, double _bestEnergy, map<string,vector<uint>> &_sequenceStateMap,
  map<string,double> _sequenceEntropyMap, vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList,
@@ -58,22 +64,21 @@ string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap);
 void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, vector<uint> _prevVec, double _prevEnergy, 
  string _currSeq, vector<uint> _currVec, vector<int> &_rotamerSampling, vector<uint> &_allInterfacePositions, map<string,map<string,double>> &_seqEnergyMap,
  map<string,double> &_sequenceEntropyMap);
-void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs,
- vector<uint> &_bestState, string &_bestSequence, map<string, map<string,double>> &_sequenceEnergyMap, map<string, vector<uint>> &_sequenceVectorMap,
- map<string,double> _sequenceEntropyMap, vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList,
- vector<int> &_rotamerSampling, int _rep, ofstream &_out, ofstream &_err);
-void setActiveSequence(System &_sys, string _sequence);
 
 // geometry setup functions
 void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS);
-PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom, string &_rotamerLevels,
- string &_variablePositionString, string &_rotamerSamplingString, vector<int> &_linkedPositions, vector<uint> &_allInterfacePositions,
- vector<uint> &_interfacePositions, vector<int> &_rotamerSamplingPerPosition, ofstream &_out);
 void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis,
  AtomPointerVector &_axisA, AtomPointerVector &_axisB, CartesianPoint &_ori, 
  CartesianPoint &_xAxis, CartesianPoint &_zAxis, Transforms &_trans);
+
+// define interface and rotamer level functions
+PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom, string &_rotamerLevels,
+ string &_variablePositionString, string &_rotamerSamplingString, vector<int> &_linkedPositions, vector<uint> &_allInterfacePositions,
+ vector<uint> &_interfacePositions, vector<int> &_rotamerSamplingPerPosition, ofstream &_out);
 void defineRotamerLevels(Options &_opt, vector<pair <int, double> > &_resiBurial, vector<int> &_interfacePositions,
  string &_rotamerLevels, string &_variablePositionString);
+void useInputInterface(Options &_opt, string &_variablePositionString, string &_rotamerLevels, vector<int> &_interfacePositions);
+void setActiveSequence(System &_sys, string _sequence);
 
 // backbone repack functions
 void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, uint _rep, double _savedXShift, System &_helicalAxis, AtomPointerVector &_axisA,
@@ -89,45 +94,7 @@ void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, dou
 void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingPerPosition, map<string,map<string,double>> _sequenceEnergyMap,
  vector<double> _densities);
 string getRunParameters(Options &_opt, vector<double> _densities);
-
-void outputTime(auto _start, string _descriptor, bool _beginFunction, ofstream &_out){
-	auto end = chrono::system_clock::now();
-	time_t endTimeFormatted = chrono::system_clock::to_time_t(end); 
-	chrono::duration<double> elapsedTime = end-_start;
-	if (_beginFunction == true){
-		_out << _descriptor << " started. Time: " << ctime(&endTimeFormatted);
-		_out << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
-		cout << _descriptor << " started. Time: " << ctime(&endTimeFormatted);
-		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
-	} else {
-		_out << _descriptor << " finished. Time: " << ctime(&endTimeFormatted);
-		_out << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
-		cout << _descriptor << " finished. Time: " << ctime(&endTimeFormatted);
-		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
-	}
-}
-
-void useInputInterface(Options &_opt, string &_variablePositionString, string &_rotamerLevels, vector<int> &_interfacePositions){
-	for (uint i=3; i<_opt.interface.length()-4; i++){
-		if (_opt.interface[i] == '0'){
-			if (_variablePositionString[i] != '0'){
-				_variablePositionString.replace(_variablePositionString.begin()+i, _variablePositionString.begin()+i+1, "0");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
-			}
-		} else if (_opt.interface[i] == '1'){
-			if (_rotamerLevels[i] != '0'){
-				_rotamerLevels.replace(_rotamerLevels.begin()+i, _rotamerLevels.begin()+i+1, "0");
-			}
-			if (_variablePositionString[i] == '0'){
-				_variablePositionString.replace(_variablePositionString.begin()+i, _variablePositionString.begin()+i+1, "1");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
-			}
-		}
-	}
-	for (uint i=0; i<_variablePositionString.length(); i++){
-		if (_variablePositionString[i] == '1'){
-			_interfacePositions.push_back(i+_opt.thread);
-		}
-	}
-}
+void outputTime(auto _start, string _descriptor, bool _beginFunction, ofstream &_out);
 
 // help functions
 void usage();
@@ -241,19 +208,6 @@ int main(int argc, char *argv[]){
 	//if (opt.sequence == ""){
 
 	/******************************************************************************
-<<<<<<< HEAD
-=======
-	 *                      === GENERATE POLYMER SEQUENCE ===
-	 ******************************************************************************/
-	// polymer sequences have: chain, starting position of chain residue, three letter AA code
-	string polySeq = generatePolymerSequence(opt.backboneAA, opt.backboneLength, opt.thread);
-	PolymerSequence PS(polySeq);
-	//} else {
-	//	// make a new function that generates a polymer sequence for sequence
-	//	generateMultiIDPolymerSequence(opt.sequence, opt.backboneLength, opt.thread, );
-	//}
-	/******************************************************************************
->>>>>>> 096967b8ef4746142cb5c151f5d071fe63d94e79
 	 *                         === HELICAL AXIS SET UP ===
 	 ******************************************************************************/
 	// System for the helical axis that sets protein around the origin (0.0, 0.0, 0.0)
@@ -352,7 +306,6 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *                    === GET THE BEST STARTING STATE ===
 	 ******************************************************************************/
-	// TODO: check if this works properly
 	vector<uint> bestState;
 	if (opt.sequence == ""){
 		outputTime(start, "Self Consistent Mean Field", true, sout);
@@ -378,13 +331,12 @@ int main(int argc, char *argv[]){
 	// set system to the best sequence or input sequence 
 	sys.setActiveRotamers(bestState);
 	string seq = convertPolymerSeqToOneLetterSeq(chainA);
-	cout << seq << endl;
 	double bestEnergy = sys.calcEnergy();
+	cout << "Sequence: " << seq << "; Energy: " << bestEnergy << endl;
 	sys.getEnergySet()->eraseTerm("CHARMM_VDW");
 	sys.getEnergySet()->eraseTerm("CHARMM_IMM1");
 	sys.getEnergySet()->eraseTerm("CHARMM_IMM1REF");
 	sys.getEnergySet()->eraseTerm("SCWRL4_HBOND");
-	// output energy and compare to previous?
 
 	/******************************************************************************
 	 *      === MONTE CARLO TO RANDOMIZE SEQUENCES FROM BEST SCMF STATE ===
@@ -405,7 +357,6 @@ int main(int argc, char *argv[]){
 	}
 	// TODO: make a decision; should I try to calculate the energies for every sequence on the final backbone? Or should I just
 	// say what the geometry is?
-	// I think first I need to look at the geometries, the pds, etc. to make sure it looks reasonable
 	/******************************************************************************
 	 *            === CALCULATE MONOMER ENERGIES OF EACH SEQUENCE ===
 	 ******************************************************************************/
@@ -438,187 +389,78 @@ int main(int argc, char *argv[]){
 
 //Functions
 // mutate a random position in the sequence to all other given amino acids and save the energetics
-string getRunParameters(Options &_opt, vector<double> _densities){
-	stringstream ss;
-	string t = "\t";
-	ss <<  _densities[0] << t << _densities[1] << t << _densities[2] << t << _opt.thread << t << _opt.sasaRepackLevel.size() << t << _opt.interfaceLevel << t << _opt.backboneLength;
-	string runParameters = ss.str();
-	return runParameters;
-}
 
-void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingPerPosition, map<string,map<string,double>> _sequenceEnergyMap,
- vector<double> _densities){
-	// Setup vector to hold energy file lines
-	vector<string> energyLines;
-	// get the run parameters
-	string runParameters = getRunParameters(_opt, _densities);
-	string t = "\t";
-	stringstream enerTerms;
-	// For loop to setup the energy file
-	uint i = 0;
-	for (auto &seq : _sequenceEnergyMap){
-		stringstream seqLine;
-		string sequence = seq.first;
-		// get the interface sequence
-		string interfaceSequence = getInterfaceSequence(_opt,_interface, sequence);
-		seqLine << sequence << t << _interface << t << interfaceSequence << t;
-		map<string,double> energyMap = _sequenceEnergyMap[sequence];
-		// For adding in strings to a line for the energy file
-		for (uint j=0; j<_opt.energyTermsToOutput.size(); j++){
-			string energyTerm = _opt.energyTermsToOutput[j];
-			double energy = energyMap[energyTerm];
-			//cout << sequence << ": " << energyTerm << " = " << energy << endl;
-			string term = MslTools::doubleToString(energy)+t;
-			seqLine << term;
-			if (i == 0){
-				enerTerms << energyTerm << t;
-			}
+// TODO: reverse docking to rid of clashing?
+/*
+// pull helices apart until they are not clashing
+void separateHelices(Options &_opt, System &_sys, System &_helicalAxis){
+	// Set up object used for transformations
+	Transforms trans;
+	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
+	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
+
+	// Get helical axis atom pointers 
+	AtomPointerVector &axisA = _helicalAxis.getChain("A").getAtomPointers();
+	AtomPointerVector &axisB = _helicalAxis.getChain("B").getAtomPointers();
+	
+	// Set up chain A and chain B atom pointer vectors
+	AtomPointerVector & apvChainA = _sys.getChain("A").getAtomPointers();
+	AtomPointerVector & apvChainB = _sys.getChain("B").getAtomPointers();
+
+	vector<unsigned int> MCOBest;
+	double deltaXShift = 0.1; // xShift changes
+	double xShiftEnd = 9; // xShift to stop at
+	double xShift = _opt.xShift; // current xShift
+	// TODO: energies should just focus on vdw here
+	double previousEnergy = _sys.calcEnergy(); // previous energy to compare to
+	double globalLowestE = previousEnergy; // Global lowest energy found (if above monomer we won't save anyways)
+	double currentEnergy = previousEnergy; // current energy
+	// while loop for x-shifts	
+	while (xShift >= xShiftEnd) {
+		// add the xShift change to the current xShift
+		xShift += deltaXShift;
+		// Move the helix
+		backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, deltaXShift, 3 );
+
+		// Run Optimization
+		repackSideChains(_spm, _opt.greedyCycles);
+		vector<unsigned int> MCOFinal;
+		MCOFinal = _spm.getMinStates()[0];
+		_sys.setActiveRotamers(MCOFinal);
+
+		// get current energy
+		currentEnergy = _spm.getMinBound()[0]-_monomerEnergy;
+
+		// Check if this is the lowest energy
+		if (currentEnergy < previousEnergy) {
+			previousEnergy = currentEnergy;
+			_savedXShift = xShift;
+			_sys.saveAltCoor("savedBestState");
+			MCOBest = MCOFinal;
+			//_helicalAxis.saveAltCoor("BestAxis");
 		}
-		string seqNumber = MslTools::doubleToString(energyMap.at("SequenceNumber"));
-		seqLine << seqNumber << t << runParameters;
-		string line = seqLine.str();
-		energyLines.push_back(line);
-		i++;
-	}
-	ofstream eout;
-	string eoutfile = _opt.pdbOutputDir + "/energyFile.csv";
-	eout.open(eoutfile.c_str());
-	eout << "Sequence" << t << "Interface" << t << "InterfaceSequence" << t;
-	eout << enerTerms.str();
-	eout << "angleDistDensity" << t << "axialRotationDensity" << t << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
-	cout << "Sequence" << t << "Interface" << t << "InterfaceSequence" << t;
-	cout << enerTerms.str();
-	eout << "angleDistDensity" << t << "axialRotationDensity" << t << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
-	for (uint i=0; i<energyLines.size() ; i++){
-		eout << energyLines[i] << endl;
-		cout << energyLines[i] << endl;
-	}
-	eout.close();
-}
+		_out << "xShift: " << xShift << " energy: " << currentEnergy << endl;
 
-map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
- string _bestSeq, vector<uint> _bestState, double _bestEnergy, map<string,vector<uint>> &_sequenceStateMap,
- map<string,double> _sequenceEntropyMap, vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList,
- vector<int> _rotamerSampling){
-	// Get a random integer to pick through the variable positions
-	int rand = _RNG.getRandomInt(0, _interfacialPositionsList.size()-1);
-	int interfacePosA = _interfacialPositionsList[rand];
-	int interfacePosB = interfacePosA+_bestSeq.length();
-
-	// Get the random position from the system
-	Position &randPosA = _sys.getPosition(interfacePosA);
-	Position &randPosB = _sys.getPosition(interfacePosB);
-	string posIdA = randPosA.getPositionId();
-	string posIdB = randPosB.getPositionId();
-
-	// variable setup for current state
-	map<string,map<string,double>> sequenceEnergyMap;
-	vector<thread> threads;
-	for (uint i=0; i<_opt.Ids.size(); i++){
-		// pick an identity for each thread 
-		int idNum = i;
-		// generate polymer sequence for each identity at the corresponding chosen position
-		string id = _opt.Ids[idNum];
-		// input into the thread function for calculating energies
-		string currAA = MslTools::getThreeLetterCode(_bestSeq.substr(interfacePosA, 1));
-		if (currAA != id){
-			// replace the id at the position in bestSeq with the current id to get current sequence
-			string currSeq = _bestSeq;
-			string oneLetterId = MslTools::getOneLetterCode(id);
-			currSeq.replace(interfacePosA, 1, oneLetterId);
-			// switch the position to the given id
-			_sys.setActiveIdentity(posIdA, id);
-			_sys.setActiveIdentity(posIdB, id);
-			// Set a mask and run a greedy to get the best state for the current sequence
-			vector<vector<bool>> mask = getActiveMask(_sys);
-			_spm.runGreedyOptimizer(_opt.greedyCycles, mask);
-			vector<uint> currVec = _spm.getMinStates()[0];
-			_sequenceStateMap[currSeq] = currVec;
-			// start threading and calculating energies for each identity
-			threads.push_back(thread{energyFunction, ref(_opt), ref(_spm), _bestSeq, _bestState, _bestEnergy, currSeq, currVec, ref(_rotamerSampling), ref(_allInterfacialPositionsList), 
-			 ref(sequenceEnergyMap), ref(_sequenceEntropyMap)});
+		// If energy increase twice in a row, and it is above the global lowest energy, quit
+		if (currentEnergy < globalLowestE) {
+			globalLowestE = currentEnergy;
 		}
-	} 
-	// join all the threads (wait for them all to finish before continuing)
-	for (auto& th : threads){
-		th.join();
+		//TODO: flip these symbols?
+		//if (currentEnergy > (globalLowestE+10.0) && previousEnergy > (globalLowestE+10.0) && currentEnergy > previousEnergy) {
+		//	cout << "Energy increasing above global lowest energy... (currently " << globalLowestE << ")" << endl;
+		//	break;
+		//} else {
+		//	previousEnergy = currentEnergy;
+		//}
 	}
-	return sequenceEnergyMap;
+
 }
-
-void setActiveSequence(System &_sys, string _sequence){
-	// Set the active sequence for the system
-	for (uint i=0; i<_sys.getPositions().size()/2; i++){
-		Position &posA = _sys.getPosition(i);
-		Position &posB = _sys.getPosition(i+_sequence.length());
-		string posIdA = posA.getPositionId();
-		string posIdB = posB.getPositionId();
-		string aa = MslTools::getThreeLetterCode(_sequence.substr(i, 1));
-		_sys.setActiveIdentity(posIdA, aa);
-		_sys.setActiveIdentity(posIdB, aa);
-	}
+void localXShiftDocking(System &_sys, BBOptions &_opt, double &_bestEnergy, double _monomerEnergy, SelfPairManager &_spm, 
+ System &_helicalAxis, Transforms &_trans, int _thread, double &_savedXShift, ofstream &_out) {
+	
+	_out << "Thread " << _thread << " Best Energy at x shift: " << _bestEnergy << " at " << _savedXShift << endl;
 }
-
-string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap){
-	string currSeq;
-	double currEnergyComparison;
-	uint i=0;
-	for (auto& seq : _sequenceEnergyMap){
-		if (i==0){
-			currSeq = seq.first;
-			currEnergyComparison = seq.second["currEnergyTotal"];
-			i++;
-		} else {
-			if (seq.second["currEnergyTotal"] < currEnergyComparison){
-				string prevSeq = currSeq;
-				currSeq = seq.first;
-				currEnergyComparison = seq.second["currEnergyTotal"];
-			}
-		}
-	}
-	return currSeq;
-}
-
-// threaded function that gets energies for a sequence and appends to a map
-void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, vector<uint> _prevVec, double _prevEnergy, 
- string _currSeq, vector<uint> _currVec, vector<int> &_rotamerSampling, vector<uint> &_allInterfacePositions, map<string,map<string,double>> &_seqEnergyMap,
- map<string,double> &_sequenceEntropyMap){
-	// variable setup
-	map<string,double> energyMap;
-
-	// Compute dimer energy
-	outputEnergiesByTerm(_spm, _currVec, energyMap, _opt.energyTermList, "Dimer", true);
-	double currEnergy = _spm.getStateEnergy(_currVec);
-
-	// initialize variables for this thread
-	double currEnergyTotal = 0;
-	double bestEnergyTotal = 0;
-	double currSEProb = 0;
-	double prevSEProb = 0;
-	double currEntropy = 0;
-	double prevEntropy = 0;
-
-	//TODO: I just realized that for heterodimers, I may need to completely remake some of these functions as with the below only taking the sequence of one helix; I may make a hetero and homo functions list?
-	calculateInterfaceSequenceEntropy(_opt, _prevSeq, _currSeq, _sequenceEntropyMap, prevSEProb,
-	 currSEProb, prevEntropy, currEntropy, _prevEnergy, currEnergy, bestEnergyTotal,
-	 currEnergyTotal, _allInterfacePositions);
-
-	// output info
-	outputEnergiesByTerm(_spm, _currVec, energyMap, _opt.energyTermList, "Dimer", true);
-	double baseline = _spm.getStateEnergy(_currVec, "BASELINE")+_spm.getStateEnergy(_currVec, "BASELINE_PAIR");
-	double enerAndSeqEntropy = bestEnergyTotal-currEnergyTotal;
-	energyMap["Dimerw/Baseline"] = currEnergy;
-	energyMap["Dimer"] = currEnergy-baseline;
-	energyMap["Baseline"] = baseline;
-	energyMap["energyComparison"] = enerAndSeqEntropy;
-	energyMap["SequenceProbability"] = currSEProb;
-	energyMap["bestEnergyTotal"] = bestEnergyTotal;
-	energyMap["currEnergyTotal"] = currEnergyTotal;
-	energyMap["entropyDiff"] = prevEntropy-currEntropy;
-	energyMap["currEntropy"] = currEntropy;
-	energyMap["prevEntropy"] = prevEntropy;
-	_seqEnergyMap[_currSeq] = energyMap;
-}
+*/
 
 // function to prepare the system for design:
 // - sets up CharmmSystemBuilder
@@ -702,7 +544,7 @@ void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSeque
 	// other coordinates? Just for simplicity for now. And if I want to implement this in design, adding this in will likely be a good idea.	
 }
 
-//Make it so that this will get all the info I need instead of having to run more code later
+// sequence search functions
 void stateMCUnlinked(System &_startGeom, Options &_opt, PolymerSequence &_PS,
 map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> &_sequenceEntropyMap,
 vector<unsigned int> &_bestState, string &_bestSequence, vector<string> &_seqs, vector<string> &_allSeqs,
@@ -732,11 +574,6 @@ vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, RandomNu
 	 *                        === SETUP SPM AND RUN DEE ===
 	 ******************************************************************************/
 	sys.buildAllAtoms(); //currently unsure if this is needed
-
-	// Setup time variables
-	time_t startTime, endTime;
-	double diffTime;
-	time(&startTime);
 
 	// Optimize Initial Starting Position (using Baseline to get back to original result)
 	SelfPairManager spm;
@@ -925,6 +762,130 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	// repeat for x times 10 cycles
 }
 
+map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
+ string _bestSeq, vector<uint> _bestState, double _bestEnergy, map<string,vector<uint>> &_sequenceStateMap,
+ map<string,double> _sequenceEntropyMap, vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList,
+ vector<int> _rotamerSampling){
+	// Get a random integer to pick through the variable positions
+	int rand = _RNG.getRandomInt(0, _interfacialPositionsList.size()-1);
+	int interfacePosA = _interfacialPositionsList[rand];
+	int interfacePosB = interfacePosA+_bestSeq.length();
+
+	// Get the random position from the system
+	Position &randPosA = _sys.getPosition(interfacePosA);
+	Position &randPosB = _sys.getPosition(interfacePosB);
+	string posIdA = randPosA.getPositionId();
+	string posIdB = randPosB.getPositionId();
+
+	// variable setup for current state
+	map<string,map<string,double>> sequenceEnergyMap;
+	vector<thread> threads;
+	for (uint i=0; i<_opt.Ids.size(); i++){
+		// pick an identity for each thread 
+		int idNum = i;
+		// generate polymer sequence for each identity at the corresponding chosen position
+		string id = _opt.Ids[idNum];
+		// input into the thread function for calculating energies
+		string currAA = MslTools::getThreeLetterCode(_bestSeq.substr(interfacePosA, 1));
+		if (currAA != id){
+			// replace the id at the position in bestSeq with the current id to get current sequence
+			string currSeq = _bestSeq;
+			string oneLetterId = MslTools::getOneLetterCode(id);
+			currSeq.replace(interfacePosA, 1, oneLetterId);
+			// switch the position to the given id
+			_sys.setActiveIdentity(posIdA, id);
+			_sys.setActiveIdentity(posIdB, id);
+			// Set a mask and run a greedy to get the best state for the current sequence
+			vector<vector<bool>> mask = getActiveMask(_sys);
+			_spm.runGreedyOptimizer(_opt.greedyCycles, mask);
+			vector<uint> currVec = _spm.getMinStates()[0];
+			_sequenceStateMap[currSeq] = currVec;
+			// start threading and calculating energies for each identity
+			threads.push_back(thread{energyFunction, ref(_opt), ref(_spm), _bestSeq, _bestState, _bestEnergy, currSeq, currVec, ref(_rotamerSampling), ref(_allInterfacialPositionsList), 
+			 ref(sequenceEnergyMap), ref(_sequenceEntropyMap)});
+		}
+	} 
+	// join all the threads (wait for them all to finish before continuing)
+	for (auto& th : threads){
+		th.join();
+	}
+	return sequenceEnergyMap;
+}
+
+void setActiveSequence(System &_sys, string _sequence){
+	// Set the active sequence for the system
+	for (uint i=0; i<_sys.getPositions().size()/2; i++){
+		Position &posA = _sys.getPosition(i);
+		Position &posB = _sys.getPosition(i+_sequence.length());
+		string posIdA = posA.getPositionId();
+		string posIdB = posB.getPositionId();
+		string aa = MslTools::getThreeLetterCode(_sequence.substr(i, 1));
+		_sys.setActiveIdentity(posIdA, aa);
+		_sys.setActiveIdentity(posIdB, aa);
+	}
+}
+
+string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap){
+	string currSeq;
+	double currEnergyComparison;
+	uint i=0;
+	for (auto& seq : _sequenceEnergyMap){
+		if (i==0){
+			currSeq = seq.first;
+			currEnergyComparison = seq.second["currEnergyTotal"];
+			i++;
+		} else {
+			if (seq.second["currEnergyTotal"] < currEnergyComparison){
+				string prevSeq = currSeq;
+				currSeq = seq.first;
+				currEnergyComparison = seq.second["currEnergyTotal"];
+			}
+		}
+	}
+	return currSeq;
+}
+
+// threaded function that gets energies for a sequence and appends to a map
+void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, vector<uint> _prevVec, double _prevEnergy, 
+ string _currSeq, vector<uint> _currVec, vector<int> &_rotamerSampling, vector<uint> &_allInterfacePositions, map<string,map<string,double>> &_seqEnergyMap,
+ map<string,double> &_sequenceEntropyMap){
+	// variable setup
+	map<string,double> energyMap;
+
+	// Compute dimer energy
+	outputEnergiesByTerm(_spm, _currVec, energyMap, _opt.energyTermList, "Dimer", true);
+	double currEnergy = _spm.getStateEnergy(_currVec);
+
+	// initialize variables for this thread
+	double currEnergyTotal = 0;
+	double bestEnergyTotal = 0;
+	double currSEProb = 0;
+	double prevSEProb = 0;
+	double currEntropy = 0;
+	double prevEntropy = 0;
+
+	//TODO: I just realized that for heterodimers, I may need to completely remake some of these functions as with the below only taking the sequence of one helix; I may make a hetero and homo functions list?
+	calculateInterfaceSequenceEntropy(_opt, _prevSeq, _currSeq, _sequenceEntropyMap, prevSEProb,
+	 currSEProb, prevEntropy, currEntropy, _prevEnergy, currEnergy, bestEnergyTotal,
+	 currEnergyTotal, _allInterfacePositions);
+
+	// output info
+	outputEnergiesByTerm(_spm, _currVec, energyMap, _opt.energyTermList, "Dimer", true);
+	double baseline = _spm.getStateEnergy(_currVec, "BASELINE")+_spm.getStateEnergy(_currVec, "BASELINE_PAIR");
+	double enerAndSeqEntropy = bestEnergyTotal-currEnergyTotal;
+	energyMap["Dimerw/Baseline"] = currEnergy;
+	energyMap["Dimer"] = currEnergy-baseline;
+	energyMap["Baseline"] = baseline;
+	energyMap["energyComparison"] = enerAndSeqEntropy;
+	energyMap["SequenceProbability"] = currSEProb;
+	energyMap["bestEnergyTotal"] = bestEnergyTotal;
+	energyMap["currEnergyTotal"] = currEnergyTotal;
+	energyMap["entropyDiff"] = prevEntropy-currEntropy;
+	energyMap["currEntropy"] = currEntropy;
+	energyMap["prevEntropy"] = prevEntropy;
+	_seqEnergyMap[_currSeq] = energyMap;
+}
+
 void getDimerSasa(System &_sys, map<string, vector<uint>> &_sequenceVectorMap, map<string, map<string,double>> &_sequenceEnergyMap){
 	for (auto &seq : _sequenceEnergyMap){
 		string sequence = seq.first;
@@ -941,6 +902,7 @@ void getDimerSasa(System &_sys, map<string, vector<uint>> &_sequenceVectorMap, m
 	}
 }
 
+// define interface functions
 // TODO: clean this up; this whole function reeks of gross duplicate variables
 // TODO: fix all of the backboneLength stuff too, I think it currently only works at one length?
 PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom, string &_rotamerLevels,
@@ -1043,7 +1005,7 @@ void defineRotamerLevels(Options &_opt, vector<pair <int, double> > &_resiBurial
 	// initialize variables
 	int levelCounter = 0;
 	int numberOfRotamerLevels = _opt.sasaRepackLevel.size();
-	int highestRotamerLevel = numberOfRotamerLevels-1;
+	//int highestRotamerLevel = numberOfRotamerLevels-1;
 	// loop through the residue burial values calculated above for each position
 	cout << "Interface: " << _opt.interface << endl;
 	for (uint i = 0; i < _resiBurial.size(); i++) {
@@ -1294,7 +1256,7 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 		
 	unsigned int counter = 0;
 	double currentEnergy = _prevBestEnergy;
-	double startDimer = _prevBestEnergy;
+	//double startDimer = _prevBestEnergy;
 
 	// setup variables for shifts: ensures that they start from the proper values for every repack and not just the final value from the initial repack
 	bool decreaseMoveSize = _opt.decreaseMoveSize;
@@ -1391,16 +1353,18 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 	double baseline = _spm.getStateEnergy(MCOBest, "BASELINE")+_spm.getStateEnergy(MCOBest, "BASELINE_PAIR");
 	double dimerEnergy = _spm.getStateEnergy(MCOBest);
 	double finalEnergy = dimerEnergy-baseline;
-	double vdw = _spm.getStateEnergy(MCOBest, "CHARMM_VDW");
-	double hbond = _spm.getStateEnergy(MCOBest, "SCWRL4_HBOND");
-	double imm1 = _spm.getStateEnergy(MCOBest, "CHARMM_IMM1")+_spm.getStateEnergy(MCOBest, "CHARMM_IMM1REF");
-	double dimerDiff = dimerEnergy-startDimer;
+	
 	cout << "Energy #" << _rep << ": " << finalEnergy << endl;
 
+	// TODO: output the below?
+	//double vdw = _spm.getStateEnergy(MCOBest, "CHARMM_VDW");
+	//double hbond = _spm.getStateEnergy(MCOBest, "SCWRL4_HBOND");
+	//double imm1 = _spm.getStateEnergy(MCOBest, "CHARMM_IMM1")+_spm.getStateEnergy(MCOBest, "CHARMM_IMM1REF");
+	//double dimerDiff = dimerEnergy-startDimer;
 	// calculate the solvent accessible surface area
-	SasaCalculator sasa(_sys.getAtomPointers());
-	sasa.calcSasa();
-	double dimerSasa = sasa.getTotalSasa();
+	//SasaCalculator sasa(_sys.getAtomPointers());
+	//sasa.calcSasa();
+	//double dimerSasa = sasa.getTotalSasa();
 
 	// Output change in geometry
 	_out << "***STARTING GEOMETRY***" << endl;
@@ -1443,5 +1407,105 @@ void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, dou
 	_deltaZ = decreaseMoveSize(_deltaZ, _opt.deltaZLimit, decreaseMultiplier, decreaseZ);	
 	if (decreaseX == false && decreaseCross == false && decreaseAx == false && decreaseZ == false){
 		_decreaseMoveSize = false;
+	}
+}
+// define interface functions
+void useInputInterface(Options &_opt, string &_variablePositionString, string &_rotamerLevels, vector<int> &_interfacePositions){
+	for (uint i=3; i<_opt.interface.length()-4; i++){
+		if (_opt.interface[i] == '0'){
+			if (_variablePositionString[i] != '0'){
+				_variablePositionString.replace(_variablePositionString.begin()+i, _variablePositionString.begin()+i+1, "0");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
+			}
+		} else if (_opt.interface[i] == '1'){
+			if (_rotamerLevels[i] != '0'){
+				_rotamerLevels.replace(_rotamerLevels.begin()+i, _rotamerLevels.begin()+i+1, "0");
+			}
+			if (_variablePositionString[i] == '0'){
+				_variablePositionString.replace(_variablePositionString.begin()+i, _variablePositionString.begin()+i+1, "1");//TODO: I just added this if statement in. It may or may not work properly because of the numbers (I think it starts at 0 rather than 1 unlike many of the other parts where I hardcode these for baselines
+			}
+		}
+	}
+	for (uint i=0; i<_variablePositionString.length(); i++){
+		if (_variablePositionString[i] == '1'){
+			_interfacePositions.push_back(i+_opt.thread);
+		}
+	}
+}
+
+
+string getRunParameters(Options &_opt, vector<double> _densities){
+	stringstream ss;
+	string t = "\t";
+	ss <<  _densities[0] << t << _densities[1] << t << _densities[2] << t << _opt.thread << t << _opt.sasaRepackLevel.size() << t << _opt.interfaceLevel << t << _opt.backboneLength;
+	string runParameters = ss.str();
+	return runParameters;
+}
+
+void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingPerPosition, map<string,map<string,double>> _sequenceEnergyMap,
+ vector<double> _densities){
+	// Setup vector to hold energy file lines
+	vector<string> energyLines;
+	// get the run parameters
+	string runParameters = getRunParameters(_opt, _densities);
+	string t = "\t";
+	stringstream enerTerms;
+	// For loop to setup the energy file
+	uint i = 0;
+	for (auto &seq : _sequenceEnergyMap){
+		stringstream seqLine;
+		string sequence = seq.first;
+		// get the interface sequence
+		string interfaceSequence = getInterfaceSequence(_opt,_interface, sequence);
+		seqLine << sequence << t << _interface << t << interfaceSequence << t;
+		map<string,double> energyMap = _sequenceEnergyMap[sequence];
+		// For adding in strings to a line for the energy file
+		for (uint j=0; j<_opt.energyTermsToOutput.size(); j++){
+			string energyTerm = _opt.energyTermsToOutput[j];
+			double energy = energyMap[energyTerm];
+			//cout << sequence << ": " << energyTerm << " = " << energy << endl;
+			string term = MslTools::doubleToString(energy)+t;
+			seqLine << term;
+			if (i == 0){
+				enerTerms << energyTerm << t;
+			}
+		}
+		string seqNumber = MslTools::doubleToString(energyMap.at("SequenceNumber"));
+		seqLine << seqNumber << t << runParameters;
+		string line = seqLine.str();
+		energyLines.push_back(line);
+		i++;
+	}
+	ofstream eout;
+	string eoutfile = _opt.pdbOutputDir + "/energyFile.csv";
+	eout.open(eoutfile.c_str());
+	eout << "Sequence" << t << "Interface" << t << "InterfaceSequence" << t;
+	eout << enerTerms.str();
+	eout << "angleDistDensity" << t << "axialRotationDensity" << t << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
+	cout << "Sequence" << t << "Interface" << t << "InterfaceSequence" << t;
+	cout << enerTerms.str();
+	eout << "angleDistDensity" << t << "axialRotationDensity" << t << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
+	for (uint i=0; i<energyLines.size() ; i++){
+		eout << energyLines[i] << endl;
+		cout << energyLines[i] << endl;
+	}
+	eout.close();
+}
+
+void outputTime(auto _start, string _descriptor, bool _beginFunction, ofstream &_out){
+	auto end = chrono::system_clock::now();
+	time_t endTimeFormatted = chrono::system_clock::to_time_t(end); 
+	chrono::duration<double> elapsedTime = end-_start;
+	_out.precision(3);// rounds output to 3 decimal places
+	cout.precision(3);// rounds output to 3 decimal places
+	if (_beginFunction == true){
+		_out << _descriptor << " started. Time: " << ctime(&endTimeFormatted);
+		_out << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
+		cout << _descriptor << " started. Time: " << ctime(&endTimeFormatted);
+		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
+	} else {
+		_out << _descriptor << " finished. Time: " << ctime(&endTimeFormatted);
+		_out << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
+		cout << _descriptor << " finished. Time: " << ctime(&endTimeFormatted);
+		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
 	}
 }
