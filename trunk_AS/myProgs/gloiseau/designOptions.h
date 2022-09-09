@@ -78,8 +78,6 @@ struct Options{
 	that end up having a SASA value in level 1 and 2 are considered interface.
 	*/
 
-	
-
 	// Starting Geometry
 	double xShift; //distance between helices
 	double zShift; //position of the crossing point between helices

@@ -37,13 +37,7 @@
 #include "designOptions.h"
 
 // Design Functions: TODO figure out which of these are necessary; a lot of this code I just added internally I believe
-#include "BaselineIMM1Interaction.h"
 #include "BaselinePairInteraction.h"
-#include "BaselineOuterPairInteraction.h"
-#include "BaselineAAComposition.h"
-#include "BaselineSequenceEntropy.h"
-#include "BaselineSequenceEntropyNormalized.h"
-#include "BaselinePermutation.h"
 #include "SasaCalculator.h"
 
 using namespace std;
