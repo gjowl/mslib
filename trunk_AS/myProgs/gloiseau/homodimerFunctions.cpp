@@ -430,29 +430,6 @@ void getSasaDifference(vector<pair<string,vector<uint>>> &_sequenceStatePair, ma
 	}
 }
 
-//TODO: Use this as a template for making this code more clean: when I don't have the name in the config file, it still works...how can I make it like that for everything? Should I just have one function that will get all of the values that need to be returned from a much larger map that may have more than that? And then if the value isn't there, call out illegal value that needs to be added in?
-
-void deleteTerminalHydrogenBondInteractions(System &_sys, Options &_opt){
-	EnergySet* pESet = _sys.getEnergySet();
-	int chainSize = _sys.chainSize();
-	int frontExt = _opt.tmStart;
-	int endExt = _opt.endResNum;
-	AtomPointerVector atoms;
-	for(int i = 0; i < chainSize; i++) {
-		Chain & thisChain = _sys.getChain(i);
-		vector<Position*>& positions = thisChain.getPositions();
-		for(int i = 0; i < 3; i++) {
-			if(frontExt > i) {
-				atoms += positions[i]->getAtomPointers();
-			}
-			if(endExt > i) {
-				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
-			}
-		}
-	}
-	pESet->deleteInteractionsWithAtoms(atoms,"SCWRL4_HBOND");
-}
-
 //Other functions
 void saveEnergyDifference(Options _opt, map<string,map<string,double>> &_sequenceEnergyMap, string _sequence){
 	map<string,double> &energyMap = _sequenceEnergyMap[_sequence];

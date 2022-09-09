@@ -66,11 +66,8 @@ void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vec
 	} else {
 		if (_opt.verbose){
 			cout << "Load rotamers..." << endl;
-			cout << "Non-interface: " << _opt.SL << endl;
-			cout << "Interface:     " << _opt.SLInterface << endl;
 		}
 		loadRotamers(_sys, _sysRot, _opt.SL);
-		loadInterfacialRotamers(_sys, _sysRot, _opt.SLInterface, _opt.sasaRepackLevel.size(), _rotamerSampling);
 	}
 }
 
@@ -1753,25 +1750,56 @@ Options parseOptions(int _argc, char * _argv[]){
 
 	//opt.required.push_back("");
 	//opt.allowed.push_back("");
+	
+	// Input Files
+	opt.allowed.push_back("topFile");
+	opt.allowed.push_back("parFile");
+	opt.allowed.push_back("geometryDensityFile");
+	opt.allowed.push_back("solvFile");
+	opt.allowed.push_back("rotLibFile");
+	opt.allowed.push_back("backboneCrd");
+	opt.allowed.push_back("hbondFile");
+	opt.allowed.push_back("pdbOutputDir");
+	opt.allowed.push_back("backboneFile");
+	opt.allowed.push_back("selfEnergyFile");
+	opt.allowed.push_back("pairEnergyFile");
+	opt.allowed.push_back("sequenceEntropyFile");
+	opt.allowed.push_back("AACompositionPenaltyFile");
+	opt.allowed.push_back("configfile");
+	opt.allowed.push_back("helicalAxis");
 
-	// optional
-	opt.allowed.push_back("getGeoFromPDBData");
-
+	// sequence parameters
 	opt.allowed.push_back("sequence");
 	opt.allowed.push_back("backboneAA");
 	opt.allowed.push_back("backboneLength");
+	opt.allowed.push_back("interface");
+
+	// booleans
+	opt.allowed.push_back("getGeoFromPDBData");
+	opt.allowed.push_back("verbose");
+	opt.allowed.push_back("useSasa");
+	opt.allowed.push_back("useTimeBasedSeed");
+	opt.allowed.push_back("deleteTerminalBonds");
+	opt.allowed.push_back("linkInterfacialPositions");
+	opt.allowed.push_back("useAlaAtCTerminus");
+	opt.allowed.push_back("useBaseline");
+	opt.allowed.push_back("getRandomAxRotAndZShift");
+
+	// repack parameters
+	opt.allowed.push_back("greedyCycles");
+	opt.allowed.push_back("seed");
+
 
 	opt.allowed.push_back("startResNum");
 	opt.allowed.push_back("endResNum");
-	opt.allowed.push_back("tmStart");
-	opt.allowed.push_back("tmEnd");
 
 	//Geometry
 	opt.allowed.push_back("xShift");
 	opt.allowed.push_back("crossingAngle");
 	opt.allowed.push_back("axialRotation");
 	opt.allowed.push_back("zShift");
-	opt.allowed.push_back("transform");
+	opt.allowed.push_back("negAngle");
+	opt.allowed.push_back("thread");
 
 	//Monte Carlo variables
 	opt.allowed.push_back("MCCycles");
@@ -1791,6 +1819,10 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("backboneConvergedSteps");
 	opt.allowed.push_back("backboneConvergedE");
 
+	// use different energy parameters
+	opt.allowed.push_back("useIMM1");
+	opt.allowed.push_back("useElec");
+	
 	//Weights
 	opt.allowed.push_back("weight_vdw");
 	opt.allowed.push_back("weight_solv");
@@ -1798,60 +1830,11 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("weight_hbond");
 	opt.allowed.push_back("weight_seqEntropy");
 
-	//Rotamers
-	opt.allowed.push_back("SL");
-	opt.allowed.push_back("SLInterface");
-
-	//
-	opt.allowed.push_back("verbose");
-	opt.allowed.push_back("greedyOptimizer");
-	opt.allowed.push_back("greedyCycles");
-	opt.allowed.push_back("seed");
-
-	// Cutoffs
-	opt.allowed.push_back("printAllCrds");
-	opt.allowed.push_back("printAxes");
-	opt.allowed.push_back("printTermEnergies");
-	opt.allowed.push_back("deleteTerminalBonds");
-	opt.allowed.push_back("deleteTerminalInteractions");
-	opt.allowed.push_back("linkInterfacialPositions");
-
-	// Input Files
-	opt.allowed.push_back("topFile");
-	opt.allowed.push_back("parFile");
-	opt.allowed.push_back("geometryDensityFile");
-	opt.allowed.push_back("solvFile");
-	opt.allowed.push_back("rotLibFile");
-	opt.allowed.push_back("backboneCrd");
-	opt.allowed.push_back("hbondFile");
-	opt.allowed.push_back("pdbOutputDir");
-	opt.allowed.push_back("backboneFile");
-	opt.allowed.push_back("selfEnergyFile");
-	opt.allowed.push_back("pairEnergyFile");
-	opt.allowed.push_back("sequenceEntropyFile");
-	opt.allowed.push_back("AACompositionPenaltyFile");
-	opt.allowed.push_back("configfile");
-
-	opt.allowed.push_back("thread");
-
-	// Alternate
+	// Alternate Identities
 	opt.allowed.push_back("Ids");
-
-	// Command Line Arguments
-	opt.allowed.push_back("runNumber");
-	opt.allowed.push_back("useIMM1");
-	opt.allowed.push_back("useElec");
 
 	// MonteCarlo Arguments
 	opt.allowed.push_back("numStatesToSave");
-
-	// RNG Arguments
-	opt.allowed.push_back("useTimeBasedSeed");
-
-	opt.allowed.push_back("energyLandscape");
-	opt.allowed.push_back("useAlaAtCTerminus");
-	opt.allowed.push_back("useBaseline");
-	opt.allowed.push_back("getRandomAxRotAndZShift");
 
 	// SelfPairManager Arguments
 	opt.allowed.push_back("runDEESingles");
@@ -1862,16 +1845,16 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("energyLandscapeTerms");
 	opt.allowed.push_back("energyTermsToOutput");
 	opt.allowed.push_back("energyTermList");
+	opt.allowed.push_back("deleteTerminalInteractions");
 
+	//Rotamers
 	// Load Rotamers from SASA values (from sgfc)
-	opt.allowed.push_back("useSasa");
 	opt.allowed.push_back("sasaRepackLevel");
 	opt.allowed.push_back("interfaceLevel");
-
-	opt.allowed.push_back("negAngle");
-	opt.allowed.push_back("helicalAxis");
+	opt.allowed.push_back("SL");
 	
 	// Shift Size
+	opt.allowed.push_back("numRepacks");
 	opt.allowed.push_back("deltaX");
 	opt.allowed.push_back("deltaCross");
 	opt.allowed.push_back("deltaAx");
@@ -1881,9 +1864,8 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("deltaAxLimit");
 	opt.allowed.push_back("deltaZLimit");
 	opt.allowed.push_back("decreaseMoveSize");
-	opt.allowed.push_back("numRepacks");
 
-	opt.allowed.push_back("interface");
+	opt.allowed.push_back("runNumber");
 
 	// Begin Parsing through the options
 	OptionParser OP;
@@ -1925,27 +1907,192 @@ Options parseOptions(int _argc, char * _argv[]){
 		}
 	}
 
+	// Input Files
+	opt.topFile = OP.getString("topFile");
+	if (OP.fail()) {
+		string envVar = "MSL_CHARMM_TOP";
+		if(SYSENV.isDefined(envVar)) {
+			opt.topFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "topFile not specified using " + opt.topFile + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine topFile - " + envVar + " - not set\n"	;
+			opt.errorFlag = true;
+		}
+	}
+	opt.parFile = OP.getString("parFile");
+	if (OP.fail()) {
+		string envVar = "MSL_CHARMM_PAR";
+		if(SYSENV.isDefined(envVar)) {
+			opt.parFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "parFile not specified using " + opt.parFile + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine parFile - " + envVar + " - not set\n"	;
+			opt.errorFlag = true;
+		}
+	}
+	opt.geometryDensityFile = OP.getString("geometryDensityFile");
+	if (OP.fail()) {
+		opt.warningMessages += "Unable to determine geometryDensityFile, defaulting to original density file\n";
+		opt.warningFlag = true;
+		opt.geometryDensityFile = "/exports/home/gloiseau/mslib/trunk_AS/designFiles/2021_09_28_geometryDensityFile.txt";
+	}
+	opt.solvFile = OP.getString("solvFile");
+	if (OP.fail()) {
+		string envVar = "MSL_CHARMM_SOLV";
+		if(SYSENV.isDefined(envVar)) {
+			opt.solvFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "solvFile not specified using " + opt.solvFile + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine solvFile - " + envVar + " - not set\n";
+			opt.errorFlag = true;
+		}
+	}
+	opt.rotLibFile = OP.getString("rotLibFile");
+	if (OP.fail()) {
+		string envVar = "MSL_ROTLIB";
+		if(SYSENV.isDefined(envVar)) {
+			opt.rotLibFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "rotLibFile not specified using " + opt.rotLibFile + ", defaulting to " + SYSENV.getEnv(envVar) + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine rotLibFile - " + envVar + " - not set\n";
+			opt.errorFlag = true;
+		}
+	}
+	opt.backboneCrd = OP.getString("backboneCrd");
+	if (OP.fail()) {
+		opt.errorMessages += "Unable to determine backboneCrd";
+		opt.errorFlag = true;
+	}
+	opt.hbondFile = OP.getString("hbondFile");
+	if (OP.fail()) {
+		string envVar = "MSL_HBOND_CA_PAR";
+		if(SYSENV.isDefined(envVar)) {
+			opt.hbondFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "hbondFile not specified using " + opt.hbondFile + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine hbondFile - MSL_HBOND_CA_PAR - not set\n"	;
+			opt.errorFlag = true;
+		}
+	}
+	opt.backboneFile = OP.getString("backboneFile");
+	if (OP.fail()) {
+		opt.warningMessages += "backboneFile not specified, default to /data01/sabs/tmRepacks/pdbFiles/69-gly-residue-helix.pdbi\n";
+		opt.warningFlag = true;
+		opt.backboneFile = "/data01/sabs/tmRepacks/pdbFiles/69-gly-residue-helix.pdb";
+	}
+	opt.selfEnergyFile = OP.getString("selfEnergyFile");
+	if (OP.fail()) {
+		opt.warningMessages += "selfEnergyFile not specified, default \n";
+		opt.warningFlag = true;
+		opt.selfEnergyFile = "/exports/home/gloiseau/mslib/trunk_AS/DesignFiles/2020_10_07_meanSelf_par.txt";
+	}
+	opt.pairEnergyFile = OP.getString("pairEnergyFile");
+	if (OP.fail()) {
+		opt.warningMessages += "pairEnergyFile not specified, default \n";
+		opt.warningFlag = true;
+		opt.pairEnergyFile = "/exports/home/gloiseau/mslib/trunk_AS/DesignFiles/2020_10_07_meanPair_par.txt";
+	}
+	opt.sequenceEntropyFile = OP.getString("seqEntropyFile");
+	if (OP.fail()) {
+		opt.warningMessages += "seqEntropyFile not specified, default to /data01/sabs/tmRepacks/pdbFiles/69-gly-residue-helix.pdbi\n";
+		opt.warningFlag = true;
+		opt.sequenceEntropyFile = "/exports/home/gloiseau/mslib/trunk_AS/myProgs/gloiseau/sequenceEntropies.txt";
+	}
+	opt.AACompositionPenaltyFile = OP.getString("AACompositionPenaltyFile");
+	if (OP.fail()) {
+		opt.warningMessages += "AACompositionPenaltyFile not specified, default \n";
+		opt.warningFlag = true;
+		opt.AACompositionPenaltyFile = "/exports/home/gloiseau/mslib/trunk_AS/DesignFiles/AACompositionPenalties.out";
+	}
+	opt.helicalAxis = OP.getString("helicalAxis");
+	if (OP.fail()) {
+		opt.warningMessages += "helicalAxis not specified\n";
+		opt.warningFlag = true;
+		opt.helicalAxis = "/exports/home/gloiseau/mslib/trunk_AS/myProgs/parameterFiles/helicalAxis.pdb";
+	}
+	opt.pdbOutputDir = OP.getString("pdbOutputDir");
+	if (OP.fail()) {
+		opt.warningMessages += "Unable to determine pdbOutputDir, default to current directory\n";
+		opt.warningFlag = true;
+	}
+	
+	// sequence parameters
+	opt.sequence = OP.getString("sequence");
+	if (OP.fail()) {
+		opt.warningMessages += "sequence not specified, defaulting to polyleu\n";
+		opt.warningFlag = true;
+		opt.sequence = "";
+	}
+	opt.backboneAA = OP.getString("backboneAA");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "backboneAA not specified, default to V\n";
+		opt.backboneAA = "V";
+	}
+	opt.backboneLength = OP.getInt("backboneLength");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "backboneLength not specified, default to 35\n";
+		opt.backboneLength = 35;
+	}
+	// override backboneLength if a sequence is specified
+	if (opt.sequence != "") {
+		opt.backboneLength = opt.sequence.length();
+	}
+	opt.startResNum = OP.getInt("startResNum");
+	if (OP.fail()) {
+		opt.warningMessages += "startResNum not specified using " + MslTools::intToString(1) + "\n";
+		opt.warningFlag = true;
+		opt.startResNum = 1;
+	}
+	opt.endResNum = OP.getInt("endResNum");
+	if (OP.fail()) {
+		opt.warningMessages += "endResNum not specified using " + MslTools::intToString(opt.startResNum+opt.backboneLength) + "\n";
+		opt.warningFlag = true;
+		opt.endResNum = opt.startResNum+opt.backboneLength;
+	}
+	opt.interface = OP.getString("interface");
+	if (OP.fail()) {
+		opt.warningMessages += "interface not specified\n";
+		opt.warningFlag = true;
+		opt.interface = "";
+	}
+	// if sequence is specified, define interface for sequence
+	if (opt.sequence != "" && opt.interface == "") {
+		opt.interface = "";
+		for (uint i=0; i<opt.sequence.length(); i++) {
+			// assumes polyLeu backbone
+			if (i > 3 || i < opt.sequence.length()-5) {
+				// if not Leu, then interface
+				if (opt.sequence[i] != 'L') {
+					opt.interface += "1";
+				} else {
+					opt.interface += "0";
+				}
+			} else {
+				opt.interface += "0";
+			}
+		}
+	}
+	if (opt.interface != "") {
+		if (opt.interface.length() != opt.backboneLength) {
+			opt.errorMessages += "interface string and backbone length must be the same length\n";
+			opt.errorFlag = true;
+		}
+	}
+
+	// booleans
 	opt.getGeoFromPDBData = OP.getBool("getGeoFromPDBData");
 	if (OP.fail()) {
 		opt.warningMessages += "getGeoFromPDBData not specified, defaulting to false\n";
 		opt.warningFlag = true;
 		opt.getGeoFromPDBData = false;
 	}
-
-	opt.runNumber = OP.getString("runNumber");
-	if (OP.fail()) {
-		opt.warningMessages += "runNumber not specified, using 1\n";
-		opt.warningFlag = true;
-		opt.runNumber = MslTools::intToString(1);
-	}
-
-	opt.useIMM1 = OP.getBool("useIMM1");
-	if (OP.fail()) {
-		opt.warningMessages += "useIMM1 not specified, defaulting to true\n";
-		opt.warningFlag = true;
-		opt.useIMM1 = true;
-	}
-
 	opt.deleteTerminalBonds = OP.getBool("deleteTerminalBonds");
 	if (OP.fail()) {
 		opt.deleteTerminalBonds = true;
@@ -1958,35 +2105,57 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningMessages += "deleteTerminalInteractions not specified, defaulting to delete SCWRL4_HBOND\n";
 		opt.warningFlag = true;
 	}
-
-	opt.tmStart = OP.getInt("tmStart");
-	if(OP.fail()) {
-		opt.warningMessages += "tmStart not specified using 1\n";
-		opt.warningFlag = true;
-		opt.tmStart = 1;
-	}
-
-	opt.tmEnd = OP.getInt("tmEnd");
-	if(OP.fail()) {
-		opt.tmEnd = opt.tmStart+opt.backboneLength;
-		opt.warningMessages += "tmEnd not specified using " + MslTools::intToString(opt.tmStart+opt.backboneLength) + "\n";
-		opt.warningFlag = true;
-	}
-
-	opt.startResNum = OP.getInt("startResNum");
+	opt.verbose = OP.getBool("verbose");
 	if (OP.fail()) {
-		opt.warningMessages += "startResNum not specified using " + MslTools::intToString(opt.tmStart) + "\n";
+		opt.warningMessages += "verbose not specified using false\n";
 		opt.warningFlag = true;
-		opt.startResNum = opt.tmStart;
+		opt.verbose = false;
 	}
-
-	opt.endResNum = OP.getInt("endResNum");
+	opt.linkInterfacialPositions = OP.getBool("linkInterfacialPositions");
 	if (OP.fail()) {
-		opt.warningMessages += "endResNum not specified using " + MslTools::intToString(opt.tmEnd) + "\n";
+		opt.warningMessages += "linkInterfacialPositions not specified using true\n";
 		opt.warningFlag = true;
-		opt.endResNum = opt.tmEnd;
+		opt.linkInterfacialPositions = true;
 	}
-
+	opt.useTimeBasedSeed = OP.getBool("useTimeBasedSeed");
+	if (OP.fail()) {
+		opt.warningMessages += "useTimeBasedSeed not specified, defaulting to false";
+		opt.warningFlag = true;
+		opt.useTimeBasedSeed = false;
+	}
+	opt.useAlaAtCTerminus = OP.getBool("useAlaAtCTerminus");
+	if (OP.fail()) {
+		opt.warningMessages += "useAlaAtCTerminus not specified, defaulting to false";
+		opt.warningFlag = true;
+		opt.useAlaAtCTerminus = false;
+	}
+	opt.useBaseline = OP.getBool("useBaseline");
+	if (OP.fail()) {
+		opt.warningMessages += "useBaseline not specified, defaulting to false";
+		opt.warningFlag = true;
+		opt.useBaseline = false;
+	}
+	opt.getRandomAxRotAndZShift = OP.getBool("getRandomAxRotAndZShift");
+	if (OP.fail()) {
+		opt.warningMessages += "getRandomAxRotAndZShift not specified, defaulting to false";
+		opt.warningFlag = true;
+		opt.getRandomAxRotAndZShift = false;
+	}
+	//use different energy parameters
+	opt.useIMM1 = OP.getBool("useIMM1");
+	if (OP.fail()) {
+		opt.warningMessages += "useIMM1 not specified, defaulting to true\n";
+		opt.warningFlag = true;
+		opt.useIMM1 = true;
+	}
+	opt.useElec = OP.getBool("useElec");
+	if (OP.fail()) {
+		opt.warningMessages += "useElec not specified using false\n";
+		opt.warningFlag = true;
+		opt.useElec = false;
+	}
+	
+	// starting geometry
 	opt.xShift = OP.getDouble("xShift");
 	if (OP.fail()) {
 		opt.warningMessages += "xShift not specified, defaulting getGeoFromPDBData true\n";
@@ -2020,7 +2189,6 @@ Options parseOptions(int _argc, char * _argv[]){
 	if (opt.negAngle == true){
 		opt.crossingAngle = -opt.crossingAngle;
 	}
-	
 	opt.thread = OP.getInt("thread");
 	if (OP.fail()) {
 		opt.warningMessages += "thread not specified, defaulting to 0\n";
@@ -2045,20 +2213,28 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningFlag = true;
 		opt.interfaceLevel = 1;
 	}
-	//Monte Carlo variables
+	//rotlevel
+	opt.SL = OP.getString("SL");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "SL not specified, default to SL95.00\n";
+		opt.SL = "SL95.00";
+	} else {
+		opt.SL = "SL"+opt.SL;
+	}
+
+	//Monte Carlo parameters
 	opt.MCCycles = OP.getInt("MCCycles");
 	if (OP.fail()) {
 		opt.errorMessages += "Number of MC cycles not specified!\n";
 		opt.errorFlag = true;
 	}
-
 	opt.MCMaxRejects = OP.getInt("MCMaxRejects");
 	if (OP.fail()) {
 		opt.MCMaxRejects = 10;
 		opt.warningMessages += "Number of MC max rejects not specified, default to using 10\n";
 		opt.warningFlag = true;
 	}
-
 	opt.MCStartTemp = OP.getDouble("MCStartTemp");
 	if (OP.fail()) {
 		opt.warningMessages += "MCStartTemp not specified using 1000.0\n";
@@ -2083,7 +2259,6 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningFlag = true;
 		opt.MCConvergedSteps = 10;
 	}
-	// TODO: adding the below in here and designFunctions breaks with a std::logic_error?
 	//opt.MCConvergedE = OP.getDouble("MCConvergedE");
 	//if (OP.fail()) {
 	//	opt.warningMessages += "MCConvergedE not specified using 0.01\n";
@@ -2091,27 +2266,24 @@ Options parseOptions(int _argc, char * _argv[]){
 	//	opt.MCConvergedE = 0.01;
 	//}
 
-	// Backbone Monte Carlo variables
-	// TODO: change these defaults after testing
+	// Backbone Monte Carlo parameters
 	opt.backboneMCCycles = OP.getInt("backboneMCCycles");
 	if (OP.fail()) {
 		opt.backboneMCCycles = 100;
 		opt.warningMessages += "Number of backboneMC cycles not specified, default to 100\n";
 		opt.warningFlag = true;
 	}
-
 	opt.backboneMCMaxRejects = OP.getInt("backboneMCMaxRejects");
 	if (OP.fail()) {
 		opt.backboneMCMaxRejects = 5;
 		opt.warningMessages += "Number of backboneMC max rejects not specified, default to using 5\n";
 		opt.warningFlag = true;
 	}
-
 	opt.backboneMCStartTemp = OP.getDouble("backboneMCStartTemp");
 	if (OP.fail()) {
-		opt.warningMessages += "backboneMCStartTemp not specified using 1000.0\n";
+		opt.warningMessages += "backboneMCStartTemp not specified using 100.0\n";
 		opt.warningFlag = true;
-		opt.backboneMCStartTemp = 1000.0;
+		opt.backboneMCStartTemp = 100.0;
 	}
 	opt.backboneMCEndTemp = OP.getDouble("backboneMCEndTemp");
 	if (OP.fail()) {
@@ -2138,18 +2310,7 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.backboneConvergedE = 0.01;
 	}
 
-	opt.verbose = OP.getBool("verbose");
-	if (OP.fail()) {
-		opt.warningMessages += "verbose not specified using false\n";
-		opt.warningFlag = true;
-		opt.verbose = false;
-	}
-	opt.linkInterfacialPositions = OP.getBool("linkInterfacialPositions");
-	if (OP.fail()) {
-		opt.warningMessages += "linkInterfacialPositions not specified using true\n";
-		opt.warningFlag = true;
-		opt.linkInterfacialPositions = true;
-	}
+	// repack parameters	
 	opt.greedyCycles = OP.getInt("greedyCycles");
 	if (OP.fail()) {
 		opt.warningMessages += "greedyCycles not specified using 10\n";
@@ -2157,13 +2318,7 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.greedyCycles = 10;
 	}
 
-	opt.seed = OP.getInt("seed");
-	if (OP.fail()) {
-		opt.seed = 1;
-		opt.warningMessages += "Seed not specified!\n";
-		opt.warningFlag = true;
-	}
-
+	// energy weights
 	opt.weight_vdw = OP.getDouble("weight_vdw");
 	if (OP.fail()) {
 		opt.warningFlag = true;
@@ -2195,152 +2350,7 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.weight_elec = 1.0;
 	}
 
-	//rotlevel
-	opt.SL = OP.getString("SL");
-	if (OP.fail()) {
-		opt.warningFlag = true;
-		opt.warningMessages += "SL not specified, default to SL70\n";
-		opt.SL = "SL70.00";
-	} else {
-		opt.SL = "SL"+opt.SL;
-	}
-	opt.SLInterface = OP.getString("SLInterface");
-	if (OP.fail()) {
-		opt.warningFlag = true;
-		opt.warningMessages += "SL not specified, default to SL70\n";
-		opt.SL = "SL70.00";
-	} else {
-		opt.SLInterface = "SL"+opt.SLInterface;
-	}
-
-	opt.backboneAA = OP.getString("backboneAA");
-	if (OP.fail()) {
-		opt.warningFlag = true;
-		opt.warningMessages += "backboneAA not specified, default to V\n";
-		opt.backboneAA = "V";
-	}
-	opt.backboneLength = OP.getInt("backboneLength");
-	if (OP.fail()) {
-		opt.warningFlag = true;
-		opt.warningMessages += "backboneLength not specified, default to 35\n";
-		opt.backboneLength = 35;
-	}
-
-	opt.topFile = OP.getString("topFile");
-	if (OP.fail()) {
-		string envVar = "MSL_CHARMM_TOP";
-		if(SYSENV.isDefined(envVar)) {
-			opt.topFile = SYSENV.getEnv(envVar);
-			opt.warningMessages += "topFile not specified using " + opt.topFile + "\n";
-			opt.warningFlag = true;
-		} else {
-			opt.errorMessages += "Unable to determine topFile - " + envVar + " - not set\n"	;
-			opt.errorFlag = true;
-		}
-	}
-
-	opt.parFile = OP.getString("parFile");
-	if (OP.fail()) {
-		string envVar = "MSL_CHARMM_PAR";
-		if(SYSENV.isDefined(envVar)) {
-			opt.parFile = SYSENV.getEnv(envVar);
-			opt.warningMessages += "parFile not specified using " + opt.parFile + "\n";
-			opt.warningFlag = true;
-		} else {
-			opt.errorMessages += "Unable to determine parFile - " + envVar + " - not set\n"	;
-			opt.errorFlag = true;
-		}
-	}
-
-	opt.geometryDensityFile = OP.getString("geometryDensityFile");
-	if (OP.fail()) {
-		opt.warningMessages += "Unable to determine geometryDensityFile, defaulting to original density file\n";
-		opt.warningFlag = true;
-		opt.geometryDensityFile = "/exports/home/gloiseau/mslib/trunk_AS/designFiles/2021_09_28_geometryDensityFile.txt";
-	}
-
-	opt.solvFile = OP.getString("solvFile");
-	if (OP.fail()) {
-		string envVar = "MSL_CHARMM_SOLV";
-		if(SYSENV.isDefined(envVar)) {
-			opt.solvFile = SYSENV.getEnv(envVar);
-			opt.warningMessages += "solvFile not specified using " + opt.solvFile + "\n";
-			opt.warningFlag = true;
-		} else {
-			opt.errorMessages += "Unable to determine solvFile - " + envVar + " - not set\n";
-			opt.errorFlag = true;
-		}
-	}
-	opt.rotLibFile = OP.getString("rotLibFile");
-	if (OP.fail()) {
-		string envVar = "MSL_ROTLIB";
-		if(SYSENV.isDefined(envVar)) {
-			opt.rotLibFile = SYSENV.getEnv(envVar);
-			opt.warningMessages += "rotLibFile not specified using " + opt.rotLibFile + ", defaulting to " + SYSENV.getEnv(envVar) + "\n";
-			opt.warningFlag = true;
-		} else {
-			opt.errorMessages += "Unable to determine rotLibFile - " + envVar + " - not set\n";
-			opt.errorFlag = true;
-		}
-	}
-
-	opt.backboneCrd = OP.getString("backboneCrd");
-	if (OP.fail()) {
-		opt.errorMessages += "Unable to determine backboneCrd";
-		opt.errorFlag = true;
-	}
-
-	opt.hbondFile = OP.getString("hbondFile");
-	if (OP.fail()) {
-		string envVar = "MSL_HBOND_CA_PAR";
-		if(SYSENV.isDefined(envVar)) {
-			opt.hbondFile = SYSENV.getEnv(envVar);
-			opt.warningMessages += "hbondFile not specified using " + opt.hbondFile + "\n";
-			opt.warningFlag = true;
-		} else {
-			opt.errorMessages += "Unable to determine hbondFile - MSL_HBOND_CA_PAR - not set\n"	;
-			opt.errorFlag = true;
-		}
-	}
-
-	opt.backboneFile = OP.getString("backboneFile");
-	if (OP.fail()) {
-		opt.warningMessages += "backboneFile not specified, default to /data01/sabs/tmRepacks/pdbFiles/69-gly-residue-helix.pdbi\n";
-		opt.warningFlag = true;
-		opt.backboneFile = "/data01/sabs/tmRepacks/pdbFiles/69-gly-residue-helix.pdb";
-	}
-
-	opt.selfEnergyFile = OP.getString("selfEnergyFile");
-	if (OP.fail()) {
-		opt.warningMessages += "selfEnergyFile not specified, default \n";
-		opt.warningFlag = true;
-		opt.selfEnergyFile = "/exports/home/gloiseau/mslib/trunk_AS/DesignFiles/2020_10_07_meanSelf_par.txt";
-	}
-	opt.pairEnergyFile = OP.getString("pairEnergyFile");
-	if (OP.fail()) {
-		opt.warningMessages += "pairEnergyFile not specified, default \n";
-		opt.warningFlag = true;
-		opt.pairEnergyFile = "/exports/home/gloiseau/mslib/trunk_AS/DesignFiles/2020_10_07_meanPair_par.txt";
-	}
-	opt.sequenceEntropyFile = OP.getString("seqEntropyFile");
-	if (OP.fail()) {
-		opt.warningMessages += "seqEntropyFile not specified, default to /data01/sabs/tmRepacks/pdbFiles/69-gly-residue-helix.pdbi\n";
-		opt.warningFlag = true;
-		opt.sequenceEntropyFile = "/exports/home/gloiseau/mslib/trunk_AS/myProgs/gloiseau/sequenceEntropies.txt";
-	}
-	opt.AACompositionPenaltyFile = OP.getString("AACompositionPenaltyFile");
-	if (OP.fail()) {
-		opt.warningMessages += "AACompositionPenaltyFile not specified, default \n";
-		opt.warningFlag = true;
-		opt.AACompositionPenaltyFile = "/exports/home/gloiseau/mslib/trunk_AS/DesignFiles/AACompositionPenalties.out";
-	}
-
-	opt.pdbOutputDir = OP.getString("pdbOutputDir");
-	if (OP.fail()) {
-		opt.warningMessages += "Unable to determine pdbOutputDir, default to current directory\n";
-		opt.warningFlag = true;
-	}
-
+	// alternate identities
 	opt.Ids = OP.getStringVector("Ids");
 	if (OP.fail()) {
 		opt.errorMessages += "Unable to identify alternate AA identities, make sure they are space separated\n";
@@ -2354,6 +2364,7 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningFlag = true;
 		opt.numStatesToSave = 5;
 	}
+
 	//SelfPairManager Optimization Options
 	opt.runDEESingles = OP.getBool("runDEESingles");
 	if (OP.fail()) {
@@ -2374,40 +2385,6 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.runSCMF = true;
 	}
 
-	opt.useTimeBasedSeed = OP.getBool("useTimeBasedSeed");
-	if (OP.fail()) {
-		opt.warningMessages += "useTimeBasedSeed not specified, defaulting to false";
-		opt.warningFlag = true;
-		opt.useTimeBasedSeed = false;
-	}
-
-	opt.energyLandscape = OP.getBool("energyLandscape");
-	if (OP.fail()) {
-		opt.warningMessages += "energyLandscape not specified, defaulting to false";
-		opt.warningFlag = true;
-		opt.energyLandscape = false;
-	}
-
-	opt.useAlaAtCTerminus = OP.getBool("useAlaAtCTerminus");
-	if (OP.fail()) {
-		opt.warningMessages += "useAlaAtCTerminus not specified, defaulting to false";
-		opt.warningFlag = true;
-		opt.useAlaAtCTerminus = false;
-	}
-
-	opt.useBaseline = OP.getBool("useBaseline");
-	if (OP.fail()) {
-		opt.warningMessages += "useBaseline not specified, defaulting to false";
-		opt.warningFlag = true;
-		opt.useBaseline = false;
-	}
-
-	opt.getRandomAxRotAndZShift = OP.getBool("getRandomAxRotAndZShift");
-	if (OP.fail()) {
-		opt.warningMessages += "getRandomAxRotAndZShift not specified, defaulting to false";
-		opt.warningFlag = true;
-		opt.getRandomAxRotAndZShift = false;
-	}
 	//Energy Terms to Output
 	opt.energyLandscapeTerms = OP.getStringVector("energyLandscapeTerms");
 	if (OP.fail()) {
@@ -2452,19 +2429,8 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.energyTermList.push_back("CHARMM_IMM1");
 		opt.energyTermList.push_back("CHARMM_IMM1REF");
 	}
-	opt.helicalAxis = OP.getString("helicalAxis");
-	if (OP.fail()) {
-		opt.errorMessages += "helicalAxis not specified\n";
-		opt.errorFlag = true;
-	}
-	opt.useElec = OP.getBool("useElec");
-	if (OP.fail()) {
-		opt.warningMessages += "useElec not specified using false\n";
-		opt.warningFlag = true;
-		opt.useElec = false;
-	}
-
-	//Shift Size
+	
+	// backbone repack variables
 	opt.deltaX = OP.getDouble("deltaX");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaX not specified using 0.5\n";
@@ -2488,12 +2454,6 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningMessages += "deltaZ not specified using 0.5\n";
 		opt.warningFlag = true;
 		opt.deltaZ = 0.1;
-	}
-	opt.numRepacks = OP.getInt("numRepacks");
-	if (OP.fail()) {
-		opt.warningMessages += "Number of backbone repacks not specified, default to 5\n";
-		opt.warningFlag = true;
-		opt.numRepacks = 5;
 	}
 	opt.deltaXLimit = OP.getDouble("deltaXLimit");
 	if (OP.fail()) {
@@ -2526,23 +2486,24 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.decreaseMoveSize = true;
 	}
 	
-	opt.interface = OP.getString("interface");
+	// run parameters	
+	opt.runNumber = OP.getString("runNumber");
 	if (OP.fail()) {
-		opt.warningMessages += "interface not specified\n";
+		opt.warningMessages += "runNumber not specified, using 1\n";
 		opt.warningFlag = true;
-		opt.interface = "";
+		opt.runNumber = MslTools::intToString(1);
 	}
-	if (opt.interface != "") {
-		if (opt.interface.length() != opt.backboneLength) {
-			opt.errorMessages += "interface string and backbone length must be the same length\n";
-			opt.errorFlag = true;
-		}
-	}
-	opt.sequence = OP.getString("sequence");
+	opt.seed = OP.getInt("seed");
 	if (OP.fail()) {
-		opt.warningMessages += "sequence not specified, defaulting to polyleu\n";
+		opt.seed = 1;
+		opt.warningMessages += "Seed not specified!\n";
 		opt.warningFlag = true;
-		opt.sequence = "";
+	}
+	opt.numRepacks = OP.getInt("numRepacks");
+	if (OP.fail()) {
+		opt.warningMessages += "Number of backbone repacks not specified, default to 5\n";
+		opt.warningFlag = true;
+		opt.numRepacks = 5;
 	}
 	opt.rerunConf = OP.getConfFile();
 

@@ -1,27 +1,11 @@
-<<<<<<< HEAD
 09_09_2022
 
-PolyLeu Backbone:   LLLGALLGALLGALLGALILI
+Backbone:           LLLGALLGALLGALLGALILI
 Variable Positions: 000110011001100110000
 Rotamers Levels:    033002100200010000231
-Identify Interface finished. Time: Fri Sep  9 12:41:07 2022
-Elapsed time of program: 1.90252s/0.0317087min
+Identify Interface finished. Time: Fri Sep  9 14:51:06 2022
+Elapsed time of program: 1.88037s/0.0313396min
 
-Get Starting State started. Time: Fri Sep  9 12:41:12 2022
-Elapsed time of program: 6.74177s/0.112363min
+Get Starting State started. Time: Fri Sep  9 14:51:11 2022
+Elapsed time of program: 6.71102s/0.11185min
 
-Get Starting State finished. Time: Fri Sep  9 12:41:53 2022
-Elapsed time of program: 47.7912s/0.796519min
-
-Sequence search replicate 0 started. Time: Fri Sep  9 12:41:53 2022
-Elapsed time of program: 48.6876s/0.811461min
-
-Self and Pair of all amino acids calculation 0 started. Time: Fri Sep  9 12:42:00 2022
-Elapsed time of program: 55.2204s/0.92034min
-
-Self and Pair of all amino acids calculation 0 finished. Time: Fri Sep  9 12:42:40 2022
-Elapsed time of program: 95.6748s/1.59458min
-
-=======
-09_08_2022
->>>>>>> 096967b8ef4746142cb5c151f5d071fe63d94e79

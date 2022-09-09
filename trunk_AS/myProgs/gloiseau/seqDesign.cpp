@@ -235,24 +235,22 @@ int main(int argc, char *argv[]){
 		cout << "crossingAngle: " << opt.crossingAngle << "\tDensity: " << densities[0] << endl;
 		cout << "axialRotation: " << opt.axialRotation << "\tDensity: " << densities[1] << endl;
 		cout << "zShift:        " << opt.zShift << "\tDensity: " << densities[2] << endl << endl;
-	} else {
-		if (opt.getRandomAxRotAndZShift){
+	} else if (opt.getRandomAxRotAndZShift){
 			getAxialRotAndZShift(opt, RNG, densities, sout);
 			cout << "***STARTING GEOMETRY:***" << endl;
 			cout << "xShift:        " << opt.xShift << endl;
 			cout << "crossingAngle: " << opt.crossingAngle << endl;
 			cout << "axialRotation: " << opt.axialRotation << "\tDensity: " << densities[1] << endl;
 			cout << "zShift:        " << opt.zShift << "\tDensity: " << densities[2] << endl << endl;
-		} else {
-			cout << "***STARTING GEOMETRY:***" << endl;
-			cout << "xShift:        " << opt.xShift << endl;
-			cout << "crossingAngle: " << opt.crossingAngle << endl;
-			cout << "axialRotation: " << opt.axialRotation << endl;
-			cout << "zShift:        " << opt.zShift << endl << endl;
-			densities.push_back(0);
-			densities.push_back(0);
-			densities.push_back(0);
-		}
+	} else {
+		cout << "***STARTING GEOMETRY:***" << endl;
+		cout << "xShift:        " << opt.xShift << endl;
+		cout << "crossingAngle: " << opt.crossingAngle << endl;
+		cout << "axialRotation: " << opt.axialRotation << endl;
+		cout << "zShift:        " << opt.zShift << endl << endl;
+		densities.push_back(0);
+		densities.push_back(0);
+		densities.push_back(0);
 	}
 
 	//String for the alternateIds at the interface
@@ -870,13 +868,9 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			}
 		} else {
 			_sys.setActiveRotamers(currStateVec); // set rotamers to the current state
-			if (_opt.energyLandscape){
-				map<string,double> energyMap = sequenceEnergyMap[currSeq];
-				lout << prevStateSeq << "\t" << currSeq << "\t" << bestEnergyTotal << "\t" << currEnergyTotal << "\t";
-				lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << MC.getCurrentT() << endl;
-				cout << prevStateSeq << "\t" << currSeq << "\t" << bestEnergyTotal << "\t" << currEnergyTotal << "\t";
-				cout << prevStateEntropy << "\t" << currStateEntropy << "\t" << MC.getCurrentT() << endl;
-			}
+			map<string,double> energyMap = sequenceEnergyMap[currSeq];
+			lout << prevStateSeq << "\t" << currSeq << "\t" << bestEnergyTotal << "\t" << currEnergyTotal << "\t";
+			lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << MC.getCurrentT() << endl;
 			prevStateVec = currStateVec; // set the previous state vector to be the current state vector
 			prevStateSeq = currSeq; // set the previous sequence to be the current sequence
 			bestSeq = currSeq; // set the best sequence to the newly accepted current sequence
@@ -967,26 +961,29 @@ void getDimerSasa(System &_sys, map<string, vector<uint>> &_sequenceVectorMap, m
 	}
 }
 
+// TODO: clean this up; this whole function reeks of gross duplicate variables
+// TODO: fix all of the backboneLength stuff too, I think it currently only works at one length?
 PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom, string &_rotamerLevels,
  string &_variablePositionString, string &_rotamerSamplingString, vector<int> &_linkedPositions, vector<uint> &_allInterfacePositions,
  vector<uint> &_interfacePositions, vector<int> &_rotamerSamplingPerPosition, ofstream &_out){
 	
-	//TODO: any ways of changing how we get the interface would be added here
+	// generate a backboneSequence to determine the interface positions using residue burial (defaults to polyVal)
 	string backboneSeq = generateString(_opt.backboneAA, _opt.backboneLength);
 	// save into vector of backbone positions and residue burial pairs
 	vector<pair <int, double> > resiBurial = calculateResidueBurial(_opt, _startGeom, backboneSeq);
-
 	vector<int> interfacePositions;
-	// TODO: clean this up; this whole function reeks of gross duplicate variables
-	// TODO: fix all of the backboneLength stuff too, I think it currently only works at one length?
-	// Output variable Set up
+	
+	// if sequence is not empty, use polyLeu
 	if (_opt.sequence == ""){
 		backboneSeq = generateBackboneSequence("L", _opt.backboneLength, _opt.useAlaAtCTerminus);
 	} else {
 		backboneSeq = _opt.sequence;
 	}
+
+	// setup 0 string to represent variable positions and rotamer levels
 	string variablePositionString = generateString("0", backboneSeq.length());
 	string rotamerLevels = generateString("0", backboneSeq.length());
+	// define rotamer levels for each position based on residue burial
 	defineRotamerLevels(_opt, resiBurial, interfacePositions, rotamerLevels, variablePositionString);
 
 	// checks if interface is defined; if so, check the position and set those positions to the highest rotamer level
@@ -994,7 +991,8 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 		interfacePositions.clear(); // reset the interface from the defineRotamerLevels function
 		useInputInterface(_opt, variablePositionString, rotamerLevels, interfacePositions);
 	}	
-	
+
+	//	
 	vector<int> rotamerSamplingPerPosition = getRotamerSampling(rotamerLevels); // converts the rotamer sampling for each position as a vector
 	int numberOfRotamerLevels = _opt.sasaRepackLevel.size();
 	int highestRotamerLevel = numberOfRotamerLevels-1;
@@ -1035,10 +1033,10 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 	}
 
 	_out << endl;
-	_out << "PolyLeu Backbone:   " << backboneSeq << endl;
+	_out << "Backbone:           " << backboneSeq << endl;
 	_out << "Variable Positions: " << variablePositionString << endl;
 	_out << "Rotamers Levels:    " << rotamerSamplingString << endl;
-	cout << "PolyLeu Backbone:   " << backboneSeq << endl;
+	cout << "Backbone:           " << backboneSeq << endl;
 	cout << "Variable Positions: " << variablePositionString << endl;
 	cout << "Rotamers Levels:    " << rotamerSamplingString << endl;
 
@@ -1086,12 +1084,7 @@ void defineRotamerLevels(Options &_opt, vector<pair <int, double> > &_resiBurial
 			}
 		}
 		_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
-<<<<<<< HEAD
-=======
-	cout << i << " Position: " << positionNumber << "; Residue Number: " << resiNum << endl;	
->>>>>>> 096967b8ef4746142cb5c151f5d071fe63d94e79
 	}
-	exit(0);
 }
 
 // sets the gly69 backbone to starting geometry
@@ -1194,7 +1187,6 @@ void help(Options defaults) {
 	} else {
 		//cout << "#Load Rotamers by interface and non interfacial positions" << endl;
 		cout << setw(20) << "SL" << defaults.SL << endl;
-		cout << setw(20) << "SLInterface" << defaults.SLInterface << endl;
 	}
 
 	cout << "#MonteCarlo Paramenters" << endl;

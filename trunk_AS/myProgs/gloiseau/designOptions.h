@@ -30,7 +30,11 @@ struct Options{
 
 	// sequence parameters
 	string backboneAA; //backbone amino acid (default to L)
+	string sequence; //sequence to start with; if empty, use PolyLeucine
 	int backboneLength; //length of sequence for design (default to 21; code still needs to be reworked for other lengths; imm1 energy problem?)
+	int startResNum; //starting residue number
+	int endResNum; //end residue number
+	string interface; //interface to design on; if empty, use SASA
 
 	// booleans: changing these will ..TODO: add more here
 	bool getGeoFromPDBData; //TRUE: randomly choose a dimeric geometry from the membrane protein pdb landscape OR FALSE: use a given dimer geometry
@@ -44,18 +48,15 @@ struct Options{
 	bool useAlaAtCTerminus; //TRUE: use ALA at C terminus of sequence FALSE: use LEU at C terminus ..TODO: do I need this?
 	bool useBaseline; //TRUE: calculate and use baseline values generated as estimates of the monomer sequence OR FALSE: don't use baselines to estimate the monomer
 	bool getRandomAxRotAndZShift; //TRUE: get random from geometry file OR FALSE: use given axRot and zShift
-
-	// interface parameters
-	string interface; //interface to design on; if empty, use SASA
-	string sequence; //sequence to start with; if empty, use PolyLeucine
+	// use different energy parameters
+	bool useIMM1;
+	bool useElec;
 
 	// repack parameters
 	int greedyCycles;
-	int seed;
 
 	// load rotamers useSasa = false
 	string SL; //number of rotamers
-	string SLInterface; //number of rotamers for interfacial AAs
 
 	// load rotamers useSasa = true
 	std::vector<string> sasaRepackLevel; //vector of levels
@@ -77,13 +78,7 @@ struct Options{
 	that end up having a SASA value in level 1 and 2 are considered interface.
 	*/
 
-	// tm start and end numbers
-	int tmStart; //specifies starting residue number
-	int tmEnd; //specifies ending residue number
-
-	// the actual AAs being modeled
-	int startResNum; //starting residue number
-	int endResNum; //end residue number
+	
 
 	// Starting Geometry
 	double xShift; //distance between helices
@@ -91,9 +86,8 @@ struct Options{
 	double crossingAngle; //crossing angle between helices
 	double axialRotation; //rotation of helices
 	bool negAngle;
-
 	// crossing point
-	int thread; //crossing point...(more detail about this and gly69?)
+	int thread; //crossing point (25 defaults and lets crossing point be in the center)
 
 	// Monte Carlo parameters
 	int MCCycles;
@@ -102,7 +96,6 @@ struct Options{
 	double MCEndTemp;
 	int MCCurve;
 	int MCConvergedSteps;
-	// TODO: adding the below in here and designFunctions breaks with a std::logic_error?
 	//double MCConvergedE;
 
 	// Backbone Monte Carlo parameters
@@ -113,10 +106,20 @@ struct Options{
 	int backboneMCCurve;
 	int backboneConvergedSteps;
 	double backboneConvergedE;
+	
+	// backbone repack variables
+	int numRepacks;
+	double deltaZ;
+	double deltaAx;
+	double deltaCross;
+	double deltaX;
+	double deltaXLimit; 
+	double deltaCrossLimit;
+	double deltaAxLimit;
+	double deltaZLimit;
+	bool decreaseMoveSize;
 
-	// use different energy parameters
-	bool useIMM1;
-	bool useElec;
+	
 
 	// energy weights
 	double weight_vdw; //weight of vdw energy contribution to total energy: default = 1
@@ -140,20 +143,6 @@ struct Options{
 	vector<string> energyLandscapeTerms;
 	vector<string> energyTermsToOutput;
 	vector<string> energyTermList;
-
-	// backbone repack variables
-	int numRepacks;
-	double deltaZ;
-	double deltaAx;
-	double deltaCross;
-	double deltaX;
-	double deltaXLimit; 
-	double deltaCrossLimit;
-	double deltaAxLimit;
-	double deltaZLimit;
-	bool decreaseMoveSize;
-
-
 	vector<string> deleteTerminalInteractions;
 
 	/***** MANAGEMENT VARIABLES ******/
@@ -177,10 +166,12 @@ struct Options{
 	vector<vector<string> > equivalent; // this links short options to long ones (for example -x can be given for --extended)
 
 	string OPerrors; //the errors from the option parser
-	string rerunConf; // data for a configuration file that would rerun the job as the current run
 
+	// run parameters
+	string rerunConf; // data for a configuration file that would rerun the job as the current run
 	string configfile;
 	string runNumber;
+	int seed;
 };
 
 #endif
