@@ -31,9 +31,9 @@ using namespace MSL;
 using namespace std;
 
 static SysEnv SYSENV;
-string programName = "backboneOptimizer_v3";
+string programName = "backboneOptimizer_v4";
 string programDescription = "This is an updated version of backboneOptimizer: backboneOptimizer does local backbone moves on given backbones\n\
- 	from a given input geometry. Functions in this are more improved, and it uses multithreading to try multiple threaded positions.\n\
+ 	from a given input geometry. Functions in this are improved, and it uses multithreading to try multiple crossing points.\n\
 	It also acts as a forward folding program, where it will try to minimize the energy of a given sequence and geometry.";
 string programAuthor = "Gilbert Loiseau";
 string programVersion = "4";
@@ -136,6 +136,7 @@ int main(int argc, char *argv[]){
 	System sys;
 	string polySeq = convertToPolymerSequence(opt.sequence, opt.thread);
 	prepareSystem(opt, sys, startGeom, polySeq);
+
 	// setup random number generator for monomer energy calculations
 	RandomNumberGenerator RNG;
 	RNG.setSeed(opt.seed); 
@@ -150,16 +151,17 @@ int main(int argc, char *argv[]){
 			cout << "Unable to make directory" << endl;
 			exit(0);
 		}
+		// begin threading through gly69 (not to be confused with the actual multithreading below)
 		for (uint i=opt.threadStart; i<opt.threadEnd; i++){
-			vector<thread> threads;
-			//cout << "Docking Thread: " << i << endl;
+			vector<thread> ths;
+			// loop 
 			for (uint j=0; j<opt.crossAngle.size();j++){
 				double crossingAngle = opt.crossAngle[j]; 
 				//cout << "Angle: " << crossingAngle << endl;
-				threads.push_back(thread(threadDockAndRepack, ref(opt), ref(helicalAxis), i, n, crossingAngle, monomerEnergy,
+				ths.push_back(thread(threadDockAndRepack, ref(opt), ref(helicalAxis), i, n, crossingAngle, monomerEnergy,
 				 ref(monomerEnergyByTerm), ref(eout)));
 			}
-			for (auto &t : threads){
+			for (auto &t : ths){
 				t.join();
 			}
 		}

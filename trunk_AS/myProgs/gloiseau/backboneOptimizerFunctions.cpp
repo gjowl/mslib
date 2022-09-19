@@ -274,7 +274,7 @@ void threadDockAndRepack(BBOptions &_opt, System &_helicalAxis, int _thread, int
 	RandomNumberGenerator RNG;
 	RNG.setSeed(_opt.seed); 
 	
-	// _optimize Initial Starting Position 
+	// Setup SelfPairManager object 
 	SelfPairManager spm;
 	spm.seed(RNG.getSeed());
 	spm.setSystem(&sys);
@@ -335,7 +335,7 @@ void getAxialRotAndZShift(BBOptions &_opt, map<string,double> &_geometries, vect
 	// setup random number generator object
 	RandomNumberGenerator RNG;
 	RNG.setSeed(_opt.seed);// not sure if this works without the seed 0 (time based seed)
-	// Setup file reader
+	// Setup file reader object
 	Reader reader(_opt.geometryDensityFile);
 	reader.open();
 	if(!(reader.is_open())){
@@ -470,7 +470,8 @@ void monteCarloRepack(BBOptions &_opt, System &_sys, SelfPairManager &_spm, map<
 	// Set up chain A and chain B atom pointer vectors
 	AtomPointerVector & apvChainA = _sys.getChain("A").getAtomPointers();
 	AtomPointerVector & apvChainB = _sys.getChain("B").getAtomPointers();
-	
+
+	// Set up PDBWriter object for outputting structures	
 	PDBWriter writer;
 
 	// setup output file for repack
@@ -582,7 +583,7 @@ void monteCarloRepack(BBOptions &_opt, System &_sys, SelfPairManager &_spm, map<
 	double monomerImm1 = _monomerEnergyByTerm.find("CHARMM_IMM1")->second;
 	double monomerImm1Ref =_monomerEnergyByTerm.find("CHARMM_IMM1REF")->second;
 
-	// calculate the solvent accessible surface area
+	// calculate the solvent accessible surface area using SasaCalculator object
 	SasaCalculator sasa(_sys.getAtomPointers());
 	sasa.calcSasa();
 	double dimerSasa = sasa.getTotalSasa();

@@ -6,6 +6,7 @@ executable   = /exports/home/gloiseau/mslib/trunk_AS/bin/seqDesign
 output       = $(outDir)/1.out
 log          = $(outDir)/1.log
 error        = $(outDir)/1.err
+inputFileDir = /exports/home/gloiseau/mslib/trunk_AS
 stream_output = TRUE
 stream_error  = TRUE
 
@@ -13,5 +14,5 @@ stream_error  = TRUE
 configFile = /exports/home/gloiseau/mslib/trunk_AS/config/seqDesign.config
 
 #Runs
-arguments = "--config $(configFile)"
-queue
+Arguments = "--config $(configFile) --runNumber $(runNumber) --xShift $(xShift) --crossingAngle $(crossingAngle) --negAngle $(negAngle) --axialRotation $(axialRotation) --negRot $(negRot) --zShift $(zShift) --verbose true"
+queue xShift,crossingAngle,negAngle,axialRotation,negRot,zShift from $(inputFileDir)/testGeoms.csv

@@ -549,7 +549,8 @@ vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingP
  *output file functions
  ***********************************/
 void setupDesignDirectory(Options &_opt, string _date){
-	_opt.pdbOutputDir = string(get_current_dir_name()) + "/design_" + _opt.runNumber;
+	//_opt.pdbOutputDir = string(get_current_dir_name()) + "/design_" + _opt.runNumber;
+	_opt.pdbOutputDir = "/exports/home/gloiseau/mslib/trunk_AS/design_" + _opt.runNumber;
 	string cmd = "mkdir -p " + _opt.pdbOutputDir;
 	if (system(cmd.c_str())){
 		cout << "Unable to make directory" << endl;

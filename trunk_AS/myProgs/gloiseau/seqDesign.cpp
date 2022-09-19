@@ -81,18 +81,19 @@ void useInputInterface(Options &_opt, string &_variablePositionString, string &_
 void setActiveSequence(System &_sys, string _sequence);
 
 // backbone repack functions
-void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, uint _rep, double _savedXShift, System &_helicalAxis, AtomPointerVector &_axisA,
- AtomPointerVector &_axisB, vector<int> _rotamerSampling, Transforms &_trans, RandomNumberGenerator &_RNG, ofstream &_out);
+void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, double _monomerEnergy, uint _rep, double _savedXShift,
+ System &_helicalAxis, AtomPointerVector &_axisA,  AtomPointerVector &_axisB, vector<int> _rotamerSampling, Transforms &_trans,
+ RandomNumberGenerator &_RNG, ofstream &_out);
 void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, 
  System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
- AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _prevBestEnergy,
+ AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
  uint _rep, ofstream &_out);
 void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
  bool &_decreaseMoveSize);
 
 // output functions
 void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingPerPosition, map<string,map<string,double>> _sequenceEnergyMap,
- vector<double> _densities);
+ map<string,double> _geometries, vector<double> _densities);
 string getRunParameters(Options &_opt, vector<double> _densities);
 void outputTime(auto _start, string _descriptor, bool _beginFunction, ofstream &_out);
 
@@ -204,9 +205,6 @@ int main(int argc, char *argv[]){
 	string alternateIds = getAlternateIdString(opt.Ids);
 	cout << "Amino acids for design: " << alternateIds << endl;
 
-	// check if sequence is empty
-	//if (opt.sequence == ""){
-
 	/******************************************************************************
 	 *                         === HELICAL AXIS SET UP ===
 	 ******************************************************************************/
@@ -264,7 +262,23 @@ int main(int argc, char *argv[]){
 	// redacted on 2022-9-1: printed the pdbs of the helical axis and doing this moves
 	// it a small bit more down that is unnecessary and slightly out of membrane 
 	//moveZCenterOfCAMassToOrigin(sys.getAllAtomPointers(), helicalAxis.getAtomPointers(), trans);
-	
+
+	if (opt.sequence != ""){
+		setActiveSequence(sys, opt.sequence);
+	} else {
+		string polyLeu = "LLLLLLLLLLLLLLLLLLILI";
+		setActiveSequence(sys, polyLeu);
+	}
+
+	// print pdb of geometry
+	string geometry = "/x"+MslTools::doubleToString(opt.xShift)+"_cross"+MslTools::doubleToString(opt.crossingAngle)+"_ax"+MslTools::doubleToString(opt.axialRotation)+"_z"+MslTools::doubleToString(opt.zShift)+".pdb";
+	PDBWriter writer;
+	writer.open(opt.pdbOutputDir + geometry);
+	writer.write(sys.getAtomPointers(), true, false, true);
+	writer.close();
+	cout << geometry+".pdb" << endl;
+	exit(0);
+
 	Chain &chainA = sys.getChain("A");
 	int seqLength = chainA.positionSize();
 	/******************************************************************************
@@ -297,11 +311,6 @@ int main(int argc, char *argv[]){
 	map<string, map<string,double>> sequenceEnergyMapBest; // energyMap to hold all energies for output into a summary file
 	map<string, vector<uint>> sequenceVectorMap; //sequence and vector map: sequence will be tied vector with AAs and rotamers
 	map<string, double> sequenceEntropyMap = readSingleParameters(opt.sequenceEntropyFile); // Get sequence entropy map
-
-	if (opt.sequence != ""){
-		setActiveSequence(sys, opt.sequence);
-		
-	}
 	
 	/******************************************************************************
 	 *                    === GET THE BEST STARTING STATE ===
@@ -345,24 +354,64 @@ int main(int argc, char *argv[]){
 	if(opt.linkInterfacialPositions){
 		unlinkBestState(opt, bestState, rotamerSamplingPerPosition, seqLength);
 	}
+
+	map<string, map<string,double>> sequenceEnergyMapFinalSeq; // energyMap to hold all energies for output into a summary file
 	string bestSequence;
+	map<string, double> geometries;
+	geometries["startXShift"] = opt.xShift;
+	geometries["startCrossingAngle"] = opt.crossingAngle;
+	geometries["startAxialRotation"] = opt.axialRotation;
+	geometries["startZShift"] = opt.zShift;
 	for (uint i=0; i<3; i++){
 		outputTime(start, "Sequence search replicate " + to_string(i), true, sout);
 		stateMCUnlinked(sys, opt, interfacePolySeq, sequenceEnergyMapBest, sequenceEntropyMap, bestState, bestSequence, seqs, allSeqs,
 			sequenceVectorMap, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
 		outputTime(start, "Sequence search replicate " + to_string(i), false, sout);
+
+		// since I'm only going to keep one sequence, compute monomer energy for that sequence here to compare to backbone repack energy
+		// I think I'll take the top 10 sequences with stateMC, compute monomer energies here, then save the best for the repack
+		outputTime(start, "Monomer energy calculations ", true, sout);
+		computeMonomerEnergies(opt, trans, sequenceEnergyMapBest, seqs, RNG, sout, err);
+		outputTime(start, "Monomer energy calculations ", false, sout);
+
+		// I currently pick best sequence in stateMC, but I think I should do it here with calculate monomers too
+		double bestMonomer = 0;
+		for (auto &seq : sequenceEnergyMapBest){
+			if (i == 0){
+				bestEnergy = seq.second["dimer"] - seq.second["monomer"];
+				bestMonomer = seq.second["monomer"];
+				bestSequence = seq.first;
+			} else if (seq.second["dimer"] - seq.second["monomer"] < bestEnergy){
+				// get sequence with the best dimer energy - monomer energy difference
+				bestEnergy = seq.second["dimer"] - seq.second["monomer"];
+				bestMonomer = seq.second["monomer"];
+				bestSequence = seq.first;
+			}
+		}
+
+		// add the monomer energy to the backbone repack to compare instead of using baseline energy (more accurate)
 		outputTime(start, "Backbone repack replicate " + to_string(i), true, sout);
-		localBackboneRepack(opt, sys, bestSequence, i, opt.xShift, helicalAxis, axisA, axisB, rotamerSamplingPerPosition, trans, RNG, sout);
+		localBackboneRepack(opt, sys, bestSequence, bestMonomer, i, opt.xShift, helicalAxis, axisA, axisB, rotamerSamplingPerPosition, trans, RNG, sout);
 		outputTime(start, "Backbone repack replicate " + to_string(i), false, sout);
+		// get the best sequence from the energy map
+		sequenceEnergyMapFinalSeq[bestSequence] = sequenceEnergyMapBest[bestSequence];	
+		// reset the energy map
+		sequenceEnergyMapBest.clear(); // energyMap to hold all energies for output into a summary file
+		geometries["xShift"+to_string(i)] = opt.xShift;
+		geometries["crossingAngle"+to_string(i)] = opt.crossingAngle;
+		geometries["axialRotation"+to_string(i)] = opt.axialRotation;
+		geometries["zShift"+to_string(i)] = opt.zShift;
 	}
-	// TODO: make a decision; should I try to calculate the energies for every sequence on the final backbone? Or should I just
+	geometries["finalXShift"] = opt.xShift;
+	geometries["finalCrossingAngle"] = opt.crossingAngle;
+	geometries["finalAxialRotation"] = opt.axialRotation;
+	geometries["finalZShift"] = opt.zShift;
 	// say what the geometry is?
 	/******************************************************************************
 	 *            === CALCULATE MONOMER ENERGIES OF EACH SEQUENCE ===
 	 ******************************************************************************/
-	outputTime(start, "Monomer energy calculations ", true, sout);
-	computeMonomerEnergies(opt, trans, sequenceEnergyMapBest, seqs, RNG, sout, err);
-	outputTime(start, "Monomer energy calculations ", false, sout);
+	//computeMonomerEnergies(opt, trans, sequenceEnergyMapBest, seqs, RNG, sout, err);
+	//outputTime(start, "Monomer energy calculations ", false, sout);
 	//getSasaDifference(sequenceStatePair, sequenceEnergyMap);
 
 	///******************************************************************************
@@ -376,7 +425,7 @@ int main(int argc, char *argv[]){
 	///******************************************************************************
 	// *                   === WRITE OUT ENERGY AND DESIGN FILES ===
 	// ******************************************************************************/
-	outputFiles(opt, rotamerSamplingString, rotamerSamplingPerPosition, sequenceEnergyMapBest, densities);
+	outputFiles(opt, rotamerSamplingString, rotamerSamplingPerPosition, sequenceEnergyMapFinalSeq, geometries, densities);
 
 	time(&endTime);
 	diffTime = difftime (endTime, startTime);
@@ -729,37 +778,36 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	uint i=0;
 	double ener = 0;
 	double entropy = 0;
+	
+	cout << "End monte carlo sequence search #" << _rep << ": " << diffTimeSMC << "s" << endl;
+	_out << "End monte carlo sequence search #" << _rep << ": " << diffTimeSMC << "s" << endl;
+	_out << "Monte Carlo ended at Temp: " << MC.getCurrentT() << endl << endl;
+
+	// search through the map for the best sequences
+	// make into a function
 	PDBWriter writer;
 	writer.open(_opt.pdbOutputDir + "/allDesigns_" + to_string(_rep) + ".pdb");
-	// TODO: should I switch this to the energy total?
 	for (auto &seq: allSequenceEnergyMap){
-		_out << "Best Sequence #" << i << ": " << seq.first << "; Energy: " << seq.second["Dimer"] << endl;
+		_out << "Best Sequence #" << i << ": " << seq.first << "; Energy: " << seq.second["Dimer"] << "; Curr Entropy: " << seq.second["currEntropy"];
+		_out << "; Prev Entropy: " << seq.second["prevEntropy"] << endl;
 		if (i == 0){
 			_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
 			writer.write(_sys.getAtomPointers(), true, false, true);
 			_bestSequence = seq.first;
 			ener = seq.second["currEnergyTotal"];
-			entropy = seq.second["entropyDiff"];
-		} else if (seq.second["entropyDiff"] > entropy && seq.second["currEnergyTotal"] < ener){
+		//} else if (seq.second["entropyDiff"] > entropy && seq.second["currEnergyTotal"] < ener){
+		} else if (seq.second["currEntropy"] > seq.second["prevEntropy"]){
 			_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
 			writer.write(_sys.getAtomPointers(), true, false, true);
-			_bestSequence = seq.first;
-			ener = seq.second["currEnergyTotal"];
-			entropy = seq.second["entropyDiff"];
+			_sequenceEnergyMap[seq.first] = seq.second;
+			if(seq.second["currEnergyTotal"] < ener){
+				_bestSequence = seq.first;
+				ener = seq.second["currEnergyTotal"];
+			}
 		}
-		_sequenceEnergyMap[seq.first] = seq.second;
 		i++;
 	}
-	//TODO: save the top x sequences during the last cycle after all backbone repacks finished; save the rest in a energy landscape file
 	writer.close();
-	cout << "End monte carlo sequence search #" << _rep << ": " << diffTimeSMC << "s" << endl;
-	_out << "End monte carlo sequence search #" << _rep << ": " << diffTimeSMC << "s" << endl;
-	_out << "Monte Carlo ended at Temp: " << MC.getCurrentT() << endl << endl;
-	//TODO: maybe set up something like the following:
-	// - save sequences for x cycles
-	// - recalculate the energy for all sequences at this new geometry
-	// - continue on to the next cycle with the current sequence
-	// repeat for x times 10 cycles
 }
 
 map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
@@ -1155,8 +1203,9 @@ void help(Options defaults) {
 	cout << endl;
 }
 
-void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, uint _rep, double _savedXShift, System &_helicalAxis, AtomPointerVector &_axisA,
- AtomPointerVector &_axisB, vector<int> _rotamerSampling, Transforms &_trans, RandomNumberGenerator &_RNG, ofstream &_out){
+void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, double _monomerEnergy, uint _rep, double _savedXShift,
+ System &_helicalAxis, AtomPointerVector &_axisA,  AtomPointerVector &_axisB, vector<int> _rotamerSampling, Transforms &_trans,
+ RandomNumberGenerator &_RNG, ofstream &_out){
 	string polySeq = convertToPolymerSequenceNeutralPatch(_sequence, _opt.thread);
 	PolymerSequence PS(polySeq);
 	
@@ -1181,14 +1230,11 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ui
 	AtomPointerVector & apvChainB = chainB.getAtomPointers();
 	
 	// build in baseline as an estimate for monomer energies
-	if (_opt.useBaseline){
-		//addBaselineToSelfPairManager();//TODO: was going to make this a function but I feel like it already exists in spm, so going to wait when I have time to look that up
-		//initialize baseline maps to calculate energy for each sequence for comparison in baselineMonomerComparison_x.out
-		buildBaselines(sys, _opt);
-	}
-
-	// get the best repack energy
-	double prevBestEnergy = sys.calcEnergy();
+	//if (_opt.useBaseline){
+	//	//addBaselineToSelfPairManager();//TODO: was going to make this a function but I feel like it already exists in spm, so going to wait when I have time to look that up
+	//	//initialize baseline maps to calculate energy for each sequence for comparison in baselineMonomerComparison_x.out
+	//	buildBaselines(sys, _opt);
+	//}
 
 	// Setup time variables
 	time_t startTime, endTime;
@@ -1215,8 +1261,7 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ui
 		cout << " Performing Local Monte Carlo Backbone Repack " << endl;
 		cout << "==============================================" << endl;
 	}
-	monteCarloRepack(_opt, sys, _savedXShift, spm, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, prevBestEnergy, 
-	_rep, _out);
+	monteCarloRepack(_opt, sys, _savedXShift, spm, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, _monomerEnergy, _rep, _out);
 
 	// Initialize PDBWriter
 	PDBWriter writer;
@@ -1233,7 +1278,7 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ui
 
 void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, 
  System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
- AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _prevBestEnergy,
+ AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
  uint _rep, ofstream &_out){
 	// Local Backbone Monte Carlo Repacks Time setup	
 	time_t startTimeMC, endTimeMC;
@@ -1249,13 +1294,14 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 	// Monte Carlo Repack Manager Setup
 	MonteCarloManager MCMngr(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
 	//MonteCarloManager MCMngr(_opt.backboneMCStartTemp, _opt.backboneMCEndTemp, _opt.backboneMCCycles, _opt.backboneMCCurve, _opt.backboneMCMaxRejects, _opt.backboneConvergedSteps, _opt.backboneConvergedE);
-	MCMngr.setEner(_prevBestEnergy);
 
 	vector<uint> startStateVec = _spm.getMinStates()[0];
 	vector<unsigned int> MCOBest = startStateVec;
 		
 	unsigned int counter = 0;
-	double currentEnergy = _prevBestEnergy;
+	double currentEnergy = _sys.calcEnergy()-_monomerEnergy;
+	double bestEnergy = currentEnergy;
+	MCMngr.setEner(currentEnergy);
 	//double startDimer = _prevBestEnergy;
 
 	// setup variables for shifts: ensures that they start from the proper values for every repack and not just the final value from the initial repack
@@ -1314,7 +1360,7 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 		// Run _optimization
 		repackSideChains(_spm, _opt.greedyCycles);
 		vector<unsigned int> MCOFinal = _spm.getMinStates()[0];
-		currentEnergy = _spm.getMinBound()[0];
+		currentEnergy = _spm.getMinBound()[0]-_monomerEnergy;
 		_sys.setActiveRotamers(MCOFinal);//THIS WAS NOT HERE BEFORE 2022-8-26 NIGHT! MAKE SURE IT'S IN ALL OTHER CODE, IT'S CRUCIAL TO SAVING THE STATE
 		
 		if (!MCMngr.accept(currentEnergy)) {
@@ -1322,7 +1368,7 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 				cout << "MCReject   xShift: " << xShift+deltaXShift << " crossingAngle: " << crossingAngle+deltaCrossingAngle << " axialRotation: " << axialRotation+deltaAxialRotation << " zShift: " << zShift+deltaZShift << " energy: " << currentEnergy << endl;
 			}
 		} else {
-			_prevBestEnergy = currentEnergy;
+			bestEnergy = currentEnergy;
 			_sys.saveAltCoor("savedRepackState");
 			_helicalAxis.saveAltCoor("BestRepack");
 		
@@ -1432,6 +1478,15 @@ void useInputInterface(Options &_opt, string &_variablePositionString, string &_
 	}
 }
 
+string getOutputGeometries(Options &_opt, map<string,double> _geometries){
+	stringstream ss;
+	string t = "\t";
+	for (auto geometry : _geometries){
+		cout << geometry.first << t << geometry.second << endl;
+	}
+	string runParameters = ss.str();
+	return runParameters;
+}
 
 string getRunParameters(Options &_opt, vector<double> _densities){
 	stringstream ss;
@@ -1442,7 +1497,7 @@ string getRunParameters(Options &_opt, vector<double> _densities){
 }
 
 void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingPerPosition, map<string,map<string,double>> _sequenceEnergyMap,
- vector<double> _densities){
+ map<string,double> _geometries, vector<double> _densities){
 	// Setup vector to hold energy file lines
 	vector<string> energyLines;
 	// get the run parameters
@@ -1483,7 +1538,7 @@ void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingP
 	eout << "angleDistDensity" << t << "axialRotationDensity" << t << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
 	cout << "Sequence" << t << "Interface" << t << "InterfaceSequence" << t;
 	cout << enerTerms.str();
-	eout << "angleDistDensity" << t << "axialRotationDensity" << t << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
+	cout << "angleDistDensity" << t << "axialRotationDensity" << t << "zShiftDensity" << t << "repackLevels" << t << "interfaceLevels" << t << "backboneLength" << endl;
 	for (uint i=0; i<energyLines.size() ; i++){
 		eout << energyLines[i] << endl;
 		cout << energyLines[i] << endl;
