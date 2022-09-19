@@ -1799,6 +1799,7 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("axialRotation");
 	opt.allowed.push_back("zShift");
 	opt.allowed.push_back("negAngle");
+	opt.allowed.push_back("negRot");
 	opt.allowed.push_back("thread");
 
 	//Monte Carlo variables
@@ -2188,6 +2189,15 @@ Options parseOptions(int _argc, char * _argv[]){
 	}
 	if (opt.negAngle == true){
 		opt.crossingAngle = -opt.crossingAngle;
+	}
+	opt.negRot = OP.getBool("negRot");
+	if (OP.fail()) {
+		opt.warningMessages += "negRot not specified using false\n";
+		opt.warningFlag = true;
+		opt.negRot = false;
+	}
+	if (opt.negRot == true){
+		opt.axialRotation = -opt.axialRotation;
 	}
 	opt.thread = OP.getInt("thread");
 	if (OP.fail()) {

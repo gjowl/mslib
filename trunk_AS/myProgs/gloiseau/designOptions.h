@@ -84,6 +84,7 @@ struct Options{
 	double crossingAngle; //crossing angle between helices
 	double axialRotation; //rotation of helices
 	bool negAngle;
+	bool negRot;
 	// crossing point
 	int thread; //crossing point (25 defaults and lets crossing point be in the center)
 
