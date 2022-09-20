@@ -81,10 +81,10 @@ void useInputInterface(Options &_opt, string &_variablePositionString, string &_
 void setActiveSequence(System &_sys, string _sequence);
 
 // backbone repack functions
-void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, double _monomerEnergy, uint _rep, double _savedXShift,
+void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, map<string, map<string,double>> &_sequenceEnergyMap, uint _rep, double _savedXShift,
  System &_helicalAxis, AtomPointerVector &_axisA,  AtomPointerVector &_axisB, vector<int> _rotamerSampling, Transforms &_trans,
  RandomNumberGenerator &_RNG, ofstream &_out);
-void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, 
+double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, 
  System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
  uint _rep, ofstream &_out);
@@ -262,7 +262,6 @@ int main(int argc, char *argv[]){
 	// redacted on 2022-9-1: printed the pdbs of the helical axis and doing this moves
 	// it a small bit more down that is unnecessary and slightly out of membrane 
 	//moveZCenterOfCAMassToOrigin(sys.getAllAtomPointers(), helicalAxis.getAtomPointers(), trans);
-
 	if (opt.sequence != ""){
 		setActiveSequence(sys, opt.sequence);
 	} else {
@@ -270,14 +269,14 @@ int main(int argc, char *argv[]){
 		setActiveSequence(sys, polyLeu);
 	}
 
-	// print pdb of geometry
+	// print pdb of starting geometry
 	string geometry = "/x"+MslTools::doubleToString(opt.xShift)+"_cross"+MslTools::doubleToString(opt.crossingAngle)+"_ax"+MslTools::doubleToString(opt.axialRotation)+"_z"+MslTools::doubleToString(opt.zShift)+".pdb";
 	PDBWriter writer;
 	writer.open(opt.pdbOutputDir + geometry);
 	writer.write(sys.getAtomPointers(), true, false, true);
 	writer.close();
-	cout << geometry+".pdb" << endl;
-	exit(0);
+	//cout << geometry+".pdb" << endl;
+	//exit(0);
 
 	Chain &chainA = sys.getChain("A");
 	int seqLength = chainA.positionSize();
@@ -303,6 +302,7 @@ int main(int argc, char *argv[]){
 	// load rotamers for each amino acid at each position into the system
 	loadRotamers(sys, sysRot, opt, rotamerSamplingPerPosition);
 	//CSB.updateNonBonded(10,12,50);//This for some reason updates the energy terms and makes the IMM1 terms active (still need to check where, but did a couple of calcEnergy and outputs
+
 	/******************************************************************************
 	 *           === VARIABLES FOR SAVING ENERGIES AND SEQUENCES ===
 	 ******************************************************************************/
@@ -336,7 +336,7 @@ int main(int argc, char *argv[]){
 		bestState = spm.getMinStates()[0];
 		outputTime(start, "Get Starting State", false, sout);
 	}
-	// How do I get the bestState here...? should I write a function that will give me a specific state for my starting sequence? OH or greedy using the function in stateMC?
+
 	// set system to the best sequence or input sequence 
 	sys.setActiveRotamers(bestState);
 	string seq = convertPolymerSeqToOneLetterSeq(chainA);
@@ -388,10 +388,10 @@ int main(int argc, char *argv[]){
 				bestSequence = seq.first;
 			}
 		}
-
 		// add the monomer energy to the backbone repack to compare instead of using baseline energy (more accurate)
 		outputTime(start, "Backbone repack replicate " + to_string(i), true, sout);
-		localBackboneRepack(opt, sys, bestSequence, bestMonomer, i, opt.xShift, helicalAxis, axisA, axisB, rotamerSamplingPerPosition, trans, RNG, sout);
+		// TODO: do I need to make a copy of this helical axis?
+		localBackboneRepack(opt, sys, bestSequence, sequenceEnergyMapBest, i, opt.xShift, helicalAxis, axisA, axisB, rotamerSamplingPerPosition, trans, RNG, sout);
 		outputTime(start, "Backbone repack replicate " + to_string(i), false, sout);
 		// get the best sequence from the energy map
 		sequenceEnergyMapFinalSeq[bestSequence] = sequenceEnergyMapBest[bestSequence];	
@@ -406,25 +406,9 @@ int main(int argc, char *argv[]){
 	geometries["finalCrossingAngle"] = opt.crossingAngle;
 	geometries["finalAxialRotation"] = opt.axialRotation;
 	geometries["finalZShift"] = opt.zShift;
-	// say what the geometry is?
 	/******************************************************************************
-	 *            === CALCULATE MONOMER ENERGIES OF EACH SEQUENCE ===
+	 *                   === WRITE OUT ENERGY AND DESIGN FILES ===
 	 ******************************************************************************/
-	//computeMonomerEnergies(opt, trans, sequenceEnergyMapBest, seqs, RNG, sout, err);
-	//outputTime(start, "Monomer energy calculations ", false, sout);
-	//getSasaDifference(sequenceStatePair, sequenceEnergyMap);
-
-	///******************************************************************************
-	// *              === CALCULATE TOTAL ENERGIES AND WRITE PDBS ===
-	// ******************************************************************************/
-	//// Initialize PDBWriter for designs
-	//PDBWriter writer;
-	//writer.open(opt.pdbOutputDir + "/allDesigns.pdb");
-	//writer.close();
-
-	///******************************************************************************
-	// *                   === WRITE OUT ENERGY AND DESIGN FILES ===
-	// ******************************************************************************/
 	outputFiles(opt, rotamerSamplingString, rotamerSamplingPerPosition, sequenceEnergyMapFinalSeq, geometries, densities);
 
 	time(&endTime);
@@ -795,8 +779,8 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			writer.write(_sys.getAtomPointers(), true, false, true);
 			_bestSequence = seq.first;
 			ener = seq.second["currEnergyTotal"];
-		//} else if (seq.second["entropyDiff"] > entropy && seq.second["currEnergyTotal"] < ener){
-		} else if (seq.second["currEntropy"] > seq.second["prevEntropy"]){
+		} else if (seq.second["entropyDiff"] > entropy && seq.second["currEnergyTotal"] < ener){
+		//} else if (seq.second["currEntropy"] > seq.second["prevEntropy"]){
 			_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
 			writer.write(_sys.getAtomPointers(), true, false, true);
 			_sequenceEnergyMap[seq.first] = seq.second;
@@ -1203,12 +1187,12 @@ void help(Options defaults) {
 	cout << endl;
 }
 
-void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, double _monomerEnergy, uint _rep, double _savedXShift,
+void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, map<string, map<string,double>> &_sequenceEnergyMap, uint _rep, double _savedXShift,
  System &_helicalAxis, AtomPointerVector &_axisA,  AtomPointerVector &_axisB, vector<int> _rotamerSampling, Transforms &_trans,
  RandomNumberGenerator &_RNG, ofstream &_out){
 	string polySeq = convertToPolymerSequenceNeutralPatch(_sequence, _opt.thread);
 	PolymerSequence PS(polySeq);
-	
+
 	// set up the system for the input sequence
 	System sys;
 	prepareSystem(_opt, sys, _startGeom, PS);
@@ -1229,13 +1213,6 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, do
 	AtomPointerVector & apvChainA = chainA.getAtomPointers();
 	AtomPointerVector & apvChainB = chainB.getAtomPointers();
 	
-	// build in baseline as an estimate for monomer energies
-	//if (_opt.useBaseline){
-	//	//addBaselineToSelfPairManager();//TODO: was going to make this a function but I feel like it already exists in spm, so going to wait when I have time to look that up
-	//	//initialize baseline maps to calculate energy for each sequence for comparison in baselineMonomerComparison_x.out
-	//	buildBaselines(sys, _opt);
-	//}
-
 	// Setup time variables
 	time_t startTime, endTime;
 	double diffTime;
@@ -1261,8 +1238,12 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, do
 		cout << " Performing Local Monte Carlo Backbone Repack " << endl;
 		cout << "==============================================" << endl;
 	}
-	monteCarloRepack(_opt, sys, _savedXShift, spm, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, _monomerEnergy, _rep, _out);
+	// get monomer energy
+	double monomerEnergy = _sequenceEnergyMap[_sequence]["monomer"];
 
+	double finalEnergy = monteCarloRepack(_opt, sys, _savedXShift, spm, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, monomerEnergy, _rep, _out);
+
+	_sequenceEnergyMap[_sequence]["Total"] = finalEnergy;
 	// Initialize PDBWriter
 	PDBWriter writer;
 	writer.open(_opt.pdbOutputDir + "/backboneOptimized_" + to_string(_rep) + ".pdb");
@@ -1276,7 +1257,7 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, do
 	_startGeom.buildAllAtoms();
 }
 
-void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, 
+double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, 
  System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
  uint _rep, ofstream &_out){
@@ -1434,10 +1415,11 @@ void monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPai
 	cout << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
 	_out << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
 	//TODO: there may be a better way to resolve this, but as of 2022-9-8, I want to get the most data I can before a lab meeting, so putting this here
-	if (finalEnergy > 100){
-		_out << "Final energy is " << finalEnergy << " after repack, indicating clashes. Choose a different geometry" << endl;
-		exit(0);
-	}
+	//if (finalEnergy > 100){
+	//	_out << "Final energy is " << finalEnergy << " after repack, indicating clashes. Choose a different geometry" << endl;
+	//	exit(0);
+	//}
+	return finalEnergy;
 }
 
 void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
