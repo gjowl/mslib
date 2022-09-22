@@ -95,6 +95,7 @@ void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, dou
 void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingPerPosition, map<string,map<string,double>> _sequenceEnergyMap,
  map<string,double> _geometries, vector<double> _densities);
 string getRunParameters(Options &_opt, vector<double> _densities);
+string getOutputGeometries(Options &_opt, map<string,double> _geometries);
 void outputTime(auto _start, string _descriptor, bool _beginFunction, ofstream &_out);
 
 // help functions
@@ -276,7 +277,7 @@ int main(int argc, char *argv[]){
 	writer.write(sys.getAtomPointers(), true, false, true);
 	writer.close();
 	//cout << geometry+".pdb" << endl;
-	//exit(0);
+	exit(0);
 
 	Chain &chainA = sys.getChain("A");
 	int seqLength = chainA.positionSize();
@@ -368,31 +369,30 @@ int main(int argc, char *argv[]){
 			sequenceVectorMap, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
 		outputTime(start, "Sequence search replicate " + to_string(i), false, sout);
 
-		// since I'm only going to keep one sequence, compute monomer energy for that sequence here to compare to backbone repack energy
-		// I think I'll take the top 10 sequences with stateMC, compute monomer energies here, then save the best for the repack
-		outputTime(start, "Monomer energy calculations ", true, sout);
-		computeMonomerEnergies(opt, trans, sequenceEnergyMapBest, seqs, RNG, sout, err);
-		outputTime(start, "Monomer energy calculations ", false, sout);
-
 		// I currently pick best sequence in stateMC, but I think I should do it here with calculate monomers too
-		double bestMonomer = 0;
-		for (auto &seq : sequenceEnergyMapBest){
-			if (i == 0){
-				bestEnergy = seq.second["dimer"] - seq.second["monomer"];
-				bestMonomer = seq.second["monomer"];
-				bestSequence = seq.first;
-			} else if (seq.second["dimer"] - seq.second["monomer"] < bestEnergy){
-				// get sequence with the best dimer energy - monomer energy difference
-				bestEnergy = seq.second["dimer"] - seq.second["monomer"];
-				bestMonomer = seq.second["monomer"];
-				bestSequence = seq.first;
-			}
-		}
+		//double bestMonomer = 0;
+		//for (auto &seq : sequenceEnergyMapBest){
+		//	if (i == 0){
+		//		bestEnergy = seq.second["Dimer"] - seq.second["Monomer"];
+		//		bestMonomer = seq.second["Monomer"];
+		//		bestSequence = seq.first;
+		//	} else if (seq.second["Dimer"] - seq.second["Monomer"] < bestEnergy){
+		//		// get sequence with the best dimer energy - monomer energy difference
+		//		bestEnergy = seq.second["Dimer"] - seq.second["Monomer"];
+		//		bestMonomer = seq.second["Monomer"];
+		//		bestSequence = seq.first;
+		//	}
+		//}
+		computeMonomerEnergyIMM1(opt, trans, sequenceEnergyMapBest, bestSequence, RNG, sout, err);
 		// add the monomer energy to the backbone repack to compare instead of using baseline energy (more accurate)
 		outputTime(start, "Backbone repack replicate " + to_string(i), true, sout);
 		// TODO: do I need to make a copy of this helical axis?
 		localBackboneRepack(opt, sys, bestSequence, sequenceEnergyMapBest, i, opt.xShift, helicalAxis, axisA, axisB, rotamerSamplingPerPosition, trans, RNG, sout);
 		outputTime(start, "Backbone repack replicate " + to_string(i), false, sout);
+		sequenceEnergyMapBest[bestSequence]["xShift"+to_string(i)] = opt.xShift;
+		sequenceEnergyMapBest[bestSequence]["crossingAngle"+to_string(i)] = opt.crossingAngle;
+		sequenceEnergyMapBest[bestSequence]["axialRotation"+to_string(i)] = opt.axialRotation;
+		sequenceEnergyMapBest[bestSequence]["zShift"+to_string(i)] = opt.zShift;
 		// get the best sequence from the energy map
 		sequenceEnergyMapFinalSeq[bestSequence] = sequenceEnergyMapBest[bestSequence];	
 		// reset the energy map
@@ -402,6 +402,12 @@ int main(int argc, char *argv[]){
 		geometries["axialRotation"+to_string(i)] = opt.axialRotation;
 		geometries["zShift"+to_string(i)] = opt.zShift;
 	}
+	// since I'm only going to keep one sequence, compute monomer energy for that sequence here to compare to backbone repack energy
+	// I think I'll take the top 10 sequences with stateMC, compute monomer energies here, then save the best for the repack
+	outputTime(start, "Monomer energy calculations", true, sout);
+	computeMonomerEnergies(opt, trans, sequenceEnergyMapFinalSeq, seqs, RNG, sout, err);
+	outputTime(start, "Monomer energy calculations", false, sout);
+
 	geometries["finalXShift"] = opt.xShift;
 	geometries["finalCrossingAngle"] = opt.crossingAngle;
 	geometries["finalAxialRotation"] = opt.axialRotation;
@@ -639,7 +645,8 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 
 	// Setup MonteCarloManager
 	//MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects, _opt.MCConvergedSteps, _opt.backboneConvergedE);
-	MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
+	//MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
+	MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, 10000, _opt.MCCurve, _opt.MCMaxRejects);
 	MC.setRandomNumberGenerator(&_RNG);
 
 	for (uint i=0; i<_bestState.size(); i++){
@@ -710,6 +717,8 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		vector<uint> currStateVec = sequenceVectorMap[currSeq]; // current state vector for current sequence (best rotamers and sequence identities)
 		MC.setEner(bestEnergyTotal);
 		
+		cout << "Best Sequence: " << currSeq << "; Energy: " << currEnergyTotal << endl;
+		cout << "Prev Sequence: " << prevStateSeq << "; Energy: " << bestEnergyTotal << endl;
 		// MC accept and reject conditions
 		if (!MC.accept(currEnergyTotal)){
 			_sys.setActiveRotamers(prevStateVec); // set rotamers to the previous state
@@ -761,37 +770,46 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	getDimerSasa(_sys, _sequenceVectorMap, _sequenceEnergyMap);
 	uint i=0;
 	double ener = 0;
+	double vdw = 0;
 	double entropy = 0;
 	
-	cout << "End monte carlo sequence search #" << _rep << ": " << diffTimeSMC << "s" << endl;
-	_out << "End monte carlo sequence search #" << _rep << ": " << diffTimeSMC << "s" << endl;
+	cout << "End monte carlo sequence search #" << _rep << ": " << diffTimeSMC/60 << "min" << endl;
+	_out << "End monte carlo sequence search #" << _rep << ": " << diffTimeSMC/60 << "min" << endl;
 	_out << "Monte Carlo ended at Temp: " << MC.getCurrentT() << endl << endl;
 
 	// search through the map for the best sequences
 	// make into a function
 	PDBWriter writer;
 	writer.open(_opt.pdbOutputDir + "/allDesigns_" + to_string(_rep) + ".pdb");
-	for (auto &seq: allSequenceEnergyMap){
-		_out << "Best Sequence #" << i << ": " << seq.first << "; Energy: " << seq.second["Dimer"] << "; Curr Entropy: " << seq.second["currEntropy"];
-		_out << "; Prev Entropy: " << seq.second["prevEntropy"] << endl;
-		if (i == 0){
-			_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
-			writer.write(_sys.getAtomPointers(), true, false, true);
-			_bestSequence = seq.first;
-			ener = seq.second["currEnergyTotal"];
-		} else if (seq.second["entropyDiff"] > entropy && seq.second["currEnergyTotal"] < ener){
-		//} else if (seq.second["currEntropy"] > seq.second["prevEntropy"]){
-			_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
-			writer.write(_sys.getAtomPointers(), true, false, true);
-			_sequenceEnergyMap[seq.first] = seq.second;
-			if(seq.second["currEnergyTotal"] < ener){
-				_bestSequence = seq.first;
-				ener = seq.second["currEnergyTotal"];
-			}
-		}
-		i++;
-	}
+	_sys.setActiveRotamers(_sequenceVectorMap[bestSeq]);
+	writer.write(_sys.getAtomPointers(), true, false, true);
+	//for (auto &seq: allSequenceEnergyMap){
+	//	_out << "Best Sequence #" << i << ": " << seq.first << "; Energy: " << seq.second["Dimer"] << "; Curr Entropy: " << seq.second["currEntropy"];
+	//	_out << "; Prev Entropy: " << seq.second["prevEntropy"] << endl;
+	//	if (i == 0){
+	//		_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
+	//		writer.write(_sys.getAtomPointers(), true, false, true);
+	//		_bestSequence = seq.first;
+	//		ener = seq.second["currEnergyTotal"];
+	//		vdw = seq.second["currEnergyVdw"];
+	//	} else if (seq.second["VDWDimer"] < vdw){
+	//	//} else if (seq.second["entropyDiff"] > entropy && seq.second["currEnergyTotal"] < ener){
+	//	//} else if (seq.second["currEntropy"] > seq.second["prevEntropy"]){
+	//		_sys.setActiveRotamers(_sequenceVectorMap[seq.first]);
+	//		writer.write(_sys.getAtomPointers(), true, false, true);
+	//		_sequenceEnergyMap[seq.first] = seq.second;
+	//		_bestSequence = seq.first;
+	//		ener = seq.second["currEnergyTotal"];
+	//		vdw = seq.second["currEnergyVdw"];
+	//		//if(seq.second["currEnergyTotal"] < ener){
+	//		//	_bestSequence = seq.first;
+	//		//	ener = seq.second["currEnergyTotal"];
+	//		//}
+	//	}
+	//	i++;
+	//}
 	writer.close();
+	_bestSequence = bestSeq;
 }
 
 map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
@@ -935,8 +953,6 @@ void getDimerSasa(System &_sys, map<string, vector<uint>> &_sequenceVectorMap, m
 }
 
 // define interface functions
-// TODO: clean this up; this whole function reeks of gross duplicate variables
-// TODO: fix all of the backboneLength stuff too, I think it currently only works at one length?
 PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom, string &_rotamerLevels,
  string &_variablePositionString, string &_rotamerSamplingString, vector<int> &_linkedPositions, vector<uint> &_allInterfacePositions,
  vector<uint> &_interfacePositions, vector<int> &_rotamerSamplingPerPosition, ofstream &_out){
@@ -1239,7 +1255,7 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ma
 		cout << "==============================================" << endl;
 	}
 	// get monomer energy
-	double monomerEnergy = _sequenceEnergyMap[_sequence]["monomer"];
+	double monomerEnergy = _sequenceEnergyMap[_sequence]["Monomer"];
 
 	double finalEnergy = monteCarloRepack(_opt, sys, _savedXShift, spm, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, monomerEnergy, _rep, _out);
 
@@ -1273,8 +1289,9 @@ double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfP
 	double zShift = _opt.zShift;
 
 	// Monte Carlo Repack Manager Setup
-	MonteCarloManager MCMngr(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
+	//MonteCarloManager MCMngr(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
 	//MonteCarloManager MCMngr(_opt.backboneMCStartTemp, _opt.backboneMCEndTemp, _opt.backboneMCCycles, _opt.backboneMCCurve, _opt.backboneMCMaxRejects, _opt.backboneConvergedSteps, _opt.backboneConvergedE);
+	MonteCarloManager MCMngr(_opt.backboneMCStartTemp, _opt.backboneMCEndTemp, _opt.backboneMCCycles, _opt.backboneMCCurve, _opt.backboneMCMaxRejects);
 
 	vector<uint> startStateVec = _spm.getMinStates()[0];
 	vector<unsigned int> MCOBest = startStateVec;
@@ -1338,7 +1355,7 @@ double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfP
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPreform);
 		}
 		
-		// Run _optimization
+		// Run optimization
 		repackSideChains(_spm, _opt.greedyCycles);
 		vector<unsigned int> MCOFinal = _spm.getMinStates()[0];
 		currentEnergy = _spm.getMinBound()[0]-_monomerEnergy;
@@ -1376,22 +1393,10 @@ double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfP
 	diffTimeMC = difftime (endTimeMC, startTimeMC);
 		
 	_sys.applySavedCoor("savedRepackState");
-	// TODO: make this into a map that saves all of these to be output
-	double baseline = _spm.getStateEnergy(MCOBest, "BASELINE")+_spm.getStateEnergy(MCOBest, "BASELINE_PAIR");
 	double dimerEnergy = _spm.getStateEnergy(MCOBest);
-	double finalEnergy = dimerEnergy-baseline;
+	double finalEnergy = dimerEnergy-_monomerEnergy;
 	
 	cout << "Energy #" << _rep << ": " << finalEnergy << endl;
-
-	// TODO: output the below?
-	//double vdw = _spm.getStateEnergy(MCOBest, "CHARMM_VDW");
-	//double hbond = _spm.getStateEnergy(MCOBest, "SCWRL4_HBOND");
-	//double imm1 = _spm.getStateEnergy(MCOBest, "CHARMM_IMM1")+_spm.getStateEnergy(MCOBest, "CHARMM_IMM1REF");
-	//double dimerDiff = dimerEnergy-startDimer;
-	// calculate the solvent accessible surface area
-	//SasaCalculator sasa(_sys.getAtomPointers());
-	//sasa.calcSasa();
-	//double dimerSasa = sasa.getTotalSasa();
 
 	// Output change in geometry
 	_out << "***STARTING GEOMETRY***" << endl;
@@ -1412,8 +1417,8 @@ double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfP
 	_out << "axialRotation: " << _opt.axialRotation << endl;
 	_out << "zShift:        " << _opt.zShift << endl << endl;
 	
-	cout << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
-	_out << "Monte Carlo repack complete. Time: " << diffTimeMC << " seconds" << endl << endl;
+	cout << "Monte Carlo repack complete. Time: " << diffTimeMC << " s/" << diffTimeMC/60 << "min" << endl << endl;
+	_out << "Monte Carlo repack complete. Time: " << diffTimeMC << " s/" << diffTimeMC/60 << "min" << endl << endl;
 	//TODO: there may be a better way to resolve this, but as of 2022-9-8, I want to get the most data I can before a lab meeting, so putting this here
 	//if (finalEnergy > 100){
 	//	_out << "Final energy is " << finalEnergy << " after repack, indicating clashes. Choose a different geometry" << endl;
@@ -1484,6 +1489,9 @@ void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingP
 	vector<string> energyLines;
 	// get the run parameters
 	string runParameters = getRunParameters(_opt, _densities);
+	string outputGeometries = getOutputGeometries(_opt, _geometries);
+	cout << "Geometries below: " << endl;
+	cout << outputGeometries << endl;
 	string t = "\t";
 	stringstream enerTerms;
 	// For loop to setup the energy file
@@ -1495,17 +1503,26 @@ void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingP
 		string interfaceSequence = getInterfaceSequence(_opt,_interface, sequence);
 		seqLine << sequence << t << _interface << t << interfaceSequence << t;
 		map<string,double> energyMap = _sequenceEnergyMap[sequence];
-		// For adding in strings to a line for the energy file
-		for (uint j=0; j<_opt.energyTermsToOutput.size(); j++){
-			string energyTerm = _opt.energyTermsToOutput[j];
+		// For adding in strings to a line for the energy file; looping through the terms instead of my input terms this time; sort later
+		for (auto &ener: energyMap){
+			string energyTerm = ener.first;
 			double energy = energyMap[energyTerm];
-			//cout << sequence << ": " << energyTerm << " = " << energy << endl;
 			string term = MslTools::doubleToString(energy)+t;
 			seqLine << term;
 			if (i == 0){
 				enerTerms << energyTerm << t;
 			}
 		}
+		//for (uint j=0; j<_opt.energyTermsToOutput.size(); j++){
+		//	string energyTerm = _opt.energyTermsToOutput[j];
+		//	double energy = energyMap[energyTerm];
+		//	//cout << sequence << ": " << energyTerm << " = " << energy << endl;
+		//	string term = MslTools::doubleToString(energy)+t;
+		//	seqLine << term;
+		//	if (i == 0){
+		//		enerTerms << energyTerm << t;
+		//	}
+		//}
 		string seqNumber = MslTools::doubleToString(energyMap.at("SequenceNumber"));
 		seqLine << seqNumber << t << runParameters;
 		string line = seqLine.str();
@@ -1536,13 +1553,13 @@ void outputTime(auto _start, string _descriptor, bool _beginFunction, ofstream &
 	cout.precision(3);// rounds output to 3 decimal places
 	if (_beginFunction == true){
 		_out << _descriptor << " started. Time: " << ctime(&endTimeFormatted);
-		_out << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
+		_out << "Elapsed time of program: " << elapsedTime.count()/60 << "min" << endl << endl;
 		cout << _descriptor << " started. Time: " << ctime(&endTimeFormatted);
-		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
+		cout << "Elapsed time of program: " << elapsedTime.count()/60 << "min" << endl << endl;
 	} else {
 		_out << _descriptor << " finished. Time: " << ctime(&endTimeFormatted);
-		_out << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
+		_out << "Elapsed time of program: " << elapsedTime.count()/60 << "min" << endl << endl;
 		cout << _descriptor << " finished. Time: " << ctime(&endTimeFormatted);
-		cout << "Elapsed time of program: " << elapsedTime.count() << "s/" << elapsedTime.count()/60 << "min" << endl << endl;
+		cout << "Elapsed time of program: " << elapsedTime.count()/60 << "min" << endl << endl;
 	}
 }

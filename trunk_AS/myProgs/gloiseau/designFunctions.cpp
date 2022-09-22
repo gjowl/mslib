@@ -945,10 +945,10 @@ void computeMonomerEnergyIMM1(Options& _opt, Transforms & _trans, map<string,map
 	monoEset->setTermActive("CHARMM_VDW", true);
 	monoEset->setTermActive("SCWRL4_HBOND", true);
 
-	monoEset->setWeight("CHARMM_VDW", 1);
-	monoEset->setWeight("SCWRL4_HBOND", 1);
-	monoEset->setWeight("CHARMM_IMM1REF", 1);
-	monoEset->setWeight("CHARMM_IMM1", 1);
+	monoEset->setWeight("CHARMM_VDW", _opt.weight_vdw);
+	monoEset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
+	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
+	monoEset->setWeight("CHARMM_IMM1", _opt.weight_solv);
 
 	/******************************************************************************
 	 *                     === HELICAL AXIS SET UP ===
@@ -1248,8 +1248,8 @@ void computeMonomerEnergies(Options &_opt, Transforms &_trans, map<string, map<s
 
 	time(&endTimeMono);
 	diffTimeMono = difftime (endTimeMono, startTimeMono);
-	cout << "End monomer calculations: " << diffTimeMono << "s" << endl << endl;
-	_sout << "End monomer calculations: " << diffTimeMono << "s" << endl << endl;
+	cout << "End monomer calculations: " << diffTimeMono/60 << "min" << endl << endl;
+	_sout << "End monomer calculations: " << diffTimeMono/60 << "min" << endl << endl;
 }
 
 void deleteTerminalBondInteractions(System &_sys, Options &_opt, int _firstResiNum, int _lastResiNum){
@@ -1427,18 +1427,18 @@ void calculateInterfaceSequenceEntropy(Options &_opt, string _prevSeq, string _c
 	_currEnergyTotal = _currEnergy+_currEntropy;
 
 	//Output the terms if verbose
-	if (_opt.verbose){
-		cout << "Previous Sequence vs Current Sequence: " << _prevSeq << " vs " << _currSeq << endl;
-		cout << "Prev Prob:    " << _prevSEProb << endl;
-		cout << "New Prob:     " << _currSEProb << endl;
-		cout << "Prev Seq Proportion: " << prevSeqProp << endl;
-		cout << "New Seq Proportion:  " << currSeqProp << endl;
-		cout << "PrevEner =    " << _prevEntropy << endl;
-		cout << "NewEner =     " << _currEntropy << endl;
-		cout << "Diff =        " << (_prevEntropy-_currEntropy) << endl;
-		cout << "Best Energy: " << _bestEnergyTotal << endl;
-		cout << "New Energy: " << _currEnergyTotal << endl;
-	}
+	//if (_opt.verbose){
+	//	cout << "Previous Sequence vs Current Sequence: " << _prevSeq << " vs " << _currSeq << endl;
+	//	cout << "Prev Prob:    " << _prevSEProb << endl;
+	//	cout << "New Prob:     " << _currSEProb << endl;
+	//	cout << "Prev Seq Proportion: " << prevSeqProp << endl;
+	//	cout << "New Seq Proportion:  " << currSeqProp << endl;
+	//	cout << "PrevEner =    " << _prevEntropy << endl;
+	//	cout << "NewEner =     " << _currEntropy << endl;
+	//	cout << "Diff =        " << (_prevEntropy-_currEntropy) << endl;
+	//	cout << "Best Energy: " << _bestEnergyTotal << endl;
+	//	cout << "New Energy: " << _currEnergyTotal << endl;
+	//}
 }
 
 map<string,int> getAACountMap(vector<string> _seq){
@@ -2446,25 +2446,25 @@ Options parseOptions(int _argc, char * _argv[]){
 	if (OP.fail()) {
 		opt.warningMessages += "deltaX not specified using 0.5\n";
 		opt.warningFlag = true;
-		opt.deltaX = 0.1;
+		opt.deltaX = 0.5;
 	}
 	opt.deltaCross = OP.getDouble("deltaCross");
 	if (OP.fail()) {
-		opt.warningMessages += "deltaCross not specified using 5.0\n";
+		opt.warningMessages += "deltaCross not specified using 3.0\n";
 		opt.warningFlag = true;
-		opt.deltaCross = 1.0;
+		opt.deltaCross = 3.0;
 	}
 	opt.deltaAx = OP.getDouble("deltaAx");
 	if (OP.fail()) {
-		opt.warningMessages += "deltaAx not specified using 4.0\n";
+		opt.warningMessages += "deltaAx not specified using 3.0\n";
 		opt.warningFlag = true;
-		opt.deltaAx = 1.0;
+		opt.deltaAx = 3.0;
 	}
 	opt.deltaZ = OP.getDouble("deltaZ");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaZ not specified using 0.5\n";
 		opt.warningFlag = true;
-		opt.deltaZ = 0.1;
+		opt.deltaZ = 0.5;
 	}
 	opt.deltaXLimit = OP.getDouble("deltaXLimit");
 	if (OP.fail()) {
