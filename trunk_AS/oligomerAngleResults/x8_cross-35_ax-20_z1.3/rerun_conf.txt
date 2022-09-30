@@ -1,0 +1,23 @@
+########################################################
+#  This configuration file was automatically generated,
+#  it will rerun this job with the same options. Run as:
+#
+#  Run as:
+#
+#    % oligomerAngle --configfile rerun.conf
+#
+#  Job started on Fri Sep 30 13:47:47 2022
+#  on host biondini, path /exports/home/gloiseau/mslib/trunk_AS/oligomerAngleResults
+########################################################
+
+########################################################
+#  Options from command line arguments:
+#
+#  NOTE: command line options take priority over the
+#        ones entered with the configuration file.
+########################################################
+pdbfile                       /data02/gloiseau/Sequence_Design_Project/DesignRun2/2022-9-30_rightHandTestGoodAndBadGeoms/x8_cross-35_ax-20_z1.3_energy-4.368191.pdb
+
+########################################################
+#  Options from configuration file :
+########################################################

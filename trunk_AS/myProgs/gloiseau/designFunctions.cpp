@@ -1217,6 +1217,7 @@ END";
 	_sequenceEnergyMap[_seq]["Monomer"] = monomerEnergy;
 	_sequenceEnergyMap[_seq]["MonomerSasa"] = totalMonomerSasa;
 	double dimerEnergy = _sequenceEnergyMap[_seq]["Dimer"];
+	cout << "Dimer Energy: " << _seq << ": " << dimerEnergy << endl;
 	double totalEnergy = dimerEnergy-monomerEnergy;
 	_sout << _seq << " Dimer - Monomer = " << dimerEnergy << " - " << monomerEnergy << " = " << totalEnergy << endl;
 	cout << _seq << " Dimer - Monomer = " << dimerEnergy << " - " << monomerEnergy << " = " << totalEnergy << endl;
@@ -2039,8 +2040,8 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.backboneLength = OP.getInt("backboneLength");
 	if (OP.fail()) {
 		opt.warningFlag = true;
-		opt.warningMessages += "backboneLength not specified, default to 35\n";
-		opt.backboneLength = 35;
+		opt.warningMessages += "backboneLength not specified, default to 21\n";
+		opt.backboneLength = 21;
 	}
 	// override backboneLength if a sequence is specified
 	if (opt.sequence != "") {
@@ -2199,6 +2200,7 @@ Options parseOptions(int _argc, char * _argv[]){
 	}
 	if (opt.negRot == true){
 		opt.axialRotation = -opt.axialRotation;
+		//opt.zShift = -opt.zShift;
 	}
 	opt.thread = OP.getInt("thread");
 	if (OP.fail()) {
@@ -2310,15 +2312,15 @@ Options parseOptions(int _argc, char * _argv[]){
 	}
 	opt.backboneConvergedSteps = OP.getInt("backboneConvergedSteps");
 	if (OP.fail()) {
-		opt.warningMessages += "backboneConvergedSteps not specified using 10\n";
+		opt.backboneConvergedSteps = opt.backboneMCCycles/2;
+		opt.warningMessages += "backboneConvergedSteps not specified using half of given cycles (" + to_string(opt.backboneConvergedSteps) + "\n";
 		opt.warningFlag = true;
-		opt.backboneConvergedSteps = 10;
 	}
 	opt.backboneConvergedE = OP.getDouble("backboneConvergedE");
 	if (OP.fail()) {
-		opt.warningMessages += "backboneConvergedE not specified using 0.01\n";
+		opt.warningMessages += "backboneConvergedE not specified using 0.001\n";
 		opt.warningFlag = true;
-		opt.backboneConvergedE = 0.01;
+		opt.backboneConvergedE = 0.001;
 	}
 
 	// repack parameters	

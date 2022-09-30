@@ -1,0 +1,34 @@
+===================================
+WARNINGS:
+Seed of random numbers "seed" not specified, using time based seed
+No helix start "helixStart" and end "helixEnd" definition were given, will use the whole chains
+===================================
+Start: Fri Sep 30 13:46:21 2022
+Program: oligomerAngle
+Program description: This programs calculates crossing angles in helical oligomers
+Program author: Alessandro Senes + Dan Kulp
+Program version: 1.0.1 13 November 2007
+Cub version: 0.9.5.1.6 27 March 2010
+Command: /programs/bin/x86_64/oligomerAngle
+Submission directory /exports/home/gloiseau/mslib/trunk_AS/oligomerAngleResults
+Host biondini
+===================================
+Output directoru: oligomerAngle-563581-aWN
+Standard output redirected to file oligomerAngle-563581-aWN/oligomerAngles.out
+Standard error redirected to file oligomerAngle-563581-aWN/oligomerAngles.err
+===================================
+Required parameters:
+  pdbfile
+  
+Allowed parameters:
+  helixStart helixEnd model version help configfile outputfile outputdir seed
+  
+===================================
+Run settings:
+
+===================================
+Pdb file: /data02/gloiseau/Sequence_Design_Project/DesignRun2/2022-9-30_rightHandTestGoodAndBadGeoms/x8_cross-35_ax-115_z2.7_energy103.767395.pdb
+Helices assigned automatically
+End: Fri Sep 30 13:46:21 2022
+
+Duration: 0 seconds

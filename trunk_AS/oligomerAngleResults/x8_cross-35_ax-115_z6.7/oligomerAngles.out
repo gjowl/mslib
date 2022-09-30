@@ -1,0 +1,37 @@
+==========================================
+Load the molecule /data02/gloiseau/Sequence_Design_Project/DesignRun2/2022-9-30_rightHandTestGoodAndBadGeoms/x8_cross-35_ax-115_z6.7_energy173054811.118418.pdb
+
+---- Helix Definitions (2) ----
+Helix 0: start 23 A - end 43 A
+Helix 1: start 23 B - end 43 B
+
+---- Helical Parameters ----
+
+Helix Dimer 0 1
+Helix A Start: 23 A (1)
+Helix A End: 43 A (21)
+Helix B Start: 23 B (22)
+Helix B End: 43 B (42)
+Helix A length: 21
+Helix B length: 21
+Distance: 8.00074
+Local angle: -34.9726
+Average angle: -34.9985
+Quadrant: PR
+Crossing points on helix A: 0.388889
+Crossing points on helix B: 0.388889
+Number of close segments on helix A (>=8A, 10A, 12A and total): 0 14 17 18
+Number of close segments on helix B (>=8A, 10A, 12A and total): 0 14 17 18
+Closest CA-CA distance residue on helix A: A 30
+Closest CA-CA distance residue on helix B: B 30
+CA of closest approach to other helix axis on helix A: A 30
+CA of closest approach to other helix axis on helix B: B 30
+Points of closest approach: [    -4.000      0.002     -6.393] [     4.000     -0.002     -6.393]
+
+Interhelical axes: [    -0.000     -0.453      1.437] [     0.000      0.453      1.437]
+
+
+===================================
+End: Fri Sep 30 13:47:11 2022
+
+Duration: 0 seconds
