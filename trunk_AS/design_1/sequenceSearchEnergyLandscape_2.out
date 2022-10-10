@@ -1,0 +1,5 @@
+Cycle	PrevSequence	CurrSequence	PrevEnergy	CurrEnergy	PrevEntropy	CurrEntropy	CurrentTemp
+Cycle #0; Acceptances: 0
+0	LLLLAALALALFLLLLLLILI	LLLLAAAALALFLLLLLLILI	27.3018	28.3774	0.256453	0.61885	1000
+
+Time: 0s

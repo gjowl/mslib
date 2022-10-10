@@ -1001,7 +1001,7 @@ END";
 	monoSys.calcEnergy();
 
 	// move center of mass to origin
-	//moveZCenterOfCAMassToOrigin(chainA, helicalAxis.getAtomPointers(), _trans);
+	moveZCenterOfCAMassToOrigin(chainA, helicalAxis.getAtomPointers(), _trans);
 	AtomSelection sel(chainA);
 	monoSys.calcEnergy();
 
@@ -1054,6 +1054,7 @@ END";
 			bestEnergy = currentEnergy;
 			monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
 			monoSys.saveAltCoor("savedBestMonomer");
+			helicalAxis.saveAltCoor("BestMonomerAxis");
 			bestZ = -5.0 + ((i+1)*1.0);
 		}
 	}

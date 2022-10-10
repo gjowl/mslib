@@ -85,8 +85,8 @@ void setActiveSequence(System &_sys, string _sequence);
 void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, vector<uint> _bestState, map<string, map<string,double>> &_sequenceEnergyMap,
  uint _rep, double _savedXShift, System &_helicalAxis, AtomPointerVector &_axisA,  AtomPointerVector &_axisB, vector<int> _rotamerSampling, Transforms &_trans,
  RandomNumberGenerator &_RNG, ofstream &_out);
-double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, vector<uint> _bestState, 
- System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
+double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, map<string, map<string,double>> &_sequenceEnergyMap,
+ string _sequence, vector<uint> &_bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
  uint _rep, ofstream &_out);
 void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
@@ -1215,17 +1215,17 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ve
 	double currentEnergy = spm.getStateEnergy(_bestState)-monomerEnergy;
 	double dimer = spm.getStateEnergy(_bestState);
 	double calcDimer = sys.calcEnergy();
-	cout << "Starting Energy: " << currentEnergy << endl;
-	cout << "Starting Dimer Energy: " << dimer << endl;
-	cout << "Monomer Energy: " << monomerEnergy << endl;
 	_sequenceEnergyMap[_sequence]["preRepackEnergy"] = currentEnergy;
 	sys.setActiveRotamers(_bestState);
 	PDBWriter writer1;
 	writer1.open(_opt.pdbOutputDir + "/preRepack_"+to_string(_rep)+".pdb");
 	writer1.write(sys.getAtomPointers(), true, false, false);
 	writer1.close();
-	double finalEnergy = monteCarloRepack(_opt, sys, _savedXShift, spm, _bestState, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, monomerEnergy, _rep, _out);
+	double finalEnergy = monteCarloRepack(_opt, sys, _savedXShift, spm, _sequenceEnergyMap, _sequence, _bestState, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, monomerEnergy, _rep, _out);
 	_sequenceEnergyMap[_sequence]["Total"] = finalEnergy;
+	_sequenceEnergyMap[_sequence]["VDWDimerRepack"] = spm.getStateEnergy(_bestState, "CHARMM_VDW");
+	_sequenceEnergyMap[_sequence]["IMM1DimerRepack"] = spm.getStateEnergy(_bestState, "CHARMM_IMM1")+spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	_sequenceEnergyMap[_sequence]["HBONDDimerRepack"] = spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
 
 	// Initialize PDBWriter
 	PDBWriter writer;
@@ -1238,8 +1238,8 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ve
 	_startGeom.buildAllAtoms();
 }
 
-double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, vector<uint> _bestState, 
- System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
+double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfPairManager &_spm, map<string, map<string,double>> &_sequenceEnergyMap,
+ string _sequence, vector<uint> &_bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
  uint _rep, ofstream &_out){
 	// Setup backbone repack file
@@ -1355,7 +1355,11 @@ double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfP
 		vector<unsigned int> MCOFinal = _spm.getMinStates()[0];
 		currentEnergy = _spm.getMinBound()[0]-_monomerEnergy;
 		_sys.setActiveRotamers(MCOFinal);//THIS WAS NOT HERE BEFORE 2022-8-26 NIGHT! MAKE SURE IT'S IN ALL OTHER CODE, IT'S CRUCIAL TO SAVING THE STATE
-		
+
+		if (counter == 0){
+			_sequenceEnergyMap[_sequence]["firstRepackEnergy"] = currentEnergy;
+		}
+
 		if (!MCMngr.accept(currentEnergy)) {
 			bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " energy: " << currentEnergy << endl;
 		} else {
@@ -1384,7 +1388,7 @@ double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfP
 	writer.close();
 	time(&endTimeMC);
 	diffTimeMC = difftime (endTimeMC, startTimeMC);
-	
+	_bestState = MCOBest;	
 	_sys.applySavedCoor("savedRepackState");
 	double dimerEnergy = _spm.getStateEnergy(MCOBest);
 	double finalEnergy = dimerEnergy-_monomerEnergy;
