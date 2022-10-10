@@ -1,0 +1,37 @@
+==========================================
+Load the molecule ../../../design_1/ax35.065_z5.454_vdW3506.576125.pdb
+
+---- Helix Definitions (2) ----
+Helix 0: start 23 A - end 43 A
+Helix 1: start 23 B - end 43 B
+
+---- Helical Parameters ----
+
+Helix Dimer 0 1
+Helix A Start: 23 A (1)
+Helix A End: 43 A (21)
+Helix B Start: 23 B (22)
+Helix B End: 43 B (42)
+Helix A length: 21
+Helix B length: 21
+Distance: 8.58594
+Local angle: -42.9296
+Average angle: -42.9292
+Quadrant: PR
+Crossing points on helix A: 0.388889
+Crossing points on helix B: 0.388889
+Number of close segments on helix A (>=8A, 10A, 12A and total): 0 11 15 18
+Number of close segments on helix B (>=8A, 10A, 12A and total): 0 11 15 18
+Closest CA-CA distance residue on helix A: A 30
+Closest CA-CA distance residue on helix B: B 30
+CA of closest approach to other helix axis on helix A: A 30
+CA of closest approach to other helix axis on helix B: B 30
+Points of closest approach: [    -4.293     -0.001     -5.976] [     4.293      0.001     -5.976]
+
+Interhelical axes: [     0.000     -0.551      1.402] [    -0.000      0.551      1.402]
+
+
+===================================
+End: Mon Oct  3 14:31:26 2022
+
+Duration: 0 seconds

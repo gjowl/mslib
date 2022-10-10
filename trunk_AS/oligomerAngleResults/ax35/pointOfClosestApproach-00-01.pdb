@@ -1,0 +1,7 @@
+HETATM    1  DUM DUM A   1      -4.293  -0.001  -5.976  1.00  0.00           H  
+HETATM    2  DUM DUM A   2       4.293   0.001  -5.976  1.00  0.00           H  
+TER       3                                                                     
+HETATM    4  DUM DUM B   1      -4.293  -0.552  -4.574  1.00  0.00           H  
+HETATM    5  DUM DUM B   2       4.293   0.552  -4.574  1.00  0.00           H  
+TER       6                                                                     
+END                                                                             

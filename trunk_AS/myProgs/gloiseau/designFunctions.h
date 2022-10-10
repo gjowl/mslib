@@ -101,7 +101,7 @@ vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingP
  *output file functions
  ***********************************/
 // function to setup the output directory
-void setupDesignDirectory(Options &_opt, string _date);
+void setupDesignDirectory(Options &_opt);
 // function for outputting and writing and energy file
 void outputEnergyFile(Options &_opt, string _interface, vector<string> _allDesigns);
 // function that writes a config file for local geometric repacks by geomRepack.cpp
@@ -166,7 +166,7 @@ vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingP
 // function that runs a SelfConsistentMeanField algorithm to find the best starting sequence, only taking into account monomer energies
 vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, string _rotamerSamplingString,
  string _variablePositionString, vector<string> _seqs, vector<uint> _interfacialPositions, map<string, map<string,double>> &_sequenceEnergyMap, 
- map<string, vector<uint>> &_sequenceVectorMap, map<string, double> _sequenceEntropyMap, ofstream &_out);
+ map<string, double> _sequenceEntropyMap, ofstream &_out);
 // outputs for runSCMFToGetStartingSequence
 void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfaceSeq, string _variablePosString, double _spmTime, ofstream &_out);
 // redacted old version without multithreading

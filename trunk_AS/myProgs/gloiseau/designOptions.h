@@ -25,7 +25,6 @@ struct Options{
 	string selfEnergyFile; //self energy file estimates for building baseline energies
 	string pairEnergyFile; //pair energy file estimates for building baseline energies
 	string sequenceEntropyFile; //sequence entropy file defines average propensity of each AA from my pdb analysis
-	string AACompositionPenaltyFile; //file with penalty definitions that penalizes energy of a structure based on it's AA composition
 	string helicalAxis; //file with helical axis information
 
 	// sequence parameters
@@ -42,9 +41,8 @@ struct Options{
 	bool deleteTerminalBonds; //TRUE: delete hydrogen bonds at the termini of sequences to not be considered in hydrogen bonding score OR FALSE: keep hydrogen bonds at termini
 	bool linkInterfacialPositions; //TRUE: keep interfacial positions linked (same amino acid and rotamer) when searching for the best states in stateMC (less memory) OR FALSE: unlink positions (memory intensive)
 	bool designHomodimer; //TRUE: design a homodimer sequence keeping ids same between positions on both helices OR FALSE: design a heterodimeric sequence
-	bool useSasa; //TRUE: use solvent accessible surface area to designated the number of rotamers at each position on the dimer OR FALSE: input set number of rotamers for both interface and non-interface
+	bool useSasaBurial; //TRUE: use solvent accessible surface area to designated the number of rotamers at each position on the dimer OR FALSE: input set number of rotamers for both interface and non-interface
 	bool useTimeBasedSeed; //TRUE: use time based seed for all RandomNumberGenerator functions OR FALSE: use a given seed
-	bool energyLandscape; //TRUE: collect all sequences and their respective monomer and dimer energies ..TODO: add more here
 	bool useAlaAtCTerminus; //TRUE: use ALA at C terminus of sequence FALSE: use LEU at C terminus ..TODO: do I need this?
 	bool useBaseline; //TRUE: calculate and use baseline values generated as estimates of the monomer sequence OR FALSE: don't use baselines to estimate the monomer
 	bool getRandomAxRotAndZShift; //TRUE: get random from geometry file OR FALSE: use given axRot and zShift
@@ -83,8 +81,9 @@ struct Options{
 	double zShift; //position of the crossing point between helices
 	double crossingAngle; //crossing angle between helices
 	double axialRotation; //rotation of helices
-	bool negAngle;
-	bool negRot;
+	double density; //density of axialRotation and zShift from clashing tests at different geometries
+	bool negAngle; //designates if the crossing angle is negative or positive
+	bool negRot; //designates if the axial rotation is negative or positive
 	// crossing point
 	int thread; //crossing point (25 defaults and lets crossing point be in the center)
 
@@ -107,7 +106,6 @@ struct Options{
 	double backboneConvergedE;
 	
 	// backbone repack variables
-	int numRepacks;
 	double deltaZ;
 	double deltaAx;
 	double deltaCross;
@@ -117,8 +115,6 @@ struct Options{
 	double deltaAxLimit;
 	double deltaZLimit;
 	bool decreaseMoveSize;
-
-	
 
 	// energy weights
 	double weight_vdw; //weight of vdw energy contribution to total energy: default = 1
@@ -130,17 +126,12 @@ struct Options{
 	// alternate identities
 	vector<string> Ids; //alternate AA identities for interfacial positions
 
-	// state Monte Carlo Options
-	int numStatesToSave; //number of sequences to save for each design run
-
 	//SelfPairManager Options
 	bool runDEESingles;
 	bool runDEEPairs;
 	bool runSCMF;
 
-	// energy terms to output: maybe rid of and just default them?
-	vector<string> energyLandscapeTerms;
-	vector<string> energyTermsToOutput;
+	// energy terms vectors
 	vector<string> energyTermList;
 	vector<string> deleteTerminalInteractions;
 

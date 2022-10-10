@@ -1,0 +1,23 @@
+########################################################
+#  This configuration file was automatically generated,
+#  it will rerun this job with the same options. Run as:
+#
+#  Run as:
+#
+#    % oligomerAngle --configfile rerun.conf
+#
+#  Job started on Mon Oct  3 14:31:26 2022
+#  on host biondini, path /exports/home/gloiseau/mslib/trunk_AS/oligomerAngleResults
+########################################################
+
+########################################################
+#  Options from command line arguments:
+#
+#  NOTE: command line options take priority over the
+#        ones entered with the configuration file.
+########################################################
+pdbfile                       ../../../design_1/ax35.065_z5.454_vdW3506.576125.pdb
+
+########################################################
+#  Options from configuration file :
+########################################################

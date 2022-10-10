@@ -20,8 +20,8 @@ double getStandardNormal(RandomNumberGenerator& RNG) {
 
 double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease) {
 	// edited to make sure that the move size is decreasing properly down to the move limit: add in detail here
-	double diffMoveSize = _moveSize - _moveLimit;
-	double moveDecrease = diffMoveSize * _decreaseMultiplier;
+	double diffMoveSize = _moveSize-_moveLimit;
+	double moveDecrease = diffMoveSize-(diffMoveSize*_decreaseMultiplier);// edited on 2022-10-6: it now works properly; before it decreased to the move limit
 	double newMoveSize = _moveSize - moveDecrease;
 	if (newMoveSize > _moveLimit){
 		return newMoveSize;

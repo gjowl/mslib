@@ -1,8 +1,42 @@
-09_30_2022
+10_07_2022
+Self Consistent Mean Field started. Time: Fri Oct  7 23:00:29 2022
+Elapsed time of program: 0.141min
 
-Backbone:           LLLLLLLLLLLLLLLLLLILI
-Variable Positions: 000011001101100100000
-Rotamers Levels:    102310320130032023112
-Identify Interface finished. Time: Fri Sep 30 14:34:15 2022
-Elapsed time of program: 0.0369min
+Running Self Consistent Mean Field
+Initial Sequence:   LLLLAAAALALLLLLLLLILI
+Best Sequence:      LLLLAAAALALLLLLLLLILI
+Interface Sequence: L---AAAALA-L---L--I-I
+Interface:          000011111101000100000
+Total Energy:       47.7
+VDW:                -76.9
+HBOND:              -45.2
+
+End SelfPairManager Optimization: 3s
+Self Consistent Mean Field finished. Time: Fri Oct  7 23:00:32 2022
+Elapsed time of program: 0.195min
+
+Monte Carlo Sequence Search Replicate 0 started. Time: Fri Oct  7 23:00:33 2022
+Elapsed time of program: 0.222min
+
+- SelfPairManager energy calculation 0 started. Time: Fri Oct  7 23:00:40 2022
+Elapsed time of program: 0.327min
+
+- SelfPairManager energy calculation 0 finished. Time: Fri Oct  7 23:00:41 2022
+Elapsed time of program: 0.35min
+
+- End monte carlo sequence search #0: 0min; Monte Carlo ended at Temp: 1e+03
+
+- Best Sequence: LLLLAALALALLLLLLLLILI; Energy w/ baseline: 49.1
+Monte Carlo Sequence Search Replicate 0 finished. Time: Fri Oct  7 23:00:43 2022
+Elapsed time of program: 0.377min
+
+Compute Monomer Energy 0 started. Time: Fri Oct  7 23:00:43 2022
+Elapsed time of program: 0.377min
+
+-Dimer - Monomer = -343 - -375 = 31.7
+Compute Monomer Energy 0 finished. Time: Fri Oct  7 23:01:35 2022
+Elapsed time of program: 1.25min
+
+Backbone repack replicate 0 started. Time: Fri Oct  7 23:01:35 2022
+Elapsed time of program: 1.25min
 

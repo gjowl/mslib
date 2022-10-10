@@ -1,0 +1,24 @@
+Helix Dimer 0 1
+Helix A Start: 23 A (1)
+Helix A End: 43 A (21)
+Helix B Start: 23 B (22)
+Helix B End: 43 B (42)
+Helix A length: 21
+Helix B length: 21
+Distance: 6.49993
+Local angle: -45.0042
+Average angle: -44.9956
+Quadrant: PR
+Crossing points on helix A: 0.611111
+Crossing points on helix B: 0.611111
+Number of close segments on helix A (>=8A, 10A, 12A and total): 10 15 17 18
+Number of close segments on helix B (>=8A, 10A, 12A and total): 10 15 17 18
+Closest CA-CA distance residue on helix A: A 35
+Closest CA-CA distance residue on helix B: B 35
+CA of closest approach to other helix axis on helix A: A 35
+CA of closest approach to other helix axis on helix B: B 35
+
+Points of closest approach: [    -3.250      0.001     -0.005] [     3.250     -0.001     -0.005]
+
+Interhelical axes: [    -0.000     -0.577      1.392] [     0.000      0.577      1.392]
+

@@ -1,9 +1,0 @@
-MODEL
-ATOM      1  O   DUM A   1      -4.300   0.000  -6.924  1.00  0.00           P
-ATOM      2  Z   DUM A   1      -4.300  -0.383  -6.000  1.00  0.00           O
-TER       3      DUM A   1                                                    
-ATOM      4  O   DUM B   1       4.300   0.000  -6.924  1.00  0.00           P
-ATOM      5  Z   DUM B   1       4.300   0.383  -6.000  1.00  0.00           O
-TER       6      DUM B   1                                                    
-ENDMDL
-END
