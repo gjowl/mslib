@@ -1,6 +1,6 @@
-10_10_2022
-Self Consistent Mean Field started. Time: Mon Oct 10 15:56:35 2022
-Elapsed time of program: 0.133min
+10_11_2022
+Self Consistent Mean Field started. Time: Tue Oct 11 16:11:59 2022
+Elapsed time of program: 0.116min
 
 Running Self Consistent Mean Field
 Initial Sequence:   LLLLAAAALALLLLLLLLILI
@@ -11,96 +11,96 @@ Total Energy:       47.7
 VDW:                -76.9
 HBOND:              -45.2
 
-End SelfPairManager Optimization: 3s
-Self Consistent Mean Field finished. Time: Mon Oct 10 15:56:38 2022
-Elapsed time of program: 0.176min
+End SelfPairManager Optimization: 2s
+Self Consistent Mean Field finished. Time: Tue Oct 11 16:12:01 2022
+Elapsed time of program: 0.156min
 
-Monte Carlo Sequence Search Replicate 0 started. Time: Mon Oct 10 15:56:39 2022
-Elapsed time of program: 0.202min
+Monte Carlo Sequence Search Replicate 0 started. Time: Tue Oct 11 16:12:03 2022
+Elapsed time of program: 0.181min
 
-- SelfPairManager energy calculation 0 started. Time: Mon Oct 10 15:56:45 2022
-Elapsed time of program: 0.296min
+- SelfPairManager energy calculation 0 started. Time: Tue Oct 11 16:12:08 2022
+Elapsed time of program: 0.26min
 
-- SelfPairManager energy calculation 0 finished. Time: Mon Oct 10 15:56:46 2022
-Elapsed time of program: 0.313min
+- SelfPairManager energy calculation 0 finished. Time: Tue Oct 11 16:12:09 2022
+Elapsed time of program: 0.276min
 
 - End monte carlo sequence search #0: 0min; Monte Carlo ended at Temp: 1e+03
 
-- Best Sequence: LLLLAALALALLLLLLLLILI; Energy w/ baseline: 49.1
-Monte Carlo Sequence Search Replicate 0 finished. Time: Mon Oct 10 15:56:48 2022
-Elapsed time of program: 0.343min
+- Best Sequence: LLLLAAAALALLLLLALLILI; Energy w/ baseline: 49.1
+Monte Carlo Sequence Search Replicate 0 finished. Time: Tue Oct 11 16:12:10 2022
+Elapsed time of program: 0.301min
 
-Compute Monomer Energy 0 started. Time: Mon Oct 10 15:56:48 2022
-Elapsed time of program: 0.343min
+Compute Monomer Energy 0 started. Time: Tue Oct 11 16:12:10 2022
+Elapsed time of program: 0.301min
 
--Dimer - Monomer = -343 - -375 = 31.7
-Compute Monomer Energy 0 finished. Time: Mon Oct 10 15:57:25 2022
-Elapsed time of program: 0.959min
+-Dimer - Monomer = -323 - -354 = 30.7
+Compute Monomer Energy 0 finished. Time: Tue Oct 11 16:12:40 2022
+Elapsed time of program: 0.804min
 
-Backbone repack replicate 0 started. Time: Mon Oct 10 15:57:25 2022
-Elapsed time of program: 0.959min
+Backbone repack replicate 0 started. Time: Tue Oct 11 16:12:40 2022
+Elapsed time of program: 0.804min
 
-Backbone repack replicate 0 finished. Time: Mon Oct 10 15:57:50 2022
-Elapsed time of program: 1.37min
+Backbone repack replicate 0 finished. Time: Tue Oct 11 16:13:02 2022
+Elapsed time of program: 1.16min
 
-Monte Carlo Sequence Search Replicate 1 started. Time: Mon Oct 10 15:57:50 2022
-Elapsed time of program: 1.37min
+Monte Carlo Sequence Search Replicate 1 started. Time: Tue Oct 11 16:13:02 2022
+Elapsed time of program: 1.16min
 
-- SelfPairManager energy calculation 1 started. Time: Mon Oct 10 15:57:55 2022
-Elapsed time of program: 1.46min
+- SelfPairManager energy calculation 1 started. Time: Tue Oct 11 16:13:07 2022
+Elapsed time of program: 1.25min
 
-- SelfPairManager energy calculation 1 finished. Time: Mon Oct 10 15:57:56 2022
-Elapsed time of program: 1.48min
+- SelfPairManager energy calculation 1 finished. Time: Tue Oct 11 16:13:08 2022
+Elapsed time of program: 1.26min
 
 - End monte carlo sequence search #1: 0min; Monte Carlo ended at Temp: 1e+03
 
-- Best Sequence: LLLLAALALALFLLLLLLILI; Energy w/ baseline: 35.4
-Monte Carlo Sequence Search Replicate 1 finished. Time: Mon Oct 10 15:57:57 2022
-Elapsed time of program: 1.5min
+- Best Sequence: LLLLAAALLALLLLLALLILI; Energy w/ baseline: 43.7
+Monte Carlo Sequence Search Replicate 1 finished. Time: Tue Oct 11 16:13:09 2022
+Elapsed time of program: 1.29min
 
-Compute Monomer Energy 1 started. Time: Mon Oct 10 15:57:57 2022
-Elapsed time of program: 1.5min
+Compute Monomer Energy 1 started. Time: Tue Oct 11 16:13:09 2022
+Elapsed time of program: 1.29min
 
--Dimer - Monomer = -339 - -357 = 18.2
-Compute Monomer Energy 1 finished. Time: Mon Oct 10 15:58:42 2022
-Elapsed time of program: 2.25min
+-Dimer - Monomer = -339 - -364 = 25.9
+Compute Monomer Energy 1 finished. Time: Tue Oct 11 16:13:46 2022
+Elapsed time of program: 1.9min
 
-Backbone repack replicate 1 started. Time: Mon Oct 10 15:58:42 2022
-Elapsed time of program: 2.25min
+Backbone repack replicate 1 started. Time: Tue Oct 11 16:13:46 2022
+Elapsed time of program: 1.9min
 
-Backbone repack replicate 1 finished. Time: Mon Oct 10 15:59:18 2022
-Elapsed time of program: 2.84min
+Backbone repack replicate 1 finished. Time: Tue Oct 11 16:14:16 2022
+Elapsed time of program: 2.4min
 
-Monte Carlo Sequence Search Replicate 2 started. Time: Mon Oct 10 15:59:18 2022
-Elapsed time of program: 2.84min
+Monte Carlo Sequence Search Replicate 2 started. Time: Tue Oct 11 16:14:16 2022
+Elapsed time of program: 2.4min
 
-- SelfPairManager energy calculation 2 started. Time: Mon Oct 10 15:59:23 2022
-Elapsed time of program: 2.93min
+- SelfPairManager energy calculation 2 started. Time: Tue Oct 11 16:14:21 2022
+Elapsed time of program: 2.48min
 
-- SelfPairManager energy calculation 2 finished. Time: Mon Oct 10 15:59:24 2022
-Elapsed time of program: 2.95min
+- SelfPairManager energy calculation 2 finished. Time: Tue Oct 11 16:14:22 2022
+Elapsed time of program: 2.5min
 
 - End monte carlo sequence search #2: 0min; Monte Carlo ended at Temp: 1e+03
 
-- Best Sequence: LLLLAAAALALFLLLLLLILI; Energy w/ baseline: 27.8
-Monte Carlo Sequence Search Replicate 2 finished. Time: Mon Oct 10 15:59:26 2022
-Elapsed time of program: 2.97min
+- Best Sequence: LLLLAAALFALLLLLALLILI; Energy w/ baseline: 33.7
+Monte Carlo Sequence Search Replicate 2 finished. Time: Tue Oct 11 16:14:23 2022
+Elapsed time of program: 2.52min
 
-Compute Monomer Energy 2 started. Time: Mon Oct 10 15:59:26 2022
-Elapsed time of program: 2.97min
+Compute Monomer Energy 2 started. Time: Tue Oct 11 16:14:23 2022
+Elapsed time of program: 2.52min
 
--Dimer - Monomer = -337 - -347 = 9.6
-Compute Monomer Energy 2 finished. Time: Mon Oct 10 16:00:06 2022
-Elapsed time of program: 3.64min
+-Dimer - Monomer = -330 - -347 = 16.2
+Compute Monomer Energy 2 finished. Time: Tue Oct 11 16:15:05 2022
+Elapsed time of program: 3.22min
 
-Backbone repack replicate 2 started. Time: Mon Oct 10 16:00:06 2022
-Elapsed time of program: 3.64min
+Backbone repack replicate 2 started. Time: Tue Oct 11 16:15:05 2022
+Elapsed time of program: 3.22min
 
-Backbone repack replicate 2 finished. Time: Mon Oct 10 16:00:42 2022
-Elapsed time of program: 4.25min
+Backbone repack replicate 2 finished. Time: Tue Oct 11 16:15:50 2022
+Elapsed time of program: 3.97min
 
 Sequence	Interface	InterfaceSequence	Baseline	Dimer	Dimerw/Baseline	HBONDDimer	HBONDDimerRepack	HBONDMonomer	IMM1Dimer	IMM1DimerRepack	IMM1Monomer	MCSearchEnergy	Monomer	MonomerSasa	SequenceProbability	Total	VDWDimer	VDWDimerRepack	VDWMonomer	acceptCycleNumber	bestEnergyTotal	currEnergyTotal	currEntropy	endAxialRotation	endCrossingAngle	endXShift	endZShift	energyComparison	entropyDiff	firstRepackEnergy	geometryNumber	preRepackEnergy	prevEntropy	startAxialRotation	startCrossingAngle	startDensity	startXShift	startZShift	
-LLLLAAAALALFLLLLLLILI	023301110120232023031	L---AAAALA-F---L--I-I	364.692	-336.933	27.7586	-45.1579	-45.1579	-45.0878	-222.993	-229.216	-265.393	9.60166	-346.535	4621.65	3.35714e-05	-1.8419	-68.7822	-74.0032	-36.0548	0	27.3018	28.3774	0.61885	83.5846	24.7612	10.5671	7.03487	-1.07565	-0.362397	10.0002	2	8.67706e+09	0.256453	73.7854	22.2086	0	11.4723	5.85295	
-LLLLAALALALFLLLLLLILI	023301110120232023031	L---AALALA-F---L--I-I	374.404	-339.018	35.3858	-45.1579	-45.1579	-45.0878	-220.633	-226.421	-269.317	18.1815	-357.2	4661.48	6.19193e-05	10.1468	-73.227	-75.4744	-42.7943	0	43.7075	35.5978	0.211997	73.7854	22.2086	11.4723	5.85295	8.10971	0.498788	23.8803	1	3.23248e+07	0.710785	65.2999	21.2525	0	12.5224	4.72514	
-LLLLAALALALLLLLLLLILI	023301110120232023031	L---AALALA-L---L--I-I	392.314	-343.221	49.0928	-45.1579	-45.1579	-45.0951	-216.24	-220.118	-268.342	31.6791	-374.9	4651.16	2.66632e-05	25.5844	-81.8231	-84.0399	-61.4623	0	47.764	49.3992	0.306324	65.2999	21.2525	12.5224	4.72514	-1.63514	0.230296	31.6659	0	31.6791	0.53662	60	25	0	13	4	
+LLLLAAAALALLLLLALLILI	023301110120232023031	L---AAAALA-L---A--I-I	372.352	-323.248	49.104	-45.1579	-45.1579	-45.0407	-208.807	-212.211	-260.394	30.7022	-353.95	4560.07	8.16447e-06	25.5201	-69.2833	-71.0618	-48.5153	0	47.4481	49.7951	0.691038	66.9199	21.6598	12.5435	4.85803	-2.34694	-0.470331	30.5153	0	30.7022	0.220707	60	25	0	13	4	
+LLLLAAALFALLLLLALLILI	023301110120232023031	L---AAALFA-L---A--I-I	364.031	-330.369	33.662	-45.1579	-45.1579	-45.0878	-225.552	-233.262	-266.073	16.1676	-346.536	4604.74	3.35714e-05	2.08996	-59.6587	-66.0261	-35.3756	0	29.9496	33.917	0.254948	90.3649	16.269	11.3871	7.76397	-3.9673	0.366687	10.655	2	89.2481	0.621635	79.9871	18.2703	0	11.5528	6.40261	
+LLLLAAALLALLLLLALLILI	023301110120232023031	L---AAALLA-L---A--I-I	382.2	-338.515	43.6847	-45.1579	-45.1579	-45.0951	-216.227	-224.633	-265.096	25.908	-364.423	4590.18	1.80703e-05	11.5514	-77.1308	-83.0815	-54.2323	0	44.6129	43.9054	0.220707	79.9871	18.2703	11.5528	6.40261	0.707546	0.470331	25.604	1	25.908	0.691038	66.9199	21.6598	0	12.5435	4.85803	
 Total Time: 4 minutes

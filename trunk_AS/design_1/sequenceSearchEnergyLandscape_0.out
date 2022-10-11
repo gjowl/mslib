@@ -1,8 +1,5 @@
 Cycle	PrevSequence	CurrSequence	PrevEnergy	CurrEnergy	PrevEntropy	CurrEntropy	CurrentTemp
 Cycle #0; Acceptances: 0
-State not accepted, E= 49.7951; PrevE= 47.4481
-
-Cycle #1; Acceptances: 0
-1	LLLLAAAALALLLLLLLLILI	LLLLAALALALLLLLLLLILI	47.764	49.3992	0.53662	0.306324	1000
+0	LLLLAAAALALLLLLLLLILI	LLLLAAAALALLLLLALLILI	47.4481	49.7951	0.220707	0.691038	1000
 
 Time: 0s

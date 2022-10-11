@@ -59,6 +59,7 @@ map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt,
  string _bestSeq, double _bestEnergy, map<string,vector<uint>> &_sequenceStateMap, map<string,double> _sequenceEntropyMap,
  vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList, vector<int> _rotamerSampling);
 string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap);
+string getSequenceUsingMetropolisCriteria(map<string,map<string,double>> &_sequenceEnergyMap, RandomNumberGenerator &_RNG, double _currTemp);
 void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, double _prevEnergy, string _currSeq, vector<uint> _currVec,
  vector<int> &_rotamerSampling, vector<uint> &_allInterfacePositions, map<string,map<string,double>> &_seqEnergyMap,
  map<string,double> &_sequenceEntropyMap);
@@ -712,7 +713,9 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		 sequenceVectorMap, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
 		
 		// get the best sequence and energy for the current mutation position (picks sequence with energy including vdw, hbond, imm1, baseline, sequence entropy)
-		string currSeq = getBestSequenceInMap(sequenceEnergyMap);
+		//string currSeq = getBestSequenceInMap(sequenceEnergyMap);
+		double currTemp = MC.getCurrentT();
+		string currSeq = getSequenceUsingMetropolisCriteria(sequenceEnergyMap, _RNG, currTemp);
 		double currEnergyTotal = sequenceEnergyMap[currSeq]["currEnergyTotal"]; // energy total for current sequence
 		double bestEnergyTotal = sequenceEnergyMap[currSeq]["bestEnergyTotal"]; // energy total for previous sequence (details in energyFunction)
 		double prevStateEntropy = sequenceEnergyMap[currSeq]["prevEntropy"];
@@ -850,6 +853,52 @@ void setActiveSequence(System &_sys, string _sequence){
 		_sys.setActiveIdentity(posIdA, aa);
 		_sys.setActiveIdentity(posIdB, aa);
 	}
+}
+
+string getSequenceUsingMetropolisCriteria(map<string,map<string,double>> &_sequenceEnergyMap, RandomNumberGenerator &_RNG, double _currTemp){
+	// get a random sequence from the map
+	int rand = _RNG.getRandomInt(0, _sequenceEnergyMap.size()-1);	
+	map<string,map<string,double>>::iterator it = _sequenceEnergyMap.begin();
+	advance(it, rand);
+	string currSeq = it->first;
+	double lastEnergy = it->second["currEnergyTotal"];
+	// create a vector to hold sequences that are already chosen; allows me to randomly traverse the map
+	vector<string> chosenSeqs;
+	chosenSeqs.push_back(it->first);
+	// loop through map size
+	for (uint i=0; i<_sequenceEnergyMap.size()-1; i++){
+		// get a random sequence from the map
+		int rand = _RNG.getRandomInt(0, _sequenceEnergyMap.size()-1);	
+		map<string,map<string,double>>::iterator it = _sequenceEnergyMap.begin();
+		// check if random sequence has already been chosen
+		if (find(chosenSeqs.begin(), chosenSeqs.end(), it->first) != chosenSeqs.end()){
+			// if it has been chosen, get a new random sequence
+			while (find(chosenSeqs.begin(), chosenSeqs.end(), it->first) != chosenSeqs.end()){
+				rand = _RNG.getRandomInt(0, _sequenceEnergyMap.size()-1);	
+				it = _sequenceEnergyMap.begin();
+				advance(it, rand);
+			}
+		}
+		// add the chosen sequence to the list of chosen sequences
+		chosenSeqs.push_back(it->first);
+		// advance to the random sequence
+		double energy = it->second["currEnergyTotal"];
+		/***********************************
+		 *  Metropolis criterion
+		 ***********************************/
+		double exp = pow(M_E,(lastEnergy - energy) / (MslTools::R * _currTemp));
+		if (exp > 1) {
+			lastEnergy = energy;
+			currSeq = it->first;
+		} else {
+			double randomN = _RNG.getRandomDouble();
+			if (exp > randomN) {
+				lastEnergy = energy;
+				currSeq = it->first;
+			}
+		}
+	}
+	return currSeq;
 }
 
 string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap){
