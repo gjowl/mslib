@@ -310,7 +310,7 @@ int main(int argc, char *argv[]){
 	string prevSequence;
 	map<string, double> geometries;
 	PDBWriter helicalAxisWriter;
-	for (uint i=0; i<3; i++){
+	for (uint i=0; i<10; i++){
 		helicalAxisWriter.open(opt.pdbOutputDir+"/helicalAxis"+to_string(i)+".pdb");
 		helicalAxisWriter.write(helicalAxis.getAtomPointers(), true, false, true);
 		helicalAxisWriter.close();
@@ -331,18 +331,18 @@ int main(int argc, char *argv[]){
 			double monomerEnergy = sequenceEnergyMapBest[bestSequence]["Monomer"];
 			double dimerEnergy = sequenceEnergyMapBest[bestSequence]["Dimer"];
 			double startEnergy = dimerEnergy - monomerEnergy;
-			cout << "Energy Before Repack: " << bestSequence << ": " << startEnergy << endl;
+			cout << "Energy Before BBOptimize: " << bestSequence << ": " << startEnergy << endl;
 			// set as the start energy
 			sequenceEnergyMapBest[bestSequence]["MCSearchEnergy"] = startEnergy;
 			sequenceEnergyMapBest[bestSequence]["geometryNumber"] = i;
 			addGeometryToEnergyMap(opt, sequenceEnergyMapBest, bestSequence, "start");
 			// add the monomer energy to the backbone repack to compare instead of using baseline energy (more accurate)
-			outputTime(start, "Backbone repack replicate " + to_string(i), true, sout);
+			outputTime(start, "Backbone optimize replicate " + to_string(i), true, sout);
 			localBackboneRepack(opt, sys, bestSequence, bestState, sequenceEnergyMapBest, i, opt.xShift, helicalAxis, axisA, axisB,
 			 rotamerSamplingPerPosition, trans, RNG, sout);
-			outputTime(start, "Backbone repack replicate " + to_string(i), false, sout);
+			outputTime(start, "Backbone optimize replicate " + to_string(i), false, sout);
 			double repackEnergy = sequenceEnergyMapBest[bestSequence]["Total"];
-			cout << "Energy After Repack: " << bestSequence << ": " << repackEnergy << endl;
+			cout << "Energy After BBoptimize: " << bestSequence << ": " << repackEnergy << endl;
 			// set the end geometries after the repack for the sequence
 			addGeometryToEnergyMap(opt, sequenceEnergyMapBest, bestSequence, "end");
 			// get the best sequence from the energy map
@@ -713,9 +713,9 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		 sequenceVectorMap, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
 		
 		// get the best sequence and energy for the current mutation position (picks sequence with energy including vdw, hbond, imm1, baseline, sequence entropy)
-		//string currSeq = getBestSequenceInMap(sequenceEnergyMap);
-		double currTemp = MC.getCurrentT();
-		string currSeq = getSequenceUsingMetropolisCriteria(sequenceEnergyMap, _RNG, currTemp);
+		string currSeq = getBestSequenceInMap(sequenceEnergyMap);
+		//double currTemp = MC.getCurrentT();
+		//string currSeq = getSequenceUsingMetropolisCriteria(sequenceEnergyMap, _RNG, currTemp);
 		double currEnergyTotal = sequenceEnergyMap[currSeq]["currEnergyTotal"]; // energy total for current sequence
 		double bestEnergyTotal = sequenceEnergyMap[currSeq]["bestEnergyTotal"]; // energy total for previous sequence (details in energyFunction)
 		double prevStateEntropy = sequenceEnergyMap[currSeq]["prevEntropy"];
@@ -1264,21 +1264,30 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ve
 	double currentEnergy = spm.getStateEnergy(_bestState)-monomerEnergy;
 	double dimer = spm.getStateEnergy(_bestState);
 	double calcDimer = sys.calcEnergy();
-	_sequenceEnergyMap[_sequence]["preRepackEnergy"] = currentEnergy;
+	_sequenceEnergyMap[_sequence]["preBBOptimizeEnergy"] = currentEnergy;
 	sys.setActiveRotamers(_bestState);
 	PDBWriter writer1;
-	writer1.open(_opt.pdbOutputDir + "/preRepack_"+to_string(_rep)+".pdb");
+	writer1.open(_opt.pdbOutputDir + "/preBackboneOptimize_"+to_string(_rep)+".pdb");
 	writer1.write(sys.getAtomPointers(), true, false, false);
 	writer1.close();
+	SasaCalculator dimerSasa(sys.getAtomPointers());
+	dimerSasa.calcSasa();
+	double sasa = dimerSasa.getTotalSasa();
+	_sequenceEnergyMap[_sequence]["PreBBOptimizeSasa"] = sasa;
+	cout << "Pre BBOptimize SASA: " << sasa << endl;
 	double finalEnergy = monteCarloRepack(_opt, sys, _savedXShift, spm, _sequenceEnergyMap, _sequence, _bestState, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, monomerEnergy, _rep, _out);
 	_sequenceEnergyMap[_sequence]["Total"] = finalEnergy;
-	_sequenceEnergyMap[_sequence]["VDWDimerRepack"] = spm.getStateEnergy(_bestState, "CHARMM_VDW");
-	_sequenceEnergyMap[_sequence]["IMM1DimerRepack"] = spm.getStateEnergy(_bestState, "CHARMM_IMM1")+spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
-	_sequenceEnergyMap[_sequence]["HBONDDimerRepack"] = spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
+	_sequenceEnergyMap[_sequence]["VDWDimerBBOptimize"] = spm.getStateEnergy(_bestState, "CHARMM_VDW");
+	_sequenceEnergyMap[_sequence]["IMM1DimerBBOptimize"] = spm.getStateEnergy(_bestState, "CHARMM_IMM1")+spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	_sequenceEnergyMap[_sequence]["HBONDDimerBBOptimize"] = spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
+	dimerSasa.calcSasa();
+	sasa = dimerSasa.getTotalSasa();
+	_sequenceEnergyMap[_sequence]["BBOptimizeSasa"] = sasa;
+	cout << "BBOptimize SASA: " << sasa << endl;
 
 	// Initialize PDBWriter
 	PDBWriter writer;
-	writer.open(_opt.pdbOutputDir + "/postRepack_" + to_string(_rep) + ".pdb");
+	writer.open(_opt.pdbOutputDir + "/BackboneOptimize_" + to_string(_rep) + ".pdb");
 	writer.write(sys.getAtomPointers(), true, false, false);
 	writer.close();
 

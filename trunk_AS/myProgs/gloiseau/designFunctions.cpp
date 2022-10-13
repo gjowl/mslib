@@ -726,9 +726,9 @@ void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>
 						for (uint k=0; k < (*p2)->identitySize(); k++){
 							Residue &res2 = (*p2)->getIdentity(k);
 							string baseId2 = res2.getResidueName();
-							//if (p2-positions.begin() < 3){
-							//	baseId2 = baseId2.append("-ACE");
-							//}
+							if (p2-positions.begin() < 3){
+								baseId2 = baseId2.append("-ACE");
+							}
 							if (p2-positions.begin() > positions.size()-2){
 								baseId2 = baseId2.append("-CT2");
 							}
