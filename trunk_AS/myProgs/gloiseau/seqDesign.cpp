@@ -750,7 +750,7 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		//Reset the MC to run 100 more cycles
 		//if (MC.getComplete() == true && MC.getCurrentT() < 546.4){
 		//	MC.reset(3649, 3649, 500, MonteCarloManager::EXPONENTIAL, 10);//Approximately 50% likely to accept within 5kcal, and 25% likely to accept within 10kcal
-		//}
+		//}	
 		cycleCounter++;
 	}
 	time(&endTimeSMC);
