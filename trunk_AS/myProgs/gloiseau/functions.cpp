@@ -595,3 +595,11 @@ string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum
 	return "A" + ps;
 }
 
+//Function to get the sum of a vector of doubles, typically energies
+double sumEnergyVector(vector<double> _energies){
+	double ener = 0;
+	for (uint i=0; i<_energies.size(); i++){
+		ener = ener + _energies[i];
+	}
+	return ener;
+}

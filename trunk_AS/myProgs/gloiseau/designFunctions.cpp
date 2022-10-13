@@ -593,14 +593,6 @@ vector<double> calcPairBaselineEnergies(System &_sys, int _seqLength){
 	return ener;
 }
 
-//Function to get the sum of a vector of doubles, typically energies
-double sumEnergyVector(vector<double> _energies){
-	double ener = 0;
-	for (uint i=0; i<_energies.size(); i++){
-		ener = ener + _energies[i];
-	}
-	return ener;
-}
 
 // build in the baseline energies to the system EnergySet
 void buildBaselines(System &_sys, Options &_opt){
@@ -687,6 +679,7 @@ void buildSelfInteractions(System &_sys, map<string, double> &_selfMap){
 				if (p-positions.begin() < 3 || p-positions.begin() > positions.size()-5){//On 03_18_2021 I found this error; position.size() is weird, so need to use 5 instead of 4; on 11_20_2021 saw that a lot of clashing occurs at hte 4th position, so changed this to only use 3
 					baseId = baseId.append("-OUT");
 				}
+				//cout << "Adding self energy for " << baseId << " Position: " << p-positions.begin() << endl;
 				try{
 					double ener = _selfMap.at(baseId);
 					Atom *a = &res.getAtom("CA");
@@ -710,17 +703,15 @@ void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>
 			for (uint j=0; j < (*p)->identitySize(); j++){
 				Residue &res1 = (*p)->getIdentity(j);
 				string baseId1 = res1.getResidueName();
-				if (p-positions.begin() < 1){
+				if (p-positions.begin() < 3){
 					baseId1 = baseId1.append("-ACE");
 				}
 				//Changed this on 11_24_2021 for the designFiles/2021_11_22_IMM1Self and Pair baselines
-				//if (p-positions.begin() > positions.size()-5){//
-				//	baseId1 = baseId1.append("-CT2");
-				//}
-				//cout << "Identity " << j << ": " << baseId1 << endl;
+				if (p-positions.begin() > positions.size()-5){//
+					baseId1 = baseId1.append("-CT2");
+				}
 				for (vector<Position*>::iterator p2 = p+1; p2 != positions.end(); p2++){
 					uint d = p2-p;
-					//cout << "Position 2: " << p2-positions.begin() << endl;
 					if (d <= 10){
 						//cout << "Distance: " << d << endl;
 						for (uint k=0; k < (*p2)->identitySize(); k++){
@@ -729,7 +720,7 @@ void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>
 							if (p2-positions.begin() < 3){
 								baseId2 = baseId2.append("-ACE");
 							}
-							if (p2-positions.begin() > positions.size()-2){
+							if (p2-positions.begin() > positions.size()-5){
 								baseId2 = baseId2.append("-CT2");
 							}
 							try{

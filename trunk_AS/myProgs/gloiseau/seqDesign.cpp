@@ -176,6 +176,9 @@ int main(int argc, char *argv[]){
 	cout << "zShift:        " << opt.zShift << endl << endl;
 
 	// String for the alternateIds at the interface
+	if (opt.xShift <= 7.5){
+		opt.Ids.push_back("GLY");
+	}
 	string alternateIds = getAlternateIdString(opt.Ids);
 	cout << "Amino acids for design: " << alternateIds << endl << endl;
 
@@ -310,7 +313,7 @@ int main(int argc, char *argv[]){
 	string prevSequence;
 	map<string, double> geometries;
 	PDBWriter helicalAxisWriter;
-	for (uint i=0; i<10; i++){
+	for (uint i=0; i<5; i++){
 		helicalAxisWriter.open(opt.pdbOutputDir+"/helicalAxis"+to_string(i)+".pdb");
 		helicalAxisWriter.write(helicalAxis.getAtomPointers(), true, false, true);
 		helicalAxisWriter.close();
@@ -745,9 +748,9 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			acceptCounter++;
 		}
 		//Reset the MC to run 100 more cycles
-		if (MC.getComplete() == true && MC.getCurrentT() < 546.4){
-			MC.reset(3649, 3649, 500, MonteCarloManager::EXPONENTIAL, 10);//Approximately 50% likely to accept within 5kcal, and 25% likely to accept within 10kcal
-		}
+		//if (MC.getComplete() == true && MC.getCurrentT() < 546.4){
+		//	MC.reset(3649, 3649, 500, MonteCarloManager::EXPONENTIAL, 10);//Approximately 50% likely to accept within 5kcal, and 25% likely to accept within 10kcal
+		//}
 		cycleCounter++;
 	}
 	time(&endTimeSMC);

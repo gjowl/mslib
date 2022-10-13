@@ -61,4 +61,6 @@ string convertToPolymerSequence(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum);
 
+double sumEnergyVector(vector<double> _energies);
+
 # endif
