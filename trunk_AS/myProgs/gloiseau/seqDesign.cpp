@@ -94,7 +94,7 @@ void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, dou
  bool &_decreaseMoveSize);
 
 // output functions
-void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingPerPosition,
+void outputFiles(Options &_opt, string _interface, double _seed, vector<int> _rotamerSamplingPerPosition,
  map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout);
 string getRunParameters(Options &_opt, vector<double> _densities);
 void outputTime(auto _start, string _descriptor, bool _beginFunction, ofstream &_out);
@@ -313,7 +313,18 @@ int main(int argc, char *argv[]){
 	string prevSequence;
 	map<string, double> geometries;
 	PDBWriter helicalAxisWriter;
-	for (uint i=0; i<5; i++){
+	double startXShift = opt.xShift;
+	double startCrossingAngle = opt.crossingAngle;
+	double startAxialRotation = opt.axialRotation;
+	double startZShift = opt.zShift;
+	// convert to the ax' and z'
+	double relativeAx;
+	double relativeZ;
+	convertToRelativeAxAndZ(opt.axialRotation, opt.zShift, relativeAx, relativeZ);
+	double startAxialRotationP = relativeAx;
+	double startZShiftP = relativeZ;
+	int numRepacks = 3;
+	for (uint i=0; i<numRepacks; i++){
 		helicalAxisWriter.open(opt.pdbOutputDir+"/helicalAxis"+to_string(i)+".pdb");
 		helicalAxisWriter.write(helicalAxis.getAtomPointers(), true, false, true);
 		helicalAxisWriter.close();
@@ -322,13 +333,22 @@ int main(int argc, char *argv[]){
 		stateMCUnlinked(sys, opt, interfacePolySeq, sequenceEnergyMapBest, sequenceEntropyMap, bestState, bestSequence, seqs, allSeqs,
 			allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
 		outputTime(start, "Monte Carlo Sequence Search Replicate " + to_string(i), false, sout);
+
+		// add in the starting geometries to the map	
+		sequenceEnergyMapBest[bestSequence]["startXShift"] = startXShift;
+		sequenceEnergyMapBest[bestSequence]["startCrossingAngle"] = startCrossingAngle;
+		sequenceEnergyMapBest[bestSequence]["startAxialRotation"] = startAxialRotation;
+		sequenceEnergyMapBest[bestSequence]["startZShift"] = startZShift;
+		sequenceEnergyMapBest[bestSequence]["startAxialRotationPrime"] = startAxialRotation;
+		sequenceEnergyMapBest[bestSequence]["startZShiftPrime"] = startZShift;
 		
 		// TODO: search through and see if the best sequence is found in the final energy map (won't have to do if improvements for more than one cycle are miniscule)
 		if (prevSequence != bestSequence){
 			// compute monomer energy
 			cout << interfacePolySeq << endl;
+			switchSequence(sys, opt, bestSequence);
 			outputTime(start, "Compute Monomer Energy " + to_string(i), true, sout);
-			computeMonomerEnergyIMM1(opt, trans, sequenceEnergyMapBest, bestSequence, RNG, sout, err);
+			computeMonomerEnergyIMM1(sys, helicalAxis, opt, trans, sequenceEnergyMapBest, bestSequence, RNG, sout, err);
 			outputTime(start, "Compute Monomer Energy " + to_string(i), false, sout);
 			// get the current energy of the sequence by subtracting monomer from dimer
 			double monomerEnergy = sequenceEnergyMapBest[bestSequence]["Monomer"];
@@ -338,7 +358,7 @@ int main(int argc, char *argv[]){
 			// set as the start energy
 			sequenceEnergyMapBest[bestSequence]["MCSearchEnergy"] = startEnergy;
 			sequenceEnergyMapBest[bestSequence]["geometryNumber"] = i;
-			addGeometryToEnergyMap(opt, sequenceEnergyMapBest, bestSequence, "start");
+			addGeometryToEnergyMap(opt, sequenceEnergyMapBest, bestSequence, "preOptimize");
 			// add the monomer energy to the backbone repack to compare instead of using baseline energy (more accurate)
 			outputTime(start, "Backbone optimize replicate " + to_string(i), true, sout);
 			localBackboneRepack(opt, sys, bestSequence, bestState, sequenceEnergyMapBest, i, opt.xShift, helicalAxis, axisA, axisB,
@@ -354,7 +374,7 @@ int main(int argc, char *argv[]){
 			sequenceEnergyMapBest.clear(); // energyMap to hold all energies for output into a summary file
 		} else {
 			// end loop if same sequence from seq monte carlo
-			i = 3;	
+			i = numRepacks;	
 		}
 		prevSequence = bestSequence;
 	}
@@ -362,7 +382,8 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *                   === WRITE OUT ENERGY AND DESIGN FILES ===
 	 ******************************************************************************/
-	outputFiles(opt, rotamerSamplingString, rotamerSamplingPerPosition, sequenceEnergyMapFinalSeq, sout);
+	double seed = RNG.getSeed();
+	outputFiles(opt, rotamerSamplingString, seed, rotamerSamplingPerPosition, sequenceEnergyMapFinalSeq, sout);
 
 	time(&endTime);
 	diffTime = difftime (endTime, startTime);
@@ -374,9 +395,334 @@ int main(int argc, char *argv[]){
 }
 
 //Functions
+
+//double computeMonomerEnergy(System & _sys, Transforms & _trans, catmOptions & _opt, System & _helicalAxis, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _fout, int _greedyCycles, int _MCCycles, int _MCMaxRejects) {
+//
+//	time_t startTimeMono, endTimeMono;
+//	double diffTimeMono;
+//	time(&startTimeMono);
+//
+//	Chain & inputChain = _sys.getChain(0);
+//	AtomPointerVector &axisA = _helicalAxis.getChain("A").getAtomPointers();
+//	AtomPointerVector &axisB = _helicalAxis.getChain("B").getAtomPointers();
+//
+//	// Declare new system
+//	System monoSys;
+//	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile, _opt.solvFile);
+//	CSBMono.setBuildTerm("CHARMM_ELEC", true);
+//	CSBMono.setBuildTerm("CHARMM_ANGL", false);
+//	CSBMono.setBuildTerm("CHARMM_BOND", false);
+//	CSBMono.setBuildTerm("CHARMM_DIHE", false);
+//	CSBMono.setBuildTerm("CHARMM_IMPR", false);
+//	CSBMono.setBuildTerm("CHARMM_U-BR", false);
+//
+//	CSBMono.setSolvent("MEMBRANE");
+//	CSBMono.setIMM1Params(15, 10);
+//	CSBMono.buildSystemFromPDB(inputChain.getAtomPointers());
+//
+//	SystemRotamerLoader monoRot(monoSys, _opt.monoRotLibFile);
+//	monoRot.defineRotamerSamplingLevels();
+//
+//	// Add hydrogen bond term
+//	HydrogenBondBuilder monohb(monoSys, _opt.hBondFile);
+//	monohb.buildInteractions(30);
+//
+//	/******************************************************************************
+//	 *                     === INITIAL VARIABLE SET UP ===
+//	 ******************************************************************************/
+//	EnergySet* monoEset = monoSys.getEnergySet();
+//	monoEset->setAllTermsActive();
+//	monoEset->setTermActive("CHARMM_ELEC", true);
+//	monoEset->setTermActive("CHARMM_ANGL", false);
+//	monoEset->setTermActive("CHARMM_BOND", false);
+//	monoEset->setTermActive("CHARMM_DIHE", false);
+//	monoEset->setTermActive("CHARMM_IMPR", false);
+//	monoEset->setTermActive("CHARMM_U-BR", false);
+//
+//	deleteTerminalBondInteractions(monoSys, _opt);
+//
+//	/******************************************************************************
+//	 *              === LOAD ROTAMERS FOR MONOMER & SET-UP SPM ===
+//	 ******************************************************************************/
+//	SelfPairManager monoSpm;
+//	monoSpm.seed(_opt.seed);
+//	monoSpm.setVerbose(_opt.verbose);
+//
+//	for (uint k=0; k < monoSys.positionSize(); k++) {
+//		Position &pos = monoSys.getPosition(k);
+//
+//		if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+//			if (!monoRot.loadRotamers(&pos, pos.getResidueName(), "SL97.00")) {
+//				cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+//			}
+//		}
+//	}
+//
+//	monoEset->setWeight("CHARMM_ELEC", _opt.weight_elec);
+//	monoEset->setWeight("CHARMM_VDW", _opt.weight_vdw);
+//	monoEset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
+//	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
+//	monoEset->setWeight("CHARMM_IMM1", _opt.weight_solv);
+//	_fout << "Monomer - ELEC weight: " << monoEset->getWeight("CHARMM_ELEC") << " VDW weight: " << monoEset->getWeight("CHARMM_VDW") << " HB weight: " << monoEset->getWeight("SCWRL4_HBOND") << " IMM1REF weight: " << monoEset->getWeight("CHARMM_IMM1REF") << " IMM1 weight: " << monoEset->getWeight("CHARMM_IMM1") << endl;
+//
+//	monoSpm.setSystem(&monoSys);
+//	monoSpm.updateWeights();
+//
+//	/******************************************************************************
+//	 *                     === INITIAL VARIABLE SET UP ===
+//	 ******************************************************************************/
+//	AtomPointerVector &chainA = monoSys.getAtomPointers();
+//
+//	/******************************************************************************
+//	 *                     === SHIFT HELICES INTO MEMBRANE ===
+//	 ******************************************************************************/
+//	CartesianPoint moveAxisBOneAngstrom;
+//	moveAxisBOneAngstrom.setCoor(1.0, 0.0, 0.0);
+//	_trans.translate(axisB, moveAxisBOneAngstrom);
+//
+//	monoSys.calcEnergy();
+//
+//	// move center of mass to origin
+//	//moveZCenterOfCAMassToOrigin(chainA, _helicalAxis.getAtomPointers(), _trans);
+//	AtomSelection sel(chainA);
+//	AtomPointerVector & caApV = sel.select("name CA");
+//	double centerHelix = 0.0;
+//	for(int i = 0; i < caApV.size(); i++) {
+//		centerHelix += (caApV[i]->getCoor()).getZ();
+//	}
+//	centerHelix = -1.0 * centerHelix/double(caApV.size());
+//
+//	CartesianPoint interDistVect;
+//	interDistVect.setCoor(0.0, 0.0, centerHelix);
+//	_trans.translate(chainA, interDistVect);
+//
+//
+//	// Initial Z Shift move -5A down
+//	CartesianPoint zUnitVector;
+//	zUnitVector.setCoor(0.0, 0.0, 1.0);
+//
+//	CartesianPoint move5Down = zUnitVector * -5.0;
+//	_trans.translate(chainA, move5Down);
+//	double bestZ = -5.0;
+//
+//	monoSys.calcEnergy();
+//
+//	// Repack side chains
+//	monoSpm.setOnTheFly(1);
+//	monoSpm.calculateEnergies();
+//        monoSpm.runGreedyOptimizer(_greedyCycles);
+//
+//	double currentEnergy = monoSpm.getMinBound()[0];
+//	double bestEnergy = currentEnergy;
+//	monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
+//	monoSys.saveAltCoor("savedBestMonomer");
+//	_helicalAxis.saveAltCoor("BestMonomerAxis");
+//	_fout << "current Z: -5 Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
+//
+//	// Test -5 to +5A shifts in Membrane
+//	for(int i=0; i<=10; i++) {
+//
+//		_trans.translate(chainA, zUnitVector);
+//
+//		double currentZ = -5.0 + ((i+1)*1.0);
+//		monoSpm.calculateEnergies();
+//		monoSpm.runGreedyOptimizer(_greedyCycles);
+//		currentEnergy = monoSpm.getMinBound()[0];
+//		_fout << "current Z: " << currentZ << " Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
+//
+//		if(currentEnergy < bestEnergy) {
+//			bestEnergy = currentEnergy;
+//			monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
+//			monoSys.saveAltCoor("savedBestMonomer");
+//			bestZ = -5.0 + ((i+1)*1.0);
+//		}
+//	}
+//
+//	// Test at different tilts and rotations
+//	monoSys.applySavedCoor("savedBestMonomer");
+//	_helicalAxis.applySavedCoor("BestMonomerAxis");
+//
+//	monoSys.saveAltCoor("bestZ");
+//	_helicalAxis.saveAltCoor("bestZ");
+//
+//	double bestTilt = 0.0;
+//	double bestRotation = 0.0;
+//	double monoTilt = 0.0;
+//	double monoAxialRotation = 0.0;
+//	for(int i=1; i<=3; i++) { // test at 3 tilts: 15, 30 and 45 degrees
+//		//==================================
+//		//====== Membrane Tilt ======
+//		//==================================
+//		monoSys.applySavedCoor("bestZ");
+//		_helicalAxis.applySavedCoor("bestZ");
+//
+//		monoTilt = i * 15;
+//		_trans.rotate(chainA, monoTilt, axisA(0).getCoor(), axisB(0).getCoor());
+//		_trans.rotate(axisA, monoTilt, axisA(0).getCoor(), axisB(0).getCoor());
+//		for(int j=0; j<=3; j++) { // test at 4 rotations 0, 90, 180 and 270 degrees
+//			//==================================
+//			//====== Axial Rot ======
+//			//==================================
+//			monoAxialRotation = j * 90.0;
+//
+//			monoSpm.calculateEnergies();
+//			monoSpm.runGreedyOptimizer(_greedyCycles);
+//			currentEnergy = monoSpm.getMinBound()[0];
+//			_fout << "current tilt: " << monoTilt << " current rotation: " << monoAxialRotation << " Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
+//			//monoSys.writePdb("mono_" + MslTools::doubleToString(monoTilt) + "_" + MslTools::doubleToString(monoAxialRotation) + ".pdb");
+//
+//			if(currentEnergy < bestEnergy) {
+//				bestEnergy = currentEnergy;
+//				bestTilt = monoTilt;
+//				bestRotation = monoAxialRotation;
+//				monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
+//				monoSys.saveAltCoor("savedBestMonomer");
+//				_helicalAxis.saveAltCoor("BestMonomerAxis");
+//			}
+//
+//			_trans.rotate(chainA, 90.0, axisA(0).getCoor(), axisA(1).getCoor());
+//
+//		}
+//	}
+//
+//	MonteCarloManager MCMngr(1000.0, 0.5, _MCCycles, MonteCarloManager::EXPONENTIAL, _MCMaxRejects);
+//	MCMngr.setEner(bestEnergy);
+//
+//	double zShift = bestZ;
+//	double crossingAngle = bestTilt;
+//	double axialRotation = bestRotation;
+//	unsigned int counter = 0;
+//
+//	while(!MCMngr.getComplete()) {
+//
+//		monoSys.applySavedCoor("savedBestMonomer");
+//		_helicalAxis.applySavedCoor("BestMonomerAxis");
+//
+//		int moveToPreform = _RNG.getRandomInt(2);
+//
+//		double deltaZShift = 0.0;
+//		double deltaTilt = 0.0;
+//		double deltaAxialRotation = 0.0;
+//
+//		//======================================
+//		//====== Z Shift ======
+//		//======================================
+//		if (moveToPreform == 0) {
+//			deltaZShift = getStandardNormal(_RNG) * 1.0;
+//			CartesianPoint translateA = axisA(1).getCoor() - axisA(0).getCoor(); // vector minus helical center
+//			translateA = translateA.getUnit() * deltaZShift; // unit vector of helical _axis times the amount to shift by
+//			_trans.translate(chainA, translateA);
+//			//_fout << setiosflags(ios::fixed) << setprecision(3)<< "Zshift: " << deltaZShift << endl;
+//
+//		} else if (moveToPreform == 1) {
+//		//==================================
+//		//====== Axial Rot ======
+//		//==================================
+//			deltaAxialRotation = getStandardNormal(_RNG) * 20.0;
+//			_trans.rotate(chainA, deltaAxialRotation, axisA(0).getCoor(), axisA(1).getCoor());
+//			//_fout << setiosflags(ios::fixed) << setprecision(3)<< "axial: " << deltaAxialRotation << endl;
+//
+//		} else if (moveToPreform == 2) {
+//		//==================================
+//		//====== Membrane Tilt ======
+//		//==================================
+//			deltaTilt = getStandardNormal(_RNG) * 10;
+//			_trans.rotate(chainA, deltaTilt, axisA(0).getCoor(), axisB(0).getCoor());
+//			_trans.rotate(axisA, deltaTilt, axisA(0).getCoor(), axisB(0).getCoor());
+//			//_fout << setiosflags(ios::fixed) << setprecision(3)<< "tilt: " << deltaTilt << endl;
+//		}
+//
+//		// Run Optimization
+//		// Run repack every N steps
+//		if (counter % 10 == 0) {
+//			//_fout << "repack." << endl;
+//			monoSpm.calculateEnergies();
+//			monoSpm.runGreedyOptimizer(_greedyCycles);
+//
+//			currentEnergy = monoSpm.getMinBound()[0];
+//		} else {
+//			currentEnergy = monoSys.calcEnergy();
+//			//_fout << monoEset->getSummary() << endl;
+//		}
+//
+//		if (!MCMngr.accept(currentEnergy)) {
+//			//_fout << "state rejected   energy: " << currentEnergy << endl;
+//		}
+//		else {
+//			monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
+//			monoSys.saveAltCoor("savedBestMonomer");
+//			_helicalAxis.saveAltCoor("BestMonomerAxis");
+//			bestEnergy = currentEnergy;
+//
+//			crossingAngle = crossingAngle + deltaTilt;
+//			axialRotation = axialRotation + deltaAxialRotation;
+//			zShift = zShift +  deltaZShift;
+//
+//			_fout << setiosflags(ios::fixed) << setprecision(3) << "MCAccept   axial Tilt: " << crossingAngle << " zShift: " << zShift << " axialRot: " << axialRotation << " energy: " << currentEnergy*2 << endl;
+//		}
+//
+//		counter++;
+//	}
+//
+//	time(&endTimeMono);
+//	diffTimeMono = difftime (endTimeMono, startTimeMono);
+//	_fout << endl << "Total Monomer Time: " << setiosflags(ios::fixed) << setprecision(0) << diffTimeMono << " seconds" << endl;
+//
+//
+//	/******************************************************************************
+//	 *               === PRINT OUT MONOMER / STORE ENERGIES ===
+//	 ******************************************************************************/
+//	monoSys.applySavedCoor("savedBestMonomer");
+//	_helicalAxis.applySavedCoor("BestMonomerAxis");
+//	_fout << monoEset->getSummary();
+//	_fout << endl;
+//
+//	// print the monomer
+//	string monoOutCrdFile  = _opt.pdbOutputDir + "/" + _opt.uniprotAccession + "_monomer.crd";
+//	CRDWriter monoCrd;
+//	monoCrd.open(monoOutCrdFile);
+//	if(!monoCrd.write(monoSys.getAtomPointers())) {
+//		cerr << "Unable to write " << monoOutCrdFile << endl;
+//		exit(0);
+//	}
+//
+//	string monoOutPdbFile  = _opt.pdbOutputDir + "/" + _opt.uniprotAccession + "_monomer.pdb";
+//	PDBWriter monoPdb;
+//	monoPdb.setConvertFormat("CHARMM22","PDB2");
+//	monoPdb.open(monoOutPdbFile);
+//	if(!monoPdb.write(monoSys.getAtomPointers())) {
+//		cerr << "Unable to write " << monoOutPdbFile << endl;
+//		exit(0);
+//	}
+//
+//	// Store monomer energy by term
+//	if(_opt.printTermEnergies) {
+//		monoSys.calcEnergy();
+//		_monomerEnergyByTerm = getEnergyByTermDoubled(monoSys.getEnergySet()); // must double the energy, as only computed energy for 1 helix
+//
+//		ofstream meOut;
+//		string meOutName  = _opt.pdbOutputDir + "/" + _opt.uniprotAccession + "_monomer.energy";
+//		meOut.open(meOutName.c_str());
+//		if(!meOut.is_open()) {
+//			cerr << "Unable to open " << meOutName << endl;
+//			exit(0);
+//		}
+//		for(map<string,double>::iterator it = _monomerEnergyByTerm.begin(); it != _monomerEnergyByTerm.end(); it++) {
+//			meOut << it->first << " " << it->second << endl;
+//		}
+//		meOut.close();
+//
+//	}
+//
+//	double finalEnergy = 2.0 * monoSpm.getMinBound()[0]; // double the energy for 2 helices
+//	return finalEnergy;
+//
+//}
 void outputGeometry(Options &_opt, double _xShift, double _crossingAngle, double _axialRotation, double _zShift, ofstream &_out){
 	_out << "xShift;        Before: " << _opt.xShift << "; After: " << _xShift << endl;
 	_out << "crossingAngle; Before: " << _opt.crossingAngle << "; After: " << _crossingAngle << endl;
+	_out << "axialRotation; Before: " << _opt.axialRotation << "; After: " << _axialRotation << endl;
+	_out << "zShift;        Before: " << _opt.zShift << "; After: " << _zShift << endl << endl;
 	double relativeAxBefore;
 	double relativeZBefore;
 	convertToRelativeAxAndZ(_opt.axialRotation, _opt.zShift, relativeAxBefore, relativeZBefore);
@@ -384,18 +730,20 @@ void outputGeometry(Options &_opt, double _xShift, double _crossingAngle, double
 	double relativeZAfter;
 	convertToRelativeAxAndZ(_axialRotation, _zShift, relativeAxAfter, relativeZAfter);
 	// convert axialRotation and zShift for output (from parallelogram from Ben's paper for interface to square)
-	_out << "axialRotation; Before: " << relativeAxBefore << "; After: " << relativeAxAfter << endl;
-	_out << "zShift;        Before: " << relativeZBefore << "; After: " << relativeZAfter << endl << endl;
+	_out << "axialRotationPrime; Before: " << relativeAxBefore << "; After: " << relativeAxAfter << endl;
+	_out << "zShiftPrime;        Before: " << relativeZBefore << "; After: " << relativeZAfter << endl << endl;
 }
 void addGeometryToEnergyMap(Options &_opt, map<string, map<string, double>> &_energyMap, string _bestSequence, string _descriptor){
 	_energyMap[_bestSequence][_descriptor+"XShift"] = _opt.xShift;
 	_energyMap[_bestSequence][_descriptor+"CrossingAngle"] = _opt.crossingAngle;
+	_energyMap[_bestSequence][_descriptor+"AxialRotation"] = _opt.axialRotation;
+	_energyMap[_bestSequence][_descriptor+"ZShift"] = _opt.zShift;
 	double relativeAx;
 	double relativeZ;
 	convertToRelativeAxAndZ(_opt.axialRotation, _opt.zShift, relativeAx, relativeZ);
-	_energyMap[_bestSequence][_descriptor+"AxialRotation"] = relativeAx;
-	_energyMap[_bestSequence][_descriptor+"ZShift"] = relativeZ;
-	_energyMap[_bestSequence]["startDensity"] = _opt.density;
+	_energyMap[_bestSequence][_descriptor+"AxialRotationPrime"] = relativeAx;
+	_energyMap[_bestSequence][_descriptor+"ZShiftPrime"] = relativeZ;
+	_energyMap[_bestSequence]["startRotZDensity"] = _opt.density;
 }
 
 void convertToRelativeAxAndZ(double _axialRot, double _zShift, double &_relativeAx, double &_relativeZ){
@@ -706,6 +1054,8 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	// initialize energy variables for the MonteCarlo
 	string bestSeq = prevStateSeq;
 	map<string,double> bestSequenceEnergyMap;
+	bool randomMCRun = false;
+	bool decreaseMCRun = false;
 	// Monte Carlo while loop for finding the best sequences
 	while (!MC.getComplete()){
 		lout << "Cycle #" << cycleCounter << "; Acceptances: " << acceptCounter << endl;
@@ -716,9 +1066,9 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		 sequenceVectorMap, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
 		
 		// get the best sequence and energy for the current mutation position (picks sequence with energy including vdw, hbond, imm1, baseline, sequence entropy)
-		string currSeq = getBestSequenceInMap(sequenceEnergyMap);
-		//double currTemp = MC.getCurrentT();
-		//string currSeq = getSequenceUsingMetropolisCriteria(sequenceEnergyMap, _RNG, currTemp);
+		//string currSeq = getBestSequenceInMap(sequenceEnergyMap);
+		double currTemp = MC.getCurrentT();
+		string currSeq = getSequenceUsingMetropolisCriteria(sequenceEnergyMap, _RNG, currTemp);
 		double currEnergyTotal = sequenceEnergyMap[currSeq]["currEnergyTotal"]; // energy total for current sequence
 		double bestEnergyTotal = sequenceEnergyMap[currSeq]["bestEnergyTotal"]; // energy total for previous sequence (details in energyFunction)
 		double prevStateEntropy = sequenceEnergyMap[currSeq]["prevEntropy"];
@@ -735,22 +1085,30 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 			lout << "State not accepted, E= " << currEnergyTotal << "; PrevE= " << bestEnergyTotal << endl << endl;
 		} else {
 			_sys.setActiveRotamers(currStateVec); // set rotamers to the current state
+			double acceptTemp = MC.getCurrentT();
 			map<string,double> energyMap = sequenceEnergyMap[currSeq];
 			lout << cycleCounter << "\t" << prevStateSeq << "\t" << currSeq << "\t" << bestEnergyTotal << "\t" << currEnergyTotal << "\t";
-			lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << MC.getCurrentT() << endl << endl;
+			lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << acceptTemp << endl << endl;
 			_bestState = currStateVec;
 			prevStateVec = currStateVec; // set the previous state vector to be the current state vector
 			prevStateSeq = currSeq; // set the previous sequence to be the current sequence
 			bestSeq = currSeq; // set the best sequence to the newly accepted current sequence
 			bestEnergy = sequenceEnergyMap[bestSeq]["Dimerw/Baseline"]; // set the best energy to the current energy (vdw, hbond, imm1, baseline)
 			sequenceEnergyMap[bestSeq]["acceptCycleNumber"] = acceptCounter; // gets the accept cycle number for the current sequence
+			sequenceEnergyMap[bestSeq]["acceptTemp"] = acceptTemp; // gets the accept cycle number for the current sequence
 			bestSequenceEnergyMap = sequenceEnergyMap[bestSeq]; // saves the current sequence energy map to the all sequence energy map
 			acceptCounter++;
 		}
 		//Reset the MC to run 100 more cycles
-		//if (MC.getComplete() == true && MC.getCurrentT() < 546.4){
-		//	MC.reset(3649, 3649, 500, MonteCarloManager::EXPONENTIAL, 10);//Approximately 50% likely to accept within 5kcal, and 25% likely to accept within 10kcal
-		//}	
+		if (MC.getComplete() == true && randomMCRun == false){
+			MC.reset(3649, 3649, _opt.MCCycles, MonteCarloManager::EXPONENTIAL, _opt.MCMaxRejects);//Approximately 50% likely to accept within 5kcal, and 25% likely to accept within 10kcal
+			randomMCRun = true;
+		} 
+		// run more cycles of MC to decrease
+		if (MC.getComplete() == true && randomMCRun == true && decreaseMCRun == false){
+			MC.reset(3649, _opt.MCEndTemp, _opt.MCCycles, MonteCarloManager::EXPONENTIAL, _opt.MCMaxRejects);
+			decreaseMCRun = true;
+		}
 		cycleCounter++;
 	}
 	time(&endTimeSMC);
@@ -1273,20 +1631,12 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ve
 	writer1.open(_opt.pdbOutputDir + "/preBackboneOptimize_"+to_string(_rep)+".pdb");
 	writer1.write(sys.getAtomPointers(), true, false, false);
 	writer1.close();
-	SasaCalculator dimerSasa(sys.getAtomPointers());
-	dimerSasa.calcSasa();
-	double sasa = dimerSasa.getTotalSasa();
-	_sequenceEnergyMap[_sequence]["PreBBOptimizeSasa"] = sasa;
-	cout << "Pre BBOptimize SASA: " << sasa << endl;
+	
 	double finalEnergy = monteCarloRepack(_opt, sys, _savedXShift, spm, _sequenceEnergyMap, _sequence, _bestState, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, monomerEnergy, _rep, _out);
 	_sequenceEnergyMap[_sequence]["Total"] = finalEnergy;
 	_sequenceEnergyMap[_sequence]["VDWDimerBBOptimize"] = spm.getStateEnergy(_bestState, "CHARMM_VDW");
 	_sequenceEnergyMap[_sequence]["IMM1DimerBBOptimize"] = spm.getStateEnergy(_bestState, "CHARMM_IMM1")+spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
 	_sequenceEnergyMap[_sequence]["HBONDDimerBBOptimize"] = spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
-	dimerSasa.calcSasa();
-	sasa = dimerSasa.getTotalSasa();
-	_sequenceEnergyMap[_sequence]["BBOptimizeSasa"] = sasa;
-	cout << "BBOptimize SASA: " << sasa << endl;
 
 	// Initialize PDBWriter
 	PDBWriter writer;
@@ -1327,6 +1677,12 @@ double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfP
 
 	bbout << "***STARTING GEOMETRY***" << endl;
 	outputGeometry(_opt, xShift, crossingAngle, axialRotation, zShift, bbout);
+	// calculate starting sasa
+	SasaCalculator startSasa(_sys.getAtomPointers());
+	startSasa.calcSasa();
+	double sasa = startSasa.getTotalSasa();
+	_sequenceEnergyMap[_sequence]["PreBBOptimizeSasa"] = sasa;
+	cout << "Pre BBOptimize SASA: " << sasa << endl;
 
 	// Monte Carlo Repack Manager Setup
 	MonteCarloManager MCMngr(_opt.backboneMCStartTemp, _opt.backboneMCEndTemp, _opt.backboneMCCycles, _opt.backboneMCCurve, _opt.backboneMCMaxRejects, _opt.backboneConvergedSteps, _opt.backboneConvergedE);
@@ -1459,6 +1815,12 @@ double monteCarloRepack(Options &_opt, System &_sys, double &_savedXShift, SelfP
 	outputGeometry(_opt, finalXShift, finalCrossingAngle, finalAxialRotation, finalZShift, bbout);
 	bbout << "Energy;        Before: " << prevBestEnergy << "; After: " << bestEnergy << endl << endl;
 
+	SasaCalculator endDimerSasa(_sys.getAtomPointers());
+	endDimerSasa.calcSasa();
+	double endSasa = endDimerSasa.getTotalSasa();
+	_sequenceEnergyMap[_sequence]["BBOptimizeSasa"] = endSasa;
+	cout << "BBOptimize SASA: " << endSasa << endl;
+
 	// sets the updated backbone parameters
 	_opt.xShift = finalXShift;
 	_opt.crossingAngle = finalCrossingAngle;
@@ -1514,7 +1876,7 @@ void useInputInterface(Options &_opt, string &_variablePositionString, string &_
 	}
 }
 
-void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingPerPosition,
+void outputFiles(Options &_opt, string _rotamerValues, double _seed, vector<int> _rotamerSamplingPerPosition,
  map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout){
 	// Setup vector to hold energy file lines
 	vector<string> energyLines;
@@ -1527,8 +1889,8 @@ void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingP
 		stringstream seqLine;
 		string sequence = seq.first;
 		// get the interface sequence
-		string interfaceSequence = getInterfaceSequence(_opt,_interface, sequence);
-		seqLine << sequence << t << _interface << t << interfaceSequence << t;
+		string interfaceSequence = getInterfaceSequence(_opt,_rotamerValues, sequence);
+		seqLine << sequence << t << _rotamerValues << t << _opt.interface << t << interfaceSequence << t << _seed << t;
 		map<string,double> energyMap = _sequenceEnergyMap[sequence];
 		// For adding in strings to a line for the energy file; looping through the terms instead of my input terms this time; sort later
 		for (auto &ener: energyMap){
@@ -1547,9 +1909,9 @@ void outputFiles(Options &_opt, string _interface, vector<int> _rotamerSamplingP
 	ofstream eout;
 	string eoutfile = _opt.pdbOutputDir + "/energyFile.csv";
 	eout.open(eoutfile.c_str());
-	eout << "Sequence" << t << "Interface" << t << "InterfaceSequence" << t;
+	eout << "Sequence" << t << "RotamerValues" << t << "Interface" << t << "InterfaceSequence" << t << "Seed" << t;
 	eout << enerTerms.str() << endl;
-	_sout << "Sequence" << t << "Interface" << t << "InterfaceSequence" << t;
+	_sout << "Sequence" << t << "RotamerValues" << t << "Interface" << t << "InterfaceSequence" << t << "Seed" << t;
 	_sout << enerTerms.str() << endl;
 	for (uint i=0; i<energyLines.size() ; i++){
 		eout << energyLines[i] << endl;
