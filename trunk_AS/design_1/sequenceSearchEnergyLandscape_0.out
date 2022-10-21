@@ -1,11 +1,1 @@
-Cycle	PrevSequence	CurrSequence	PrevEnergy	CurrEnergy	PrevEntropy	CurrEntropy	CurrentTemp
-Cycle #0; Acceptances: 0
-0	LLLALLLALLLLALLLLLILI	LLLALLLALLLLALLLFLILI	45.4852	32.5691	0.78825	0.181527	1000
-
-Cycle #1; Acceptances: 1
-1	LLLALLLALLLLALLLFLILI	LLLALLLALLLLALLAFLILI	32.7508	34.7673	0.363279	0.461474	3649
-
-Cycle #2; Acceptances: 2
-2	LLLALLLALLLLALLAFLILI	LLLALLLLLLLLALLAFLILI	34.7673	34.8973	0.461474	0.363279	3649
-
-Time: 0s
+Accept/Reject	Cycle	PrevSequence	CurrSequence	PrevEnergy	CurrEnergy	PrevEntropy	CurrEntropy	CurrentTemp	Accepts

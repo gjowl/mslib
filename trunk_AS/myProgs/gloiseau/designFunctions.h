@@ -111,9 +111,9 @@ void outputDesignFiles(Options &_opt, string _interface, vector<int> _rotamerSam
  *baseline energy helper functions
  ***********************************/
 // calculates the self energies of a structure
-vector<double> calcBaselineEnergies(System &_sys, int _seqLength);
+vector<double> calcBaselineEnergies(System &_sys, Options &_opt);
 // calculates the pair energies of a structure
-vector<double> calcPairBaselineEnergies(System &_sys, int _seqLength);
+vector<double> calcPairBaselineEnergies(System &_sys, Options &_opt);
 // adds up all of the values in a vector<double> to get the total energy
 double sumEnergyVector(vector<double> _energies);
 // baseline builder function; must have a selfEnergyFile and a pairEnergyFile in the options
@@ -122,11 +122,15 @@ map<string, double> readSingleParameters(string _baselineFile);
 map<string,map<string,map<uint, double>>> readPairParameters(string _baselineFile);
 void buildSelfInteractions(System &_sys, map<string, double> &_selfMap);
 void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>>& _pairMap);
+void setActiveSequence(System &_sys, string _sequence);
 
 /***********************************
  *sequence entropy functions
  ***********************************/
 void calculateInterfaceSequenceEntropy(Options &_opt, string _prevSeq, string _currSeq,
+map<string,double> _entropyMap, double &_prevSEProb, double &_currSEProb, double &_prevEntropy,
+double &_currEntropy, double _bestEnergy, double _currEnergy, double &_bestEnergyTotal, double &_currEnergyTotal, vector<uint> _interfacePositionsList);
+void calculateInternalSequenceEntropy(Options &_opt, string _prevSeq, string _currSeq,
 map<string,double> _entropyMap, double &_prevSEProb, double &_currSEProb, double &_prevEntropy,
 double &_currEntropy, double _bestEnergy, double _currEnergy, double &_bestEnergyTotal, double &_currEnergyTotal, vector<uint> _interfacePositionsList);
 // counts the number of each AA in a sequence and outputs a map<string(AA),int(numAA)> ...
@@ -137,6 +141,8 @@ double calcNumberOfPermutations(map<string,int> _seqAACounts, int _seqLength);
 // and calculates the number of permutations for those AAs and the number of interfacial positions)
 void interfaceAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, vector<uint> _interfacialPositionsList);
 double getInterfaceSequenceEntropyProbability(Options &_opt, string _sequence, map<string,double> &_entropyMap, vector<uint> _interfacialPositionsList);
+void internalAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, vector<uint> _interfacialPositionsList);
+double getInternalSequenceEntropyProbability(Options &_opt, string _sequence, map<string,double> &_entropyMap, vector<uint> _interfacialPositionsList);
 double calculateSequenceProbability(map<string,int> &_seqCountMap, map<string,double> &_entropyMap, double _numberOfPermutations);
 
 /***********************************

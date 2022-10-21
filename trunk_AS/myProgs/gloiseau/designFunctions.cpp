@@ -551,41 +551,41 @@ void setupDesignDirectory(Options &_opt){
  *baseline energy helper functions
  ***********************************/
 //Function to calculate the self energies of a chain
-vector<double> calcBaselineEnergies(System &_sys, int _seqLength){
+vector<double> calcBaselineEnergies(System &_sys, Options &_opt){
 	vector<double> ener;
 	AtomSelection sel(_sys.getAtomPointers());
 	//cout << "Self Energies" << endl;
-	for (uint i=0; i<_seqLength; i++){
+	for (uint i=_opt.thread+3; i<_opt.thread+_opt.backboneLength-5; i++){
 		string residue = "resi, chain A and resi ";
-		string number = to_string(i+1);
+		string number = to_string(i);
 		sel.select(residue += number);
 		double resi = _sys.calcEnergy("resi");
 		ener.push_back(resi);
-		//cout << number << ": " << resi << endl;
+		cout << number << ": " << resi << endl;
 	}
 	sel.clearStoredSelections();
 	return ener;
 }
 
 //Function to calculate the pair energies of a chain
-vector<double> calcPairBaselineEnergies(System &_sys, int _seqLength){
+vector<double> calcPairBaselineEnergies(System &_sys, Options &_opt){
 	vector<double> ener;
 	AtomSelection sel(_sys.getAtomPointers());
 
-	for (uint i=0; i<_seqLength; i++){
+	for (uint i=_opt.thread+3; i<_opt.thread+_opt.backboneLength-5; i++){
 		string residue = "resi1, chain A and resi ";
-		string num1 = to_string(i+1);
+		string num1 = to_string(i);
 		sel.select(residue += num1);
-		for (uint j=i+1; j<_seqLength;j++){
+		for (uint j=i+1; j<_opt.thread+_opt.backboneLength-5;j++){
 			int dist = j-i;
 			if (dist <= 10){
 				string resi1 = "resi2, chain A and resi ";
-				string num2 = to_string(j+1);
+				string num2 = to_string(j);
 				sel.select(resi1 += num2);
 				double pair = _sys.calcEnergy("resi1", "resi2");
 				ener.push_back(pair);
 			} else {
-				j = _seqLength;
+				j = _opt.thread+_opt.backboneLength-5;
 			}
 		}
 	}
@@ -844,8 +844,8 @@ void computeMonomerEnergyNoIMM1(Options& _opt, map<string,map<string,double>> &_
 	map<string,double> &energyMap = _sequenceEnergyMap[_seq];
 	outputEnergiesByTerm(monoSpm, stateVec, energyMap, _opt.energyTermList, "MonomerNoIMM1", false);
 	_sequenceEnergyMap[_seq]["MonomerNoIMM1"] = monomerEnergy;
-	vector<double> selfVec = calcBaselineEnergies(monoSys, _opt.backboneLength);
-	vector<double> pairVec = calcPairBaselineEnergies(monoSys, _opt.backboneLength);
+	vector<double> selfVec = calcBaselineEnergies(monoSys, _opt);
+	vector<double> pairVec = calcPairBaselineEnergies(monoSys, _opt);
 	//double self = sumEnergyVector(selfVec);
 	//double pair = sumEnergyVector(pairVec);
 	_sout << "Monomer Energy No IMM1: " << monomerEnergy << endl;
@@ -1142,6 +1142,13 @@ void computeMonomerEnergyIMM1(System &_sys, System &_helicalAxis, Options &_opt,
 	cout << "-Dimer - Monomer = " << dimerEnergy << " - " << monomerEnergy << " = " << totalEnergy << endl;
 	_sequenceEnergyMap[_seq]["preRepackTotal"] = totalEnergy;
 
+	// calculate the energy of the monomer for positions 4-18
+	vector<double> selfVec = calcBaselineEnergies(monoSys, _opt);
+	vector<double> pairVec = calcPairBaselineEnergies(monoSys, _opt);
+	double self = sumEnergyVector(selfVec);
+	double pair = sumEnergyVector(pairVec);
+	_sequenceEnergyMap[_seq]["MonomerWithoutAlaEnds"] = 2*(self+pair);
+
 	// Clear saved coordinates
 	monoSys.clearSavedCoor("savedBestMonomer");
 	monoSys.clearSavedCoor("bestZ");
@@ -1246,7 +1253,7 @@ vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNum
 	}
 
 	// run and find a sequence using the chosen parameters (MCOptions, SCMF, DEE, etc.)
-	spm.runOptimizer();
+	//spm.runOptimizer();
 	time(&endTime);
 	diffTime = difftime (endTime, startTime);
 
@@ -1264,8 +1271,65 @@ vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNum
 	pair<string,vector<uint>> startSequenceStatePair = make_pair(startSequence, bestState);
 	getEnergiesForStartingSequence(_opt, spm, startSequence, bestState, _interfacialPositions, _sequenceEnergyMap, _sequenceEntropyMap);
 	getSasaForStartingSequence(_sys, startSequence, bestState, _sequenceEnergyMap);
-
+	int rand = _RNG.getRandomInt(0, _interfacialPositions.size()-1);
+	int interfacePosA = _interfacialPositions[rand];
+	int interfacePosB = interfacePosA+startSequence.length();
+	// Get the random position from the system
+	Position &randPosA = _sys.getPosition(interfacePosA);
+	Position &randPosB = _sys.getPosition(interfacePosB);
+	string posIdA = randPosA.getPositionId();
+	string posIdB = randPosB.getPositionId();
+		PDBWriter writer1;
+	for (uint i=0; i<_opt.Ids.size(); i++){
+		// pick an identity for each thread 
+		int idNum = i;
+		// generate polymer sequence for each identity at the corresponding chosen position
+		string id = _opt.Ids[idNum];
+		cout << "id: " << id << endl;
+		// input into the thread function for calculating energies
+		string currAA = MslTools::getThreeLetterCode(startSequence.substr(interfacePosA, 1));
+		if (currAA != id){
+			// replace the id at the position in bestSeq with the current id to get current sequence
+			string currSeq = startSequence;
+			string oneLetterId = MslTools::getOneLetterCode(id);
+			currSeq.replace(interfacePosA, 1, oneLetterId);
+			//setActiveSequence(_sys, currSeq);
+			// switch the position to the given id
+			_sys.setActiveIdentity(posIdA, id);
+			_sys.setActiveIdentity(posIdB, id);
+			// Set a mask and run a greedy to get the best state for the current sequence
+			vector<vector<bool>> mask = getActiveMask(_sys);
+			spm.runGreedyOptimizer(_opt.greedyCycles, mask);
+			vector<uint> currVec = spm.getMinStates()[0];
+			string pos = posIdA+","+id;
+			uint rotamers = _sys.getTotalNumberOfRotamers(pos);  // this returns the sum of the alt confs for all identities ("A,37), or one identity ("A,37,ILE")
+			_sys.setActiveRotamers(currVec);
+			//_sys.setActiveRotamer(pos, 3);
+			cout << currSeq << ": " << _sys.calcEnergy() << ";" << rotamers << endl;
+			//cout << spm.getSummary(currVec) << endl;
+			writer1.open(_opt.pdbOutputDir + "/"+id+"1.pdb");
+			writer1.write(_sys.getAtomPointers(), true, false, true);
+			_sys.setActiveIdentity(posIdA, currAA);
+			_sys.setActiveIdentity(posIdB, currAA);
+			writer1.write(_sys.getAtomPointers(), true, false, true);
+			writer1.close();
+		}
+	}
+	exit(0);
 	return bestState;
+}
+
+void setActiveSequence(System &_sys, string _sequence){
+	// Set the active sequence for the system
+	for (uint i=0; i<_sys.getPositions().size()/2; i++){
+		Position &posA = _sys.getPosition(i);
+		Position &posB = _sys.getPosition(i+_sequence.length());
+		string posIdA = posA.getPositionId();
+		string posIdB = posB.getPositionId();
+		string aa = MslTools::getThreeLetterCode(_sequence.substr(i, 1));
+		_sys.setActiveIdentity(posIdA, aa);
+		_sys.setActiveIdentity(posIdB, aa);
+	}
 }
 
 void getEnergiesForStartingSequence(Options &_opt, SelfPairManager &_spm, string _startSequence,
@@ -1284,7 +1348,7 @@ vector<uint> &_stateVector, vector<uint> _interfacialPositions, map<string, map<
 	map<string,int> seqCountMap;
 	double numberOfPermutations;
 	// Found mistake on 2022-8-18: the sequence entropies for this sequence are wrong; use interfaceAASequenceEntropy instead
-	interfaceAASequenceEntropySetup(_startSequence, seqCountMap, numberOfPermutations, _interfacialPositions);
+	internalAASequenceEntropySetup(_startSequence, seqCountMap, numberOfPermutations, _interfacialPositions);
 	double SEProb = calculateSequenceProbability(seqCountMap, _entropyMap, numberOfPermutations);
 
 	_sequenceEnergyMap[_startSequence]["SequenceProbability"] = SEProb;
@@ -1347,6 +1411,29 @@ void calculateInterfaceSequenceEntropy(Options &_opt, string _prevSeq, string _c
 	_currEnergyTotal = _currEnergy+_currEntropy;
 }
 
+void calculateInternalSequenceEntropy(Options &_opt, string _prevSeq, string _currSeq,
+ map<string,double> _entropyMap, double &_prevSEProb, double &_currSEProb, double &_prevEntropy,
+ double &_currEntropy, double _bestEnergy, double _currEnergy, double &_bestEnergyTotal, double &_currEnergyTotal, vector<uint> _interfacePositionsList){
+
+	_prevSEProb = getInternalSequenceEntropyProbability(_opt, _prevSeq, _entropyMap, _interfacePositionsList);
+	_currSEProb = getInternalSequenceEntropyProbability(_opt, _currSeq, _entropyMap, _interfacePositionsList);
+
+	//Calculate the probability of each sequence compared to the other
+	//On 10_26_21: after changing to the 2021_10_25_seqEntropies.txt file with more accurate membrane composition from Liu et al. 2002, I started seeing a lot of GxxxG sequences. I also checked my runs from before this date, and there were qute a bit of GxxxG sequences as well. Uncomment the below if you would like to try running using the internal probabilities, which should give a bit more flexibiilty to choosing AAs with lower likelilhoods of being in the membrane
+	double totSEProb = _prevSEProb+_currSEProb;
+	double prevSeqProp = _prevSEProb/totSEProb;
+	double currSeqProp = _currSEProb/totSEProb;
+
+	//Convert the probability of each sequence to an entropy term that can be added to the original energy to directly compare two sequences
+	_prevEntropy = -log(prevSeqProp)*0.592*_opt.weight_seqEntropy;//Multiplies the energy (log proportion times RT in kcal/mol) by the sequence entropy weight (weight of 1 gives entropy same weight as other terms)
+	_currEntropy = -log(currSeqProp)*0.592*_opt.weight_seqEntropy;
+
+	//Calculate energy total for best sequence vs current sequence
+	//The below includes the baseline energy, which is an estimate of monomer energy
+	_bestEnergyTotal = _bestEnergy+_prevEntropy;
+	_currEnergyTotal = _currEnergy+_currEntropy;
+}
+
 map<string,int> getAACountMap(vector<string> _seq){
 	map<string,int> AAcounts;
 	for (uint i=0; i<_seq.size(); i++){
@@ -1368,16 +1455,28 @@ double calcNumberOfPermutations(map<string,int> _seqAACounts, int _seqLength){
 	//This function calculates number of permutations using following equation: n!/(n-r)! where n is number of positions and r is number of AAs
 	double numPermutation = 1;
 	double permutationDenominator = 1;
+	//cout << "Number Positions = " << _seqLength << endl;
 	for(uint i=_seqLength; i>1; i--){
 		numPermutation = numPermutation*i;
 	}
-	map<string,int>::iterator itr;
-	for(itr = _seqAACounts.begin(); itr != _seqAACounts.end(); itr++){
-		for (uint j=itr->second; j>1; j--){
-			permutationDenominator = permutationDenominator*j;
-		}
+	// was running the below before 2022-10-19; realized it doesn't give me the n!/(n-r)!, so not sure why I thought it was
+	//map<string,int>::iterator itr;
+	//for(itr = _seqAACounts.begin(); itr != _seqAACounts.end(); itr++){
+	//	cout << itr->first << ": " << itr->second << endl;
+	//	for (uint j=itr->second; j>1; j--){
+	//		permutationDenominator = permutationDenominator*j;
+	//	}
+	//}
+	double denomFactorial = _seqLength-_seqAACounts.size();
+	//cout << "Denominator Factorial = " << denomFactorial << "!" << endl;
+	//cout << "Num unique AAs = " << _seqAACounts.size();
+	for (uint i=denomFactorial; i>1; i--){
+		permutationDenominator = permutationDenominator*i;
 	}
+	//cout << "Number Permutations: " << numPermutation << endl;
+	//cout << "Permutation Denominator: " << permutationDenominator << endl;
 	numPermutation = numPermutation/permutationDenominator;
+	//cout << "Number Permutations/Denominator: " << numPermutation << endl;
 
 	return numPermutation;
 }
@@ -1405,6 +1504,33 @@ double getInterfaceSequenceEntropyProbability(Options &_opt, string _sequence, m
 	map<string,int> AACountMap;
 	double numberOfPermutations;
 	interfaceAASequenceEntropySetup(_sequence, AACountMap, numberOfPermutations, _interfacialPositionsList);
+	double seqProb = calculateSequenceProbability(AACountMap, _entropyMap, numberOfPermutations);
+	return seqProb;
+}
+
+void internalAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, vector<uint> _interfacialPositionsList){
+	//Get residue name for each interfacial identity
+	vector<string> seqVector;
+	int numInterfacials = _interfacialPositionsList.size()-1;
+	for (uint i=3; i<_seq.length()-4; i++){
+		//Position &pos = _sys.getPosition(_interfacialPositionsList[i]);
+		//Residue &resi = pos.getCurrentIdentity();
+		//string id = resi.getResidueName();
+		stringstream tmp;
+		tmp << _seq[i];
+		string aa = tmp.str();
+		string resName = MslTools::getThreeLetterCode(aa);
+		seqVector.push_back(resName);
+		//cout << _interfacialPositionsList[i] << " : " << resName << endl;
+	}
+	_seqCountMap = getAACountMap(seqVector);
+	_numberOfPermutations = calcNumberOfPermutations(_seqCountMap, seqVector.size());
+}
+
+double getInternalSequenceEntropyProbability(Options &_opt, string _sequence, map<string,double> &_entropyMap, vector<uint> _interfacialPositionsList){
+	map<string,int> AACountMap;
+	double numberOfPermutations;
+	internalAASequenceEntropySetup(_sequence, AACountMap, numberOfPermutations, _interfacialPositionsList);
 	double seqProb = calculateSequenceProbability(AACountMap, _entropyMap, numberOfPermutations);
 	return seqProb;
 }
@@ -1487,7 +1613,7 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("useTimeBasedSeed");
 	opt.allowed.push_back("deleteTerminalBonds");
 	opt.allowed.push_back("linkInterfacialPositions");
-	opt.allowed.push_back("useAlaAtCTerminus");
+	opt.allowed.push_back("useAlaAtTermini");
 	opt.allowed.push_back("useBaseline");
 	opt.allowed.push_back("getRandomAxRotAndZShift");
 
@@ -1822,11 +1948,11 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningFlag = true;
 		opt.useTimeBasedSeed = false;
 	}
-	opt.useAlaAtCTerminus = OP.getBool("useAlaAtCTerminus");
+	opt.useAlaAtTermini = OP.getBool("useAlaAtTermini");
 	if (OP.fail()) {
-		opt.warningMessages += "useAlaAtCTerminus not specified, defaulting to false";
+		opt.warningMessages += "useAlaAtTermini not specified, defaulting to false";
 		opt.warningFlag = true;
-		opt.useAlaAtCTerminus = false;
+		opt.useAlaAtTermini = false;
 	}
 	opt.useBaseline = OP.getBool("useBaseline");
 	if (OP.fail()) {
@@ -1915,6 +2041,7 @@ Options parseOptions(int _argc, char * _argv[]){
 	if (OP.fail()) {
 		opt.warningMessages += "useSasaBurial not specified, default true\n";
 		opt.warningFlag = true;
+		opt.useSasaBurial = true;
 	}
 	opt.sasaRepackLevel = OP.getMultiString("sasaRepackLevel");
 	if (OP.fail()) {
