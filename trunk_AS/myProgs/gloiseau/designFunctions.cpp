@@ -909,7 +909,7 @@ void computeMonomerEnergyIMM1(System &_sys, System &_helicalAxis, Options &_opt,
 	/*****************************************************************************
 	 *              === LOAD ROTAMERS FOR MONOMER & SET-UP SPM ===
 	 ******************************************************************************/
-	loadRotamers(monoSys, monoRot, "SL97.00");
+	loadRotamers(monoSys, monoRot, _opt.SL);
 	CSBMono.updateNonBonded(10,12,50);
 
 	// Optimize Initial Starting Position (using Baseline to get back to original result)
@@ -1143,12 +1143,13 @@ void computeMonomerEnergyIMM1(System &_sys, System &_helicalAxis, Options &_opt,
 	_sequenceEnergyMap[_seq]["preRepackTotal"] = totalEnergy;
 
 	// calculate the energy of the monomer for positions 4-18
-	vector<double> selfVec = calcBaselineEnergies(monoSys, _opt);
-	vector<double> pairVec = calcPairBaselineEnergies(monoSys, _opt);
-	double self = sumEnergyVector(selfVec);
-	double pair = sumEnergyVector(pairVec);
-	_sequenceEnergyMap[_seq]["MonomerWithoutAlaEnds"] = 2*(self+pair);
-
+	if (_opt.useAlaAtTermini){
+		vector<double> selfVec = calcBaselineEnergies(monoSys, _opt);
+		vector<double> pairVec = calcPairBaselineEnergies(monoSys, _opt);
+		double self = sumEnergyVector(selfVec);
+		double pair = sumEnergyVector(pairVec);
+		_sequenceEnergyMap[_seq]["MonomerWithoutAlaEnds"] = 2*(self+pair);
+	}
 	// Clear saved coordinates
 	monoSys.clearSavedCoor("savedBestMonomer");
 	monoSys.clearSavedCoor("bestZ");
@@ -1232,7 +1233,7 @@ vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNum
 	spm.setSystem(&_sys);
 	spm.setVerbose(false);
 	spm.setRunDEE(_opt.runDEESingles, _opt.runDEEPairs);
-	spm.setOnTheFly(false);
+	spm.setOnTheFly(true);
 	spm.setMCOptions(1000, 0.5, 5000, 3, 10, 1000, 0.01);//changed to sigmoid and added up to 5000
 	spm.saveEnergiesByTerm(true); //added back in on 09_21_2021 to get the vdw and hbond energies
 	spm.calculateEnergies();
@@ -1253,7 +1254,7 @@ vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNum
 	}
 
 	// run and find a sequence using the chosen parameters (MCOptions, SCMF, DEE, etc.)
-	//spm.runOptimizer();
+	spm.runOptimizer();
 	time(&endTime);
 	diffTime = difftime (endTime, startTime);
 
@@ -1271,51 +1272,51 @@ vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNum
 	pair<string,vector<uint>> startSequenceStatePair = make_pair(startSequence, bestState);
 	getEnergiesForStartingSequence(_opt, spm, startSequence, bestState, _interfacialPositions, _sequenceEnergyMap, _sequenceEntropyMap);
 	getSasaForStartingSequence(_sys, startSequence, bestState, _sequenceEnergyMap);
-	int rand = _RNG.getRandomInt(0, _interfacialPositions.size()-1);
-	int interfacePosA = _interfacialPositions[rand];
-	int interfacePosB = interfacePosA+startSequence.length();
-	// Get the random position from the system
-	Position &randPosA = _sys.getPosition(interfacePosA);
-	Position &randPosB = _sys.getPosition(interfacePosB);
-	string posIdA = randPosA.getPositionId();
-	string posIdB = randPosB.getPositionId();
-		PDBWriter writer1;
-	for (uint i=0; i<_opt.Ids.size(); i++){
-		// pick an identity for each thread 
-		int idNum = i;
-		// generate polymer sequence for each identity at the corresponding chosen position
-		string id = _opt.Ids[idNum];
-		cout << "id: " << id << endl;
-		// input into the thread function for calculating energies
-		string currAA = MslTools::getThreeLetterCode(startSequence.substr(interfacePosA, 1));
-		if (currAA != id){
-			// replace the id at the position in bestSeq with the current id to get current sequence
-			string currSeq = startSequence;
-			string oneLetterId = MslTools::getOneLetterCode(id);
-			currSeq.replace(interfacePosA, 1, oneLetterId);
-			//setActiveSequence(_sys, currSeq);
-			// switch the position to the given id
-			_sys.setActiveIdentity(posIdA, id);
-			_sys.setActiveIdentity(posIdB, id);
-			// Set a mask and run a greedy to get the best state for the current sequence
-			vector<vector<bool>> mask = getActiveMask(_sys);
-			spm.runGreedyOptimizer(_opt.greedyCycles, mask);
-			vector<uint> currVec = spm.getMinStates()[0];
-			string pos = posIdA+","+id;
-			uint rotamers = _sys.getTotalNumberOfRotamers(pos);  // this returns the sum of the alt confs for all identities ("A,37), or one identity ("A,37,ILE")
-			_sys.setActiveRotamers(currVec);
-			//_sys.setActiveRotamer(pos, 3);
-			cout << currSeq << ": " << _sys.calcEnergy() << ";" << rotamers << endl;
-			//cout << spm.getSummary(currVec) << endl;
-			writer1.open(_opt.pdbOutputDir + "/"+id+"1.pdb");
-			writer1.write(_sys.getAtomPointers(), true, false, true);
-			_sys.setActiveIdentity(posIdA, currAA);
-			_sys.setActiveIdentity(posIdB, currAA);
-			writer1.write(_sys.getAtomPointers(), true, false, true);
-			writer1.close();
-		}
-	}
-	exit(0);
+	//int rand = _RNG.getRandomInt(0, _interfacialPositions.size()-1);
+	//int interfacePosA = _interfacialPositions[rand];
+	//int interfacePosB = interfacePosA+startSequence.length();
+	//// Get the random position from the system
+	//Position &randPosA = _sys.getPosition(interfacePosA);
+	//Position &randPosB = _sys.getPosition(interfacePosB);
+	//string posIdA = randPosA.getPositionId();
+	//string posIdB = randPosB.getPositionId();
+	//	PDBWriter writer1;
+	//for (uint i=0; i<_opt.Ids.size(); i++){
+	//	// pick an identity for each thread 
+	//	int idNum = i;
+	//	// generate polymer sequence for each identity at the corresponding chosen position
+	//	string id = _opt.Ids[idNum];
+	//	cout << "id: " << id << endl;
+	//	// input into the thread function for calculating energies
+	//	string currAA = MslTools::getThreeLetterCode(startSequence.substr(interfacePosA, 1));
+	//	if (currAA != id){
+	//		// replace the id at the position in bestSeq with the current id to get current sequence
+	//		string currSeq = startSequence;
+	//		string oneLetterId = MslTools::getOneLetterCode(id);
+	//		currSeq.replace(interfacePosA, 1, oneLetterId);
+	//		//setActiveSequence(_sys, currSeq);
+	//		// switch the position to the given id
+	//		_sys.setActiveIdentity(posIdA, id);
+	//		_sys.setActiveIdentity(posIdB, id);
+	//		// Set a mask and run a greedy to get the best state for the current sequence
+	//		vector<vector<bool>> mask = getActiveMask(_sys);
+	//		spm.runGreedyOptimizer(_opt.greedyCycles, mask);
+	//		vector<uint> currVec = spm.getMinStates()[0];
+	//		string pos = posIdA+","+id;
+	//		uint rotamers = _sys.getTotalNumberOfRotamers(pos);  // this returns the sum of the alt confs for all identities ("A,37), or one identity ("A,37,ILE")
+	//		_sys.setActiveRotamers(currVec);
+	//		//_sys.setActiveRotamer(pos, 3);
+	//		cout << currSeq << ": " << _sys.calcEnergy() << ";" << rotamers << endl;
+	//		//cout << spm.getSummary(currVec) << endl;
+	//		writer1.open(_opt.pdbOutputDir + "/"+id+"1.pdb");
+	//		writer1.write(_sys.getAtomPointers(), true, false, true);
+	//		_sys.setActiveIdentity(posIdA, currAA);
+	//		_sys.setActiveIdentity(posIdB, currAA);
+	//		writer1.write(_sys.getAtomPointers(), true, false, true);
+	//		writer1.close();
+	//	}
+	//}
+	//exit(0);
 	return bestState;
 }
 

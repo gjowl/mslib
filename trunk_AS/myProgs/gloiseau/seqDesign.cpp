@@ -327,7 +327,7 @@ int main(int argc, char *argv[]){
 	convertToRelativeAxAndZ(opt.axialRotation, opt.zShift, relativeAx, relativeZ);
 	double startAxialRotationP = relativeAx;
 	double startZShiftP = relativeZ;
-	int numRepacks = 3;
+	int numRepacks = 5;
 	for (uint i=0; i<numRepacks; i++){
 		helicalAxisWriter.open(opt.pdbOutputDir+"/helicalAxis_"+to_string(i)+".pdb");
 		helicalAxisWriter.write(helicalAxis.getAtomPointers(), true, false, true);
@@ -349,7 +349,6 @@ int main(int argc, char *argv[]){
 		// TODO: search through and see if the best sequence is found in the final energy map (won't have to do if improvements for more than one cycle are miniscule)
 		if (prevSequence != bestSequence){
 			// compute monomer energy
-			cout << interfacePolySeq << endl;
 			switchSequence(sys, opt, bestSequence);
 			outputTime(start, "Compute Monomer Energy " + to_string(i), true, sout);
 			computeMonomerEnergyIMM1(sys, helicalAxis, opt, trans, sequenceEnergyMapBest, bestSequence, RNG, sout, err);
@@ -1156,9 +1155,6 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 		vector<uint> currStateVec = sequenceVectorMap[currSeq]; // current state vector for current sequence (best rotamers and sequence identities)
 		MC.setEner(bestEnergyTotal);
 		
-		//cout << "Best Sequence: " << currSeq << "; Energy: " << currEnergyTotal << "; Entropy: " << currStateEntropy << endl;
-		//cout << "Prev Sequence: " << prevStateSeq << "; Energy: " << bestEnergyTotal << "; Entropy: " << prevStateEntropy << endl;
-
 		double acceptTemp = MC.getCurrentT();
 		// MC accept and reject conditions
 		if (!MC.accept(currEnergyTotal)){
@@ -1223,16 +1219,26 @@ void searchForBestSequencesUsingThreads(System &_sys, Options &_opt, SelfPairMan
 	//cout << bestSeq << endl;
 	// offset the rotamer indeces whenever the residue is GLY, ALA, or PRO since they only have one rotamer
 	// the below is definitely a hack, but I couldn't figure out how to do it and was too frustrated after hours of thinking
-	uint offset = 3;
-	for (uint i=3; i<_sys.getPositions().size()-3; i++){
-		Position &pos = _sys.getPosition(i);
-		if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-			//cout << pos.getResidueName() << "\t" << statePositionIdRotamerIndeces[i-offset][2] << ":" << i << ";" << offset << endl;
-			rotamerState.push_back(statePositionIdRotamerIndeces[i-offset][2]);
-		} else {
-			if (i > 17 && i < 24){
-				offset++;
+	if (_opt.useAlaAtTermini){
+		uint offset = 3;
+		for (uint i=3; i<_sys.getPositions().size()-3; i++){
+			Position &pos = _sys.getPosition(i);
+			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+				//cout << pos.getResidueName() << "\t" << statePositionIdRotamerIndeces[i-offset][2] << ":" << i << ";" << offset << endl;
+				rotamerState.push_back(statePositionIdRotamerIndeces[i-offset][2]);
+			} else {
+				if (i > 17 && i < 24){
+					offset++;
+				}
 			}
+		}
+	} else {
+		for (uint i=0; i<statePositionIdRotamerIndeces.size(); i++){
+			Position &pos = _sys.getPosition(i);
+			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+				//cout << pos.getResidueName() << "\t" << statePositionIdRotamerIndeces[i-offset][2] << ":" << i << ";" << offset << endl;
+				rotamerState.push_back(statePositionIdRotamerIndeces[i][2]);
+			} 
 		}
 	}
 	_bestState = rotamerState;
@@ -1263,13 +1269,11 @@ map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt,
 	// variable setup for current state
 	map<string,map<string,double>> sequenceEnergyMap;
 	vector<thread> threads;
-		PDBWriter writer1;
 	for (uint i=0; i<_opt.Ids.size(); i++){
 		// pick an identity for each thread 
 		int idNum = i;
 		// generate polymer sequence for each identity at the corresponding chosen position
 		string id = _opt.Ids[idNum];
-		cout << "id: " << id << endl;
 		// input into the thread function for calculating energies
 		string currAA = MslTools::getThreeLetterCode(_bestSeq.substr(interfacePosA, 1));
 		if (currAA != id){
@@ -1291,14 +1295,11 @@ map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt,
 	//sel.select("chainB, chain B");
 	//double energy = _sys.calcEnergy("chainA", "chainB");
 			//cout << currSeq << ": " << energy << "; " << _sys.calcEnergy() << endl;
-			cout << _spm.getSummary(currVec) << endl;
+			//cout << _spm.getSummary(currVec) << endl;
 			_sequenceStateMap[currSeq] = currVec;
 			// start threading and calculating energies for each identity; changed the below interface from allInterface to just the given interface since these are the ones that change and ala at ends as of 2022-10-18
-			threads.push_back(thread{energyFunction, ref(_opt), ref(_spm), _bestSeq, _bestEnergy, currSeq, currVec, ref(_rotamerSampling), ref(_interfacialPositionsList), 
+			threads.push_back(thread{energyFunction, ref(_opt), ref(_spm), _bestSeq, _bestEnergy, currSeq, currVec, ref(_rotamerSampling), ref(_allInterfacialPositionsList), 
 			 ref(sequenceEnergyMap), ref(_sequenceEntropyMap)});
-			writer1.open(_opt.pdbOutputDir + "/"+id+".pdb");
-			writer1.write(_sys.getAtomPointers(), true, false, false);
-			writer1.close();
 		}
 		setActiveSequence(_sys, _bestSeq);
 	} 
@@ -1306,7 +1307,6 @@ map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt,
 	for (auto& th : threads){
 		th.join();
 	}
-	exit(0);
 	return sequenceEnergyMap;
 }
 
@@ -1334,7 +1334,6 @@ string getSequenceUsingMetropolisCriteria(map<string,map<string,double>> &_seque
 	vector<string> chosenSeqs;
 	chosenSeqs.push_back(it->first);
 	// loop through map size
-	cout << _sequenceEnergyMap.size() << endl;
 	for (uint i=0; i<_sequenceEnergyMap.size()-1; i++){
 		// get a random sequence from the map
 		int rand = _RNG.getRandomInt(0, _sequenceEnergyMap.size()-1);	
@@ -1348,7 +1347,6 @@ string getSequenceUsingMetropolisCriteria(map<string,map<string,double>> &_seque
 				advance(it, rand);
 			}
 		}
-		cout << it->first << endl;
 		// add the chosen sequence to the list of chosen sequences
 		chosenSeqs.push_back(it->first);
 		// advance to the random sequence
@@ -1357,7 +1355,7 @@ string getSequenceUsingMetropolisCriteria(map<string,map<string,double>> &_seque
 		 *  Metropolis criterion
 		 ***********************************/
 		double exp = pow(M_E,(lastEnergy - energy) / (MslTools::R * _currTemp));
-		cout << "currSeq: " << currSeq << ";energy: " << energy << ";lastEnergy: " << lastEnergy << ";exp: " << exp << endl;
+		//cout << "currSeq: " << currSeq << ";energy: " << energy << ";lastEnergy: " << lastEnergy << ";exp: " << exp << endl;
 		if (exp > 1) {
 			lastEnergy = energy;
 			currSeq = it->first;
@@ -1414,7 +1412,7 @@ void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, doubl
 	double prevEntropy = 0;
 
 	//TODO: I just realized that for heterodimers, I may need to completely remake some of these functions as with the below only taking the sequence of one helix; I may make a hetero and homo functions list?
-	calculateInternalSequenceEntropy(_opt, _prevSeq, _currSeq, _sequenceEntropyMap, prevSEProb,
+	calculateInterfaceSequenceEntropy(_opt, _prevSeq, _currSeq, _sequenceEntropyMap, prevSEProb,
 	 currSEProb, prevEntropy, currEntropy, _prevEnergy, currEnergy, bestEnergyTotal,
 	 currEnergyTotal, _allInterfacePositions);
 
@@ -1698,7 +1696,8 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ve
 	sysRot.defineRotamerSamplingLevels();
 
 	// load the rotamers
-	loadRotamers(sys, sysRot, _opt, _rotamerSampling);
+	//loadRotamers(sys, sysRot, _opt, _rotamerSampling);
+	loadRotamers(sys, sysRot, _opt.SL);
 
 	// get chain A and B from the system
 	Chain & chainA = sys.getChain("A");
@@ -1736,6 +1735,7 @@ void localBackboneRepack(Options &_opt, System &_startGeom, string _sequence, ve
 	// get monomer energy
 	double monomerEnergy = _sequenceEnergyMap[_sequence]["Monomer"];
 	double currentEnergy = spm.getStateEnergy(_bestState)-monomerEnergy;
+	// for some reason, best state is too long when rotamer level 60, but works otherwise
 	double dimer = spm.getStateEnergy(_bestState);
 	double calcDimer = sys.calcEnergy();
 	_sequenceEnergyMap[_sequence]["preBBOptimizeEnergy"] = currentEnergy;

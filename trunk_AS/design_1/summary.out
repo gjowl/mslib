@@ -1,4 +1,48 @@
-10_21_2022
-Self Consistent Mean Field started. Time: Fri Oct 21 16:54:44 2022
-Elapsed time of program: 0.12min
+10_22_2022
+Self Consistent Mean Field started. Time: Sat Oct 22 10:20:28 2022
+Elapsed time of program: 0.143min
 
+Running Self Consistent Mean Field
+Initial Sequence:   LLLLYYAAYALFLLLSLLILI
+Best Sequence:      LLLLYYAAYALFLLLSLLILI
+Interface Sequence: L---YYAAYA-F---S--I-I
+Interface:          000011111101000100000
+Total Energy:       26.1
+VDW:                -26.7
+HBOND:              -60.5
+
+End SelfPairManager Optimization: 154s
+Self Consistent Mean Field finished. Time: Sat Oct 22 10:23:03 2022
+Elapsed time of program: 2.71min
+
+Monte Carlo Sequence Search Replicate 0 started. Time: Sat Oct 22 10:23:04 2022
+Elapsed time of program: 2.74min
+
+- SelfPairManager energy calculation 0 started. Time: Sat Oct 22 10:23:11 2022
+Elapsed time of program: 2.85min
+
+- SelfPairManager energy calculation 0 finished. Time: Sat Oct 22 10:25:39 2022
+Elapsed time of program: 5.32min
+
+- End monte carlo sequence search #0: 0min; Monte Carlo ended at Temp: 3.65e+03
+
+- Best Sequence: LLLLYYAYTALFLLLSLLILI; Energy w/ baseline: 19.9
+Monte Carlo Sequence Search Replicate 0 finished. Time: Sat Oct 22 10:25:42 2022
+Elapsed time of program: 5.36min
+
+Compute Monomer Energy 0 started. Time: Sat Oct 22 10:25:42 2022
+Elapsed time of program: 5.36min
+
+-Dimer - Monomer = -313 - -337 = 24.6
+Compute Monomer Energy 0 finished. Time: Sat Oct 22 10:32:10 2022
+Elapsed time of program: 11.8min
+
+Backbone optimize replicate 0 started. Time: Sat Oct 22 10:32:10 2022
+Elapsed time of program: 11.8min
+
+Backbone optimize replicate 0 finished. Time: Sat Oct 22 10:33:43 2022
+Elapsed time of program: 13.4min
+
+Sequence	RotamerValues	Interface	InterfaceSequence	Seed	BBOptimizeSasa	Baseline	Dimer	DimerPreBBOptimize	Dimerw/Baseline	HBONDDimer	HBONDDimerBBOptimize	HBONDDimerPreBBOptimize	HBONDMonomer	IMM1Dimer	IMM1DimerBBOptimize	IMM1DimerPreBBOptimize	IMM1Monomer	MCSearchEnergy	Monomer	MonomerSasa	PreBBOptimizeSasa	SequenceProbability	Total	TotalPreBBOptimize	VDWDimer	VDWDimerBBOptimize	VDWDimerPreBBOptimize	VDWMonomer	acceptCycleNumber	acceptTemp	bestEnergyTotal	currEnergyTotal	currEntropy	endAxialRotation	endAxialRotationPrime	endCrossingAngle	endXShift	endZShift	endZShiftPrime	energyComparison	entropyDiff	firstRepackEnergy	geometryNumber	preBBOptimizeEnergy	preOptimizeAxialRotation	preOptimizeAxialRotationPrime	preOptimizeCrossingAngle	preOptimizeXShift	preOptimizeZShift	preOptimizeZShiftPrime	preRepackTotal	prevEntropy	startAxialRotation	startAxialRotationPrime	startCrossingAngle	startRotZDensity	startXShift	startZShift	startZShiftPrime	
+LLLLYYAYTALFLLLSLLILI	023301110120232023031		L---YYAYTA-F---S--I-I	1	4265.32	332.433	-312.528	-312.472	19.905	-63.8818	-63.7465	-63.8163	-74.0975	-229.946	-231.459	-229.942	-249.103	24.5734	-337.101	4667.67	4258.46	2.16738e-07	23.2175	24.629	-18.7	-18.6781	-18.7141	-13.9007	3	3649	18.0704	20.4451	0.540023	-67.1241	61.3935	26.1224	12.987	4.85673	4.27763	-2.37469	-0.235994	24.6866	0	24.629	-66.6667	60	25	13	4.6	4	24.5734	0.304028	-66.6667	60	25	0	13	4.6	4	
+Total Time: 13 minutes

@@ -1,0 +1,23 @@
+########################################################
+#  This configuration file was automatically generated,
+#  it will rerun this job with the same options. Run as:
+#
+#  Run as:
+#
+#    % interhelicalCoordinates --configfile 
+#
+#  Job started on Fri Oct 28 16:54:10 2022
+#  on host , path 
+########################################################
+
+########################################################
+#  Options from command line arguments:
+#
+#  NOTE: command line options take priority over the
+#        ones entered with the configuration file.
+########################################################
+filename                      /data02/gloiseau/Sequence_Design_Project/interhelicalCoordinates/membraneProteins/opm_pdbs/pdbs/5i9k.pdb
+
+########################################################
+#  Options from configuration file :
+########################################################
