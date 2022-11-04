@@ -21,18 +21,18 @@ static SysEnv SYSENV;
 /***********************************
  * load rotamers 
  ***********************************/
-void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling){
+void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, vector<string> _repackLevels, vector<uint> _rotamerSampling){
 	//Repack side chains based on sasa scores
 	// get backbone length
 	int backboneLength = _sys.getChain("A").positionSize();
-	for (uint i = 0; i < _rotamerSampling.size()/2; i++) {
+	for (uint i = 0; i < _rotamerSampling.size(); i++) {
 		Position &posA = _sys.getPosition(i);
 		Position &posB = _sys.getPosition(i+backboneLength);
 		if (posA.identitySize() > 1){
 			for (uint j=0; j < posA.getNumberOfIdentities(); j++){
 				posA.setActiveIdentity(j);
 				posB.setActiveIdentity(j);
-				string posRot = _opt.sasaRepackLevel[_rotamerSampling[i]];
+				string posRot = _repackLevels[_rotamerSampling[i]];
 				if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
 					if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) {
 						cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
@@ -43,7 +43,7 @@ void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Option
 				}
 			}
 		} else {
-			string posRot = _opt.sasaRepackLevel[_rotamerSampling[i]];
+			string posRot = _repackLevels[_rotamerSampling[i]];
 			if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
 				if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) {
 					cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
@@ -56,10 +56,10 @@ void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Option
 	}
 }
 
-void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling){
+void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<uint> &_rotamerSampling){
 	// if using the SASA to identify the interface, then load the rotamers by the SASA burial
 	if (_opt.useSasaBurial){
-		loadRotamersBySASABurial(_sys, _sysRot, _opt, _rotamerSampling);
+		loadRotamersBySASABurial(_sys, _sysRot, _opt.sasaRepackLevel, _rotamerSampling);
 	} else {
 		loadRotamers(_sys, _sysRot, _opt.SL);
 	}
@@ -137,8 +137,8 @@ void getAxialRotAndZShift(Options &_opt, RandomNumberGenerator &_RNG, vector<dou
 //Example: Sequence:  LLLLIGLLIGLLIGLLLL
 //         Interface: 000011001100110000
 // Positions at interface are 1 and non-interfacial are 0
-vector<int> getLinked(vector<int> _rotamerSampling, int _backboneLength, int _interfaceLevel, int _highestRotamerLevel){
-	vector<int> linkedPositions;
+vector<uint> getLinked(vector<uint> _rotamerSampling, int _backboneLength, int _interfaceLevel, int _highestRotamerLevel){
+	vector<uint> linkedPositions;
 	for (uint i=0; i<_backboneLength; i++){
 		if (_rotamerSampling[i] < _interfaceLevel || _rotamerSampling[i] == _highestRotamerLevel){
 			linkedPositions.push_back(i);
@@ -148,51 +148,44 @@ vector<int> getLinked(vector<int> _rotamerSampling, int _backboneLength, int _in
 }
 
 // Convert positions to string for setLinkedPositions(std::vector<std::vector<std::string> > &_linkedPositions) which uses "A,19" "B,19" format!
-vector<vector<string>> convertToLinkedFormat(System &_sys, vector<int> &_interfacialPositions, int _backboneLength){
+vector<vector<string>> convertToLinkedFormat(System &_sys, vector<uint> &_interfacePositions, int _backboneLength){
 	vector<vector<string>> stringPositions;
-	//TODO: if you want to make it possible to do sequences that are not linked, need to change this function! 
-	for (uint k=0; k<_backboneLength; k++){
+	for (uint k=0; k<_interfacePositions.size(); k++){
+		int interfacePosition = _interfacePositions[k];
 		// search through the interface positions vector to get the interface
-		if (_interfacialPositions[k] == 1){
-			vector<string> tempPos;
+		vector<string> tempPos;
 
-			// get the positions at the backbone position k
-			Position &posA = _sys.getPosition(k);
-			Position &posB = _sys.getPosition(k+_backboneLength);
+		// get the positions at the backbone position k
+		Position &posA = _sys.getPosition(interfacePosition);
+		Position &posB = _sys.getPosition(interfacePosition+_backboneLength);
 
-			// convert position to string
-			string A = posA.toString();
-			string B = posB.toString();
+		// convert position to string
+		string A = posA.toString();
+		string B = posB.toString();
 
-			// find the space delimiter	
-			string delimiter = " ";
-			size_t p = 0;
-			p = A.find(delimiter);
+		// find the space delimiter	
+		string delimiter = " ";
+		size_t p = 0;
+		p = A.find(delimiter);
 
-			// add the string without anything after the delimiter to the tempPos vector
-			tempPos.push_back(A.substr(0, p));
-			tempPos.push_back(B.substr(0, p));
+		// add the string without anything after the delimiter to the tempPos vector
+		tempPos.push_back(A.substr(0, p));
+		tempPos.push_back(B.substr(0, p));
 			
-			// add the tempPos vector to the stringPositions vector
-			stringPositions.push_back(tempPos);
-		}
+		// add the tempPos vector to the stringPositions vector
+		stringPositions.push_back(tempPos);
 	}
 	return stringPositions;
 }
 
+// REDACTED: used to unlink the best state by duplicating the best state for the second chain
 //makes the best state applicable for unlinked positions by duplicating the rotamer at each interfacial position on the opposite chain
-void unlinkBestState(Options &_opt, vector<uint> &_bestState, vector<int> _rotamerSampling, int _backboneLength){
-	vector<int> linkedPositions = getLinked(_rotamerSampling, _backboneLength, _opt.interfaceLevel, _opt.sasaRepackLevel.size()-1);
-
-	for (uint i=_backboneLength; i<_backboneLength*2; i++){
-		vector<int>::iterator itr;
-		itr = find(linkedPositions.begin(), linkedPositions.end(), i-_backboneLength);
-		if (itr != linkedPositions.end()){
-			vector<uint>::iterator itPos;
-			itPos = _bestState.begin()+i;
-			_bestState.insert(itPos, _bestState[i-_backboneLength]);
-		}
+vector<uint> unlinkBestState(vector<uint> _bestState, vector<uint> _interfacePositions, int _backboneLength){
+	int originalSize = _bestState.size();
+	for (uint i=0; i<originalSize; i++){
+		_bestState.push_back(_bestState[i]);
 	}
+	return _bestState;
 }
 
 /***********************************
@@ -255,72 +248,15 @@ string generateMonomerMultiIDPolymerSequence(string _seq, int _startResNum, vect
 	return "A" + ps;
 }
 
-// converts a polymer sequence to a string for one chain (for homodimer sequences)
-string convertPolymerSeqToOneLetterSeq(Chain &_chain) {
-	string seq = "";
-	for (uint i=0; i<_chain.positionSize(); i++){
-		string resName = _chain.getPosition(i).getCurrentIdentity().getResidueName();
-		string resID = MslTools::getOneLetterCode(resName);
-		seq += resID;
-	}
-	return seq;
-}
-
-// output energies by term into a referenced energyMap
-void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
-vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
-	if (_includeIMM1 == false){//No IMM1 Energy (for the Monte Carlos, both dimer and monomer)
-		for (uint i=0; i<_energyTermList.size(); i++){
-			string energyTerm = _energyTermList[i]; //CHARMM_ and SCWRL4_ terms
-			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;//Removes the CHARMM_ and SCWRL4_ before energyTerm names
-			if (energyTerm.find("IMM1") != string::npos){
-				continue;
-			} else {
-				if (_energyDescriptor.find("Monomer") != string::npos){
-					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
-				} else {
-					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
-				}
-			}
-		}
-		if (_energyDescriptor.find("Monomer") != string::npos){
-			//skip if monomer; could add calc baseline here at some point
-		} else {
-			_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
-			_energyMap["DimerSelfBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE");
-			_energyMap["DimerPairBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
-		}
-	} else if (_includeIMM1 == true){//IMM1 Energies
-		for (uint i=0; i<_energyTermList.size(); i++){
-			string energyTerm = _energyTermList[i];
-			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;
-			if (_energyDescriptor.find("Monomer") != string::npos){
-				if (energyTerm.find("IMM1") != string::npos){
-					_energyMap["IMM1Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
-				} else {
-					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
-				}
-			} else {
-				if (energyTerm.find("IMM1") != string::npos){
-					_energyMap["IMM1Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
-				} else {
-					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
-				}
-			}
-		}
-		//_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
-	}
-}
-
 // get the string of an interface sequence in 00010001 format where 1 is an interface residue and 0 is a non-interface residue
-string getInterfaceSequence(Options &_opt, string _interface, string _sequence){
+string getInterfaceSequence(int _interfaceLevelLimit, string _interface, string _sequence){
 	string interfaceSequence = "";
 	for(string::iterator it = _interface.begin(); it != _interface.end(); it++) {
 		stringstream ss;
 		ss << *it;
 		int pos = it-_interface.begin();
 		int tmp = MslTools::toInt(ss.str());
-		if (tmp > _opt.interfaceLevel-1){//interfaceLevel counts from 1 but rotamerLevel coutns from 0
+		if (tmp > _interfaceLevelLimit-1){//interfaceLevel counts from 1 but rotamerLevel coutns from 0
 			interfaceSequence = interfaceSequence + "-";
 		} else {
 			interfaceSequence = interfaceSequence + _sequence[pos];
@@ -501,7 +437,7 @@ std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &
 			(*k)->setTempFactor(burial);
 		}
 	}
-	// sort in descending order of burial
+	// sort in descending order of burial (most buried first)
 	sort(residueBurial.begin(), residueBurial.end(), [](auto &left, auto &right) {
 			return left.second < right.second;
 	});
@@ -509,7 +445,7 @@ std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &
 }
 
 // get a vector of all interfacial positions, including the ends
-vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition, int _backboneLength){
+vector<uint> getAllInterfacePositions(Options &_opt, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength){
 	vector<uint> variableInterfacePositions;
 	for (uint k=0; k<_backboneLength; k++){//TODO: make this not hardcoded to skip RAS
 		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
@@ -522,7 +458,7 @@ vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSampli
 }
 
 // get a vector of interface positions that doesn't include the ends of the sequence
-vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition, int _backboneLength){
+vector<uint> getInterfacePositions(Options &_opt, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength){
 	vector<uint> variableInterfacePositions;
 	for (uint k=3; k<_backboneLength-5; k++){//TODO: make this not hardcoded to skip RAS
 		if (_rotamerSamplingPerPosition[k] < _opt.interfaceLevel){
@@ -538,9 +474,9 @@ vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingP
  *output file functions
  ***********************************/
 void setupDesignDirectory(Options &_opt){
-	_opt.pdbOutputDir = string(get_current_dir_name()) + "/design_" + _opt.runNumber;
-	//_opt.pdbOutputDir = "/exports/home/gloiseau/mslib/trunk_AS/design_" + _opt.runNumber;
-	string cmd = "mkdir -p " + _opt.pdbOutputDir;
+	_opt.outputDir = string(get_current_dir_name()) + "/design_" + _opt.runNumber;
+	//_opt.outputDir = "/exports/home/gloiseau/mslib/trunk_AS/design_" + _opt.runNumber;
+	string cmd = "mkdir -p " + _opt.outputDir;
 	if (system(cmd.c_str())){
 		cout << "Unable to make directory" << endl;
 		exit(0);
@@ -550,12 +486,12 @@ void setupDesignDirectory(Options &_opt){
 /***********************************
  *baseline energy helper functions
  ***********************************/
-//Function to calculate the self energies of a chain
-vector<double> calcBaselineEnergies(System &_sys, Options &_opt){
+//Function to calculate the non-termini self energies of a chain
+vector<double> calcBaselineEnergies(System &_sys, int _thread, int _backboneLength){
 	vector<double> ener;
 	AtomSelection sel(_sys.getAtomPointers());
 	//cout << "Self Energies" << endl;
-	for (uint i=_opt.thread+3; i<_opt.thread+_opt.backboneLength-5; i++){
+	for (uint i=_thread+3; i<_thread+_backboneLength-5; i++){
 		string residue = "resi, chain A and resi ";
 		string number = to_string(i);
 		sel.select(residue += number);
@@ -567,16 +503,16 @@ vector<double> calcBaselineEnergies(System &_sys, Options &_opt){
 	return ener;
 }
 
-//Function to calculate the pair energies of a chain
-vector<double> calcPairBaselineEnergies(System &_sys, Options &_opt){
+//Function to calculate the non-termini pair energies of a chain
+vector<double> calcPairBaselineEnergies(System &_sys, int _thread, int _backboneLength){
 	vector<double> ener;
 	AtomSelection sel(_sys.getAtomPointers());
 
-	for (uint i=_opt.thread+3; i<_opt.thread+_opt.backboneLength-5; i++){
+	for (uint i=_thread+3; i<_thread+_backboneLength-5; i++){
 		string residue = "resi1, chain A and resi ";
 		string num1 = to_string(i);
 		sel.select(residue += num1);
-		for (uint j=i+1; j<_opt.thread+_opt.backboneLength-5;j++){
+		for (uint j=i+1; j<_thread+_backboneLength-5;j++){
 			int dist = j-i;
 			if (dist <= 10){
 				string resi1 = "resi2, chain A and resi ";
@@ -585,7 +521,7 @@ vector<double> calcPairBaselineEnergies(System &_sys, Options &_opt){
 				double pair = _sys.calcEnergy("resi1", "resi2");
 				ener.push_back(pair);
 			} else {
-				j = _opt.thread+_opt.backboneLength-5;
+				j = _thread+_backboneLength-5;
 			}
 		}
 	}
@@ -593,11 +529,10 @@ vector<double> calcPairBaselineEnergies(System &_sys, Options &_opt){
 	return ener;
 }
 
-
 // build in the baseline energies to the system EnergySet
-void buildBaselines(System &_sys, Options &_opt){
-		map<string, double> selfMap = readSingleParameters(_opt.selfEnergyFile);
-		map<string,map<string,map<uint,double>>> pairMap = readPairParameters(_opt.pairEnergyFile);
+void buildBaselines(System &_sys, string _selfEnergyFile, string _pairEnergyFile){
+		map<string, double> selfMap = readSingleParameters(_selfEnergyFile);
+		map<string,map<string,map<uint,double>>> pairMap = readPairParameters(_pairEnergyFile);
 		buildSelfInteractions(_sys, selfMap);
 		buildPairInteractions(_sys, pairMap);
 }
@@ -844,8 +779,8 @@ void computeMonomerEnergyNoIMM1(Options& _opt, map<string,map<string,double>> &_
 	map<string,double> &energyMap = _sequenceEnergyMap[_seq];
 	outputEnergiesByTerm(monoSpm, stateVec, energyMap, _opt.energyTermList, "MonomerNoIMM1", false);
 	_sequenceEnergyMap[_seq]["MonomerNoIMM1"] = monomerEnergy;
-	vector<double> selfVec = calcBaselineEnergies(monoSys, _opt);
-	vector<double> pairVec = calcPairBaselineEnergies(monoSys, _opt);
+	vector<double> selfVec = calcBaselineEnergies(monoSys, _opt.thread, _opt.backboneLength);
+	vector<double> pairVec = calcPairBaselineEnergies(monoSys, _opt.thread, _opt.backboneLength);
 	//double self = sumEnergyVector(selfVec);
 	//double pair = sumEnergyVector(pairVec);
 	_sout << "Monomer Energy No IMM1: " << monomerEnergy << endl;
@@ -1144,8 +1079,8 @@ void computeMonomerEnergyIMM1(System &_sys, System &_helicalAxis, Options &_opt,
 
 	// calculate the energy of the monomer for positions 4-18
 	if (_opt.useAlaAtTermini){
-		vector<double> selfVec = calcBaselineEnergies(monoSys, _opt);
-		vector<double> pairVec = calcPairBaselineEnergies(monoSys, _opt);
+		vector<double> selfVec = calcBaselineEnergies(monoSys, _opt.thread, _opt.backboneLength);
+		vector<double> pairVec = calcPairBaselineEnergies(monoSys, _opt.thread, _opt.backboneLength);
 		double self = sumEnergyVector(selfVec);
 		double pair = sumEnergyVector(pairVec);
 		_sequenceEnergyMap[_seq]["MonomerWithoutAlaEnds"] = 2*(self+pair);
@@ -1219,107 +1154,6 @@ void getSasaForStartingSequence(System &_sys, string _sequence, vector<uint> _st
 /***********************************
 * sequence search functions
  ***********************************/
-vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, string _rotamerSamplingString,
- string _variablePositionString, vector<string> _seqs, vector<uint> _interfacialPositions, map<string, map<string,double>> &_sequenceEnergyMap, 
- map<string, double> _sequenceEntropyMap, ofstream &_out){
-	// Setup time variables
-	time_t startTime, endTime;
-	double diffTime;
-	time(&startTime);
-
-	// SelfPairManager setup
-	SelfPairManager spm;
-	spm.seed(_RNG.getSeed());
-	spm.setSystem(&_sys);
-	spm.setVerbose(false);
-	spm.setRunDEE(_opt.runDEESingles, _opt.runDEEPairs);
-	spm.setOnTheFly(true);
-	spm.setMCOptions(1000, 0.5, 5000, 3, 10, 1000, 0.01);//changed to sigmoid and added up to 5000
-	spm.saveEnergiesByTerm(true); //added back in on 09_21_2021 to get the vdw and hbond energies
-	spm.calculateEnergies();
-
-	//Setup running SCMF or UnbiasedMC
-	if (_opt.runSCMF == true){
-		cout << "Running Self Consistent Mean Field" << endl;
-		_out << "Running Self Consistent Mean Field" << endl;
-		spm.setRunSCMF(true);
-		spm.setRunSCMFBiasedMC(true);
-		spm.setRunUnbiasedMC(false);
-	} else {
-		cout << "runSCMF is false; Run Unbiased Monte Carlo " << endl;
-		_out << "runSCMF is false; Run Unbiased Monte Carlo " << endl;
-		spm.setRunSCMF(false);
-		spm.setRunSCMFBiasedMC(false);
-		spm.setRunUnbiasedMC(true);
-	}
-
-	// run and find a sequence using the chosen parameters (MCOptions, SCMF, DEE, etc.)
-	spm.runOptimizer();
-	time(&endTime);
-	diffTime = difftime (endTime, startTime);
-
-	// vector for the SCMF state after the biased monte carlo
-	vector<unsigned int> bestState = spm.getBestSCMFBiasedMCState();
-	_sys.setActiveRotamers(bestState);
-	string startSequence = convertPolymerSeqToOneLetterSeq(_sys.getChain("A")); //used for outputting starting sequence
-	string interfaceSeq = getInterfaceSequence(_opt, _rotamerSamplingString, startSequence);
-
-	// output spm run optimizer information
-	spmRunOptimizerOutput(spm, _sys, interfaceSeq, _variablePositionString, diffTime, _out);
-	
-	//Add energies for initial sequences into the sequenceEnergyMap
-	_seqs.insert(_seqs.begin(), startSequence);
-	pair<string,vector<uint>> startSequenceStatePair = make_pair(startSequence, bestState);
-	getEnergiesForStartingSequence(_opt, spm, startSequence, bestState, _interfacialPositions, _sequenceEnergyMap, _sequenceEntropyMap);
-	getSasaForStartingSequence(_sys, startSequence, bestState, _sequenceEnergyMap);
-	//int rand = _RNG.getRandomInt(0, _interfacialPositions.size()-1);
-	//int interfacePosA = _interfacialPositions[rand];
-	//int interfacePosB = interfacePosA+startSequence.length();
-	//// Get the random position from the system
-	//Position &randPosA = _sys.getPosition(interfacePosA);
-	//Position &randPosB = _sys.getPosition(interfacePosB);
-	//string posIdA = randPosA.getPositionId();
-	//string posIdB = randPosB.getPositionId();
-	//	PDBWriter writer1;
-	//for (uint i=0; i<_opt.Ids.size(); i++){
-	//	// pick an identity for each thread 
-	//	int idNum = i;
-	//	// generate polymer sequence for each identity at the corresponding chosen position
-	//	string id = _opt.Ids[idNum];
-	//	cout << "id: " << id << endl;
-	//	// input into the thread function for calculating energies
-	//	string currAA = MslTools::getThreeLetterCode(startSequence.substr(interfacePosA, 1));
-	//	if (currAA != id){
-	//		// replace the id at the position in bestSeq with the current id to get current sequence
-	//		string currSeq = startSequence;
-	//		string oneLetterId = MslTools::getOneLetterCode(id);
-	//		currSeq.replace(interfacePosA, 1, oneLetterId);
-	//		//setActiveSequence(_sys, currSeq);
-	//		// switch the position to the given id
-	//		_sys.setActiveIdentity(posIdA, id);
-	//		_sys.setActiveIdentity(posIdB, id);
-	//		// Set a mask and run a greedy to get the best state for the current sequence
-	//		vector<vector<bool>> mask = getActiveMask(_sys);
-	//		spm.runGreedyOptimizer(_opt.greedyCycles, mask);
-	//		vector<uint> currVec = spm.getMinStates()[0];
-	//		string pos = posIdA+","+id;
-	//		uint rotamers = _sys.getTotalNumberOfRotamers(pos);  // this returns the sum of the alt confs for all identities ("A,37), or one identity ("A,37,ILE")
-	//		_sys.setActiveRotamers(currVec);
-	//		//_sys.setActiveRotamer(pos, 3);
-	//		cout << currSeq << ": " << _sys.calcEnergy() << ";" << rotamers << endl;
-	//		//cout << spm.getSummary(currVec) << endl;
-	//		writer1.open(_opt.pdbOutputDir + "/"+id+"1.pdb");
-	//		writer1.write(_sys.getAtomPointers(), true, false, true);
-	//		_sys.setActiveIdentity(posIdA, currAA);
-	//		_sys.setActiveIdentity(posIdB, currAA);
-	//		writer1.write(_sys.getAtomPointers(), true, false, true);
-	//		writer1.close();
-	//	}
-	//}
-	//exit(0);
-	return bestState;
-}
-
 void setActiveSequence(System &_sys, string _sequence){
 	// Set the active sequence for the system
 	for (uint i=0; i<_sys.getPositions().size()/2; i++){
@@ -1356,7 +1190,7 @@ vector<uint> &_stateVector, vector<uint> _interfacialPositions, map<string, map<
 }
 
 
-void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfaceSeq, string _variablePosString, double _spmTime, ofstream &_out){
+void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfaceSeq, ofstream &_out){
 	// output this information about the SelfPairManager run below
 	// vector for the initial SCMF state
 	vector<unsigned int> initialState = _spm.getSCMFstate();
@@ -1378,11 +1212,9 @@ void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfac
 	_out << "Initial Sequence:   " << initialSeq << endl;
 	_out << "Best Sequence:      " << SCMFBestSeq << endl;
 	_out << "Interface Sequence: " << _interfaceSeq << endl;
-	_out << "Interface:          " << _variablePosString << endl;
 	_out << "Total Energy:       " << bestEnergy << endl;
 	_out << "VDW:                " << vdwEnergy << endl;
 	_out << "HBOND:              " << hbondEnergy << endl;
-	_out << endl << "End SelfPairManager Optimization: " << _spmTime << "s" << endl;
 }
 
 /***********************************
@@ -1461,19 +1293,20 @@ double calcNumberOfPermutations(map<string,int> _seqAACounts, int _seqLength){
 		numPermutation = numPermutation*i;
 	}
 	// was running the below before 2022-10-19; realized it doesn't give me the n!/(n-r)!, so not sure why I thought it was
-	//map<string,int>::iterator itr;
-	//for(itr = _seqAACounts.begin(); itr != _seqAACounts.end(); itr++){
-	//	cout << itr->first << ": " << itr->second << endl;
-	//	for (uint j=itr->second; j>1; j--){
-	//		permutationDenominator = permutationDenominator*j;
-	//	}
-	//}
-	double denomFactorial = _seqLength-_seqAACounts.size();
+	// as of 2022-11-3: running this again per Alessandro; it should be n!/(numAA1!*numAA2!*...)
+	map<string,int>::iterator itr;
+	for(itr = _seqAACounts.begin(); itr != _seqAACounts.end(); itr++){
+		cout << itr->first << ": " << itr->second << endl;
+		for (uint j=itr->second; j>1; j--){
+			permutationDenominator = permutationDenominator*j;
+		}
+	}
+	//double denomFactorial = _seqLength-_seqAACounts.size();
 	//cout << "Denominator Factorial = " << denomFactorial << "!" << endl;
 	//cout << "Num unique AAs = " << _seqAACounts.size();
-	for (uint i=denomFactorial; i>1; i--){
-		permutationDenominator = permutationDenominator*i;
-	}
+	//for (uint i=denomFactorial; i>1; i--){
+	//	permutationDenominator = permutationDenominator*i;
+	//}
 	//cout << "Number Permutations: " << numPermutation << endl;
 	//cout << "Permutation Denominator: " << permutationDenominator << endl;
 	numPermutation = numPermutation/permutationDenominator;
@@ -1485,7 +1318,7 @@ double calcNumberOfPermutations(map<string,int> _seqAACounts, int _seqLength){
 void interfaceAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, vector<uint> _interfacialPositionsList){
 	//Get residue name for each interfacial identity
 	vector<string> seqVector;
-	int numInterfacials = _interfacialPositionsList.size()-1;
+	int numInterfacials = _interfacialPositionsList.size();
 	for (uint i=0; i<numInterfacials; i++){
 		//Position &pos = _sys.getPosition(_interfacialPositionsList[i]);
 		//Residue &resi = pos.getCurrentIdentity();
@@ -1593,7 +1426,7 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("rotLibFile");
 	opt.allowed.push_back("backboneCrd");
 	opt.allowed.push_back("hbondFile");
-	opt.allowed.push_back("pdbOutputDir");
+	opt.allowed.push_back("outputDir");
 	opt.allowed.push_back("backboneFile");
 	opt.allowed.push_back("selfEnergyFile");
 	opt.allowed.push_back("pairEnergyFile");
@@ -1841,9 +1674,9 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningFlag = true;
 		opt.helicalAxis = "/exports/home/gloiseau/mslib/trunk_AS/myProgs/parameterFiles/helicalAxis.pdb";
 	}
-	opt.pdbOutputDir = OP.getString("pdbOutputDir");
+	opt.outputDir = OP.getString("outputDir");
 	if (OP.fail()) {
-		opt.warningMessages += "Unable to determine pdbOutputDir, default to current directory\n";
+		opt.warningMessages += "Unable to determine outputDir, default to current directory\n";
 		opt.warningFlag = true;
 	}
 	
@@ -2197,6 +2030,10 @@ Options parseOptions(int _argc, char * _argv[]){
 	if (OP.fail()) {
 		opt.errorMessages += "Unable to identify alternate AA identities, make sure they are space separated\n";
 		opt.errorFlag = true;
+	}
+	// String for the alternateIds at the interface
+	if (opt.xShift <= 7.5){
+		opt.Ids.push_back("GLY");
 	}
 
 	//SelfPairManager Optimization Options

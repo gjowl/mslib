@@ -46,22 +46,23 @@ using namespace MSL;
 /***********************************
  *load rotamer functions
  ***********************************/
-//load rotamers for dimer with different rotamer levels at each position
-void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling);
-//load rotamers for interfacial positions
-void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<int> _interface);
 //Uses rotamer sampling defined by SASA values to load rotamers by position
-void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<int> &_rotamerSampling);
+void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<uint> &_rotamerSampling);
+//load rotamers for dimer with different rotamer levels at each position
+void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, vector<string> _repackLevels, vector<uint> _rotamerSampling);
+//load rotamers for interfacial positions
+void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<uint> _interface);
 
 /***********************************
  *define interface and rotamer sampling
  ***********************************/
 //
-vector<int> getLinkedPositions(vector<int> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel);
-//
-vector<vector<string>> convertToLinkedFormat(System &_sys, vector<int> &_interfacialPositions, int _backboneLength);
+vector<uint> getLinkedPositions(vector<uint> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel);
+// Convert positions to string for setLinkedPositions(std::vector<std::vector<std::string> > &_linkedPositions) which uses "A,19" "B,19" format!
+vector<vector<string>> convertToLinkedFormat(System &_sys, vector<uint> &_interfacialPositions, int _backboneLength);
 //unlinks a state vector, replicating the state vector of the linked structure (i.e. for a sequence with 5 AAs and 5 rotamers each: linked: 0,1,2,3,4; unlinked: 0,1,2,3,4,0,1,2,3,4)
-void unlinkBestState(Options &_opt, vector<uint> &_bestState, vector<int> _linkedPositions, int _backboneLength);
+vector<uint> unlinkBestState(vector<uint> _bestState, vector<uint> _interfacePositions, int _backboneLength);
+
 /***********************************
  *geometry
  ***********************************/
@@ -80,23 +81,20 @@ string generateBackboneSequence(string _backbone, int _length);
 string generateMonomerMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions);
 string getInterfaceString(vector<int> _interface, int _seqLength);
 string getAlternateIdString(vector<string> _alternateIds);
-string convertPolymerSeqToOneLetterSeq(Chain &_chain);
-string getInterfaceSequence(Options &_opt, string _interface, string _sequence);
+string getInterfaceSequence(int _interfaceLevelLimit, string _interface, string _sequence);
 
 /***********************************
  *define interface and rotamer sampling
  ***********************************/
-// gets a vector of the rotamer level for each position on the protein
-vector<int> getRotamerSampling(string _rotamerLevels);
 //
-vector<uint> getVariablePositions(vector<int> &_interfacialPositions);
+vector<uint> getVariablePositions(vector<uint> &_interfacialPositions);
 //
 std::vector<pair <int, double> > calculateResidueBurial (System &_sys);
 // Calculate Residue Burial for use in identifying the interfacial positions and output a PDB that highlights the interface
 std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &_startGeom, string _seq);
 
-vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition, int _backboneLength);
-vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition, int _backboneLength);
+vector<uint> getAllInterfacePositions(Options &_opt, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength);
+vector<uint> getInterfacePositions(Options &_opt, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength);
 /***********************************
  *output file functions
  ***********************************/
@@ -104,20 +102,18 @@ vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingP
 void setupDesignDirectory(Options &_opt);
 // function for outputting and writing and energy file
 void outputEnergyFile(Options &_opt, string _interface, vector<string> _allDesigns);
-// function that writes a config file for local geometric repacks by geomRepack.cpp
-void outputDesignFiles(Options &_opt, string _interface, vector<int> _rotamerSampling, vector<pair<string,vector<uint>>> _sequenceStatePair, map<string,map<string,double>> _sequenceEnergyMap, vector<double> _densities);
 
 /***********************************
  *baseline energy helper functions
  ***********************************/
 // calculates the self energies of a structure
-vector<double> calcBaselineEnergies(System &_sys, Options &_opt);
+vector<double> calcBaselineEnergies(System &_sys, int _thread, int _backboneLength);
 // calculates the pair energies of a structure
-vector<double> calcPairBaselineEnergies(System &_sys, Options &_opt);
+vector<double> calcPairBaselineEnergies(System &_sys, int _thread, int _backboneLength);
 // adds up all of the values in a vector<double> to get the total energy
 double sumEnergyVector(vector<double> _energies);
 // baseline builder function; must have a selfEnergyFile and a pairEnergyFile in the options
-void buildBaselines(System &_sys, Options &_opt);
+void buildBaselines(System &_sys, string _selfEnergyFile, string _pairEnergyFile);
 map<string, double> readSingleParameters(string _baselineFile);
 map<string,map<string,map<uint, double>>> readPairParameters(string _baselineFile);
 void buildSelfInteractions(System &_sys, map<string, double> &_selfMap);
@@ -164,28 +160,22 @@ void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
 void getSasaForStartingSequence(System &_sys, string _sequence, vector<uint> _state, map<string, map<string,double>> &_sequenceEnergyMap);
 
 // gets the interfacial positions from a vector
-vector<uint> getAllInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
-vector<uint> getInterfacePositions(Options &_opt, vector<int> &_rotamerSamplingPerPosition);
+vector<uint> getAllInterfacePositions(Options &_opt, vector<uint> &_rotamerSamplingPerPosition);
+vector<uint> getInterfacePositions(Options &_opt, vector<uint> &_rotamerSamplingPerPosition);
 
 /***********************************
 * sequence search functions
  ***********************************/
-// function that runs a SelfConsistentMeanField algorithm to find the best starting sequence, only taking into account monomer energies
-vector<uint> runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, string _rotamerSamplingString,
- string _variablePositionString, vector<string> _seqs, vector<uint> _interfacialPositions, map<string, map<string,double>> &_sequenceEnergyMap, 
- map<string, double> _sequenceEntropyMap, ofstream &_out);
 // outputs for runSCMFToGetStartingSequence
-void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfaceSeq, string _variablePosString, double _spmTime, ofstream &_out);
+void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfaceSeq, ofstream &_out);
 // redacted old version without multithreading
 void searchForBestSequences(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs, vector<uint> &_bestState,
  map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> _sequenceEntropyMap, vector<pair<string,vector<uint>>> &_sequenceStatePair, 
- vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList, vector<int> &_rotamerSampling, ofstream &_out, ofstream &_err);
+ vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList, vector<uint> &_rotamerSampling, ofstream &_out, ofstream &_err);
 // gets the sasa score for sequences found during monte carlo search
 void getDimerSasa(System &_sys, map<string, vector<uint>> &_sequenceVectorMap, map<string, map<string,double>> &_sequenceEnergyMap);
 void getEnergiesForStartingSequence(Options &_opt, SelfPairManager &_spm, string _startSequence,
 vector<uint> &_stateVector, vector<uint> _interfacialPositions, map<string, map<string, double>> &_sequenceEnergyMap, map<string, double> &_entropyMap);
-void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
-  vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1);
 
 // parse config file for given options
 Options parseOptions(int _argc, char * _argv[]);

@@ -14,7 +14,7 @@ using namespace std;
 struct Options{
 	// input files
 	string backboneCrd; //initial coordinates for helix backbones: crd file
-	string pdbOutputDir; //output directory for all files
+	string outputDir; //output directory for all files
 	string topFile; //topology file (default CHARMM22: defines distances between atoms)
 	string parFile; //parameter file (defines Hbonding distances)
 	string geometryDensityFile; //geometries to choose for design with...density
