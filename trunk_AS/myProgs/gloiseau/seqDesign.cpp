@@ -116,6 +116,8 @@ void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, map<st
 
 void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq,
  RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
+double calculateInterfaceSequenceEntropy(string _sequence, map<string, double> _sequenceEntropyMap, vector<uint> _interfacePositions,
+ double &_sequenceProbability, double _seqEntropyWeight);
 
 // help functions
 void usage();
@@ -245,12 +247,11 @@ int main(int argc, char *argv[]){
 	 ******************************************************************************/
 	map<string, map<string,double>> sequenceEnergyMapBest; // energyMap to hold all energies for output into a summary file
 	map<string, double> sequenceEntropyMap = readSingleParameters(opt.sequenceEntropyFile); // Get sequence entropy map
-	
-	//calculateEntropyOfInterface(opt.sequence, sequenceEntropyMap);
-	map<string,int> AACountMap;
-	double numberOfPermutations;
-	interfaceAASequenceEntropySetup(opt.sequence, AACountMap, numberOfPermutations, interfacePositions);
-	double seqProb = calculateSequenceProbability(AACountMap, sequenceEntropyMap, numberOfPermutations);
+
+	double sequenceProbability = 1; // probability of the sequence	
+	double seqEntropy = calculateInterfaceSequenceEntropy(opt.sequence, sequenceEntropyMap, interfacePositions, sequenceProbability, opt.weight_seqEntropy); // calculate the sequence entropy for the interface
+	cout << "seqEntropy: " << seqEntropy << endl;
+	exit(0);
 
 	/******************************************************************************
 	 *                    === GET THE BEST STARTING STATE ===
@@ -331,6 +332,26 @@ int main(int argc, char *argv[]){
 }
 
 //Functions
+double calculateInterfaceSequenceEntropy(string _sequence, map<string, double> _sequenceEntropyMap, vector<uint> _interfacePositions,
+ double &_sequenceProbability, double _seqEntropyWeight){
+	//Get residue name for each interfacial identity
+	vector<string> seqVector;
+	int numInterfacials = _interfacePositions.size();
+	for (uint i=0; i<numInterfacials; i++){
+		stringstream tmp;
+		tmp << _sequence[_interfacePositions[i]];
+		string aa = tmp.str();
+		string resName = MslTools::getThreeLetterCode(aa);
+		seqVector.push_back(resName);
+		//cout << _interfacialPositionsList[i] << " : " << resName << endl;
+	}
+	map<string,int> seqCountMap = getAACountMap(seqVector); // get the count of each amino acid in the sequence
+	double numberOfPermutations = calcNumberOfPermutations(seqCountMap, numInterfacials); // calculate the number of permutations for the sequence
+	_sequenceProbability = calculateSequenceProbability(seqCountMap, _sequenceEntropyMap, numberOfPermutations); // calculate the sequence probability
+	double seqEntropy = _sequenceProbability * _seqEntropyWeight * -1; // multiply by the weight and -1
+	return seqEntropy;
+}
+
 map<string, double> getGeometryMap(Options &_opt, string _descriptor){
 	map<string, double> geometryMap;
 	geometryMap[_descriptor+"XShift"] = _opt.xShift;
@@ -685,10 +706,10 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 		double currTemp = MC.getCurrentT();
 		string currSeq = getSequenceUsingMetropolisCriteria(sequenceEnergyMap, _RNG, currTemp);
 		// extract energies from the sequence energy map for the chosen sequence
-		double currEnergyTotal = sequenceEnergyMap[currSeq]["currEnergyTotal"]; // energy total for current sequence (dimer+baseline+sequence entropy)
-		double bestEnergyTotal = sequenceEnergyMap[currSeq]["bestEnergyTotal"]; // energy total for previous sequence (details in energyFunction)
-		double prevStateEntropy = sequenceEnergyMap[currSeq]["prevEntropy"];
-		double currStateEntropy = sequenceEnergyMap[currSeq]["currEntropy"];
+		double currEnergyTotal = sequenceEnergyMap[currSeq]["Totalw/Entropy"]; // energy total for current sequence (dimer+baseline+sequence entropy)
+		double bestEnergyTotal = sequenceEnergyMap[bestSeq]["Totalw/Entropy"]; // energy total for previous sequence (details in energyFunction)
+		double prevStateEntropy = sequenceEnergyMap[currSeq]["SequenceEntropy"];
+		double currStateEntropy = sequenceEnergyMap[bestSeq]["SequenceEntropy"];
 		vector<uint> currStateVec = sequenceVectorMap[currSeq]; // current state vector for current sequence (best rotamers and sequence identities)
 		MC.setEner(bestEnergyTotal);
 		double acceptTemp = MC.getCurrentT();
@@ -829,7 +850,7 @@ map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt,
 
 // threaded function that gets energies for a sequence and appends to a map
 void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, double _prevEnergy, string _currSeq, vector<uint> _currVec,
- vector<uint> &_rotamerSampling, vector<uint> &_allInterfacePositions, map<string,map<string,double>> &_seqEnergyMap,
+ vector<uint> &_rotamerSampling, vector<uint> &_interfacePositions, map<string,map<string,double>> &_seqEnergyMap,
  map<string,double> &_sequenceEntropyMap){
 	// variable setup
 	map<string,double> energyMap;
@@ -839,30 +860,28 @@ void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, doubl
 	double currEnergy = _spm.getStateEnergy(_currVec);
 
 	// initialize variables for this thread
-	double currEnergyTotal = 0;
-	double bestEnergyTotal = 0;
-	double currSEProb = 0;
-	double prevSEProb = 0;
-	double currEntropy = 0;
-	double prevEntropy = 0;
-
-	calculateInterfaceSequenceEntropy(_opt, _prevSeq, _currSeq, _sequenceEntropyMap, prevSEProb,
-	 currSEProb, prevEntropy, currEntropy, _prevEnergy, currEnergy, bestEnergyTotal,
-	 currEnergyTotal, _allInterfacePositions);
+	//double currEnergyTotal = 0;
+	//double bestEnergyTotal = 0;
+	double sequenceProbability = 1;
+	//double prevSEProb = 0;
+	//double currEntropy = 0;
+	//double prevEntropy = 0;
+	double sequenceEntropy = calculateInterfaceSequenceEntropy(_currSeq, _sequenceEntropyMap, _interfacePositions, sequenceProbability, _opt.weight_seqEntropy); // calculate the sequence entropy for the interface
 
 	// output info
 	double baseline = _spm.getStateEnergy(_currVec, "BASELINE")+_spm.getStateEnergy(_currVec, "BASELINE_PAIR");
-	double enerAndSeqEntropy = bestEnergyTotal-currEnergyTotal;
+	double energyAndEntropyTotal = sequenceEntropy;
 	energyMap["Dimerw/Baseline"] = currEnergy;
 	energyMap["Dimer"] = currEnergy-baseline;
 	energyMap["Baseline"] = baseline;
-	energyMap["energyComparison"] = enerAndSeqEntropy;
-	energyMap["SequenceProbability"] = currSEProb;
-	energyMap["bestEnergyTotal"] = bestEnergyTotal;
-	energyMap["currEnergyTotal"] = currEnergyTotal;
-	energyMap["entropyDiff"] = prevEntropy-currEntropy;
-	energyMap["currEntropy"] = currEntropy;
-	energyMap["prevEntropy"] = prevEntropy;
+	//energyMap["energyComparison"] = enerAndSeqEntropy;
+	energyMap["SequenceProbability"] = sequenceProbability;
+	energyMap["SequenceEntropy"] = sequenceEntropy;
+	energyMap["Totalw/Entropy"] = energyAndEntropyTotal;
+	//energyMap["bestEnergyTotal"] = bestEnergyTotal;
+	//energyMap["entropyDiff"] = prevEntropy-currEntropy;
+	//energyMap["currEntropy"] = currEntropy;
+	//energyMap["prevEntropy"] = prevEntropy;
 	_seqEnergyMap[_currSeq] = energyMap;
 }
 

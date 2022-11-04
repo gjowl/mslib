@@ -1345,7 +1345,7 @@ double getInterfaceSequenceEntropyProbability(Options &_opt, string _sequence, m
 void internalAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, vector<uint> _interfacialPositionsList){
 	//Get residue name for each interfacial identity
 	vector<string> seqVector;
-	int numInterfacials = _interfacialPositionsList.size()-1;
+	int numInterfacials = _interfacialPositionsList.size();
 	for (uint i=3; i<_seq.length()-4; i++){
 		//Position &pos = _sys.getPosition(_interfacialPositionsList[i]);
 		//Residue &resi = pos.getCurrentIdentity();
