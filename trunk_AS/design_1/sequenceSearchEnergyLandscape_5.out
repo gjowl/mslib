@@ -1,0 +1,14 @@
+Cycle	PrevSequence	CurrSequence	PrevEnergy	CurrEnergy	PrevEntropy	CurrEntropy	CurrentTemp
+Cycle #0; Acceptances: 0
+State not accepted, E= 259.309; PrevE= 255.649
+
+Cycle #1; Acceptances: 0
+State not accepted, E= 259.745; PrevE= 255.649
+
+Cycle #2; Acceptances: 0
+State not accepted, E= 259.813; PrevE= 255.649
+
+Cycle #3; Acceptances: 0
+3	LLLLLAAAAALAALLLLLILI	LLLLAAAAAALAALLLLLILI	254.859	252.755	0.0926584	1.14364	1000
+
+Time: 0s
