@@ -59,7 +59,6 @@ std::vector < std::vector < bool > > getActiveMask (System &_sys);
 string convertToPolymerSequence(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum);
-
 string convertPolymerSeqToOneLetterSeq(Chain &_chain);
 void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
   vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1);

@@ -29,9 +29,7 @@ using namespace std;
 
 static SysEnv SYSENV;
 string programName = "generateSelfPairIMM1Baseline";
-string programDescription = "This program generate baselines for my sequences: I was previously using only Leucine ends, 
- but because we use LILI as the C terminal of our helices, I needed to generate new baselines for this termini; unfinished
- because the baselines seem good enough for now";
+string programDescription = "This program generate baselines for my sequences: I was previously using only Leucine ends, but because we use LILI as the C terminal of our helices, I needed to generate new baselines for this termini";
 string programAuthor = "Gilbert Loiseau";
 string programVersion = "3";
 string programDate = "13 October 2022";
@@ -199,7 +197,7 @@ void deleteTerminalHydrogenBondInteractions(System &_sys, Options& _opt) {
 	pESet->deleteInteractionsWithAtoms(atoms,"SCWRL4_HBOND");
 }
 
-Options parseOptions(int _argc, char * _argv[], Options defaults);
+Options parseBaselineOptions(int _argc, char * _argv[]);
 
 void printOptions(Options & _op, ofstream & _fout) {
 	_fout << "Datafile: " << _op.datafile << endl << endl;
@@ -249,7 +247,7 @@ void loadRotamers1(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
 		if (pos.identitySize() > 1){
 			for (uint j=0; j < pos.getNumberOfIdentities(); j++){
 				pos.setActiveIdentity(j);
-				if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+				if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "ALA-ACE" && pos.getResidueName() != "ALA-CT2" && pos.getResidueName() != "PRO") {
 					if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
 						cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
 					}
@@ -258,7 +256,8 @@ void loadRotamers1(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
 			}
 		}
 		else{
-			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+			//if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "ALA-ACE" && pos.getResidueName() != "ALA-CT2" && pos.getResidueName() != "PRO") {
 				if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
 					cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
 				}
@@ -284,10 +283,10 @@ string randomAASeqChangedTermini(vector<string> _weightedAAs, int _seqLength, Ra
 	for (uint i=0; i<_seqLength; i++){
 		if (i < 4 || i > _seqLength-5){
 			if (i == _seqLength-3 || i == _seqLength-1){
-				seq += "I";
+				seq += "A";
 			}
 			else{
-			      	seq += "L";
+			   	seq += "A";
 			}
 		}
 		else{
@@ -321,11 +320,12 @@ vector<double> calcBaselinePositionEnergies(System &_sys, int _seqLength, double
 		ener.push_back(protEnergy);
 		_totalProt += protEnergy;
 	}
+	sel.clearStoredSelections();
 	return ener;
 }
 
 vector<double> calcBaselineEnergies(System &_sys, int _seqLength, double &_totalProt, int _thread){
-	vector <double> ener;
+	vector<double> ener;
 	AtomSelection sel(_sys.getAtomPointers());
 	for (uint i=_thread; i<_seqLength+_thread; i++){
 		string residue = "resi, chain A and resi ";
@@ -341,7 +341,7 @@ vector<double> calcBaselineEnergies(System &_sys, int _seqLength, double &_total
 }
 
 vector<double> calcPairBaselineEnergies(System &_sys, Options _opt, int _seqLength, double &_totalProt, int _thread){
-	vector <double> ener;
+	vector<double> ener;
 	AtomSelection sel(_sys.getAtomPointers());
 
 	for (uint i=_thread; i<_seqLength+_thread; i++){
@@ -358,8 +358,7 @@ vector<double> calcPairBaselineEnergies(System &_sys, Options _opt, int _seqLeng
 				ener.push_back(pair);
 				_totalProt += pair;
 				//cout << residue << "; " << resi1 << " : " << pair << endl;
-			}
-			else{
+			} else {
 				j = _seqLength+_thread;
 			}
 		}
@@ -593,9 +592,7 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *                 === PARSE THE COMMAND LINE OPTIONS ===
 	 ******************************************************************************/
-	Options defaults;
-
-	Options opt = parseOptions(argc, argv, defaults);
+	Options opt = parseBaselineOptions(argc, argv);
 	if (opt.errorFlag) {
 		cerr << endl;
 		cerr << "The program terminated with errors:" << endl;
@@ -845,6 +842,7 @@ int main(int argc, char *argv[]){
 		vector<double> AAHbondIMM1 = calcBaselineEnergies(sys, seq.length(), totalProt, opt.thread);
 		vector<double> AAPosHbondIMM1 = calcBaselinePositionEnergies(sys, seq.length(), totalProt, opt.thread);
 		vector<double> pairAAHbondIMM1 = calcPairBaselineEnergies(sys, opt, seq.length(), totalProt, opt.thread);
+		cout << 4 << endl;
 		
 		/******************************************************************************
 		 *                 === CALCULATE ENERGIES FOR ERASED TERM ===
@@ -854,6 +852,7 @@ int main(int argc, char *argv[]){
 		vector<double> AAIMM1 = calcBaselineEnergies(sys, seq.length(), totalProt, opt.thread);
 		vector<double> AAPosIMM1 = calcBaselinePositionEnergies(sys, seq.length(), totalProt, opt.thread);
 		vector<double> pairAAIMM1 = calcPairBaselineEnergies(sys, opt, seq.length(), totalProt, opt.thread);
+		cout << 5 << endl;
 		
 		/******************************************************************************
 		 *                 === CALCULATE ENERGIES FOR ERASED TERM ===
@@ -928,7 +927,7 @@ int main(int argc, char *argv[]){
 	spout.close();
 }
 
-Options parseOptions(int _argc, char * _argv[], Options defaults){
+Options parseBaselineOptions(int _argc, char * _argv[]){
 	
 	/******************************************
 	 *  Pass the array of argument and the name of

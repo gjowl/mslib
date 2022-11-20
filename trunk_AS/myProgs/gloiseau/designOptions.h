@@ -49,6 +49,7 @@ struct Options{
 	// use different energy parameters
 	bool useIMM1;
 	bool useElec;
+	bool compareSasa; //TRUE: use SASA to compare backboneOptimize states OR FALSE: use energy
 
 	// repack parameters
 	int greedyCycles;
@@ -94,6 +95,8 @@ struct Options{
 	double MCEndTemp;
 	int MCCurve;
 	int MCConvergedSteps;
+	double MCResetTemp;
+	double MCResetCycles;
 	//double MCConvergedE;
 
 	// Backbone Monte Carlo parameters
@@ -115,6 +118,7 @@ struct Options{
 	double deltaAxLimit;
 	double deltaZLimit;
 	bool decreaseMoveSize;
+	int backboneSearchCycles;
 
 	// energy weights
 	double weight_vdw; //weight of vdw energy contribution to total energy: default = 1

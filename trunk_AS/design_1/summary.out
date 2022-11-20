@@ -1,1 +1,45 @@
-11_04_2022
+11_17_2022
+Self Consistent Mean Field Start Time: Thu Nov 17 14:39:25 2022
+Elapsed time of program: 0.125min
+
+Running Self Consistent Mean Field
+Initial Sequence:   LLLLLAYLLSLLLFLSWLILI
+Best Sequence:      LLLLLAYLLSLLLFLSWLILI
+Interface Sequence: L-L--AY-LS--LF-SW--L-
+Total Energy:       13.7
+VDW:                -60.3
+HBOND:              -75.7
+Self Consistent Mean Field End Time: Thu Nov 17 14:41:11 2022
+Elapsed time of program: 1.9min
+
+Monte Carlo Sequence Search Replicate 0 Start Time: Thu Nov 17 14:41:12 2022
+Elapsed time of program: 1.91min
+
+  - SelfPairManager energy calculation 0 Start Time: Thu Nov 17 14:41:17 2022
+Elapsed time of program: 2min
+
+  - SelfPairManager energy calculation 0 End Time: Thu Nov 17 14:43:09 2022
+Elapsed time of program: 3.86min
+
+- End monte carlo sequence search #0: 0min; Monte Carlo ended at Temp: 3.65e+03
+
+- Best Sequence: LLLLLAYLLSLLSTLSWLILI; Energy w/ baseline: 19.3
+Monte Carlo Sequence Search Replicate 0 End Time: Thu Nov 17 14:43:09 2022
+Elapsed time of program: 3.87min
+
+Compute Monomer Energy Start Time: Thu Nov 17 14:43:12 2022
+Elapsed time of program: 3.91min
+
+-Dimer - Monomer = -374 - -402 = 27.4
+Compute Monomer Energy End Time: Thu Nov 17 14:46:11 2022
+Elapsed time of program: 6.89min
+
+Backbone optimize replicate 0 Start Time: Thu Nov 17 14:46:11 2022
+Elapsed time of program: 6.9min
+
+Backbone optimize replicate 0 End Time: Thu Nov 17 14:46:38 2022
+Elapsed time of program: 7.35min
+
+Sequence	RotamerValues	Interface	InterfaceSequence	Seed	Baseline	Dimer	Dimerw/Baseline	HBONDDimer	HBONDDimerOptimize	HBONDDimerPreOptimize	HBONDMonomer	IMM1Dimer	IMM1DimerOptimize	IMM1DimerPreOptimize	IMM1Monomer	Monomer	MonomerSasa	OptimizeSasa	PreBBOptimizeSasa	SequenceEntropy	SequenceProbability	Total	TotalPreOptimize	Totalw/Entropy	VDWDimer	VDWDimerOptimize	VDWDimerPreOptimize	VDWMonomer	acceptCycleNumber	acceptTemp	endAxialRotation	endAxialRotationPrime	endCrossingAngle	endXShift	endZShift	endZShiftPrime	firstRepackEnergy	preOptimizeAxialRotation	preOptimizeAxialRotationPrime	preOptimizeCrossingAngle	preOptimizeEnergy	preOptimizeXShift	preOptimizeZShift	preOptimizeZShiftPrime	preRepackTotal	replicateNumber	startAxialRotation	startAxialRotationPrime	startCrossingAngle	startXShift	startZShift	startZShiftPrime	
+LLLLLAYLLSLLSTLSWLILI	120330121032012103302		L-L--AY-LS--ST-SW--L-	1	393.644	-374.326	19.3177	-92.167	-104.959	-92.1506	-104.927	-225.908	-225.4	-225.905	-250.42	-401.774	4547.38	3850	3844.01	61.2917	3.18865e-05	11.4315	27.4582	80.6094	-56.2513	-59.9835	-56.2606	-46.4269	3	3649	40	174.074	24.3161	10	4	5.11111	11.4315	40	174.074	25	27.4582	10	4	5.11111	27.4483	0	40	174.074	25	10	4	5.11111	
+Total Time: 7 minutes

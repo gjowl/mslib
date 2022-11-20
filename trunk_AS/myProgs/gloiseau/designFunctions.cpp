@@ -65,71 +65,6 @@ void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vec
 	}
 }
 
-/***********************************
- *geometry
- ***********************************/
-void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out){
-	// Setup file reader
-	Reader reader(_opt.geometryDensityFile);
-	reader.open();
-	if(!(reader.is_open())){
-		cerr << "WARNING: Unable to open " << _opt.geometryDensityFile << endl;
-		exit(0);
-	}
-	vector<string> lines = reader.getAllLines();
-
-	// Extract the geometries from a random line of the geometry file
-	int geometryLine = _RNG.getRandomInt(1,lines.size()-1);
-	vector<string> tokens = MslTools::tokenize(lines[geometryLine], "\t");//xShift, crossingAngle, axialRotation, zShift, angleDistDensity, axialRotationDensity, zShiftDensity
-	_opt.xShift = MslTools::toDouble(tokens[0]);
-	_opt.crossingAngle = MslTools::toDouble(tokens[1]);
-	_opt.axialRotation = MslTools::toDouble(tokens[2]);
-	_opt.zShift = MslTools::toDouble(tokens[3]);
-	double angleDistDensity = MslTools::toDouble(tokens[4]);
-	double axialRotationDensity = MslTools::toDouble(tokens[5]);
-	double zShiftDensity = MslTools::toDouble(tokens[6]);
-	_densities.push_back(angleDistDensity);
-	_densities.push_back(axialRotationDensity);
-	_densities.push_back(zShiftDensity);
-
-	// Output to summary file
-	_out << "***STARTING GEOMETRY:***" << endl;
-	_out << "xShift:        " << _opt.xShift << "\tDensity: " << angleDistDensity << endl;
-	_out << "crossingAngle: " << _opt.crossingAngle << "\tDensity: " << angleDistDensity << endl;
-	_out << "axialRotation: " << _opt.axialRotation << "\tDensity: " << axialRotationDensity << endl;
-	_out << "zShift:        " << _opt.zShift << "\tDensity: " << zShiftDensity << endl << endl;
-}
-
-void getAxialRotAndZShift(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out){
-	// Setup file reader
-	Reader reader(_opt.geometryDensityFile);
-	reader.open();
-	if(!(reader.is_open())){
-		cerr << "WARNING: Unable to open " << _opt.geometryDensityFile << endl;
-		exit(0);
-	}
-	vector<string> lines = reader.getAllLines();
-
-	// Extract the geometries from a random line of the geometry file
-	int geometryLine = _RNG.getRandomInt(1,lines.size()-1);
-	vector<string> tokens = MslTools::tokenize(lines[geometryLine], "\t");//xShift, crossingAngle, axialRotation, zShift, angleDistDensity, axialRotationDensity, zShiftDensity
-	_opt.axialRotation = MslTools::toDouble(tokens[2]);
-	_opt.zShift = MslTools::toDouble(tokens[3]);
-	double angleDistDensity = MslTools::toDouble(tokens[4]);
-	double axialRotationDensity = MslTools::toDouble(tokens[5]);
-	double zShiftDensity = MslTools::toDouble(tokens[6]);
-	_densities.push_back(0);//temp 0 for now; need to determine density of given geometry later
-	_densities.push_back(axialRotationDensity);
-	_densities.push_back(zShiftDensity);
-
-	// Output to summary file
-	_out << "***STARTING GEOMETRY:***" << endl;
-	_out << "xShift:        " << _opt.xShift << "\tDensity: " << angleDistDensity << endl;
-	_out << "crossingAngle: " << _opt.crossingAngle << "\tDensity: " << angleDistDensity << endl;
-	_out << "axialRotation: " << _opt.axialRotation << "\tDensity: " << axialRotationDensity << endl;
-	_out << "zShift:        " << _opt.zShift << "\tDensity: " << zShiftDensity << endl << endl;
-}
-
 /***************************************
  *define interface and rotamer sampling
  ***************************************/
@@ -137,16 +72,6 @@ void getAxialRotAndZShift(Options &_opt, RandomNumberGenerator &_RNG, vector<dou
 //Example: Sequence:  LLLLIGLLIGLLIGLLLL
 //         Interface: 000011001100110000
 // Positions at interface are 1 and non-interfacial are 0
-vector<uint> getLinked(vector<uint> _rotamerSampling, int _backboneLength, int _interfaceLevel, int _highestRotamerLevel){
-	vector<uint> linkedPositions;
-	for (uint i=0; i<_backboneLength; i++){
-		if (_rotamerSampling[i] < _interfaceLevel || _rotamerSampling[i] == _highestRotamerLevel){
-			linkedPositions.push_back(i);
-		}
-	}
-	return linkedPositions;
-}
-
 // Convert positions to string for setLinkedPositions(std::vector<std::vector<std::string> > &_linkedPositions) which uses "A,19" "B,19" format!
 vector<vector<string>> convertToLinkedFormat(System &_sys, vector<uint> &_interfacePositions, int _backboneLength){
 	vector<vector<string>> stringPositions;
@@ -178,7 +103,6 @@ vector<vector<string>> convertToLinkedFormat(System &_sys, vector<uint> &_interf
 	return stringPositions;
 }
 
-// REDACTED: used to unlink the best state by duplicating the best state for the second chain
 //makes the best state applicable for unlinked positions by duplicating the rotamer at each interfacial position on the opposite chain
 vector<uint> unlinkBestState(vector<uint> _bestState, vector<uint> _interfacePositions, int _backboneLength){
 	int originalSize = _bestState.size();
@@ -191,63 +115,6 @@ vector<uint> unlinkBestState(vector<uint> _bestState, vector<uint> _interfacePos
 /***********************************
  *string output functions
  ***********************************/
-string generateMonomerMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions) {
-	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
-	// A:{32}ALA ILE GLY GLY GLY
-	string ps = "";
-	int counter = 0;
-	for(string::iterator it = _seq.begin(); it != _seq.end(); it++) {
-		if (it == _seq.begin() || it == _seq.end()-1){
-			stringstream ss;
-			ss << *it;
-			string resName = MslTools::getThreeLetterCode(ss.str());
-			if (it == _seq.begin()){
-				if(resName == "HIS") {
-					ps = ps + " HSE-ACE";
-				} else {
-					ps = ps + " " + resName + "-ACE";
-				}
-			} else {
-				if(resName == "HIS") {
-					ps = ps + " HSE-CT2";
-				} else {
-					ps = ps + " " + resName + "-CT2";
-				}
-			}
-			counter++;
-		} else {
-			stringstream ss;
-			ss << *it;
-			string resName = MslTools::getThreeLetterCode(ss.str());
-			if (_interfacialPositions[counter] == 1){
-				ps = ps + " [";
-				if(resName == "HIS") {
-					ps = ps + " HSE";
-				} else {
-					ps = ps + " " + resName;
-				}
-				for (uint i=0; i<_alternateIds.size(); i++){
-					if(_alternateIds[i] == "HIS") {
-						ps = ps + " HSE";
-					} else {
-						ps = ps + " " + _alternateIds[i];
-					}
-				}
-				ps = ps + "] ";
-			} else {
-				if(resName == "HIS") {
-					ps = ps + " HSE";
-				} else {
-					ps = ps + " " + resName;
-				}
-			}
-			counter++;
-		}
-	}
-	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
-	return "A" + ps;
-}
-
 // get the string of an interface sequence in 00010001 format where 1 is an interface residue and 0 is a non-interface residue
 string getInterfaceSequence(int _interfaceLevelLimit, string _interface, string _sequence){
 	string interfaceSequence = "";
@@ -319,7 +186,7 @@ std::vector<pair <int, double> > calculateResidueBurial (System &_sys) {
 //Calculate Residue Burial and output a PDB that highlights the interface
 std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &_startGeom, string _seq) {
 	// polymer sequences have: chain, starting position of chain residue, three letter AA code
-	string polySeq = generatePolymerSequence(_opt.backboneAA, _opt.backboneLength, _opt.thread);
+	string polySeq = convertToPolymerSequence(_seq, _opt.thread);
 	PolymerSequence PS(polySeq);
 
 	// Declare system for dimer
@@ -680,418 +547,6 @@ void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>
 /***********************************
  *calculate energies
  ***********************************/
-void computeMonomerEnergyNoIMM1(Options& _opt, map<string,map<string,double>> &_sequenceEnergyMap, string &_seq, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err) {
-
-	string polySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, _opt.thread);
-	PolymerSequence PS(polySeq);
-
-	// Declare new system
-	System monoSys;
-	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile);
-	CSBMono.setBuildTerm("CHARMM_ELEC", false);
-	CSBMono.setBuildTerm("CHARMM_ANGL", false);
-	CSBMono.setBuildTerm("CHARMM_BOND", false);
-	CSBMono.setBuildTerm("CHARMM_DIHE", false);
-	CSBMono.setBuildTerm("CHARMM_IMPR", false);
-	CSBMono.setBuildTerm("CHARMM_U-BR", false);
-
-	CSBMono.setBuildNonBondedInteractions(false);
-	if (!CSBMono.buildSystem(PS)){
-		cerr << "Unable to build system from " << polySeq << endl;
-	}
-
-	/******************************************************************************
-	 *                         === INITIALIZE POLYGLY ===
-	 ******************************************************************************/
-	// Read in Gly-69 to use as backbone coordinate template
-	CRDReader cRead;
-	cRead.open(_opt.backboneCrd);
-	if(!cRead.read()) {
-		cerr << "Unable to read " << _opt.backboneCrd << endl;
-		exit(0);
-	}
-	cRead.close();
-
-	AtomPointerVector& glyAPV = cRead.getAtomPointers();//*/
-
-	/******************************************************************************
-	 *                         === INITIALIZE POLYGLY ===
-	 ******************************************************************************/
-	monoSys.assignCoordinates(glyAPV,false);
-	monoSys.buildAllAtoms();
-
-	SystemRotamerLoader monoRot(monoSys, _opt.rotLibFile);
-	monoRot.defineRotamerSamplingLevels();
-
-	// Add hydrogen bond term
-	HydrogenBondBuilder monohb(monoSys, _opt.hbondFile);
-	monohb.buildInteractions(50);
-
-	/******************************************************************************
-	 *                     === INITIAL VARIABLE SET UP ===
-	 ******************************************************************************/
-	EnergySet* monoEset = monoSys.getEnergySet();
-	monoEset->setAllTermsActive();
-	monoEset->setTermActive("CHARMM_ELEC", false);
-	monoEset->setTermActive("CHARMM_ANGL", false);
-	monoEset->setTermActive("CHARMM_BOND", false);
-	monoEset->setTermActive("CHARMM_DIHE", false);
-	monoEset->setTermActive("CHARMM_IMPR", false);
-	monoEset->setTermActive("CHARMM_U-BR", false);
-
-	monoEset->setWeight("CHARMM_VDW", 1);
-	monoEset->setWeight("SCWRL4_HBOND", 1);
-
-	/*****************************************************************************
-	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
-	 ******************************************************************************/
-	int firstPos = 0;
-    int lastPos = monoSys.positionSize();
-    deleteTerminalBondInteractions(monoSys,_opt,firstPos,lastPos);
-
-	/*****************************************************************************
-	 *                 === GREEDY TO OPTIMIZE ROTAMERS ===
-	 ******************************************************************************/
-	loadRotamers(monoSys, monoRot, "SL95.00");
-	CSBMono.updateNonBonded(10,12,50);
-
-	// Optimize Initial Starting Position (using Baseline to get back to original result)
-	SelfPairManager monoSpm;
-	monoSpm.seed(_RNG.getSeed());
-	monoSpm.setSystem(&monoSys);
-	monoSpm.setVerbose(false);
-	monoSpm.getMinStates()[0];
-	monoSpm.updateWeights();
-	monoSpm.setOnTheFly(true);
-	monoSpm.saveEnergiesByTerm(true);
-	monoSpm.calculateEnergies();
-
-	/*****************************************************************************
-	 *            === SET SYSTEM TO BEST SPM ROTAMERS AND OUTPUT ===
-	 ******************************************************************************/
-	repackSideChains(monoSpm, 10);
-	vector<uint> stateVec = monoSpm.getMinStates()[0];
-
-	monoSys.setActiveRotamers(stateVec);
-	double monomerEnergy = monoSpm.getStateEnergy(stateVec)*2;
-
-	// Add energy to sequence energy map
-	map<string,double> &energyMap = _sequenceEnergyMap[_seq];
-	outputEnergiesByTerm(monoSpm, stateVec, energyMap, _opt.energyTermList, "MonomerNoIMM1", false);
-	_sequenceEnergyMap[_seq]["MonomerNoIMM1"] = monomerEnergy;
-	vector<double> selfVec = calcBaselineEnergies(monoSys, _opt.thread, _opt.backboneLength);
-	vector<double> pairVec = calcPairBaselineEnergies(monoSys, _opt.thread, _opt.backboneLength);
-	//double self = sumEnergyVector(selfVec);
-	//double pair = sumEnergyVector(pairVec);
-	_sout << "Monomer Energy No IMM1: " << monomerEnergy << endl;
-	//cout << "Self Energy:  " << self << endl;
-	//cout << "Pair Energy:  " << pair << endl;
-	//cout << "Total Energy: " << self+pair << endl;
-}
-
-void computeMonomerEnergyIMM1(System &_sys, System &_helicalAxis, Options &_opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq,
- RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err) {
-
-	Chain & inputChain = _sys.getChain(0);
-	AtomPointerVector &axisA = _helicalAxis.getChain("A").getAtomPointers();
-	AtomPointerVector &axisB = _helicalAxis.getChain("B").getAtomPointers();
-
-	// Declare new system
-	System monoSys;
-	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile, _opt.solvFile);
-	CSBMono.setBuildTerm("CHARMM_ELEC", false);
-	CSBMono.setBuildTerm("CHARMM_ANGL", false);
-	CSBMono.setBuildTerm("CHARMM_BOND", false);
-	CSBMono.setBuildTerm("CHARMM_DIHE", false);
-	CSBMono.setBuildTerm("CHARMM_IMPR", false);
-	CSBMono.setBuildTerm("CHARMM_U-BR", false);
-	CSBMono.setBuildTerm("CHARMM_IMM1REF", true);
-	CSBMono.setBuildTerm("CHARMM_IMM1", true);
-
-	CSBMono.setSolvent("MEMBRANE");
-	CSBMono.setIMM1Params(15, 10);
-	CSBMono.buildSystemFromPDB(inputChain.getAtomPointers());
-
-	SystemRotamerLoader monoRot(monoSys, _opt.rotLibFile);
-	monoRot.defineRotamerSamplingLevels();
-
-	// Add hydrogen bond term
-	HydrogenBondBuilder monohb(monoSys, _opt.hbondFile);
-	monohb.buildInteractions(30);
-	
-	/******************************************************************************
-	 *                     === INITIAL VARIABLE SET UP ===
-	 ******************************************************************************/
-	EnergySet* monoEset = monoSys.getEnergySet();
-	monoEset->setAllTermsInactive();
-	monoEset->setTermActive("CHARMM_IMM1REF", true);
-	monoEset->setTermActive("CHARMM_IMM1", true);
-	monoEset->setTermActive("CHARMM_VDW", true);
-	monoEset->setTermActive("SCWRL4_HBOND", true);
-
-	monoEset->setWeight("CHARMM_VDW", _opt.weight_vdw);
-	monoEset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
-	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
-	monoEset->setWeight("CHARMM_IMM1", _opt.weight_solv);
-
-	/*****************************************************************************
-	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
-	 ******************************************************************************/
-	int firstPos = 0;
-    int lastPos = monoSys.positionSize();
-    deleteTerminalBondInteractions(monoSys,_opt,firstPos,lastPos);
-
-	/*****************************************************************************
-	 *              === LOAD ROTAMERS FOR MONOMER & SET-UP SPM ===
-	 ******************************************************************************/
-	loadRotamers(monoSys, monoRot, _opt.SL);
-	CSBMono.updateNonBonded(10,12,50);
-
-	// Optimize Initial Starting Position (using Baseline to get back to original result)
-	SelfPairManager monoSpm;
-	monoSpm.seed(_RNG.getSeed());
-	monoSpm.setSystem(&monoSys);
-	monoSpm.setVerbose(false);
-	monoSpm.updateWeights();
-	monoSpm.saveEnergiesByTerm(true);
-	monoSpm.calculateEnergies();
-
-	/******************************************************************************
-	 *                     === INITIAL VARIABLE SET UP ===
-	 ******************************************************************************/
-	AtomPointerVector &chainA = monoSys.getAtomPointers();
-
-	/******************************************************************************
-	 *                     === SHIFT HELICES INTO MEMBRANE ===
-	 ******************************************************************************/
-	CartesianPoint moveAxisBOneAngstrom;
-	moveAxisBOneAngstrom.setCoor(1.0, 0.0, 0.0);
-	_trans.translate(axisB, moveAxisBOneAngstrom);
-
-	monoSys.calcEnergy();
-
-	// move center of mass to origin
-	//moveZCenterOfCAMassToOrigin(chainA, helicalAxis.getAtomPointers(), _trans);
-	AtomSelection sel(chainA);
-	AtomPointerVector & caApV = sel.select("name CA");
-	double centerHelix = 0.0;
-	for(int i = 0; i < caApV.size(); i++) {
-		centerHelix += (caApV[i]->getCoor()).getZ();
-	}
-	centerHelix = -1.0 * centerHelix/double(caApV.size());
-
-	CartesianPoint interDistVect;
-	interDistVect.setCoor(0.0, 0.0, centerHelix);
-	_trans.translate(chainA, interDistVect);
-
-	// Initial Z Shift move -5A down
-	CartesianPoint zUnitVector;
-	zUnitVector.setCoor(0.0, 0.0, 1.0);
-
-	CartesianPoint move5Down = zUnitVector * -5.0;
-	_trans.translate(chainA, move5Down);
-	double bestZ = -5.0;
-
-	monoSys.calcEnergy();
-
-	// Repack side chains
-	monoSpm.setOnTheFly(1);
-	monoSpm.calculateEnergies();
-        monoSpm.runGreedyOptimizer(_opt.greedyCycles);
-
-	double currentEnergy = monoSpm.getMinBound()[0];
-	double bestEnergy = currentEnergy;
-	monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
-	monoSys.saveAltCoor("savedBestMonomer");
-	_helicalAxis.saveAltCoor("BestMonomerAxis");
-	//_fout << "current Z: -5 Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
-
-	// Test -5 to +5A shifts in Membrane
-	for(int i=0; i<=10; i++) {
-
-		_trans.translate(chainA, zUnitVector);
-
-		//double currentZ = -5.0 + ((i+1)*1.0);
-		monoSpm.calculateEnergies();
-		monoSpm.runGreedyOptimizer(_opt.greedyCycles);
-		currentEnergy = monoSpm.getMinBound()[0];
-		//_fout << "current Z: " << currentZ << " Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
-
-		if(currentEnergy < bestEnergy) {
-			bestEnergy = currentEnergy;
-			monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
-			monoSys.saveAltCoor("savedBestMonomer");
-			//_helicalAxis.saveAltCoor("BestMonomerAxis");
-			bestZ = -5.0 + ((i+1)*1.0);
-		}
-	}
-
-	// Test at different tilts and rotations
-	monoSys.applySavedCoor("savedBestMonomer");
-	_helicalAxis.applySavedCoor("BestMonomerAxis");
-
-	monoSys.saveAltCoor("bestZ");
-	_helicalAxis.saveAltCoor("bestZ");
-
-	double bestTilt = 0.0;
-	double bestRotation = 0.0;
-	double monoTilt = 0.0;
-	double monoAxialRotation = 0.0;
-	for(int i=1; i<=3; i++) { // test at 3 tilts: 15, 30 and 45 degrees
-		//==================================
-		//====== Membrane Tilt ======
-		//==================================
-		monoSys.applySavedCoor("bestZ");
-		_helicalAxis.applySavedCoor("bestZ");
-
-		monoTilt = i * 15;
-		_trans.rotate(chainA, monoTilt, axisA(0).getCoor(), axisB(0).getCoor());
-		_trans.rotate(axisA, monoTilt, axisA(0).getCoor(), axisB(0).getCoor());
-		for(int j=0; j<=3; j++) { // test at 4 rotations 0, 90, 180 and 270 degrees
-			//==================================
-			//====== Axial Rot ======
-			//==================================
-			monoAxialRotation = j * 90.0;
-
-			monoSpm.calculateEnergies();
-			monoSpm.runGreedyOptimizer(_opt.greedyCycles);
-			currentEnergy = monoSpm.getMinBound()[0];
-			//_fout << "current tilt: " << monoTilt << " current rotation: " << monoAxialRotation << " Energy: " << currentEnergy*2.0 << endl; // must double the energy, as only computed energy for 1 helix
-			//monoSys.writePdb("mono_" + MslTools::doubleToString(monoTilt) + "_" + MslTools::doubleToString(monoAxialRotation) + ".pdb");
-
-			if(currentEnergy < bestEnergy) {
-				bestEnergy = currentEnergy;
-				bestTilt = monoTilt;
-				bestRotation = monoAxialRotation;
-				monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
-				monoSys.saveAltCoor("savedBestMonomer");
-				_helicalAxis.saveAltCoor("BestMonomerAxis");
-			}
-
-			_trans.rotate(chainA, 90.0, axisA(0).getCoor(), axisA(1).getCoor());
-
-		}
-	}
-
-	//MonteCarloManager MCMngr(1000.0, 0.5, _opt.MCCycles, MonteCarloManager::EXPONENTIAL, _opt.MCMaxRejects);
-	MonteCarloManager MCMngr(0.5, 0.5, 100, MonteCarloManager::EXPONENTIAL, 5);
-	MCMngr.setEner(bestEnergy);
-
-	double zShift = bestZ;
-	double crossingAngle = bestTilt;
-	double axialRotation = bestRotation;
-	unsigned int counter = 0;
-
-	while(!MCMngr.getComplete()) {
-
-		monoSys.applySavedCoor("savedBestMonomer");
-		_helicalAxis.applySavedCoor("BestMonomerAxis");
-
-		int moveToPreform = _RNG.getRandomInt(2);
-
-		double deltaZShift = 0.0;
-		double deltaTilt = 0.0;
-		double deltaAxialRotation = 0.0;
-
-		//======================================
-		//====== Z Shift ======
-		//======================================
-		if (moveToPreform == 0) {
-			deltaZShift = getStandardNormal(_RNG) * 1.0;
-			CartesianPoint translateA = axisA(1).getCoor() - axisA(0).getCoor(); // vector minus helical center
-			translateA = translateA.getUnit() * deltaZShift; // unit vector of helical _axis times the amount to shift by
-			_trans.translate(chainA, translateA);
-			//_fout << setiosflags(ios::fixed) << setprecision(3)<< "Zshift: " << deltaZShift << endl;
-
-		} else if (moveToPreform == 1) {
-		//==================================
-		//====== Axial Rot ======
-		//==================================
-			deltaAxialRotation = getStandardNormal(_RNG) * 20.0;
-			_trans.rotate(chainA, deltaAxialRotation, axisA(0).getCoor(), axisA(1).getCoor());
-			//_fout << setiosflags(ios::fixed) << setprecision(3)<< "axial: " << deltaAxialRotation << endl;
-
-		} else if (moveToPreform == 2) {
-		//==================================
-		//====== Membrane Tilt ======
-		//==================================
-			deltaTilt = getStandardNormal(_RNG) * 10;
-			_trans.rotate(chainA, deltaTilt, axisA(0).getCoor(), axisB(0).getCoor());
-			_trans.rotate(axisA, deltaTilt, axisA(0).getCoor(), axisB(0).getCoor());
-			//_fout << setiosflags(ios::fixed) << setprecision(3)<< "tilt: " << deltaTilt << endl;
-		}
-
-		// Run Optimization
-		// Run repack every N steps
-		if (counter % 10 == 0) {
-			//_fout << "repack." << endl;
-			monoSpm.calculateEnergies();
-			monoSpm.runGreedyOptimizer(_opt.greedyCycles);
-
-			currentEnergy = monoSpm.getMinBound()[0];
-		} else {
-			currentEnergy = monoSys.calcEnergy();
-			//_fout << monoEset->getSummary() << endl;
-		}
-
-		if (!MCMngr.accept(currentEnergy)) {
-			//_fout << "state rejected   energy: " << currentEnergy << endl;
-		} else {
-			monoSys.setActiveRotamers(monoSpm.getMinStates()[0]);
-			monoSys.saveAltCoor("savedBestMonomer");
-			_helicalAxis.saveAltCoor("BestMonomerAxis");
-			bestEnergy = currentEnergy;
-
-			crossingAngle = crossingAngle + deltaTilt;
-			axialRotation = axialRotation + deltaAxialRotation;
-			zShift = zShift +  deltaZShift;
-		}
-		counter++;
-	}
-
-	/******************************************************************************
-	 *               === PRINT OUT MONOMER / STORE ENERGIES ===
-	 ******************************************************************************/
-	//Calculate Monomer energy for output
-	monoSys.applySavedCoor("savedBestMonomer");
-	_helicalAxis.applySavedCoor("BestMonomerAxis");
-	vector<uint> stateVec = monoSpm.getMinStates()[0];
-	monoSys.setActiveRotamers(stateVec);
-	double monomerEnergy = monoSpm.getMinBound()[0]*2;
-
-	//Setup SasaCalculator to calculate the monomer SASA
-	SasaCalculator monoSasa(monoSys.getAtomPointers());
-	monoSasa.calcSasa();
-	double monomerSasa = monoSasa.getTotalSasa();
-	double totalMonomerSasa = monomerSasa*2;
-
-	// Add energy to sequence energy map
-	map<string,double> &energyMap = _sequenceEnergyMap[_seq];
-	outputEnergiesByTerm(monoSpm, stateVec, energyMap, _opt.energyTermList, "Monomer", true);
-	_sequenceEnergyMap[_seq]["Monomer"] = monomerEnergy;
-	_sequenceEnergyMap[_seq]["MonomerSasa"] = totalMonomerSasa;
-	double dimerEnergy = _sequenceEnergyMap[_seq]["Dimer"];
-	cout << "Dimer Energy: " << _seq << ": " << dimerEnergy << endl;
-	double totalEnergy = dimerEnergy-monomerEnergy;
-	_sout << "-Dimer - Monomer = " << dimerEnergy << " - " << monomerEnergy << " = " << totalEnergy << endl;
-	cout << "-Dimer - Monomer = " << dimerEnergy << " - " << monomerEnergy << " = " << totalEnergy << endl;
-	_sequenceEnergyMap[_seq]["preRepackTotal"] = totalEnergy;
-
-	// calculate the energy of the monomer for positions 4-18
-	if (_opt.useAlaAtTermini){
-		vector<double> selfVec = calcBaselineEnergies(monoSys, _opt.thread, _opt.backboneLength);
-		vector<double> pairVec = calcPairBaselineEnergies(monoSys, _opt.thread, _opt.backboneLength);
-		double self = sumEnergyVector(selfVec);
-		double pair = sumEnergyVector(pairVec);
-		_sequenceEnergyMap[_seq]["MonomerWithoutAlaEnds"] = 2*(self+pair);
-	}
-	// Clear saved coordinates
-	monoSys.clearSavedCoor("savedBestMonomer");
-	monoSys.clearSavedCoor("bestZ");
-	_helicalAxis.clearSavedCoor("BestMonomerAxis");
-	_helicalAxis.clearSavedCoor("bestZ");
-}
-
 //void computeMonomerEnergies(Options &_opt, Transforms &_trans, map<string, map<string,double>> &_sequenceEnergyMap, vector<string> &_seqs,
 // RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err){
 //	time_t startTimeMono, endTimeMono;
@@ -1296,7 +751,7 @@ double calcNumberOfPermutations(map<string,int> _seqAACounts, int _seqLength){
 	// as of 2022-11-3: running this again per Alessandro; it should be n!/(numAA1!*numAA2!*...)
 	map<string,int>::iterator itr;
 	for(itr = _seqAACounts.begin(); itr != _seqAACounts.end(); itr++){
-		cout << itr->first << ": " << itr->second << endl;
+		//cout << itr->first << ": " << itr->second << endl;
 		for (uint j=itr->second; j>1; j--){
 			permutationDenominator = permutationDenominator*j;
 		}
@@ -1477,6 +932,8 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("MCCurve");
 	opt.allowed.push_back("MCConvergedSteps");
 	opt.allowed.push_back("MCConvergedE");
+	opt.allowed.push_back("MCResetTemp");
+	opt.allowed.push_back("MCResetCycles");
 
 	// Backbone Monte Carlo variables
 	opt.allowed.push_back("backboneMCCycles");
@@ -1486,10 +943,12 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("backboneMCCurve");
 	opt.allowed.push_back("backboneConvergedSteps");
 	opt.allowed.push_back("backboneConvergedE");
+	opt.allowed.push_back("backboneSearchCycles");
 
 	// use different energy parameters
 	opt.allowed.push_back("useIMM1");
 	opt.allowed.push_back("useElec");
+	opt.allowed.push_back("compareSasa");
 	
 	//Weights
 	opt.allowed.push_back("weight_vdw");
@@ -1813,6 +1272,12 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningFlag = true;
 		opt.useElec = false;
 	}
+	opt.compareSasa = OP.getBool("compareSasa");
+	if (OP.fail()) {
+		opt.warningMessages += "compareSasa not specified, defaulting to false\n";
+		opt.warningFlag = true;
+		opt.compareSasa = false;
+	}
 	
 	// starting geometry
 	opt.xShift = OP.getDouble("xShift");
@@ -1862,6 +1327,7 @@ Options parseOptions(int _argc, char * _argv[]){
 	}
 	if (opt.negRot == true){
 		opt.axialRotation = opt.axialRotation-100;
+		//opt.axialRotation = -opt.axialRotation;//for CATM geometries?
 	}
 	opt.thread = OP.getInt("thread");
 	if (OP.fail()) {
@@ -1901,8 +1367,9 @@ Options parseOptions(int _argc, char * _argv[]){
 	//Monte Carlo parameters
 	opt.MCCycles = OP.getInt("MCCycles");
 	if (OP.fail()) {
-		opt.errorMessages += "Number of MC cycles not specified!\n";
-		opt.errorFlag = true;
+		opt.warningMessages += "Number of MCResetCycles not specified, using 100\n";
+		opt.warningFlag = true;
+		opt.MCCycles = 100;
 	}
 	opt.MCMaxRejects = OP.getInt("MCMaxRejects");
 	if (OP.fail()) {
@@ -1940,6 +1407,18 @@ Options parseOptions(int _argc, char * _argv[]){
 	//	opt.warningFlag = true;
 	//	opt.MCConvergedE = 0.01;
 	//}
+	opt.MCResetTemp = OP.getDouble("MCResetTemp");
+	if (OP.fail()) {
+		opt.warningMessages += "MCResetTemp not specified using 1000.0\n";
+		opt.warningFlag = true;
+		opt.MCResetTemp = 3649; // 50% likelihood of accepting a solution within 5kcals
+	}
+	opt.MCResetCycles = OP.getInt("MCResetCycles");
+	if (OP.fail()) {
+		opt.warningMessages += "Number of MCResetCycles not specified, using 100\n";
+		opt.warningFlag = true;
+		opt.MCResetCycles = 100;
+	}
 
 	// Backbone Monte Carlo parameters
 	opt.backboneMCCycles = OP.getInt("backboneMCCycles");
@@ -1983,6 +1462,12 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningMessages += "backboneConvergedE not specified using 0.001\n";
 		opt.warningFlag = true;
 		opt.backboneConvergedE = 0.001;
+	}
+	opt.backboneSearchCycles = OP.getInt("backboneSearchCycles");
+	if (OP.fail()) {
+		opt.backboneSearchCycles = 5;
+		opt.warningMessages += "Number of backbone search cycles not specified, default to 5\n";
+		opt.warningFlag = true;
 	}
 
 	// repack parameters	
@@ -2140,3 +1625,647 @@ Options parseOptions(int _argc, char * _argv[]){
 
 	return opt;
 }
+
+///***********************************
+// *geometry
+// ***********************************/
+//void moveZCenterOfCAMassToOrigin(AtomPointerVector& _apV, AtomPointerVector& _axis, Transforms & _trans) {
+//	AtomSelection sel(_apV);
+//	AtomPointerVector & caApV = sel.select("name CA");
+//	double zShift = 0.0;
+//	for(int i = 0; i < caApV.size(); i++) {
+//		zShift += (caApV[i]->getCoor()).getZ();
+//	}
+//	zShift = -1.0 * zShift/double(caApV.size());
+//
+//	CartesianPoint interDistVect;
+//	interDistVect.setCoor(0.0, 0.0, zShift);
+//	_trans.translate(_apV, interDistVect);
+//	_trans.translate(_axis, interDistVect);
+//}
+//
+//void c2Symmetry(AtomPointerVector & _apvA, AtomPointerVector & _apvB) {
+//	// Set coordinates of chain A to chain B
+//	for (uint i=0; i < _apvA.size(); i++) {
+//		_apvB[i]->copyAllCoor(*_apvA[i]);
+//	}
+//
+//	// Rotation matrix for 180 degrees
+//	// flips the sign on the x and y coordinates
+//	Matrix m(3,3,0.0);
+//	m[0][0] = -1.0;
+//	m[0][1] = 0.0;
+//	m[0][2] = 0.0;
+//	m[1][0] = 0.0;
+//	m[1][1] = -1.0;
+//	m[1][2] = 0.0;
+//	m[2][0] = 0.0;
+//	m[2][1] = 0.0;
+//	m[2][2] = 1.0;
+//
+//	// Rotate chain B around Z axis
+//	Transforms trans;
+//	trans.rotate(_apvB, m);
+//}
+//
+//void transformation(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, CartesianPoint & _ori, CartesianPoint & _xAxis, CartesianPoint & _zAxis, double _zShift, double _axialRotation, double _crossingAngle, double _xShift, Transforms & _trans) {
+//
+//	//====== Z Shift (Crossing Point) ======
+//	CartesianPoint zShiftCP(0.0, 0.0, _zShift);
+//	_trans.translate(_chainA, zShiftCP);
+//
+//	//===== Axial Rotation ======
+//	_trans.rotate(_chainA, _axialRotation, _ori, _zAxis);
+//
+//	//====== Local Crossing Angle ======
+//	_trans.rotate(_chainA, (_crossingAngle/2.0), _ori, _xAxis);
+//	_trans.rotate(_axisA, (_crossingAngle/2.0), _ori, _xAxis);
+//
+//	//====== X shift (Interhelical Distance) =======
+//	CartesianPoint interDistVect;
+//	interDistVect.setCoor((-1.0*_xShift/2.0), 0.0, 0.0);
+//	_trans.translate(_chainA, interDistVect);
+//	_trans.translate(_axisA, interDistVect);
+//
+//	c2Symmetry(_chainA, _chainB);
+//	c2Symmetry(_axisA, _axisB);
+//}
+//
+//void backboneMovement(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, Transforms _trans, double _deltaMove, unsigned int moveType) {
+//
+//	 if (moveType == 0) {
+//		// Z Shift
+//		CartesianPoint translateA = _axisA(1).getCoor() - _axisA(0).getCoor(); // vector minus helical center
+//		translateA = translateA.getUnit() * _deltaMove; // unit vector of helical _axis times the amount to shift by
+//
+//		_trans.translate(_chainA, translateA);
+//
+//		c2Symmetry(_chainA, _chainB);
+//		c2Symmetry(_axisA, _axisB);
+//
+//	} else if (moveType == 1) {
+//		// Axial Rotation
+//		_trans.rotate(_chainA, (_deltaMove), _axisA(0).getCoor(), _axisA(1).getCoor());
+//
+//		c2Symmetry(_chainA, _chainB);
+//		c2Symmetry(_axisA, _axisB);
+//
+//	} else 	if (moveType == 2) {
+//		// Crossing Angle
+//		_trans.rotate(_chainA, (_deltaMove * 0.5), _axisA(0).getCoor(), _axisB(0).getCoor());
+//		_trans.rotate(_axisA, (_deltaMove * 0.5), _axisA(0).getCoor(), _axisB(0).getCoor());
+//
+//		c2Symmetry(_chainA, _chainB);
+//		c2Symmetry(_axisA, _axisB);
+//
+//	} else if (moveType == 3) {
+//		// XShift
+//		// Helix A interhelical distance
+//		CartesianPoint translateA = _axisB(0).getCoor() - _axisA(0).getCoor(); // vector minus helical center
+//		translateA = translateA.getUnit() * _deltaMove * -0.5; // unit vector of helical axis times the amount to shift by
+//
+//		_trans.translate(_chainA, translateA);
+//		_trans.translate(_axisA, translateA);
+//
+//		// Helix B interhelical distance
+//		c2Symmetry(_chainA, _chainB);
+//		c2Symmetry(_axisA, _axisB);
+//
+//	} else {
+//		cerr << "Unknown moveType " << moveType << " in backboneMovement. Should be 0-3 " << endl;
+//	}
+//}
+//
+//map<string,double> getEnergyByTerm(EnergySet* _eSet) {
+//	// get all terms
+//	map<string,double> eByTerm;
+//	map<string,vector<Interaction*> > * allTerms = _eSet->getEnergyTerms();
+//	for(map<string,vector<Interaction*> >::iterator it = allTerms->begin(); it != allTerms->end(); it++) {
+//		if(_eSet->isTermActive(it->first)) {
+//			eByTerm[it->first] =  _eSet->getTermEnergy(it->first);
+//		}
+//	}
+//	return eByTerm;
+//}
+//
+//map<string,double> getEnergyByTermDoubled(EnergySet* _eSet) {
+//	// get all terms
+//	map<string,double> eByTerm;
+//	map<string,vector<Interaction*> > * allTerms = _eSet->getEnergyTerms();
+//	for(map<string,vector<Interaction*> >::iterator it = allTerms->begin(); it != allTerms->end(); it++) {
+//		if(_eSet->isTermActive(it->first)) {
+//			eByTerm[it->first] =  2.0* _eSet->getTermEnergy(it->first);
+//		}
+//	}
+//	return eByTerm;
+//}
+//
+//void checkIfAtomsAreBuilt(System &_sys, ofstream &_err){
+//	for (uint i=0; i<_sys.atomSize(); i++){
+//		Atom atom = _sys.getAtom(i);
+//		if (!atom.hasCoor()){
+//			_err << "Atom " << i << " was not assigned coordinates; program termination";
+//			cout << "Atom " << i << " was not assigned coordinates; program termination";
+//			break;
+//		} else {
+//			continue;
+//		}
+//	}
+//}
+//
+//string generateMonomerPolymerSequenceFromSequence(string _sequence, int _startResNum) {
+//	string ps = "";
+//	for (uint i=0; i<_sequence.length(); i++){
+//		stringstream tmp;
+//		tmp << _sequence[i];
+//		string aa = tmp.str();
+//		string resName = MslTools::getThreeLetterCode(aa);
+//		if(resName == "HIS") {
+//			resName = "HSE";
+//		}
+//		ps = ps + " " + resName;
+//	}
+//	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+//	return "A" + ps;
+//}
+//string generatePolymerSequence(string _backboneAA, int _backboneLength, int _startResNum) {
+//	string ps = "";
+//	string resName = MslTools::getThreeLetterCode(_backboneAA);
+//	if(resName == "HIS") {
+//		resName = "HSE";
+//	}
+//	for (uint i=0; i<_backboneLength; i++){
+//		ps = ps + " " + resName;
+//	}
+//	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+//	return "A" + ps + "\nB" + ps;
+//}
+//
+//
+///***********************************
+// *load rotamer functions
+// ***********************************/
+//void loadMonomerRotamers(System &_sys, SystemRotamerLoader &_sysRot){
+//	for (uint k=0; k<_sys.positionSize(); k++) {
+//		Position &pos = _sys.getPosition(k);
+//		if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+//			if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), "SL90.00")) {//lower rotamer level because I did baselines at this level
+//				cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+//			}
+//		}
+//	}
+//}
+//void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
+//	for (uint k=0; k < _sys.positionSize(); k++) {
+//		Position &pos = _sys.getPosition(k);
+//
+//		if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+//			if (!_sysRot.loadRotamers(&pos, pos.getResidueName(),_SL)) {
+//				cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+//			}
+//		}
+//	}
+//}
+//
+//// converts a polymer sequence to a string for one chain (for homodimer sequences)
+//string convertPolymerSeqToOneLetterSeq(Chain &_chain) {
+//	string seq = "";
+//	for (uint i=0; i<_chain.positionSize(); i++){
+//		string resName = _chain.getPosition(i).getCurrentIdentity().getResidueName();
+//		string resID = MslTools::getOneLetterCode(resName);
+//		seq += resID;
+//	}
+//	return seq;
+//}
+//
+//// output energies by term into a referenced energyMap
+//void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
+//vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
+//	if (_includeIMM1 == false){//No IMM1 Energy (for the Monte Carlos, both dimer and monomer)
+//		for (uint i=0; i<_energyTermList.size(); i++){
+//			string energyTerm = _energyTermList[i]; //CHARMM_ and SCWRL4_ terms
+//			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;//Removes the CHARMM_ and SCWRL4_ before energyTerm names
+//			if (energyTerm.find("IMM1") != string::npos){
+//				continue;
+//			} else {
+//				if (_energyDescriptor.find("Monomer") != string::npos){
+//					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
+//				} else {
+//					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
+//				}
+//			}
+//		}
+//		if (_energyDescriptor.find("Monomer") != string::npos){
+//			//skip if monomer; could add calc baseline here at some point
+//		} else {
+//			_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
+//			_energyMap["DimerSelfBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE");
+//			_energyMap["DimerPairBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
+//		}
+//	} else if (_includeIMM1 == true){//IMM1 Energies
+//		for (uint i=0; i<_energyTermList.size(); i++){
+//			string energyTerm = _energyTermList[i];
+//			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;
+//			if (_energyDescriptor.find("Monomer") != string::npos){
+//				if (energyTerm.find("IMM1") != string::npos){
+//					_energyMap["IMM1Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
+//				} else {
+//					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
+//				}
+//			} else {
+//				if (energyTerm.find("IMM1") != string::npos){
+//					_energyMap["IMM1Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
+//				} else {
+//					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
+//				}
+//			}
+//		}
+//		//_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
+//	}
+//}
+//
+////void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
+////	for (uint k=0; k<_sys.positionSize(); k++) {
+////		Position &pos = _sys.getPosition(k);
+////		if (pos.identitySize() > 1){
+////			for (uint j=0; j < pos.getNumberOfIdentities(); j++){
+////				pos.setActiveIdentity(j);
+////				if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+////					if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
+////						cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+////					}
+////				}
+////			}
+////			pos.setActiveIdentity(0);
+////		} else {
+////			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+////				if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
+////					cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+////				}
+////			}
+////		}
+////	}
+////}
+//
+////below function only loads rotamers onto the interfacial positions by interfacialPositions (01 where 0 = non-interfacial and 1 = interfacial)
+//void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<int> _interface){
+//	for (uint k=0; k<_interface.size(); k++) {
+//		if (_interface[k] < _numRotamerLevels){
+//			Position &pos = _sys.getPosition(k);
+//			if (pos.identitySize() > 1){
+//				for (uint j=0; j < pos.getNumberOfIdentities(); j++){
+//					pos.setActiveIdentity(j);
+//					if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+//						if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
+//							cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+//						}
+//					}
+//					pos.setActiveIdentity(0);
+//				}
+//			} else {
+//				if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+//					if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
+//						cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+//					}
+//				}
+//			}
+//		}
+//	}
+//}
+//
+//void repackSideChains(SelfPairManager & _spm, int _greedyCycles) {
+//	_spm.setOnTheFly(1);
+//	_spm.calculateEnergies(); // CHANGE BACK!!!
+//	_spm.runGreedyOptimizer(_greedyCycles);
+//}
+//
+///***********************************
+// *functions from designFunctions
+// ***********************************/
+//string getAlternateIdString(vector<string> _alternateIds){
+//	string alternateIdsString = "";
+//	for (uint i=0; i<_alternateIds.size(); i++){
+//		if (i == _alternateIds.size()-1){
+//			alternateIdsString += _alternateIds[i];
+//		} else {
+//			alternateIdsString += _alternateIds[i] += " ";
+//		}
+//	}
+//	return alternateIdsString;
+//}
+//
+//
+//string convertVectorUintToString(vector<uint> _inputVector){
+//	string outputString = "";
+//	for (uint i=0; i<_inputVector.size(); i++){
+//		outputString += MslTools::intToString(_inputVector[i]);
+//	}
+//	return outputString;
+//}
+//
+//// get the positions that will be linked on the interface (will have same AA identity and rotamer for self consistent mean field)
+//vector<uint> getLinkedPositions(vector<uint> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel){
+//	vector<uint> positionsToLink;
+//	for (uint i=0; i<_rotamerSampling.size(); i++){
+//		if (_rotamerSampling[i] < _interfaceLevel || _rotamerSampling[i] == _highestRotamerLevel){
+//			positionsToLink.push_back(1);
+//		} else {
+//			positionsToLink.push_back(0);
+//		}
+//	}
+//	return positionsToLink;
+//}
+//
+//// define the rotamer level for each position in the backbone
+//vector<uint> convertStringToVectorUint(string _inputString){
+//	vector<uint> outputVec;
+//	for (uint i=0; i<_inputString.size(); i++){
+//		stringstream ss;
+//		ss << _inputString[i];
+//		uint stringToInt = MslTools::toUnsignedInt(ss.str());
+//		outputVec.push_back(stringToInt);
+//	}
+//	return outputVec;
+//}
+//
+//// get a backbone sequence with an alanine cap at the beginning and end as an option
+//string generateBackboneSequence(string _backboneAA, int _length, bool _useAlaCap) {
+//	// initial start of sequence
+//	string str = "";
+//	//2021-09-21: add in an alanine cap to allow for more variable positions at the leucine region
+//	for (uint i=0; i<_length-3; i++){
+//		if (i<3){
+//			if (_useAlaCap == true){
+//				str = str + "A";
+//			} else {
+//				str = str + _backboneAA;
+//			}
+//		} else {
+//			str = str + _backboneAA;
+//		}
+//	}
+//	// Adds in the LILI at the end of the sequence which is necessary for our TOXCAT plasmids
+//	if (_useAlaCap == true){
+//		str = str + "AAA";
+//	} else {
+//		str = str + "ILI";
+//	}
+//	return str;
+//}
+//
+//// generate string for backbone sequence
+//string generateString(string _backbone, int _length) {
+//	string str = "";
+//	for (uint i=0; i<_length; i++){
+//		str = str + _backbone;
+//	}
+//	return str;
+//}
+//
+//string generateMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions) {
+//	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+//	// A:{32}ALA ILE GLY GLY GLY
+//	// B:{32}ALA ILE GLY GLY GLY
+//	string ps = "";
+//	int counter = 0;
+//	int startPos = _startResNum;
+//	int endPos = _startResNum+_seq.length();
+//	for(string::iterator it = _seq.begin(); it != _seq.end(); it++) {
+//		int pos = it-_seq.begin()+_startResNum;
+//		if (it == _seq.begin() || it == _seq.end()-1){
+//		//if (it == _seq.begin()){
+//			stringstream ss;
+//			ss << *it;
+//			string resName = MslTools::getThreeLetterCode(ss.str());
+//			if (it == _seq.begin()){
+//				if(resName == "HIS") {
+//					ps = ps + " HSE-ACE";
+//				} else {
+//					ps = ps + " " + resName + "-ACE";
+//				}
+//			} else {
+//				if(resName == "HIS") {
+//					ps = ps + " HSE-CT2";
+//				} else {
+//					ps = ps + " " + resName + "-CT2";
+//				}
+//			}
+//			counter++;
+//		} else if (pos < startPos+3 || pos > endPos-5){
+//			stringstream ss;
+//			ss << *it;
+//			string resName = MslTools::getThreeLetterCode(ss.str());
+//			if(resName == "HIS") {
+//				ps = ps + " HSE";
+//			} else {
+//				ps = ps + " " + resName;
+//			}
+//		} else {
+//			stringstream ss;
+//			ss << *it;
+//			string resName = MslTools::getThreeLetterCode(ss.str());
+//			//cout << pos << endl;
+//			if (find(_interfacialPositions.begin(), _interfacialPositions.end(), pos) != _interfacialPositions.end()){
+//				ps = ps + " [";
+//				for (uint i=0; i<_alternateIds.size(); i++){
+//					if(_alternateIds[i] == "HIS") {
+//						ps = ps + " HSE";
+//					} else {
+//						ps = ps + " " + _alternateIds[i];
+//					}
+//				}
+//				ps = ps + "] ";
+//			} else {
+//				if(resName == "HIS") {
+//					ps = ps + " HSE";
+//				} else {
+//					ps = ps + " " + resName;
+//				}
+//			}
+//			counter++;
+//		}
+//	}
+//	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+//	return "A" + ps + "\nB" + ps;
+//}
+//
+////Code Samson made a while back that should get each active ID and set a mask for anything that isn't active
+//std::vector < std::vector < bool > > getActiveMask (System &_sys) {
+//	_sys.updateVariablePositions();
+//	std::vector <unsigned int> residueState;
+//	std::vector < std::vector<unsigned int> > resRots(_sys.getMasterPositions().size());
+//	std::vector < std::vector<bool> > resMask(_sys.getMasterPositions().size());
+//	//Initialize residue state at the current active identity for each position
+//	for (unsigned int i = 0; i < _sys.getMasterPositions().size(); i++) {
+//		Position &pos = _sys.getPosition(_sys.getMasterPositions()[i]);
+//		unsigned int activeRes = pos.getActiveIdentity();
+//		residueState.push_back(activeRes);
+//
+//		resRots[i] = std::vector<unsigned int> (pos.identitySize());
+//		for (unsigned int j = 0; j < pos.identitySize(); j++) {
+//			resRots[i][j] = pos.getTotalNumberOfRotamers(j);
+//		}
+//	}
+//
+//	for (unsigned int i = 0; i < residueState.size(); i++) {
+//		unsigned int activeResidue = residueState[i];
+//		if (activeResidue >= resRots[i].size()) {
+//			cerr << "ERROR: the current residue number exceeds the number of residues for position " << i << endl;
+//			exit(100);
+//		}
+//		for (unsigned int j = 0; j < resRots[i].size(); j++) {
+//			if (j==activeResidue) {
+//				for (unsigned int k = 0; k < resRots[i][j]; k++) {
+//					resMask[i].push_back(true);
+//				}
+//			} else {
+//				for (unsigned int k = 0; k < resRots[i][j]; k++) {
+//					resMask[i].push_back(false);
+//				}
+//			}
+//		}
+//
+//		//Sanity check for presence of true rotamers
+//
+//		bool trueRots = false;
+//		for (unsigned int j = 0; j < resMask[i].size(); j++) {
+//			if (resMask[i][j]) {
+//				trueRots = true;
+//			}
+//		}
+//		if (!trueRots) {
+//			cerr << "ERROR AT POSITION: " << i << endl;
+//			cerr << "Current Residue: " << activeResidue << endl;
+//			cerr << "resRots at this position: " << endl;
+//			for (uint k = 0; k < resRots[i].size(); k++) {
+//				cerr << resRots[i][k] << " ";
+//			}
+//			cerr << endl;
+//			cerr << "resMask at this position: " << endl;
+//			for (uint k = 0; k < resMask[i].size(); k++) {
+//				cerr << resMask[i][k] << " ";
+//			}
+//			cerr << endl;
+//			exit(9123);
+//		}
+//	}
+//	return resMask;
+//}
+//
+//string convertToPolymerSequence(string _seq, int _startResNum) {
+//	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+//	// A:{32}ALA ILE GLY GLY GLY
+//	// B:{32}ALA ILE GLY GLY GLY
+//	string ps = "";
+//	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
+//		stringstream ss;
+//		ss << *it;
+//		string resName = MslTools::getThreeLetterCode(ss.str());
+//		if(resName == "HIS") {
+//			ps = ps + " HSE";
+//		} else {
+//			ps = ps + " " + resName;
+//		}
+//	}
+//	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+//	return "A" + ps + "\nB" + ps;
+//}
+//
+//string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum) {
+//	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+//	// A:{32}ALA ILE GLY GLY GLY
+//	// B:{32}ALA ILE GLY GLY GLY
+//	string ps = "";
+//	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
+//		if (it == _seq.begin() || it == _seq.end()-1){
+//			stringstream ss;
+//			ss << *it;
+//			string resName = MslTools::getThreeLetterCode(ss.str());
+//			if (it == _seq.begin()){
+//				if(resName == "HIS") {
+//					ps = ps + " HSE-ACE";
+//				} else {
+//					ps = ps + " " + resName + "-ACE";
+//				}
+//			} else {
+//				if(resName == "HIS") {
+//					ps = ps + " HSE-CT2";
+//				} else {
+//					ps = ps + " " + resName + "-CT2";
+//				}
+//			}
+//		} else {
+//			stringstream ss;
+//			ss << *it;
+//			string resName = MslTools::getThreeLetterCode(ss.str());
+//			if(resName == "HIS") {
+//				ps = ps + " HSE";
+//			} else {
+//				ps = ps + " " + resName;
+//			}
+//		}
+//	}
+//	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+//	return "A" + ps + "\nB" + ps;
+//}
+//
+//string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum) {
+//	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+//	// A:{32}ALA ILE GLY GLY GLY
+//	string ps = "";
+//	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
+//		if (it == _seq.begin() || it == _seq.end()-1){
+//			stringstream ss;
+//			ss << *it;
+//			string resName = MslTools::getThreeLetterCode(ss.str());
+//			if (it == _seq.begin()){
+//				if(resName == "HIS") {
+//					ps = ps + " HSE-ACE";
+//				} else {
+//					ps = ps + " " + resName + "-ACE";
+//				}
+//			} else {
+//				if(resName == "HIS") {
+//					ps = ps + " HSE-CT2";
+//				} else {
+//					ps = ps + " " + resName + "-CT2";
+//				}
+//			}
+//		} else {
+//			stringstream ss;
+//			ss << *it;
+//			string resName = MslTools::getThreeLetterCode(ss.str());
+//			if(resName == "HIS") {
+//				ps = ps + " HSE";
+//			} else {
+//				ps = ps + " " + resName;
+//			}
+//		}
+//	}
+//	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+//	return "A" + ps;
+//}
+//
+////Function to get the sum of a vector of doubles, typically energies
+//double sumEnergyVector(vector<double> _energies){
+//	double ener = 0;
+//	for (uint i=0; i<_energies.size(); i++){
+//		ener = ener + _energies[i];
+//	}
+//	return ener;
+//}
+//
+//void resetEnergySet(System &_sys, vector<string> _energyTermList){
+//	for (uint i=0; i<_energyTermList.size(); i++){
+//		string energyTerm = _energyTermList[i];
+//		_sys.getEnergySet()->eraseTerm(energyTerm);
+//	}
+//}
+//
+//void writePdb(System &_sys, string _outputDir, string _pdbName){
+//	PDBWriter writer;
+//	writer.open(_outputDir + "/" + _pdbName + ".pdb");
+//	writer.write(_sys.getAtomPointers(), true, false, false);
+//	writer.close();
+//}
+//
