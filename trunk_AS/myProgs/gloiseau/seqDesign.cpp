@@ -276,6 +276,7 @@ int main(int argc, char *argv[]){
 		 allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
 		// add in the starting geometries to the map	
 		addGeometryToEnergyMap(startGeometries, sequenceEnergyMapBest, bestSequence);
+		// TODO: going to set up this today; save x number of sequences from the search and then optimize them with threading
 		// if the sequence is different, optimize the backbone
 		if (prevSequence != bestSequence){ 
 			// switch the sequence to the best sequence from the search monte carlo
