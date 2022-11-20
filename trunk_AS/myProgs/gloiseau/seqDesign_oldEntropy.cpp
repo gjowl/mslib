@@ -252,9 +252,10 @@ int main(int argc, char *argv[]){
 
 	// get the starting sequence	
 	Chain &chainA = sys.getChain("A");
+	//string seq = chainA.toString();// check if this works: if so, change convertPolymerSeq to this
 	string seq = convertPolymerSeqToOneLetterSeq(chainA);
 	cout << "Sequence before stateMC: " << seq << endl;
-
+	
 	/******************************************************************************
 	 *   === MONTE CARLO TO SEARCH FOR BEST SEQUENCES AND BACKBONE OPTIMIZE ===
 	 ******************************************************************************/
@@ -264,11 +265,7 @@ int main(int argc, char *argv[]){
 	map<string, double> startGeometries = getGeometryMap(opt, "start");
 	addGeometryToEnergyMap(startGeometries, sequenceEnergyMapBest, bestSequence);
 
-	// loop through sequence search and backbone optimization
-	// realized that my sequence search works well for a backbone, and my optimization works well for a sequence, so why am I doing them concurrently?
-	// instead, I can do more backbone cycles for multiple sequence searches? May be easier to explain than iterative sequence search and optimization
-	// is it possible to pass an energy set to multiple systems?
-	// TODO: I don't think I can do this; I would need to be able to copy the energy set to a new system, which I don't think I can do
+	// loop through sequence search and backbone optimization 
 	for (uint i=0; i<opt.backboneSearchCycles; i++){
 		vector<uint> bestState;
 		// run state Monte Carlo to get a random sequence from the best state
@@ -276,7 +273,6 @@ int main(int argc, char *argv[]){
 		 allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
 		// add in the starting geometries to the map	
 		addGeometryToEnergyMap(startGeometries, sequenceEnergyMapBest, bestSequence);
-		// TODO: going to set up this today; save x number of sequences from the search and then optimize them with threading
 		// if the sequence is different, optimize the backbone
 		if (prevSequence != bestSequence){ 
 			// switch the sequence to the best sequence from the search monte carlo
@@ -656,7 +652,8 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 	_sequenceEnergyMap[_bestSequence]["SequenceProbability"] = sequenceProbability;
 	_sequenceEnergyMap[_bestSequence]["SequenceEntropy"] = sequenceEntropy;
 	_sequenceEnergyMap[_bestSequence]["Totalw/Entropy"] = energyAndEntropyTotal;
-	bestEnergy = energyAndEntropyTotal;
+	//bestEnergy = energyAndEntropyTotal;
+	double prevProb = sequenceProbability;
 
 	// State variable setup
 	vector<unsigned int> prevStateVec = _bestState;
@@ -687,7 +684,8 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 	bool decreaseMCRun = false;
 
 	// Monte Carlo while loop for finding the best sequences
-	string energyTermToEvaluate = "Totalw/Entropy";
+	//string energyTermToEvaluate = "Totalw/Entropy";
+	string energyTermToEvaluate = "Dimerw/Baseline";
 	double bestProb = sequenceProbability;
 	while (!MC.getComplete()){
 		// get the sequence entropy probability for the current best sequence
@@ -701,26 +699,35 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 		string currSeq = getSequenceUsingMetropolisCriteria(sequenceEnergyMap, _RNG, currTemp, energyTermToEvaluate);
 		// extract energies from the sequence energy map for the chosen sequence
 		double currEnergy = sequenceEnergyMap[currSeq][energyTermToEvaluate]; // energy total for current sequence (dimer+baseline+sequence entropy)
-		double currStateEntropy = sequenceEnergyMap[currSeq]["SequenceEntropy"];
+		double currProb = sequenceEnergyMap[currSeq]["SequenceProbability"];
 		// compare the entropy between the current sequence and previous sequence 
 		vector<uint> currStateVec = sequenceVectorMap[currSeq]; // current state vector for current sequence (best rotamers and sequence identities)
-
-		//MC.setEner(bestEnergyTotal);
+		double totalProb = bestProb+currProb;
+		double currSeqProp = currProb/totalProb; 
+		double prevSeqProp = bestProb/totalProb;
+		// calculate the entropy contribution for each sequence
+		double prevStateEntropy = -log(prevSeqProp)*0.592*_opt.weight_seqEntropy;//Multiplies the energy (log proportion times RT in kcal/mol) by the sequence entropy weight (weight of 1 gives entropy same weight as other terms)
+		double currStateEntropy = -log(currSeqProp)*0.592*_opt.weight_seqEntropy;
+		cout << "currSeqProp: " << currSeqProp << " prevSeqProp: " << prevSeqProp << endl;
+		// add entropy to the energy 
+		double currEnergyTotal = currEnergy+currStateEntropy;
+		double bestEnergyTotal = bestEnergy+prevStateEntropy;
+		MC.setEner(bestEnergyTotal);
 		// MC accept and reject conditions
 		double acceptTemp = MC.getCurrentT();
-		if (!MC.accept(currEnergy)){
+		if (!MC.accept(currEnergyTotal)){
 			setActiveSequence(_sys, bestSeq);
 			_sys.setActiveRotamers(prevStateVec); // set rotamers to the previous state
-			lout << "Reject\t" << cycleCounter << "\t" << prevStateSeq << "\t" << currSeq << "\t" << bestEnergy << "\t" << currEnergy << "\t";
+			lout << "Reject\t" << cycleCounter << "\t" << prevStateSeq << "\t" << currSeq << "\t" << bestEnergyTotal << "\t" << currEnergyTotal << "\t";
 			lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << acceptTemp << "\t" << acceptCounter << endl;
 		} else {
 			acceptCounter++; // increase the accept counter by 1
-			//bestProb = currProb;
 			setActiveSequence(_sys, currSeq);
 			_sys.setActiveRotamers(currStateVec); // set rotamers to the current state
 			map<string,double> energyMap = sequenceEnergyMap[currSeq];
-			lout << "Accept\t" << cycleCounter << "\t" << prevStateSeq << "\t" << currSeq << "\t" << bestEnergy << "\t" << currEnergy << "\t";
+			lout << "Accept\t" << cycleCounter << "\t" << prevStateSeq << "\t" << currSeq << "\t" << bestEnergyTotal << "\t" << currEnergyTotal << "\t";
 			lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << acceptTemp << "\t" << acceptCounter << endl;
+			bestProb = currProb;
 			bestEnergy = currEnergy;
 			_bestState = currStateVec; // set the 
 			prevStateVec = currStateVec; // set the previous state vector to be the current state vector

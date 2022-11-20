@@ -28,7 +28,7 @@ using namespace MSL;
 using namespace std;
 
 static SysEnv SYSENV;
-string programName = "seqDesign";//TODO: better name
+string programName = "heteroDesign";
 string programDescription = "Designs sequences for backbone geometries extracted from the PDB";
 string programAuthor = "Gilbert Loiseau";
 string programVersion = "2";
@@ -118,7 +118,6 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
  RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
 double calculateInterfaceSequenceEntropy(string _sequence, map<string, double> _sequenceEntropyMap, vector<uint> _interfacePositions,
  double &_sequenceProbability, double _seqEntropyWeight);
-void outputStartDesignInfo(Options &_opt);
 
 // help functions
 void usage();
@@ -175,9 +174,15 @@ int main(int argc, char *argv[]){
 
 	// get the starting geometries; convert to parallelogram axialRot and Z (Mueller 2014; Fig. S1)
 	convertToAxAndZForTranformation(opt);
-
-	// output starting design information
-	outputStartDesignInfo(opt);
+	cout << "***STARTING GEOMETRY:***" << endl;
+	cout << "xShift:        " << opt.xShift << endl;
+	cout << "crossingAngle: " << opt.crossingAngle << endl;
+	cout << "axialRotation: " << opt.axialRotation << endl;
+	cout << "zShift:        " << opt.zShift << endl << endl;
+	
+	// output the alternate ids to be used for design	
+	string alternateIds = getAlternateIdString(opt.Ids);
+	cout << "Variable amino acids at the interface: " << alternateIds << endl << endl;
 
 	/*******************************************
 	 *       === HELICAL AXIS SET UP ===
@@ -209,10 +214,16 @@ int main(int argc, char *argv[]){
 	vector<uint> allInterfacePositions; // vector of positions at the interface including the terminal positions
 	vector<uint> rotamerSamplingPerPosition; // vector of rotamer level for each position
 
+// heterodimerization starts here: will have to change the function that makes the polymer sequence; will then have to change all of the functions that use that polymer sequence, or that use the system chain
+// - functions to change include:
+// 		- switchSequence, 
+//		- loadRotamers, 
+//		- anything that uses bestSequence (maybe? I just have to make sure that's being read for heteror and for homo)	
+// I think the best thing 
 	// Defines the interfacial positions and the number of rotamers to give each position
 	PolymerSequence interfacePolySeq = getInterfacialPolymerSequence(opt, startGeom, allInterfacePositions, interfacePositions,
 	 rotamerSamplingPerPosition);
-	
+// I was wrong about the above: I can still use that for the polymer sequence, it's just going to be for all of the things that choose the sequence in search for best sequence	
 	/******************************************************************************
 	 *  === DECLARE SYSTEM FOR POLYLEU WITH ALTERNATE IDENTITIES AT INTERFACE ===
 	 ******************************************************************************/
@@ -250,11 +261,9 @@ int main(int argc, char *argv[]){
 		 interfacePositions, sequenceEnergyMapBest, sequenceEntropyMap, sout);
 	}
 
-	// get the starting sequence	
-	Chain &chainA = sys.getChain("A");
-	string seq = convertPolymerSeqToOneLetterSeq(chainA);
-	cout << "Sequence before stateMC: " << seq << endl;
-
+	// get the starting sequence as a map of chainId and sequence	
+	map<string,string> chainSeqMap = getChainSeqMap(sys);//TODO: test the hetero version of this
+	
 	/******************************************************************************
 	 *   === MONTE CARLO TO SEARCH FOR BEST SEQUENCES AND BACKBONE OPTIMIZE ===
 	 ******************************************************************************/
@@ -263,20 +272,15 @@ int main(int argc, char *argv[]){
 	string prevSequence;
 	map<string, double> startGeometries = getGeometryMap(opt, "start");
 	addGeometryToEnergyMap(startGeometries, sequenceEnergyMapBest, bestSequence);
-
-	// loop through sequence search and backbone optimization
-	// realized that my sequence search works well for a backbone, and my optimization works well for a sequence, so why am I doing them concurrently?
-	// instead, I can do more backbone cycles for multiple sequence searches? May be easier to explain than iterative sequence search and optimization
-	// is it possible to pass an energy set to multiple systems?
-	// TODO: I don't think I can do this; I would need to be able to copy the energy set to a new system, which I don't think I can do
-	for (uint i=0; i<opt.backboneSearchCycles; i++){
+	int numRepacks = 5;
+	for (uint i=0; i<numRepacks; i++){
 		vector<uint> bestState;
 		// run state Monte Carlo to get a random sequence from the best state
 		searchForBestSequence(startGeom, opt, interfacePolySeq, sequenceEnergyMapBest, sequenceEntropyMap, bestState, bestSequence,
 		 allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
+		
 		// add in the starting geometries to the map	
 		addGeometryToEnergyMap(startGeometries, sequenceEnergyMapBest, bestSequence);
-		// TODO: going to set up this today; save x number of sequences from the search and then optimize them with threading
 		// if the sequence is different, optimize the backbone
 		if (prevSequence != bestSequence){ 
 			// switch the sequence to the best sequence from the search monte carlo
@@ -286,13 +290,14 @@ int main(int argc, char *argv[]){
 			// optimize the backbone for the sequence
 			backboneOptimizer(opt, startGeom, bestSequence, bestState, sequenceEnergyMapBest, i, helicalAxis, axisA, axisB,
 			 rotamerSamplingPerPosition, trans, RNG, sout);
+			sequenceEnergyMapBest[bestSequence]["geometryNumber"] = i;	
 			// get the best sequence from the energy map
 			sequenceEnergyMapFinalSeqs[bestSequence] = sequenceEnergyMapBest[bestSequence];	
 			// reset the energy map
 			sequenceEnergyMapBest.clear(); // energyMap to hold all energies for output into a summary file
 		} else {
 			// end loop if same sequence from seq monte carlo
-			i = opt.backboneSearchCycles;	
+			i = numRepacks;	
 		}
 		prevSequence = bestSequence;// save the current best sequence as the previous sequence for comparison before backbone optimization
 	}
@@ -329,8 +334,7 @@ double calculateInterfaceSequenceEntropy(string _sequence, map<string, double> _
 	map<string,int> seqCountMap = getAACountMap(seqVector); // get the count of each amino acid in the sequence
 	double numberOfPermutations = calcNumberOfPermutations(seqCountMap, numInterfacials); // calculate the number of permutations for the sequence
 	_sequenceProbability = calculateSequenceProbability(seqCountMap, _sequenceEntropyMap, numberOfPermutations); // calculate the sequence probability
-	double seqEntropy = -log(_sequenceProbability)*0.592*_seqEntropyWeight; // multiply by the weight and -1
-	//double seqEntropy = _seqEntropyWeight/_sequenceProbability; // divide the weight by the probability to get the entropy
+	double seqEntropy = _sequenceProbability * _seqEntropyWeight * -1; // multiply by the weight and -1
 	return seqEntropy;
 }
 
@@ -688,7 +692,6 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 
 	// Monte Carlo while loop for finding the best sequences
 	string energyTermToEvaluate = "Totalw/Entropy";
-	double bestProb = sequenceProbability;
 	while (!MC.getComplete()){
 		// get the sequence entropy probability for the current best sequence
 		map<string,vector<uint>> sequenceVectorMap;
@@ -702,12 +705,10 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 		// extract energies from the sequence energy map for the chosen sequence
 		double currEnergy = sequenceEnergyMap[currSeq][energyTermToEvaluate]; // energy total for current sequence (dimer+baseline+sequence entropy)
 		double currStateEntropy = sequenceEnergyMap[currSeq]["SequenceEntropy"];
-		// compare the entropy between the current sequence and previous sequence 
 		vector<uint> currStateVec = sequenceVectorMap[currSeq]; // current state vector for current sequence (best rotamers and sequence identities)
-
-		//MC.setEner(bestEnergyTotal);
-		// MC accept and reject conditions
 		double acceptTemp = MC.getCurrentT();
+
+		// MC accept and reject conditions
 		if (!MC.accept(currEnergy)){
 			setActiveSequence(_sys, bestSeq);
 			_sys.setActiveRotamers(prevStateVec); // set rotamers to the previous state
@@ -715,13 +716,11 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 			lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << acceptTemp << "\t" << acceptCounter << endl;
 		} else {
 			acceptCounter++; // increase the accept counter by 1
-			//bestProb = currProb;
 			setActiveSequence(_sys, currSeq);
 			_sys.setActiveRotamers(currStateVec); // set rotamers to the current state
 			map<string,double> energyMap = sequenceEnergyMap[currSeq];
 			lout << "Accept\t" << cycleCounter << "\t" << prevStateSeq << "\t" << currSeq << "\t" << bestEnergy << "\t" << currEnergy << "\t";
 			lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << acceptTemp << "\t" << acceptCounter << endl;
-			bestEnergy = currEnergy;
 			_bestState = currStateVec; // set the 
 			prevStateVec = currStateVec; // set the previous state vector to be the current state vector
 			prevStateSeq = currSeq; // set the previous sequence to be the current sequence
@@ -734,15 +733,12 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 		}
 		//Reset the MC to run x more cycles
 		if (MC.getComplete() == true && randomMCRun == false){
-			//MC.reset(3649, 3649, _opt.MCCycles, MonteCarloManager::EXPONENTIAL, _opt.MCMaxRejects);//Approximately 50% likely to accept within 5kcal, and 25% likely to accept within 10kcal
-			//MC.reset(547, 547, 100, MonteCarloManager::EXPONENTIAL, _opt.MCMaxRejects);//Approximately 25% likely to accept within 5kcal
-			MC.reset(_opt.MCResetTemp, _opt.MCResetTemp, _opt.MCResetCycles, MonteCarloManager::EXPONENTIAL, _opt.MCMaxRejects);//Approximately 25% likely to accept within 5kcal
+			MC.reset(3649, 3649, _opt.MCCycles, MonteCarloManager::EXPONENTIAL, _opt.MCMaxRejects);//Approximately 50% likely to accept within 5kcal, and 25% likely to accept within 10kcal
 			randomMCRun = true;
 		} 
 		// run more cycles of MC to decrease
 		if (MC.getComplete() == true && randomMCRun == true && decreaseMCRun == false){
-			//MC.reset(547, _opt.MCEndTemp, 100, MonteCarloManager::EXPONENTIAL, _opt.MCMaxRejects);
-			MC.reset(_opt.MCResetTemp, _opt.MCEndTemp, _opt.MCResetCycles, MonteCarloManager::EXPONENTIAL, _opt.MCMaxRejects);//Approximately 25% likely to accept within 5kcal
+			MC.reset(3649, _opt.MCEndTemp, _opt.MCCycles, MonteCarloManager::EXPONENTIAL, _opt.MCMaxRejects);
 			decreaseMCRun = true;
 		}
 		cycleCounter++;
@@ -814,32 +810,42 @@ map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt,
 	// variable setup for current state
 	map<string,map<string,double>> sequenceEnergyMap;
 	vector<thread> threads;
-	for (uint i=0; i<_opt.Ids.size(); i++){
-		// pick an identity for each thread 
-		int idNum = i;
-		// generate polymer sequence for each identity at the corresponding chosen position
-		string id = _opt.Ids[idNum];
-		// input into the thread function for calculating energies
-		string currAA = MslTools::getThreeLetterCode(_bestSeq.substr(interfacePosA, 1));
-		if (currAA != id){
-			// replace the id at the position in bestSeq with the current id to get current sequence
-			string currSeq = _bestSeq;
-			string oneLetterId = MslTools::getOneLetterCode(id);
-			currSeq.replace(interfacePosA, 1, oneLetterId);
-			// switch to the mutated sequence
-			setActiveSequence(_sys, currSeq);
-			// Set a mask and run a greedy to get the best state for the current sequence
-			vector<vector<bool>> mask = getActiveMask(_sys);
-			_spm.runGreedyOptimizer(_opt.greedyCycles, mask);
-			vector<uint> currVec = _spm.getMinStates()[0];
-			_sys.setActiveRotamers(currVec);
-			_sequenceStateMap[currSeq] = currVec;
-			// start threading and calculating energies for each identity; changed the below interface from allInterface to just the given interface since these are the ones that change and ala at ends as of 2022-10-18
-			threads.push_back(thread{energyFunction, ref(_opt), ref(_spm), _bestSeq, _bestEnergy, currSeq, currVec, ref(_rotamerSampling), ref(_interfacialPositionsList), 
-			 ref(sequenceEnergyMap), ref(_sequenceEntropyMap)});
-		}
-		setActiveSequence(_sys, _bestSeq);
-	} 
+
+	// TODO: need to go through all of the possible combinations of AAs at a position
+	// create a function that will change the amino acid at a position
+	// use that function to change one chain, then change the next to all other positions
+	// run energy function on that 
+	for (uint c=0; c<_sys.chainSize(); c++){
+		Chain &chain = _sys.getChain();
+		string chainId = chain.getChainId();
+		string chainSeq = chain.toString();
+		for (uint i=0; i<_opt.Ids.size(); i++){
+			// pick an identity for each thread 
+			int idNum = i;
+			// generate polymer sequence for each identity at the corresponding chosen position
+			string id = _opt.Ids[idNum];
+			// input into the thread function for calculating energies
+			string currAA = MslTools::getThreeLetterCode(chainSeq.substr(interfacePosA, 1));
+			if (currAA != id){
+				// replace the id at the position in bestSeq with the current id to get current sequence
+				string currSeq = chainSeq;
+				string oneLetterId = MslTools::getOneLetterCode(id);
+				currSeq.replace(interfacePosA, 1, oneLetterId);
+				// switch to the mutated sequence
+				setActiveSequence(_sys, currSeq, chainId);
+				// Set a mask and run a greedy to get the best state for the current sequence
+				vector<vector<bool>> mask = getActiveMask(_sys);
+				_spm.runGreedyOptimizer(_opt.greedyCycles, mask);
+				vector<uint> currVec = _spm.getMinStates()[0];
+				_sys.setActiveRotamers(currVec);
+				_sequenceStateMap[currSeq] = currVec;
+				// start threading and calculating energies for each identity; changed the below interface from allInterface to just the given interface since these are the ones that change and ala at ends as of 2022-10-18
+				threads.push_back(thread{energyFunction, ref(_opt), ref(_spm), _bestSeq, _bestEnergy, currSeq, currVec, ref(_rotamerSampling), ref(_interfacialPositionsList), 
+				 ref(sequenceEnergyMap), ref(_sequenceEntropyMap)});
+			}
+			setActiveSequence(_sys, chainSeq, chainId);
+		} 
+	}
 	// join all the threads (wait for them all to finish before continuing)
 	for (auto& th : threads){
 		th.join();
@@ -868,9 +874,14 @@ void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, doubl
 	energyMap["Dimerw/Baseline"] = currEnergy;
 	energyMap["Dimer"] = currEnergy-baseline;
 	energyMap["Baseline"] = baseline;
+	//energyMap["energyComparison"] = enerAndSeqEntropy;
 	energyMap["SequenceProbability"] = sequenceProbability;
 	energyMap["SequenceEntropy"] = sequenceEntropy;
 	energyMap["Totalw/Entropy"] = energyAndEntropyTotal;
+	//energyMap["bestEnergyTotal"] = bestEnergyTotal;
+	//energyMap["entropyDiff"] = prevEntropy-currEntropy;
+	//energyMap["currEntropy"] = currEntropy;
+	//energyMap["prevEntropy"] = prevEntropy;
 	_seqEnergyMap[_currSeq] = energyMap;
 }
 
@@ -1949,17 +1960,4 @@ void runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNumberGener
 	
 	// output the ending time
 	outputTime(clockTime, "Self Consistent Mean Field End", _out);
-}
-
-void outputStartDesignInfo(Options &_opt){
-	// output the starting geometry	
-	cout << "***STARTING GEOMETRY:***" << endl;
-	cout << "xShift:        " << _opt.xShift << endl;
-	cout << "crossingAngle: " << _opt.crossingAngle << endl;
-	cout << "axialRotation: " << _opt.axialRotation << endl;
-	cout << "zShift:        " << _opt.zShift << endl << endl;
-
-	// output the alternate ids to be used for design	
-	string alternateIds = getAlternateIdString(_opt.Ids);
-	cout << "Variable amino acids at the interface: " << alternateIds << endl << endl;
 }

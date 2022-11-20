@@ -232,6 +232,63 @@ void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
 	}
 }
 
+// converts a polymer sequence to a string for one chain (for homodimer sequences)
+string convertPolymerSeqToOneLetterSeq(Chain &_chain) {
+	string seq = "";
+	for (uint i=0; i<_chain.positionSize(); i++){
+		string resName = _chain.getPosition(i).getCurrentIdentity().getResidueName();
+		string resID = MslTools::getOneLetterCode(resName);
+		seq += resID;
+	}
+	return seq;
+}
+
+// output energies by term into a referenced energyMap
+void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
+vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
+	if (_includeIMM1 == false){//No IMM1 Energy (for the Monte Carlos, both dimer and monomer)
+		for (uint i=0; i<_energyTermList.size(); i++){
+			string energyTerm = _energyTermList[i]; //CHARMM_ and SCWRL4_ terms
+			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;//Removes the CHARMM_ and SCWRL4_ before energyTerm names
+			if (energyTerm.find("IMM1") != string::npos){
+				continue;
+			} else {
+				if (_energyDescriptor.find("Monomer") != string::npos){
+					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
+				} else {
+					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
+				}
+			}
+		}
+		if (_energyDescriptor.find("Monomer") != string::npos){
+			//skip if monomer; could add calc baseline here at some point
+		} else {
+			_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
+			_energyMap["DimerSelfBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE");
+			_energyMap["DimerPairBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
+		}
+	} else if (_includeIMM1 == true){//IMM1 Energies
+		for (uint i=0; i<_energyTermList.size(); i++){
+			string energyTerm = _energyTermList[i];
+			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;
+			if (_energyDescriptor.find("Monomer") != string::npos){
+				if (energyTerm.find("IMM1") != string::npos){
+					_energyMap["IMM1Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
+				} else {
+					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
+				}
+			} else {
+				if (energyTerm.find("IMM1") != string::npos){
+					_energyMap["IMM1Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
+				} else {
+					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
+				}
+			}
+		}
+		//_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
+	}
+}
+
 //void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
 //	for (uint k=0; k<_sys.positionSize(); k++) {
 //		Position &pos = _sys.getPosition(k);
@@ -243,8 +300,8 @@ void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
 //						cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
 //					}
 //				}
-//				pos.setActiveIdentity(0);
 //			}
+//			pos.setActiveIdentity(0);
 //		} else {
 //			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
 //				if (!_sysRot.loadRotamers(&pos, pos.getResidueName(), _SL)) {
@@ -303,21 +360,17 @@ string getAlternateIdString(vector<string> _alternateIds){
 }
 
 
-string getInterfaceString(vector<int> _interface, int _seqLength){
-	string interfaceString = "";
-	for (uint i=0; i<_interface.size(); i++){
-		if (i == _seqLength){
-			i = _interface.size();
-		} else {
-			interfaceString += MslTools::intToString(_interface[i]);
-		}
+string convertVectorUintToString(vector<uint> _inputVector){
+	string outputString = "";
+	for (uint i=0; i<_inputVector.size(); i++){
+		outputString += MslTools::intToString(_inputVector[i]);
 	}
-	return interfaceString;
+	return outputString;
 }
 
 // get the positions that will be linked on the interface (will have same AA identity and rotamer for self consistent mean field)
-vector<int> getLinkedPositions(vector<int> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel){
-	vector<int> positionsToLink;
+vector<uint> getLinkedPositions(vector<uint> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel){
+	vector<uint> positionsToLink;
 	for (uint i=0; i<_rotamerSampling.size(); i++){
 		if (_rotamerSampling[i] < _interfaceLevel || _rotamerSampling[i] == _highestRotamerLevel){
 			positionsToLink.push_back(1);
@@ -329,16 +382,15 @@ vector<int> getLinkedPositions(vector<int> _rotamerSampling, int _interfaceLevel
 }
 
 // define the rotamer level for each position in the backbone
-vector<int> getRotamerSampling(string _rotamerLevels){
-	vector<int> rotamerSampling;
-	for (uint n=0; n<2; n++){
-		for (uint i=0; i<_rotamerLevels.size(); i++){
-			stringstream ss;
-			ss << _rotamerLevels[i];
-			rotamerSampling.push_back(MslTools::toInt(ss.str()));
-		}
+vector<uint> convertStringToVectorUint(string _inputString){
+	vector<uint> outputVec;
+	for (uint i=0; i<_inputString.size(); i++){
+		stringstream ss;
+		ss << _inputString[i];
+		uint stringToInt = MslTools::toUnsignedInt(ss.str());
+		outputVec.push_back(stringToInt);
 	}
-	return rotamerSampling;
+	return outputVec;
 }
 
 // get a backbone sequence with an alanine cap at the beginning and end as an option
@@ -346,8 +398,8 @@ string generateBackboneSequence(string _backboneAA, int _length, bool _useAlaCap
 	// initial start of sequence
 	string str = "";
 	//2021-09-21: add in an alanine cap to allow for more variable positions at the leucine region
-	for (uint i=0; i<_length-4; i++){
-		if (i<4){
+	for (uint i=0; i<_length-3; i++){
+		if (i<3){
 			if (_useAlaCap == true){
 				str = str + "A";
 			} else {
@@ -358,7 +410,11 @@ string generateBackboneSequence(string _backboneAA, int _length, bool _useAlaCap
 		}
 	}
 	// Adds in the LILI at the end of the sequence which is necessary for our TOXCAT plasmids
-	str = str + "LILI";
+	if (_useAlaCap == true){
+		str = str + "AAA";
+	} else {
+		str = str + "ILI";
+	}
 	return str;
 }
 
@@ -595,3 +651,25 @@ string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum
 	return "A" + ps;
 }
 
+//Function to get the sum of a vector of doubles, typically energies
+double sumEnergyVector(vector<double> _energies){
+	double ener = 0;
+	for (uint i=0; i<_energies.size(); i++){
+		ener = ener + _energies[i];
+	}
+	return ener;
+}
+
+void resetEnergySet(System &_sys, vector<string> _energyTermList){
+	for (uint i=0; i<_energyTermList.size(); i++){
+		string energyTerm = _energyTermList[i];
+		_sys.getEnergySet()->eraseTerm(energyTerm);
+	}
+}
+
+void writePdb(System &_sys, string _outputDir, string _pdbName){
+	PDBWriter writer;
+	writer.open(_outputDir + "/" + _pdbName + ".pdb");
+	writer.write(_sys.getAtomPointers(), true, false, false);
+	writer.close();
+}

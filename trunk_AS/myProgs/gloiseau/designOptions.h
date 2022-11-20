@@ -14,7 +14,7 @@ using namespace std;
 struct Options{
 	// input files
 	string backboneCrd; //initial coordinates for helix backbones: crd file
-	string pdbOutputDir; //output directory for all files
+	string outputDir; //output directory for all files
 	string topFile; //topology file (default CHARMM22: defines distances between atoms)
 	string parFile; //parameter file (defines Hbonding distances)
 	string geometryDensityFile; //geometries to choose for design with...density
@@ -43,12 +43,13 @@ struct Options{
 	bool designHomodimer; //TRUE: design a homodimer sequence keeping ids same between positions on both helices OR FALSE: design a heterodimeric sequence
 	bool useSasaBurial; //TRUE: use solvent accessible surface area to designated the number of rotamers at each position on the dimer OR FALSE: input set number of rotamers for both interface and non-interface
 	bool useTimeBasedSeed; //TRUE: use time based seed for all RandomNumberGenerator functions OR FALSE: use a given seed
-	bool useAlaAtCTerminus; //TRUE: use ALA at C terminus of sequence FALSE: use LEU at C terminus ..TODO: do I need this?
+	bool useAlaAtTermini; //TRUE: use ALA at C terminus of sequence FALSE: use LEU at C terminus ..TODO: do I need this?
 	bool useBaseline; //TRUE: calculate and use baseline values generated as estimates of the monomer sequence OR FALSE: don't use baselines to estimate the monomer
 	bool getRandomAxRotAndZShift; //TRUE: get random from geometry file OR FALSE: use given axRot and zShift
 	// use different energy parameters
 	bool useIMM1;
 	bool useElec;
+	bool compareSasa; //TRUE: use SASA to compare backboneOptimize states OR FALSE: use energy
 
 	// repack parameters
 	int greedyCycles;
@@ -94,6 +95,8 @@ struct Options{
 	double MCEndTemp;
 	int MCCurve;
 	int MCConvergedSteps;
+	double MCResetTemp;
+	double MCResetCycles;
 	//double MCConvergedE;
 
 	// Backbone Monte Carlo parameters
@@ -115,6 +118,7 @@ struct Options{
 	double deltaAxLimit;
 	double deltaZLimit;
 	bool decreaseMoveSize;
+	int backboneSearchCycles;
 
 	// energy weights
 	double weight_vdw; //weight of vdw energy contribution to total energy: default = 1

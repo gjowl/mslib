@@ -1,0 +1,23 @@
+########################################################
+#  This configuration file was automatically generated,
+#  it will rerun this job with the same options. Run as:
+#
+#  Run as:
+#
+#    % interhelicalCoordinates --configfile 
+#
+#  Job started on Thu Oct 27 16:35:50 2022
+#  on host , path 
+########################################################
+
+########################################################
+#  Options from command line arguments:
+#
+#  NOTE: command line options take priority over the
+#        ones entered with the configuration file.
+########################################################
+filename                      design_testGeoms/x6.5_cross-45_ax-0_z3.pdb
+
+########################################################
+#  Options from configuration file :
+########################################################
