@@ -610,16 +610,34 @@ void getSasaForStartingSequence(System &_sys, string _sequence, vector<uint> _st
 * sequence search functions
  ***********************************/
 void setActiveSequence(System &_sys, string _sequence){
-	// Set the active sequence for the system
-	for (uint i=0; i<_sys.getPositions().size()/2; i++){
-		Position &posA = _sys.getPosition(i);
-		Position &posB = _sys.getPosition(i+_sequence.length());
-		string posIdA = posA.getPositionId();
-		string posIdB = posB.getPositionId();
-		string aa = MslTools::getThreeLetterCode(_sequence.substr(i, 1));
-		_sys.setActiveIdentity(posIdA, aa);
-		_sys.setActiveIdentity(posIdB, aa);
+	// loop through the sequence
+	for (uint i=0; i<_sequence.size(); i++){
+		// get the ith residue in the sequence
+		string res = _sequence.substr(i,1);
+		// loop through all of the chains in the system
+		for (uint j=0; j<_sys.chainSize(); j++){
+			Chain &chain = _sys.getChain(j);
+			// get the ith position in the system
+			Position &pos = chain.getPosition(i);
+			// get the position id for the ith position
+			string posId = pos.getPositionId();
+			// convert the residue id to three letter code
+			string aa = MslTools::getThreeLetterCode(res);
+			// set active identity
+			_sys.setActiveIdentity(posId, aa);
+		}
+		
 	}
+	// Set the active sequence for the system
+	//for (uint i=0; i<_sys.getPositions().size()/2; i++){
+	//	Position &posA = _sys.getPosition(i);
+	//	Position &posB = _sys.getPosition(i+_sequence.length());
+	//	string posIdA = posA.getPositionId();
+	//	string posIdB = posB.getPositionId();
+	//	string aa = MslTools::getThreeLetterCode(_sequence.substr(i, 1));
+	//	_sys.setActiveIdentity(posIdA, aa);
+	//	_sys.setActiveIdentity(posIdB, aa);
+	//}
 }
 
 void getEnergiesForStartingSequence(Options &_opt, SelfPairManager &_spm, string _startSequence,
@@ -894,6 +912,7 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("backboneAA");
 	opt.allowed.push_back("backboneLength");
 	opt.allowed.push_back("interface");
+	opt.allowed.push_back("numberOfSequencesToSave");
 
 	// booleans
 	opt.allowed.push_back("getGeoFromPDBData");
@@ -1157,6 +1176,12 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningFlag = true;
 		opt.warningMessages += "backboneLength not specified, default to 21\n";
 		opt.backboneLength = 21;
+	}
+	opt.numberOfSequencesToSave = OP.getInt("numberOfSequencesToSave");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "numberOfSequencesToSave not specified, default to 5\n";
+		opt.numberOfSequencesToSave = 5;
 	}
 	// override backboneLength if a sequence is specified
 	if (opt.sequence != "") {

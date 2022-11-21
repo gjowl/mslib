@@ -33,6 +33,7 @@ struct Options{
 	int backboneLength; //length of sequence for design (default to 21; code still needs to be reworked for other lengths; imm1 energy problem?)
 	int startResNum; //starting residue number
 	int endResNum; //end residue number
+	int numberOfSequencesToSave; //total number of sequences to save
 	string interface; //interface to design on; if empty, use SASA
 
 	// booleans: changing these will ..TODO: add more here

@@ -1,0 +1,73 @@
+11_20_2022
+Self Consistent Mean Field Start Time: Sun Nov 20 18:48:01 2022
+Elapsed time of program: 0.0986min
+
+Running Self Consistent Mean Field
+Initial Sequence:   LLLLAALAILLAALASLLILI
+Best Sequence:      LLLLAALAILLAALASLLILI
+Interface Sequence: LL--AA-AI--AA-AS--I--
+Total Energy:       1.62e+03
+VDW:                1.32e+03
+HBOND:              -60.5
+Self Consistent Mean Field End Time: Sun Nov 20 18:48:20 2022
+Elapsed time of program: 0.407min
+
+Monte Carlo Sequence Search Start Time: Sun Nov 20 18:48:20 2022
+Elapsed time of program: 0.413min
+
+  - SelfPairManager energy calculation Start Time: Sun Nov 20 18:48:24 2022
+Elapsed time of program: 0.475min
+
+  - SelfPairManager energy calculation End Time: Sun Nov 20 18:48:41 2022
+Elapsed time of program: 0.755min
+
+Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
+	0	0	0
+Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
+LLLLAALALLLAALASLLILI	0	0	0
+Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
+LLLLAALALLLAALVSLLILI	0	0	0
+Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
+LLLLAALALLLLALVSLLILI	0	0	0
+Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
+LLLLIALALLLLALVSLLILI	0	0	0
+Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
+LLLLIFLALLLLALVSLLILI	0	0	0
+Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
+LLLLIFLALLLYALVSLLILI	0	0	0
+Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
+LLLLIFLLLLLAALVSLLILI	0	0	0
+Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
+LLLLIFLLLLLYALVSLLILI	0	0	0
+Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
+LLLLLFLLALLAILVSLLILI	0	0	0
+Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
+LLLLLFLLLLLAALVSLLILI	0	0	0
+Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
+LLLLLFLLLLLAILVSLLILI	1.66e+03	10	3.34e+03
+End monte carlo sequence search: 0.35min
+Monte Carlo ended at Temp: 0.547
+
+
+Monte Carlo Sequence Search End Time: Sun Nov 20 18:49:02 2022
+Elapsed time of program: 1.1min
+
+Compute Monomer Energy Start Time: Sun Nov 20 18:49:02 2022
+Elapsed time of program: 1.11min
+
+-Dimer - Monomer = 0 - -119 = 119
+-Dimer - Monomer = 0 - -119 = 119
+-Dimer - Monomer = 0 - -119 = 119
+-Dimer - Monomer = 0 - -118 = 118
+-Dimer - Monomer = 0 - -118 = 118
+-Dimer - Monomer = 0 - -119 = 119
+-Dimer - Monomer = 0 - -119 = 119
+-Dimer - Monomer = 0 - -119 = 119
+-Dimer - Monomer = 0 - -118 = 118
+-Dimer - Monomer = 0 - -119 = 119
+-Dimer - Monomer = 0 - -119 = 119
+-Dimer - Monomer = 0 - -119 = 119
+-Dimer - Monomer = 0 - -119 = 119
+Compute Monomer Energy End Time: Sun Nov 20 18:49:06 2022
+Elapsed time of program: 1.18min
+
