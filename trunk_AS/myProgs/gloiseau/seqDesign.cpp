@@ -777,7 +777,7 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 			Position &pos = _sys.getPosition(i);
 			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
 				rotamerState.push_back(statePositionIdRotamerIndeces[i-offset][2]);
-				cout << statePositionIdRotamerIndeces[i-offset][2] << ",";
+				//cout << statePositionIdRotamerIndeces[i-offset][2] << ",";
 			} else {
 				if (i > 17 && i < 24 || pos.getResidueName() == "ALA"){
 					offset++;

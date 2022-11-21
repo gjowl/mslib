@@ -54,7 +54,7 @@ char buffer[80];
 
 // sequence search functions
 vector<uint> convertToMaskedVector(System &_sys, SelfPairManager &_spm, vector<uint> _bestState, bool _alaTermini);
-string getLowestEnergySequence(map<string,map<string,double>> _topSequencesEnergyMap, string _energyTerm);
+string getWorstEnergySequence(map<string,map<string,double>> _topSequencesEnergyMap, string _energyTerm);
 void searchForBestSequences(System &_startGeom, Options &_opt, PolymerSequence &_PS, string _bestSequence,
  map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> &_sequenceEntropyMap,
  map<string, vector<uint>> &_sequenceRotamerMap, vector<uint> &_interfacialPositionsList, vector<uint> &_rotamerSampling,
@@ -94,9 +94,8 @@ void useInputInterface(Options &_opt, string &_variablePositionString, string &_
 
 // backbone optimization functions
 void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vector<uint> _bestState, map<string, map<string,double>> &_sequenceEnergyMap,
- System &_helicalAxis, AtomPointerVector &_axisA,  AtomPointerVector &_axisB, vector<uint> _rotamerSampling, Transforms &_trans, int _rep,
- RandomNumberGenerator &_RNG, ofstream &_sout);
-double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string, map<string,double>> &_sequenceEnergyMap,
+ System &_startHelicalAxis, vector<uint> _rotamerSampling, int _rep, RandomNumberGenerator &_RNG, ofstream &_sout);
+void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string, map<string,double>> &_sequenceEnergyMap,
  string _sequence, vector<uint> &_bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy, ofstream &_sout);
 void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
@@ -277,6 +276,7 @@ int main(int argc, char *argv[]){
 	int i = 0;
 	// compute monomer energy
 	computeMonomerEnergy(sys, helicalAxis, opt, trans, sequenceEnergyMapBest, seq, RNG, sout, err);
+	vector<thread> threads;
 	for (auto const& seqMap : sequenceEnergyMapBest){
 		// get the sequence
 		string seq = seqMap.first;
@@ -287,11 +287,15 @@ int main(int argc, char *argv[]){
 		// TODO: going to set up this today; save x number of sequences from the search and then optimize them with threading
 		// if the sequence is different, optimize the backbone
 		// optimize the backbone for the sequence
-		backboneOptimizer(opt, startGeom, bestSequence, rotamerState, sequenceEnergyMapBest, helicalAxis, axisA, axisB,
-		 rotamerSamplingPerPosition, trans, i, RNG, sout);
+		threads.push_back(thread{backboneOptimizer, ref(opt), ref(startGeom), seq, rotamerState, ref(sequenceEnergyMapBest), ref(helicalAxis),
+		 ref(rotamerSamplingPerPosition), i, ref(RNG), ref(sout)});
+
 		// get the best sequence from the energy map
 		sequenceEnergyMapFinalSeqs[seq] = sequenceEnergyMapBest[seq];	
 		i++;
+	}
+	for (auto &t : threads){
+		t.join();
 	}
 
 	/******************************************************************************
@@ -578,17 +582,17 @@ void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSeque
 /****************************************************************
  *             === SEQUENCE SEARCH FUNCTIONS ===
  ****************************************************************/
-string getLowestEnergySequence(map<string,map<string,double>> _topSequencesEnergyMap, string _energyTerm){
-	double lowestEnergy = 1000000;
-	string lowestEnergySeq = "";
-	// loop through the map and get the sequence with the lowest energy (energy term defaults to total energy)
+string getWorstEnergySequence(map<string,map<string,double>> _topSequencesEnergyMap, string _energyTerm){
+	double worstEnergy = 1000000;
+	string worstEnergySeq = "";
+	// loop through the map and get the sequence with the worst energy (energy term defaults to total energy)
 	for (auto it = _topSequencesEnergyMap.begin(); it != _topSequencesEnergyMap.end(); it++){
-		if (it->second[_energyTerm] < lowestEnergy){
-			lowestEnergy = it->second[_energyTerm];
-			lowestEnergySeq = it->first;
+		if (it->second[_energyTerm] < worstEnergy){
+			worstEnergy = it->second[_energyTerm];
+			worstEnergySeq = it->first;
 		}
 	}
-	return lowestEnergySeq;
+	return worstEnergySeq;
 }
 
 void searchForBestSequences(System &_startGeom, Options &_opt, PolymerSequence &_PS, string _bestSequence,
@@ -729,7 +733,6 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 			//bestProb = currProb;
 			setActiveSequence(_sys, currSeq);
 			_sys.setActiveRotamers(currStateVec); // set rotamers to the current state
-			map<string,double> energyMap = sequenceEnergyMap[currSeq];
 			lout << "Accept\t" << cycleCounter << "\t" << prevStateSeq << "\t" << currSeq << "\t" << bestEnergy << "\t" << currEnergy << "\t";
 			lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << acceptTemp << "\t" << acceptCounter << endl;
 			bestEnergy = currEnergy;
@@ -742,26 +745,26 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 			sequenceEnergyMap[bestSeq]["acceptTemp"] = acceptTemp; // gets the accept cycle number for the current sequence
 			bestSequenceEnergyMap = sequenceEnergyMap[bestSeq]; // saves the current sequence energy map 
 			prevStateEntropy = currStateEntropy;
+			map<string,double> energyMap = sequenceEnergyMap[currSeq];
 			// check if the current sequence is within the top sequences
 			if (topSequencesEnergyMap.find(currSeq) == topSequencesEnergyMap.end()){
 				// check if the map has reached the maximum number of sequences
-				if (topSequencesEnergyMap.size() != _opt.numberOfSequencesToSave){
+				if (topSequencesEnergyMap.size() == _opt.numberOfSequencesToSave){
 					// get the sequence with the lowest energy
-					string lowestEnergySeq = getLowestEnergySequence(topSequencesEnergyMap, energyTermToEvaluate);
-					// check if the current sequence has a lower energy than the lowest energy sequence
-					if (topSequencesEnergyMap[currSeq][energyTermToEvaluate] < topSequencesEnergyMap[lowestEnergySeq][energyTermToEvaluate]){
-				// output the size of the top sequences map
-						// remove the lowest energy sequence from the map
-						topSequencesEnergyMap.erase(lowestEnergySeq);
-						topSequencesRotamerVector.erase(lowestEnergySeq);
+					string worstEnergySeq = getWorstEnergySequence(topSequencesEnergyMap, energyTermToEvaluate);
+					// check if the current sequence has a lower energy than the worst energy sequence
+					if (topSequencesEnergyMap[currSeq][energyTermToEvaluate] < topSequencesEnergyMap[worstEnergySeq][energyTermToEvaluate]){
+						// remove the worst energy sequence from the map
+						topSequencesEnergyMap.erase(worstEnergySeq);
+						topSequencesRotamerVector.erase(worstEnergySeq);
 						// add the current sequence to the map
-						topSequencesEnergyMap[currSeq] = sequenceEnergyMap[currSeq];
+						topSequencesEnergyMap[currSeq] = energyMap;
 						topSequencesRotamerVector[currSeq] = currStateVec;
 					} 
-				} else {
-						// add the current sequence to the map
-						topSequencesEnergyMap[currSeq] = sequenceEnergyMap[currSeq];
-						topSequencesRotamerVector[currSeq] = currStateVec;
+				} else if (topSequencesEnergyMap.size() < _opt.numberOfSequencesToSave){
+					// add the current sequence to the map
+					topSequencesEnergyMap[currSeq] = energyMap;
+					topSequencesRotamerVector[currSeq] = currStateVec;
 				}
 			}
 		}
@@ -784,7 +787,6 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 	diffTimeSMC = difftime (endTimeSMC, startTimeSMC);
 	lout << "Time: " << diffTimeSMC << "s" << endl;
 	lout.close();
-
 	_sequenceEnergyMap = topSequencesEnergyMap; // saves the best sequence energy map into the global energy map
 	// output the size of the map
 	// loop through the top sequence vector map
@@ -805,23 +807,23 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 		i++;
 	}
 	// loop through the top sequences and print out the energy
+	_sout << "Sequence\tDimerw/Baseline\tAcceptCycleNumber\tAcceptTemp" << endl;
+	cout << "Sequence\tDimerw/Baseline\tAcceptCycleNumber\tAcceptTemp" << endl;
 	for (map<string, map<string,double>>::iterator it = topSequencesEnergyMap.begin(); it != topSequencesEnergyMap.end(); it++){
 		// get the sequence
 		string seq = it->first;
 		// get the energy map
 		map<string,double> energyMap = it->second;
 		// print out the sequence and energy
-		cout << "Sequence\tDimerw/Baseline\tAcceptCycleNumber\tAcceptTemp" << endl;
-		cout << seq << "\t" << energyMap["Dimerw/Baseline"] << "\t" << energyMap["acceptCycleNumber"] << "\t" << energyMap["acceptTemp"] << endl;
-		_sout << "Sequence\tDimerw/Baseline\tAcceptCycleNumber\tAcceptTemp" << endl;
 		_sout << seq << "\t" << energyMap["Dimerw/Baseline"] << "\t" << energyMap["acceptCycleNumber"] << "\t" << energyMap["acceptTemp"] << endl;
+		cout << seq << "\t" << energyMap["Dimerw/Baseline"] << "\t" << energyMap["acceptCycleNumber"] << "\t" << energyMap["acceptTemp"] << endl;
 	}
 	cout << "End monte carlo sequence search: " << diffTimeSMC/60 << "min" << endl;
 	cout << "Monte Carlo ended at Temp: " << MC.getCurrentT() << endl << endl;
 	cout << endl;	
 	_sout << "End monte carlo sequence search: " << diffTimeSMC/60 << "min" << endl;
 	_sout << "Monte Carlo ended at Temp: " << MC.getCurrentT() << endl << endl;
-	_sout << endl;	
+	_sout << endl;
 }
 
 vector<uint> convertToMaskedVector(System &_sys, SelfPairManager &_spm, vector<uint> _bestState, bool _alaTermini){
@@ -846,7 +848,6 @@ vector<uint> convertToMaskedVector(System &_sys, SelfPairManager &_spm, vector<u
 			Position &pos = _sys.getPosition(i);
 			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
 				rotamerState.push_back(statePositionIdRotamerIndeces[i][2]);
-				cout << statePositionIdRotamerIndeces[i][2] << ",";
 			} 
 		}
 	}
@@ -1142,8 +1143,7 @@ void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxi
 //TODO: start here for threading, the rest is pretty set up but this part needs work; look into backboneOptimizer_v4 for help, function threadDockAndRepack
 // backbone optimization function, setting up the system with a single sequence to run the optimization
 void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vector<uint> _bestState, map<string, map<string,double>> &_sequenceEnergyMap,
- System &_helicalAxis, AtomPointerVector &_axisA,  AtomPointerVector &_axisB, vector<uint> _rotamerSampling, Transforms &_trans, int _rep,
- RandomNumberGenerator &_RNG, ofstream &_sout){
+ System &_startHelicalAxis, vector<uint> _rotamerSampling, int _rep, RandomNumberGenerator &_RNG, ofstream &_sout){
 	// output the start time
 	outputTime(clockTime, "Backbone optimize "+_sequence+" Start", _sout);
 
@@ -1159,11 +1159,13 @@ void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vect
 	// set the helical axis at the origin
 	System helicalAxis;
 	helicalAxis.readPdb(_opt.helicalAxis);
+	helicalAxis.assignCoordinates(_startHelicalAxis.getAtomPointers(),false);
+	helicalAxis.saveCoor("originState");
 
-	// get the starting geometry using poly glycine
-	System startGeom;
-	setGly69ToStartingGeometry(_opt,startGeom,helicalAxis,trans);
-
+	// get the individual axes
+	AtomPointerVector &axisA = helicalAxis.getChain("A").getAtomPointers();
+	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
+	
 	// set up the system for the input sequence
 	System sys;
 	prepareSystem(_opt, sys, _startGeom, PS, false);
@@ -1214,7 +1216,7 @@ void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vect
 	map<string, double> preOptimizeGeometry = getGeometryMap(_opt, "preOptimize");
 	addGeometryToEnergyMap(preOptimizeGeometry, _sequenceEnergyMap, _sequence);
 	// TODO: thread the below, run multiple, and get the one with the best energy
-	double finalEnergy = backboneOptimizeMonteCarlo(_opt, sys, spm, _sequenceEnergyMap, _sequence, _bestState, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB, _trans, _RNG, monomerEnergy, _sout);
+	backboneOptimizeMonteCarlo(_opt, sys, spm, _sequenceEnergyMap, _sequence, _bestState, helicalAxis, axisA, axisB, apvChainA, apvChainB, trans, _RNG, monomerEnergy, _sout);
 	// add the geometry to the map post backbone optimization
 	map<string, double> endGeometry = getGeometryMap(_opt, "end");
 	addGeometryToEnergyMap(endGeometry, _sequenceEnergyMap, _sequence);
@@ -1223,9 +1225,9 @@ void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vect
 	string designNumber = _opt.runNumber+"_"+to_string(_rep);
 	writePdb(sys, _opt.outputDir, designNumber);
 
-	// assign the coordinates of our system to the given geometry 
-	_startGeom.assignCoordinates(sys.getAtomPointers(),false);
-	_startGeom.buildAllAtoms();
+	// assign the coordinates of our system to the given geometry (if I implement during the sequence search run, uncomment these)
+	//_startGeom.assignCoordinates(sys.getAtomPointers(),false);
+	//_startGeom.buildAllAtoms();
 
 	// output the energy of the system post backbone repack
 	double repackEnergy = _sequenceEnergyMap[_sequence]["Total"];
@@ -1236,7 +1238,7 @@ void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vect
 }
 
 // monte carlo backbone optimization function
-double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string, map<string,double>> &_sequenceEnergyMap,
+void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string, map<string,double>> &_sequenceEnergyMap,
  string _sequence, vector<uint> &_bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy, ofstream &_sout){
 	// Setup backbone repack file
@@ -1293,11 +1295,7 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	
 	double bestEnergy = currentEnergy;
 	double prevBestEnergy = currentEnergy;
-	if (_opt.compareSasa){
-		MCMngr.setEner(bestSasa);
-	} else {
-		MCMngr.setEner(currentEnergy);
-	}
+	MCMngr.setEner(currentEnergy);
 	//double startDimer = _prevBestEnergy;
 
 	// setup variables for shifts: ensures that they start from the proper values for every repack and not just the final value from the initial repack
@@ -1361,58 +1359,30 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		vector<unsigned int> MCOFinal = _spm.getMinStates()[0];
 		currentEnergy = _spm.getMinBound()[0]-_monomerEnergy;
 		_sys.setActiveRotamers(MCOFinal);//THIS WAS NOT HERE BEFORE 2022-8-26 NIGHT! MAKE SURE IT'S IN ALL OTHER CODE, IT'S CRUCIAL TO SAVING THE STATE
-		if (_opt.compareSasa){
-			SasaCalculator startSasa(_sys.getAtomPointers());
-			startSasa.calcSasa();
-			double sasa = startSasa.getTotalSasa()-monomerSasa;
-			if (!MCMngr.accept(sasa)) {
-				bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " sasa: " << sasa << " energy: " << currentEnergy << endl;
-			} else {
-				bestEnergy = currentEnergy;
-				bestSasa = sasa;
-				_sys.saveAltCoor("savedRepackState");
-				_helicalAxis.saveAltCoor("BestRepack");
-		
-				finalXShift = finalXShift + deltaXShift;
-				finalCrossingAngle = finalCrossingAngle + deltaCrossingAngle;
-				finalAxialRotation = finalAxialRotation + deltaAxialRotation;
-				finalZShift = finalZShift + deltaZShift;
-				MCOBest = MCOFinal;
-
-				// if accept, decrease the value of the moves by the sigmoid function
-				if (_opt.decreaseMoveSize == true){
-					double endTemp = MCMngr.getCurrentT();
-					getCurrentMoveSizes(_opt, startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, decreaseMoveSize);
-				}
-				bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " sasa: " << sasa << " energy: " << currentEnergy << endl;
-				counter++;
-			}
+		if (counter == 0){
+			_sequenceEnergyMap[_sequence]["firstRepackEnergy"] = currentEnergy;
+		}
+		if (!MCMngr.accept(currentEnergy)) {
+			bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " energy: " << currentEnergy << endl;
 		} else {
-			if (counter == 0){
-				_sequenceEnergyMap[_sequence]["firstRepackEnergy"] = currentEnergy;
-			}
-			if (!MCMngr.accept(currentEnergy)) {
-				bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " energy: " << currentEnergy << endl;
-			} else {
-				bestEnergy = currentEnergy;
-				_sys.saveAltCoor("savedRepackState");
-				_helicalAxis.saveAltCoor("BestRepack");
+			bestEnergy = currentEnergy;
+			_sys.saveAltCoor("savedRepackState");
+			_helicalAxis.saveAltCoor("BestRepack");
 		
-				finalXShift = finalXShift + deltaXShift;
-				finalCrossingAngle = finalCrossingAngle + deltaCrossingAngle;
-				finalAxialRotation = finalAxialRotation + deltaAxialRotation;
-				finalZShift = finalZShift + deltaZShift;
-				MCOBest = MCOFinal;
+			finalXShift = finalXShift + deltaXShift;
+			finalCrossingAngle = finalCrossingAngle + deltaCrossingAngle;
+			finalAxialRotation = finalAxialRotation + deltaAxialRotation;
+			finalZShift = finalZShift + deltaZShift;
+			MCOBest = MCOFinal;
 
-				// if accept, decrease the value of the moves by the sigmoid function
-				if (_opt.decreaseMoveSize == true){
-					double endTemp = MCMngr.getCurrentT();
-					getCurrentMoveSizes(_opt, startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, decreaseMoveSize);
-				}
-				bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
-				counter++;
-				//writer.write(_sys.getAtomPointers(), true, false, true);
+			// if accept, decrease the value of the moves by the sigmoid function
+			if (_opt.decreaseMoveSize == true){
+				double endTemp = MCMngr.getCurrentT();
+				getCurrentMoveSizes(_opt, startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, decreaseMoveSize);
 			}
+			bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
+			counter++;
+			//writer.write(_sys.getAtomPointers(), true, false, true);
 		}
 	}
 	//writer.close();
@@ -1444,13 +1414,12 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	_opt.axialRotation = finalAxialRotation;
 	_opt.zShift = finalZShift;
 	bbout << MCMngr.getReasonCompleted() << endl;	
-	bbout << "Monte Carlo repack complete. Time: " << diffTimeMC/60 << "min" << endl << endl;
+	bbout << "Backbone Optimization Monte Carlo repack complete. Time: " << diffTimeMC/60 << "min" << endl << endl;
 	//if (finalEnergy > 100){
  //       bbout << "Final energy is " << finalEnergy << " after repack, indicating clashes. Choose a different geometry" << endl;
 	//	_sout << "Final energy is " << finalEnergy << " after repack, indicating clashes. Choose a different geometry" << endl;
 	//	exit(0);
 	//}
-	return finalEnergy;
 }
 
 // adjust the move sizes based on the monte carlo function (decrease by multiplying by the change in temperature)

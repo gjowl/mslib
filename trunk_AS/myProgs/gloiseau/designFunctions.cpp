@@ -364,7 +364,7 @@ vector<double> calcBaselineEnergies(System &_sys, int _thread, int _backboneLeng
 		sel.select(residue += number);
 		double resi = _sys.calcEnergy("resi");
 		ener.push_back(resi);
-		cout << number << ": " << resi << endl;
+		//cout << number << ": " << resi << endl;
 	}
 	sel.clearStoredSelections();
 	return ener;
