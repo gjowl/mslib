@@ -259,7 +259,6 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *   === MONTE CARLO TO SEARCH FOR BEST SEQUENCES AND BACKBONE OPTIMIZE ===
 	 ******************************************************************************/
-	map<string, map<string,double>> sequenceEnergyMapFinalSeqs; // energyMap to hold all energies for output into a summary file
 	string bestSequence = seq;
 	string prevSequence;
 	map<string, double> startGeometries = getGeometryMap(opt, "start");
@@ -291,20 +290,18 @@ int main(int argc, char *argv[]){
 		// optimize the backbone for the sequence
 		threads.push_back(thread{backboneOptimizer, ref(opt), ref(startGeom), seq, rotamerState, ref(sequenceEnergyMapBest), ref(helicalAxis),
 		 ref(rotamerSamplingPerPosition), i, ref(RNG), ref(sout)});
-
-		// get the best sequence from the energy map
-		sequenceEnergyMapFinalSeqs[seq] = sequenceEnergyMapBest[seq];	
 		i++;
 	}
 	for (auto &t : threads){
 		t.join();
 	}
+	//map<string, map<string,double>> sequenceEnergyMapFinalSeqs; // energyMap to hold all energies for output into a summary file
 
 	/******************************************************************************
 	 *                   === WRITE OUT ENERGY AND DESIGN FILES ===
 	 ******************************************************************************/
 	double seed = RNG.getSeed();
-	outputFiles(opt, seed, rotamerSamplingPerPosition, sequenceEnergyMapFinalSeqs, sout);
+	outputFiles(opt, seed, rotamerSamplingPerPosition, sequenceEnergyMapBest, sout);
 
 	time(&endTime);
 	diffTime = difftime (endTime, startTime);
@@ -1227,7 +1224,7 @@ void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vect
 
 	// output the energy of the system post backbone repack
 	double repackEnergy = _sequenceEnergyMap[_sequence]["Total"];
-	//cout << "Energy After BBoptimize: " << repackEnergy << endl;
+	cout << "Energy After BBoptimize: " << repackEnergy << endl;
 
 	// output the end time
 	outputTime(clockTime, "Backbone optimize replicate " + to_string(_rep) + " End", _sout);
