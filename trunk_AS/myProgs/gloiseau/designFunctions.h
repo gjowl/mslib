@@ -74,7 +74,7 @@ void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_de
 void getAxialRotAndZShift(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out);
 
 /***********************************
- *string output
+ *string output functions
  ***********************************/
 // TODO: if possible, make some of these more multipurpose
 string generateBackboneSequence(string _backbone, int _length);
@@ -92,9 +92,9 @@ vector<uint> getVariablePositions(vector<uint> &_interfacialPositions);
 std::vector<pair <int, double> > calculateResidueBurial (System &_sys);
 // Calculate Residue Burial for use in identifying the interfacial positions and output a PDB that highlights the interface
 std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &_startGeom, string _seq);
-
 vector<uint> getAllInterfacePositions(Options &_opt, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength);
 vector<uint> getInterfacePositions(Options &_opt, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength);
+
 /***********************************
  *output file functions
  ***********************************/
@@ -118,7 +118,6 @@ map<string, double> readSingleParameters(string _baselineFile);
 map<string,map<string,map<uint, double>>> readPairParameters(string _baselineFile);
 void buildSelfInteractions(System &_sys, map<string, double> &_selfMap);
 void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>>& _pairMap);
-void setActiveSequence(System &_sys, string _sequence);
 
 /***********************************
  *sequence entropy functions
@@ -151,11 +150,7 @@ void computeMonomerEnergyNoIMM1(Options& _opt, map<string,map<string,double>> &_
 // helper function for computeMonomerEnergies: calculates energy for monomer with solvation energy
 void computeMonomerEnergyIMM1(System &_sys, System &_helicalAxis, Options &_opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq,
  RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
-// delete terminal hydrogen bonds
-//void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum);
-void deleteTerminalBondInteractions(System &_sys, Options &_opt, int _firstResiNum, int _lastResiNum);
-// makes sure that atoms of the system are built; errors out if not
-void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
+
 //
 void getSasaForStartingSequence(System &_sys, string _sequence, vector<uint> _state, map<string, map<string,double>> &_sequenceEnergyMap);
 

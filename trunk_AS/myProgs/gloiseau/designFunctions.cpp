@@ -11,6 +11,7 @@
 #include <iterator>
 #include <unistd.h>
 #include "designFunctions.h"
+#include "multiCodeFunctions.h"
 #include "functions.h"
 
 using namespace std;
@@ -64,6 +65,7 @@ void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vec
 		loadRotamers(_sys, _sysRot, _opt.SL);
 	}
 }
+
 
 /***************************************
  *define interface and rotamer sampling
@@ -547,54 +549,6 @@ void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>
 /***********************************
  *calculate energies
  ***********************************/
-//void computeMonomerEnergies(Options &_opt, Transforms &_trans, map<string, map<string,double>> &_sequenceEnergyMap, vector<string> &_seqs,
-// RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err){
-//	time_t startTimeMono, endTimeMono;
-//	double diffTimeMono;
-//	time(&startTimeMono);
-//
-//	cout << "Calculating monomer energies..." << endl;
-//	_sout << "Calculating monomer energies..." << endl;
-//	vector<thread> threads;
-//	for (auto &seq : _sequenceEnergyMap) {
-//		string sequence = seq.first;
-//		threads.push_back(thread(computeMonomerEnergyIMM1, ref(_opt), ref(_trans), ref(_sequenceEnergyMap), sequence, ref(_RNG), ref(_sout), ref(_err)));
-//	}
-//	for (auto &t: threads){
-//		t.join();
-//	}
-//
-//	time(&endTimeMono);
-//	diffTimeMono = difftime (endTimeMono, startTimeMono);
-//	cout << "End monomer calculations: " << diffTimeMono/60 << "min" << endl << endl;
-//	_sout << "End monomer calculations: " << diffTimeMono/60 << "min" << endl << endl;
-//}
-
-void deleteTerminalBondInteractions(System &_sys, Options &_opt, int _firstResiNum, int _lastResiNum){
-	EnergySet* pESet = _sys.getEnergySet();
-	int chainSize = _sys.chainSize();
-	AtomPointerVector atoms;
-	for(int i = 0; i < chainSize; i++) {
-		Chain & thisChain = _sys.getChain(i);
-		vector<Position*>& positions = thisChain.getPositions();
-		for(int i = 0; i < 3; i++) {
-			// rid of hbonds from first 3 positions
-			if(_firstResiNum <= i) {
-				atoms += positions[i]->getAtomPointers();
-				//cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
-			}
-			// rid of hbonds from last 3 positions
-			if(_lastResiNum > i) {
-				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
-				//cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
-			}
-		}
-	}
-	for (uint i=0; i<_opt.deleteTerminalInteractions.size(); i++){
-		pESet->deleteInteractionsWithAtoms(atoms,_opt.deleteTerminalInteractions[i]);
-	}
-}
-
 void getSasaForStartingSequence(System &_sys, string _sequence, vector<uint> _state, map<string, map<string,double>> &_sequenceEnergyMap){
 	_sys.setActiveRotamers(_state);
 
@@ -604,40 +558,6 @@ void getSasaForStartingSequence(System &_sys, string _sequence, vector<uint> _st
 	double dimerSasa = sasa.getTotalSasa();
 
 	_sequenceEnergyMap[_sequence]["DimerSasa"] = dimerSasa;
-}
-
-/***********************************
-* sequence search functions
- ***********************************/
-void setActiveSequence(System &_sys, string _sequence){
-	// loop through the sequence
-	for (uint i=0; i<_sequence.size(); i++){
-		// get the ith residue in the sequence
-		string res = _sequence.substr(i,1);
-		// loop through all of the chains in the system
-		for (uint j=0; j<_sys.chainSize(); j++){
-			Chain &chain = _sys.getChain(j);
-			// get the ith position in the system
-			Position &pos = chain.getPosition(i);
-			// get the position id for the ith position
-			string posId = pos.getPositionId();
-			// convert the residue id to three letter code
-			string aa = MslTools::getThreeLetterCode(res);
-			// set active identity
-			_sys.setActiveIdentity(posId, aa);
-		}
-		
-	}
-	// Set the active sequence for the system
-	//for (uint i=0; i<_sys.getPositions().size()/2; i++){
-	//	Position &posA = _sys.getPosition(i);
-	//	Position &posB = _sys.getPosition(i+_sequence.length());
-	//	string posIdA = posA.getPositionId();
-	//	string posIdB = posB.getPositionId();
-	//	string aa = MslTools::getThreeLetterCode(_sequence.substr(i, 1));
-	//	_sys.setActiveIdentity(posIdA, aa);
-	//	_sys.setActiveIdentity(posIdB, aa);
-	//}
 }
 
 void getEnergiesForStartingSequence(Options &_opt, SelfPairManager &_spm, string _startSequence,
@@ -661,7 +581,6 @@ vector<uint> &_stateVector, vector<uint> _interfacialPositions, map<string, map<
 
 	_sequenceEnergyMap[_startSequence]["SequenceProbability"] = SEProb;
 }
-
 
 void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfaceSeq, ofstream &_out){
 	// output this information about the SelfPairManager run below

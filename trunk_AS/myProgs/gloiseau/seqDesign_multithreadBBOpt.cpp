@@ -21,6 +21,7 @@
 
 // My functions
 #include "designFunctions.h"
+#include "multiCodeFunctions.h"
 #include "designOptions.h"
 #include "functions.h"
 
@@ -560,14 +561,9 @@ void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSeque
 	}
 
 	_sys.calcEnergy();
-	/******************************************************************************
-	 *                === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
-	 ******************************************************************************/
-	// removes all hydrogen bonding near the termini of our helices
-	// (remnant from CATM, but used in the code that was used to get baselines so keeping it to be consistent)
-	int firstPos = 0;// should this be based on the thread and the
-    int lastPos = _sys.positionSize();
-    deleteTerminalBondInteractions(_sys,_opt,firstPos,lastPos);
+	
+	// removes all bonding near the termini of our helices for a list of interactions
+    deleteTerminalBondInteractions(_sys,_opt.deleteTerminalInteractions);
 
 	/******************************************************************************
 	 *                     === ADD IN BASELINE ENERGIES ===
@@ -1702,9 +1698,7 @@ void computeMonomerEnergy(Options& _opt, map<string,map<string,double>> &_sequen
 	/*****************************************************************************
 	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
 	 ******************************************************************************/
-	int firstPos = 0;
-    int lastPos = monoSys.positionSize();
-    deleteTerminalBondInteractions(monoSys,_opt,firstPos,lastPos);
+    deleteTerminalBondInteractions(_sys,_opt.deleteTerminalInteractions);
 
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
@@ -1812,7 +1806,7 @@ END";
 	// Repack side chains
 	monoSpm.setOnTheFly(1);
 	monoSpm.calculateEnergies();
-        monoSpm.runGreedyOptimizer(_opt.greedyCycles);
+    monoSpm.runGreedyOptimizer(_opt.greedyCycles);
 
 	double currentEnergy = monoSpm.getMinBound()[0];
 	double bestEnergy = currentEnergy;

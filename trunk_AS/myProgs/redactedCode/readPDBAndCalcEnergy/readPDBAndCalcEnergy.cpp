@@ -92,7 +92,6 @@ int main(int argc, char *argv[]){
 	rerun << opt.rerunConf << endl;
 	rerun.close();
 
-	err << date << endl;
 	/******************************************************************************
 	 *                     === DECLARE SYSTEM ===
 	 ******************************************************************************/
@@ -110,6 +109,11 @@ int main(int argc, char *argv[]){
 
     CSB.buildSystemFromPDB(opt.pdbFile);
 	CSB.setBuildNonBondedInteractions(false);
+	// TODO: can I mutate the system here? or do I have to do a bunch of other stuff to get it to work (read sequence, geometry, etc)
+	// CSB addIdentity. Add identity to the system at the desired positions (ends for now, but maybe accept a list?)
+	// check if the terminal residues are the same as the identity
+	
+
 
     /******************************************************************************
 	 *                     === COPY BACKBONE COORDINATES ===
@@ -132,12 +136,6 @@ int main(int argc, char *argv[]){
 	EnergySet* Eset = sys.getEnergySet();
 	// Set all terms active, besides Charmm-Elec
 	Eset->setAllTermsInactive();
-	Eset->setTermActive("CHARMM_ELEC", false);
-	Eset->setTermActive("CHARMM_ANGL", false);
-	Eset->setTermActive("CHARMM_BOND", false);
-	Eset->setTermActive("CHARMM_DIHE", false);
-	Eset->setTermActive("CHARMM_IMPR", false);
-	Eset->setTermActive("CHARMM_U-BR", false);
 	Eset->setTermActive("CHARMM_VDW", true);
 	Eset->setTermActive("SCWRL4_HBOND", true);
 	Eset->setTermActive("CHARMM_IMM1REF", true);
@@ -158,6 +156,7 @@ int main(int argc, char *argv[]){
     int lastPos = sys.positionSize();
     deleteTerminalHydrogenBondInteractions(sys,firstPos,lastPos);
 	cout << "Energy: " << sys.calcEnergy() << endl;
+
 	/******************************************************************************
 	 *                === CHECK TO SEE IF ALL ATOMS ARE BUILT ===
 	 ******************************************************************************/
@@ -165,14 +164,10 @@ int main(int argc, char *argv[]){
 	// See if this is integratable into the system that is built previously for the helix of interest
 	checkIfAtomsAreBuilt(sys, err);
 
-    //TODO: add in a check to see if parallel or antiparallel (distance of one termini to another > 20 angstroms or something)
-    // if so, can still calculate, but make a note of it
-	
     //loading rotamers
 	loadRotamers(sys, sysRot, "SL95.00");
 	CSB.updateNonBonded(10,12,50);//This for some reason updates the energy terms and makes the IMM1 terms active (still need to check where, but did a couple of calcEnergy and outputs
 
-//TODO: make below calculation of energy into a function
 	/******************************************************************************
 	 *                  === GREEDY TO OPTIMIZE ROTAMERS ===
 	 ******************************************************************************/
@@ -195,10 +190,8 @@ int main(int argc, char *argv[]){
 	sys.setActiveRotamers(stateVec);
 	
 	double dimer = spm.getStateEnergy(stateVec);
-    
     cout << "Dimer Energy: " << dimer << endl;
-	
-	cout << 3 << endl;
+
     if (opt.verbose){
         map<string,double> energyByTerm;
 	    energyByTerm = getEnergyByTerm(sys.getEnergySet()); // must double the energy, as only computed energy for 1 helix
@@ -207,7 +200,6 @@ int main(int argc, char *argv[]){
 	    }
     }
 
-	cout << 4 << endl;
     map<string,double> monomerEnergyByTerm;
     double monomer = computeMonomerEnergy(sys, opt, RNG, monomerEnergyByTerm, mout);
 	double finalEnergy = dimer-monomer;
@@ -229,7 +221,9 @@ int main(int argc, char *argv[]){
 	double imm1Diff = imm1-imm1Monomer;
 	double dimerDiff = vdwDiff+hbondDiff+imm1Diff;
 
-	sout << opt.pdbName << ',' << finalEnergy << ',' << dimer << ',' << monomer << ',' << dimerDiff << ',' << vdw << ',' << vdwMonomer << ',' << vdwDiff << ',' << hbond << ',' << hbondMonomer << ',' << hbondDiff << ',' << imm1 << ',' << imm1Monomer << ',' << imm1Diff << endl;
+	sout << "pdbName,energy,dimerEnergy,monomerEnergy,vdwDiff,hbondDiff,imm1Diff" << endl;
+	sout << opt.pdbName << ',' << finalEnergy << ',' << dimer << ',' << monomer << ',' << vdwMonomer << ',' << vdwDiff << ',' << hbond << ',' << hbondMonomer << ',' << hbondDiff << ',' << imm1 << ',' << imm1Monomer << ',' << imm1Diff << endl;
+
     //outputs a pdb file for the structure (already have the pdb, but the sidechains may be in different positions now)
 	// Initialize PDBWriter
 	PDBWriter writer;
