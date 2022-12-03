@@ -2190,26 +2190,50 @@ Options parseOptions(int _argc, char * _argv[]){
 //	return "A" + ps;
 //}
 //
-////Function to get the sum of a vector of doubles, typically energies
-//double sumEnergyVector(vector<double> _energies){
-//	double ener = 0;
-//	for (uint i=0; i<_energies.size(); i++){
-//		ener = ener + _energies[i];
-//	}
-//	return ener;
-//}
-//
-//void resetEnergySet(System &_sys, vector<string> _energyTermList){
-//	for (uint i=0; i<_energyTermList.size(); i++){
-//		string energyTerm = _energyTermList[i];
-//		_sys.getEnergySet()->eraseTerm(energyTerm);
-//	}
-//}
-//
-//void writePdb(System &_sys, string _outputDir, string _pdbName){
-//	PDBWriter writer;
-//	writer.open(_outputDir + "/" + _pdbName + ".pdb");
-//	writer.write(_sys.getAtomPointers(), true, false, false);
-//	writer.close();
-//}
-//
+
+// output energies by term into a referenced energyMap
+void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
+vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
+	if (_includeIMM1 == false){//No IMM1 Energy (for the Monte Carlos, both dimer and monomer)
+		for (uint i=0; i<_energyTermList.size(); i++){
+			string energyTerm = _energyTermList[i]; //CHARMM_ and SCWRL4_ terms
+			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;//Removes the CHARMM_ and SCWRL4_ before energyTerm names
+			if (energyTerm.find("IMM1") != string::npos){
+				continue;
+			} else {
+				if (_energyDescriptor.find("Monomer") != string::npos){
+					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
+				} else {
+					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
+				}
+			}
+		}
+		if (_energyDescriptor.find("Monomer") != string::npos){
+			//skip if monomer; could add calc baseline here at some point
+		} else {
+			_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
+			_energyMap["DimerSelfBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE");
+			_energyMap["DimerPairBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
+		}
+	} else if (_includeIMM1 == true){//IMM1 Energies
+		for (uint i=0; i<_energyTermList.size(); i++){
+			string energyTerm = _energyTermList[i];
+			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;
+			if (_energyDescriptor.find("Monomer") != string::npos){
+				if (energyTerm.find("IMM1") != string::npos){
+					_energyMap["IMM1Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
+				} else {
+					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
+				}
+			} else {
+				if (energyTerm.find("IMM1") != string::npos){
+					_energyMap["IMM1Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
+				} else {
+					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
+				}
+			}
+		}
+		//_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
+	}
+}
+

@@ -7,14 +7,8 @@ using namespace std;
 using namespace MSL;
 
 /***********************************
- * load rotamers 
+ * System Functions
  ***********************************/
-void repackSideChains(SelfPairManager & _spm, int _greedyCycles) {
-	_spm.setOnTheFly(1);
-	_spm.calculateEnergies(); // CHANGE BACK!!!
-	_spm.runGreedyOptimizer(_greedyCycles);
-}
-
 void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
 	for (uint k=0; k < _sys.positionSize(); k++) {
 		Position &pos = _sys.getPosition(k);
@@ -77,9 +71,7 @@ void checkIfAtomsAreBuilt(System &_sys, ofstream &_err){
 	}
 }
 
-/***********************************
-* sequence search functions
- ***********************************/
+// set the active identity for each position to the identity in the given sequence
 void setActiveSequence(System &_sys, string _sequence){
 	// loop through the sequence
 	for (uint i=0; i<_sequence.size(); i++){
@@ -98,6 +90,127 @@ void setActiveSequence(System &_sys, string _sequence){
 			_sys.setActiveIdentity(posId, aa);
 		}
 	}
+}
+
+// Code Samson made a while back that should get each active ID and set a mask for anything that isn't active
+std::vector < std::vector < bool > > getActiveMask (System &_sys) {
+	_sys.updateVariablePositions();
+	std::vector <unsigned int> residueState;
+	std::vector < std::vector<unsigned int> > resRots(_sys.getMasterPositions().size());
+	std::vector < std::vector<bool> > resMask(_sys.getMasterPositions().size());
+	//Initialize residue state at the current active identity for each position
+	for (unsigned int i = 0; i < _sys.getMasterPositions().size(); i++) {
+		Position &pos = _sys.getPosition(_sys.getMasterPositions()[i]);
+		unsigned int activeRes = pos.getActiveIdentity();
+		residueState.push_back(activeRes);
+
+		resRots[i] = std::vector<unsigned int> (pos.identitySize());
+		for (unsigned int j = 0; j < pos.identitySize(); j++) {
+			resRots[i][j] = pos.getTotalNumberOfRotamers(j);
+		}
+	}
+
+	for (unsigned int i = 0; i < residueState.size(); i++) {
+		unsigned int activeResidue = residueState[i];
+		if (activeResidue >= resRots[i].size()) {
+			cerr << "ERROR: the current residue number exceeds the number of residues for position " << i << endl;
+			exit(100);
+		}
+		for (unsigned int j = 0; j < resRots[i].size(); j++) {
+			if (j==activeResidue) {
+				for (unsigned int k = 0; k < resRots[i][j]; k++) {
+					resMask[i].push_back(true);
+				}
+			} else {
+				for (unsigned int k = 0; k < resRots[i][j]; k++) {
+					resMask[i].push_back(false);
+				}
+			}
+		}
+
+		//Sanity check for presence of true rotamers
+
+		bool trueRots = false;
+		for (unsigned int j = 0; j < resMask[i].size(); j++) {
+			if (resMask[i][j]) {
+				trueRots = true;
+			}
+		}
+		if (!trueRots) {
+			cerr << "ERROR AT POSITION: " << i << endl;
+			cerr << "Current Residue: " << activeResidue << endl;
+			cerr << "resRots at this position: " << endl;
+			for (uint k = 0; k < resRots[i].size(); k++) {
+				cerr << resRots[i][k] << " ";
+			}
+			cerr << endl;
+			cerr << "resMask at this position: " << endl;
+			for (uint k = 0; k < resMask[i].size(); k++) {
+				cerr << resMask[i][k] << " ";
+			}
+			cerr << endl;
+			exit(9123);
+		}
+	}
+	return resMask;
+}
+
+
+/***********************************
+ * EnergySet Functions
+ ***********************************/
+void resetEnergySet(System &_sys, vector<string> _energyTermList){
+	for (uint i=0; i<_energyTermList.size(); i++){
+		string energyTerm = _energyTermList[i];
+		_sys.getEnergySet()->eraseTerm(energyTerm);
+	}
+}
+
+map<string,double> getEnergyByTerm(EnergySet* _eSet) {
+	// get all terms
+	map<string,double> eByTerm;
+	map<string,vector<Interaction*> > * allTerms = _eSet->getEnergyTerms();
+	for(map<string,vector<Interaction*> >::iterator it = allTerms->begin(); it != allTerms->end(); it++) {
+		if(_eSet->isTermActive(it->first)) {
+			eByTerm[it->first] =  _eSet->getTermEnergy(it->first);
+		}
+	}
+	return eByTerm;
+}
+
+map<string,double> getEnergyByTermDoubled(EnergySet* _eSet) {
+	// get all terms
+	map<string,double> eByTerm;
+	map<string,vector<Interaction*> > * allTerms = _eSet->getEnergyTerms();
+	for(map<string,vector<Interaction*> >::iterator it = allTerms->begin(); it != allTerms->end(); it++) {
+		if(_eSet->isTermActive(it->first)) {
+			eByTerm[it->first] =  2.0* _eSet->getTermEnergy(it->first);
+		}
+	}
+	return eByTerm;
+}
+
+// function for writing a pdb
+void writePdb(System &_sys, string _outputDir, string _pdbName){
+	PDBWriter writer;
+	writer.open(_outputDir + "/" + _pdbName + ".pdb");
+	writer.write(_sys.getAtomPointers(), true, false, false);
+	writer.close();
+}
+
+// function to get the sum of a vector of doubles, typically energies
+double sumDoubleVector(vector<double> _vector){
+	double sum = 0;
+	for (uint i=0; i<_vector.size(); i++){
+		sum = sum + _vector[i];
+	}
+	return sum;
+}
+
+void repackSideChains(SelfPairManager & _spm, int _greedyCycles) {
+	_spm.setOnTheFly(1);
+	_spm.calculateEnergies(); // CHANGE BACK!!!
+	_spm.runGreedyOptimizer(_greedyCycles);
 }
 
 /***********************************
@@ -230,3 +343,4 @@ double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMul
 		return _moveSize;
 	}
 }
+

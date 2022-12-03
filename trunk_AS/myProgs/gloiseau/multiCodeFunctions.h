@@ -14,8 +14,9 @@
 using namespace std;
 using namespace MSL;
 
-// runs a greedy to quickly repack sidechains
-void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
+/***********************************
+ * System Functions
+ ***********************************/
 //load rotamers for non-interfacial positions
 void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL);
 // delete terminal hydrogen bonds
@@ -24,6 +25,28 @@ void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTermina
 void setActiveSequence(System &_sys, string _sequence);
 // makes sure that atoms of the system are built; errors out if not
 void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
+// checks to ensure that the atoms are built
+void checkIfAtomsAreBuilt(System &_sys, ofstream &_err);
+// gets a mask for use in calculating the energy of only the active sequence
+std::vector < std::vector < bool > > getActiveMask (System &_sys);
+// writes a pdb file
+void writePdb(System &_sys, string _outputDir, string _pdbName);
+
+/***********************************
+ * EnergySet Functions
+ ***********************************/
+// resets the energy set of a system for a list of energy terms
+void resetEnergySet(System &_sys, vector<string> _energyTermList);
+// gets the energy of a system for a list of energy terms
+map<string,double> getEnergyByTerm(EnergySet* _eSet);
+// gets the energy of a system for a list of energy terms and doubles them (for monomers)
+map<string,double> getEnergyByTermDoubled(EnergySet* _eSet);
+
+
+// gets the sum of a vector of doubles
+double sumDoubleVector(vector<double> _vector);
+// runs a greedy to quickly repack sidechains
+void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
 
 /***********************************
 * geometry move functions

@@ -1991,8 +1991,8 @@ END";
 	if (_opt.useAlaAtTermini){
 		vector<double> selfVec = calcBaselineEnergies(monoSys, _opt.thread, _opt.backboneLength);
 		vector<double> pairVec = calcPairBaselineEnergies(monoSys, _opt.thread, _opt.backboneLength);
-		double self = sumEnergyVector(selfVec);
-		double pair = sumEnergyVector(pairVec);
+		double self = sumDoubleVector(selfVec);
+		double pair = sumDoubleVector(pairVec);
 		_sequenceEnergyMap[_seq]["MonomerWithoutAlaEnds"] = 2*(self+pair);
 	}
 
