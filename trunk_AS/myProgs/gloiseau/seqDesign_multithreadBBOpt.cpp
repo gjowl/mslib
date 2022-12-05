@@ -1698,7 +1698,7 @@ void computeMonomerEnergy(Options& _opt, map<string,map<string,double>> &_sequen
 	/*****************************************************************************
 	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
 	 ******************************************************************************/
-    deleteTerminalBondInteractions(_sys,_opt.deleteTerminalInteractions);
+    deleteTerminalBondInteractions(monoSys,_opt.deleteTerminalInteractions);
 
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
