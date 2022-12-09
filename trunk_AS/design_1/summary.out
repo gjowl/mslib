@@ -1,45 +1,64 @@
-11_22_2022
-Self Consistent Mean Field Start Time: Tue Nov 22 14:35:58 2022
-Elapsed time of program: 0.119min
+12_09_2022
+Self Consistent Mean Field Start Time: Fri Dec  9 15:07:12 2022
+Elapsed time of program: 0.13min
 
 Running Self Consistent Mean Field
-Initial Sequence:   LLLLAYLIILLSLLWSLLILI
-Best Sequence:      LLLLAYLIILLSYLWSLLILI
-Interface Sequence: LL--AY-II--SY-WS--I--
-Total Energy:       1.41e+03
-VDW:                1.34e+03
-HBOND:              -75.8
-Self Consistent Mean Field End Time: Tue Nov 22 14:37:45 2022
-Elapsed time of program: 1.9min
+Initial Sequence:   LLLLSYLIILLSYLWSLLILI
+Best Sequence:      LLLLSYLIILLSYLWSLLILI
+Interface Sequence: LL--SY-II--SY-WS--I--
+Total Energy:       1.4e+03
+VDW:                1.35e+03
+HBOND:              -103
+Self Consistent Mean Field End Time: Fri Dec  9 15:09:06 2022
+Elapsed time of program: 2.03min
 
-Monte Carlo Sequence Search Start Time: Tue Nov 22 14:37:45 2022
-Elapsed time of program: 1.9min
+Monte Carlo Sequence Search Start Time: Fri Dec  9 15:09:06 2022
+Elapsed time of program: 2.04min
 
-  - SelfPairManager energy calculation Start Time: Tue Nov 22 14:37:50 2022
-Elapsed time of program: 1.99min
+  - SelfPairManager energy calculation Start Time: Fri Dec  9 15:09:13 2022
+Elapsed time of program: 2.15min
 
-  - SelfPairManager energy calculation End Time: Tue Nov 22 14:39:40 2022
-Elapsed time of program: 3.82min
+  - SelfPairManager energy calculation End Time: Fri Dec  9 15:11:08 2022
+Elapsed time of program: 4.07min
 
 Sequence	Dimerw/Baseline	AcceptCycleNumber	AcceptTemp
-LLLLWTLLALLFILYSLLILI	1.4e+03	145	61
-End monte carlo sequence search: 0.283min
+LLLLFLLYILLSLLWFLLILI	1.41e+03	16	3.65e+03
+LLLLFLLYILLSSLWFLLILI	1.42e+03	15	3.65e+03
+LLLLFYLYILLSSLWFLLILI	1.42e+03	14	3.65e+03
+LLLLSYLLLLLYTLFSLLILI	1.39e+03	161	7.21
+LLLLYLLYLLLSLLWWLLILI	1.41e+03	21	3.65e+03
+End monte carlo sequence search: 0.333min
 Monte Carlo ended at Temp: 0.547
 
 
-Monte Carlo Sequence Search End Time: Tue Nov 22 14:39:57 2022
-Elapsed time of program: 4.11min
+Monte Carlo Sequence Search End Time: Fri Dec  9 15:11:28 2022
+Elapsed time of program: 4.4min
 
-Calculating monomer energies...
-LLLLWTLLALLFILYSLLILI Dimer - Monomer = 1.04e+03 - -368 = 1.4e+03
-End monomer calculations: 4.02min
+Backbone optimize LLLLFLLYILLSLLWFLLILI Start Time: Backbone optimize LLLLFLLYILLSSLWFLLILI Start Time: Backbone optimize LLLLFYLYILLSSLWFLLILI Start Time: Fri Dec  9 15:11:31 2022
+Fri Dec  9 15:11:31 2022
+Elapsed time of program: 4.444.44min
 
-Backbone optimize LLLLWTLLALLFILYSLLILI Start Time: Tue Nov 22 14:44:01 2022
-Elapsed time of program: 8.17min
+ackbone optimize LLLLFLLYILLSLLWFLLILI Start Time: Backbone optimize LLLLFLLYILLSSLWFLLILI Start Time: Backbone optimize LLLLFYLYILLSSLWFLLILI Start Time: Fri Dec  9 15:11:31 2022
+Fri Dec  9 15:11:31 2022
+Elapsed time of program: 4.444.44min
 
-Backbone optimize replicate 0 End Time: Tue Nov 22 14:50:25 2022
-Elapsed time of program: 14.6min
+ackbone optimize LLLLFLLYILLSLLWFLLILI Start Time: Backbone optimize LLLLFLLYILLSSLWFLLILI Start Time: Backbone optimize LLLLFYLYILLSSLWFLLILI Start Time: Fri Dec  9 15:11:31 2022
+Fri Dec  9 15:11:31 2022
+Elapsed time of program: 4.444.44min
+Backbone optimize LLLLSYLLLLLYTLFSLLILI Start Time: Fri Dec  9 15:11:31 2022
+Elapsed time of program: 4.44min
 
-Sequence	RotamerValues	Interface	InterfaceSequence	Seed	Baseline	Dimer	Dimerw/Baseline	HBONDDimer	HBONDMonomer	IMM1Dimer	IMM1Monomer	Monomer	MonomerSasa	SequenceEntropy	SequenceProbability	Totalw/Entropy	VDWDimer	VDWMonomer	acceptCycleNumber	acceptTemp	preRepackTotal	startAxialRotation	startAxialRotationPrime	startCrossingAngle	startXShift	startZShift	startZShiftPrime	
-LLLLWTLLALLFILYSLLILI	103301210220131023032		LL--WT-LA--FI-YS--I--	1	365.194	1036.45	1401.64	-60.431	-60.4608	-232.49	-286.367	-368.427	4623.67	5.48064	9.53611e-05	1407.12	1329.37	-21.5988	145	60.9677	1404.87	-66.6667	60	25	10	4.6	4	
-Total Time: 15 minutes
+ackbone optimize LLLLFLLYILLSLLWFLLILI Start Time: Backbone optimize LLLLFLLYILLSSLWFLLILI Start Time: Backbone optimize LLLLFYLYILLSSLWFLLILI Start Time: Fri Dec  9 15:11:31 2022
+Fri Dec  9 15:11:31 2022
+Elapsed time of program: 4.444.44min
+Backbone optimize LLLLSYLLLLLYTLFSLLILI Start Time: Fri Dec  9 15:11:31 2022
+Elapsed time of program: 4.44min
+Fri Dec  9 15:11:31 2022
+Elapsed time of program: 4.44min
+
+
+
+
+Backbone optimize LLLLYLLYLLLSLLWWLLILI Start Time: Fri Dec  9 15:11:31 2022
+Elapsed time of program: 4.44min
+
