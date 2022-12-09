@@ -1203,7 +1203,7 @@ void optimizeSequenceBackboneGeometry(Options &_opt, System &_startGeom, map<str
 
 		// save the pre backbone optimize energy and the replicate number in the 
 		_sequenceEnergyMap[sequence]["preOptimizeEnergy"] = currentEnergy;
-		_sequenceEnergyMap[sequence]["replicateNumber"] = replicateNumber;
+		_sequenceEnergyMap[sequence]["ReplicateNumber"] = replicateNumber;
 		
 		threads.push_back(thread{backboneOptimizeMonteCarlo, ref(_opt), ref(sys), ref(spm), ref(_sequenceEnergyMap), sequence, rotamerState, ref(helicalAxis),
 		 ref(axisA), ref(axisB), ref(apvChainA), ref(apvChainB), ref(trans), ref(_RNG), ref(_sout)});
@@ -1286,8 +1286,10 @@ void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vect
 	_sequenceEnergyMap[_sequence]["preOptimizeEnergy"] = currentEnergy;
 	
 	// TODO: thread the below, run multiple, and get the one with the best energy
-	thread{backboneOptimizeMonteCarlo, ref(_opt), ref(sys), ref(spm), ref(_sequenceEnergyMap), _sequence, _bestState, ref(helicalAxis),
-	 ref(axisA), ref(axisB), ref(apvChainA), ref(apvChainB), ref(trans), ref(_RNG), ref(_sout)};
+	//thread{backboneOptimizeMonteCarlo, ref(_opt), ref(sys), ref(spm), ref(_sequenceEnergyMap), _sequence, _bestState, ref(helicalAxis),
+	// ref(axisA), ref(axisB), ref(apvChainA), ref(apvChainB), ref(trans), ref(_RNG), ref(_sout)};
+	backboneOptimizeMonteCarlo(_opt, sys, spm, _sequenceEnergyMap, _sequence, _bestState, helicalAxis, axisA, axisB, apvChainA, apvChainB,
+	 trans, _RNG, _sout);
 	
 	// assign the coordinates of our system to the given geometry (if I implement during the sequence search run, uncomment these)
 	//_startGeom.assignCoordinates(sys.getAtomPointers(),false);
