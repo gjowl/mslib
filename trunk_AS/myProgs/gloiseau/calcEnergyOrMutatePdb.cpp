@@ -59,7 +59,6 @@ int main(int argc, char *argv[]){
 	strftime(buffer,sizeof(buffer),"%m_%d_%Y",timeinfo);
 
 	string date(buffer);
-	
     /******************************************************************************
 	 *                 === PARSE THE COMMAND LINE OPTIONS ===
 	 ******************************************************************************/
@@ -109,33 +108,40 @@ int main(int argc, char *argv[]){
 	CSB.setBuildTerm("CHARMM_DIHE", false);
 	CSB.setBuildTerm("CHARMM_IMPR", false);
 	CSB.setBuildTerm("CHARMM_U-BR", false);
+	CSB.setBuildTerm("CHARMM_IMM1REF", true);
+	CSB.setBuildTerm("CHARMM_IMM1", true);
 
 	CSB.setSolvent("MEMBRANE");
 	CSB.setIMM1Params(15, 10);
 
-    CSB.buildSystemFromPDB(opt.pdbFile);
+	// read in the pdbfile
+	sys.readPdb(opt.pdbFile);
+	cout << sys.calcEnergy() << endl;
+	//cout << Eset->getSummary() << endl;
+
 	CSB.setBuildNonBondedInteractions(false);
+    CSB.buildSystemFromPDB(opt.pdbFile);
 	// TODO: can I mutate the system here? or do I have to do a bunch of other stuff to get it to work (read sequence, geometry, etc)
 	// CSB addIdentity. Add identity to the system at the desired positions (ends for now, but maybe accept a list?)
 	// check if the terminal residues are the same as the identity
-	for (uint i = 0; i < sys.chainSize(); i++){
-		// get the chain
-		Chain &chain = sys.getChain(i);
-		// get the positions
-		vector<Position*>& positions = chain.getPositions();
-		// loop through the positions
-		for (uint j=0; j<positions.size(); j++){
-			if (j < 3 || j > positions.size() - 4){
-				// get the position
-				Position &pos = *positions[i];
-				// loop through the alternate identity list
-				for (uint k=0; k< opt.alternateIds.size(); k++){
-					string id = opt.alternateIds[k];
-					CSB.addIdentity(pos, id);
-				}
-			}
-		}
-	}
+	//for (uint i = 0; i < sys.chainSize(); i++){
+	//	// get the chain
+	//	Chain &chain = sys.getChain(i);
+	//	// get the positions
+	//	vector<Position*>& positions = chain.getPositions();
+	//	// loop through the positions
+	//	for (uint j=0; j<positions.size(); j++){
+	//		if (j < 3 || j > positions.size() - 4){
+	//			// get the position
+	//			Position &pos = *positions[i];
+	//			// loop through the alternate identity list
+	//			for (uint k=0; k< opt.alternateIds.size(); k++){
+	//				string id = opt.alternateIds[k];
+	//				CSB.addIdentity(pos, id);
+	//			}
+	//		}
+	//	}
+	//}
 
     /******************************************************************************
 	 *                     === COPY BACKBONE COORDINATES ===
@@ -143,13 +149,14 @@ int main(int argc, char *argv[]){
 	// assign the coordinates of our system to the given geometry that was assigned without energies using System pdb
 	sys.buildAllAtoms();
 
-	// initialize the object for loading rotamers into our system
-	SystemRotamerLoader sysRot(sys, opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
-
+	// check to verify that all atoms have coordinates
+	checkIfAtomsAreBuilt(sys, err);
+	
 	// Add hydrogen bond term
 	HydrogenBondBuilder hb(sys, opt.hbondFile);
 	hb.buildInteractions(50);//when this is here, the HB weight is correct
+
+	CSB.updateNonBonded(10,12,50);//This for some reason updates the energy terms and makes the IMM1 terms active (still need to check where, but did a couple of calcEnergy and outputs
 
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
@@ -170,15 +177,16 @@ int main(int argc, char *argv[]){
 	Eset->setWeight("CHARMM_IMM1", opt.weight_solv);
 
 	// removes all bonding near the termini of our helices for a list of interactions
+	sys.calcEnergy();
     deleteTerminalBondInteractions(sys,opt.deleteTerminalInteractions);
-	cout << "Energy: " << sys.calcEnergy() << endl;
-
-	// check to verify that all atoms have coordinates
-	checkIfAtomsAreBuilt(sys, err);
+	cout << Eset->getSummary() << endl;
+	
+	// initialize the object for loading rotamers into our system
+	SystemRotamerLoader sysRot(sys, opt.rotLibFile);
+	sysRot.defineRotamerSamplingLevels();
 
     // loading rotamers
 	loadRotamers(sys, sysRot, "SL95.00");
-	CSB.updateNonBonded(10,12,50);//This for some reason updates the energy terms and makes the IMM1 terms active (still need to check where, but did a couple of calcEnergy and outputs
 
 	/******************************************************************************
 	 *                  === GREEDY TO OPTIMIZE ROTAMERS ===
@@ -215,10 +223,12 @@ int main(int argc, char *argv[]){
     map<string,double> monomerEnergyByTerm;
     double monomer = computeMonomerEnergy(sys, opt, RNG, monomerEnergyByTerm, mout);
 	double finalEnergy = dimer-monomer;
+	cout << "Final Energy: " << finalEnergy << endl;
 	// added in way to get the differences between monomer and dimer for different energy terms
 	double vdw = spm.getStateEnergy(spm.getMinStates()[0], "CHARMM_VDW");
 	double hbond = spm.getStateEnergy(spm.getMinStates()[0], "SCWRL4_HBOND");
 	double imm1 = spm.getStateEnergy(spm.getMinStates()[0], "CHARMM_IMM1")+spm.getStateEnergy(spm.getMinStates()[0], "CHARMM_IMM1REF");
+	cout << Eset->getSummary() << endl;
 	auto it = monomerEnergyByTerm.find("CHARMM_VDW");
 	double vdwMonomer = it->second;
 	it = monomerEnergyByTerm.find("SCWRL4_HBOND");
@@ -235,6 +245,8 @@ int main(int argc, char *argv[]){
 
 	sout << "energy,dimerEnergy,monomerEnergy,vdwDiff,hbondDiff,imm1Diff" << endl;
 	sout << finalEnergy << ',' << dimer << ',' << monomer << ',' << vdwMonomer << ',' << vdwDiff << ',' << hbond << ',' << hbondMonomer << ',' << hbondDiff << ',' << imm1 << ',' << imm1Monomer << ',' << imm1Diff << endl;
+	cout << "energy,dimerEnergy,monomerEnergy,vdwDiff,hbondDiff,imm1Diff" << endl;
+	cout << finalEnergy << ',' << dimer << ',' << monomer << ',' << vdwMonomer << ',' << vdwDiff << ',' << hbond << ',' << hbondMonomer << ',' << hbondDiff << ',' << imm1 << ',' << imm1Monomer << ',' << imm1Diff << endl;
 
     //outputs a pdb file for the structure (already have the pdb, but the sidechains may be in different positions now)
 	// Initialize PDBWriter
@@ -247,6 +259,7 @@ int main(int argc, char *argv[]){
     sout.close();
     mout.close();
     err.close();
+	exit(0);
 }
 
 // 
@@ -257,6 +270,7 @@ string setupOutputDirectory(string _dirName){
 		cout << "Unable to make directory" << endl;
 		exit(0);
 	}
+	return _dirName;
 }
 
 void outputErrorMessage(string _message, string _optionParserErrors){
@@ -298,6 +312,8 @@ double computeMonomerEnergy(System & _sys, Options& _opt, RandomNumberGenerator 
 	CSBMono.setBuildTerm("CHARMM_DIHE", false);
 	CSBMono.setBuildTerm("CHARMM_IMPR", false);
 	CSBMono.setBuildTerm("CHARMM_U-BR", false);
+	CSBMono.setBuildTerm("CHARMM_IMM1REF", true);
+	CSBMono.setBuildTerm("CHARMM_IMM1", true);
 
 	CSBMono.setSolvent("MEMBRANE");
 	CSBMono.setIMM1Params(15, 10);
@@ -564,7 +580,6 @@ double computeMonomerEnergy(System & _sys, Options& _opt, RandomNumberGenerator 
 	double monomerEnergy = monoSpm.getStateEnergy(stateVec)*2;
 	cout << "Monomer Energy w/ IMM1: " << monomerEnergy << endl;
 	_mout << monoEset->getSummary();
-	_mout << endl;
 
 	// print the monomer
 	//string monoOutCrdFile  = _opt.outputDir + "/monomer.crd";
@@ -815,7 +830,7 @@ Options parseCalcEnergyOptions(int _argc, char * _argv[]){
 	}
 	opt.outputDirName = OP.getString("outputDirName");
 	if (OP.fail()) {
-		opt.errorMessages += "Unable to determine outputDir";
+		opt.errorMessages += "Unable to determine outputDirName";
 		opt.errorFlag = true;
 	}
 
