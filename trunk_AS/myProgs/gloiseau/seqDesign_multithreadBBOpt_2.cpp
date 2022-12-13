@@ -95,10 +95,10 @@ void useInputInterface(Options &_opt, string &_variablePositionString, string &_
 
 // backbone optimization functions
 void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vector<uint> _bestState, map<string, map<string,double>> &_sequenceEnergyMap,
- System &_startHelicalAxis, RandomNumberGenerator &_RNG, ofstream &_sout);
+ System &_startHelicalAxis, vector<uint> _rotamerSampling, int _rep, RandomNumberGenerator &_RNG, ofstream &_sout);
 void optimizeSequenceBackboneGeometry(Options &_opt, System &_startGeom, map<string,vector<uint>> _sequenceRotamerStateMap, map<string, map<string,double>> &_sequenceEnergyMap,
  System &_startHelicalAxis, RandomNumberGenerator &_RNG, ofstream &_sout);
-void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string, map<string,double>> &_sequenceEnergyMap,
+void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager _spm, map<string, map<string,double>> &_sequenceEnergyMap,
  string _sequence, vector<uint> _bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, ofstream &_sout);
 void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
@@ -277,26 +277,8 @@ int main(int argc, char *argv[]){
 	searchForBestSequences(startGeom, opt, interfacePolySeq, bestSequence, sequenceEnergyMapBest, sequenceRotamerMap, sequenceEntropyMap,
 	 interfacePositions, rotamerSamplingPerPosition, RNG, sout, err);
 	// optimize the backbone for the chosen sequences
-	//optimizeSequenceBackboneGeometry(opt, startGeom, sequenceRotamerMap, sequenceEnergyMapBest, helicalAxis, RNG, sout);
+	optimizeSequenceBackboneGeometry(opt, startGeom, sequenceRotamerMap, sequenceEnergyMapBest, helicalAxis, RNG, sout);
 	//map<string, map<string,double>> sequenceEnergyMapFinalSeqs; // energyMap to hold all energies for output into a summary file
-	vector<thread> threads;
-	uint replicateNumber = 0;
-	for (auto const& sequenceMap : sequenceEnergyMapBest){
-		// get the sequence
-		string sequence = sequenceMap.first;
-		// get the rotamer state
-		vector<uint> rotamerState = sequenceRotamerMap[sequence];
-		sequenceEnergyMapBest[sequence]["ReplicateNumber"] = replicateNumber;
-		threads.push_back(thread{backboneOptimizer, ref(opt), ref(startGeom), sequence, rotamerState, ref(sequenceEnergyMapBest),
-		 ref(helicalAxis), ref(RNG), ref(sout)});
-		
-		// increment the replicate number
-		replicateNumber++;
-	}
-	for (auto &t : threads){
-		t.join();
-	}
-
 
 	/******************************************************************************
 	 *                   === WRITE OUT ENERGY AND DESIGN FILES ===
@@ -612,7 +594,7 @@ void searchForBestSequences(System &_startGeom, Options &_opt, PolymerSequence &
 	spm.setSystem(&sys);
 	spm.setVerbose(false);
 	spm.getMinStates()[0];
-	spm.setOnTheFly(true);
+	spm.setOnTheFly(false);
 	spm.saveEnergiesByTerm(true);
 
 	// calculate the self and pair energies for each amino acid and rotamer combo in the sequence	
@@ -1203,9 +1185,9 @@ void optimizeSequenceBackboneGeometry(Options &_opt, System &_startGeom, map<str
 
 		// save the pre backbone optimize energy and the replicate number in the 
 		_sequenceEnergyMap[sequence]["preOptimizeEnergy"] = currentEnergy;
-		_sequenceEnergyMap[sequence]["ReplicateNumber"] = replicateNumber;
+		_sequenceEnergyMap[sequence]["replicateNumber"] = replicateNumber;
 		
-		threads.push_back(thread{backboneOptimizeMonteCarlo, ref(_opt), ref(sys), ref(spm), ref(_sequenceEnergyMap), sequence, rotamerState, ref(helicalAxis),
+		threads.push_back(thread{backboneOptimizeMonteCarlo, ref(_opt), ref(sys), spm, ref(_sequenceEnergyMap), sequence, rotamerState, ref(helicalAxis),
 		 ref(axisA), ref(axisB), ref(apvChainA), ref(apvChainB), ref(trans), ref(_RNG), ref(_sout)});
 
 		// increment the replicate number
@@ -1217,7 +1199,7 @@ void optimizeSequenceBackboneGeometry(Options &_opt, System &_startGeom, map<str
 }
 
 void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vector<uint> _bestState, map<string, map<string,double>> &_sequenceEnergyMap,
- System &_startHelicalAxis, RandomNumberGenerator &_RNG, ofstream &_sout){
+ System &_startHelicalAxis, vector<uint> _rotamerSampling, int _rep, RandomNumberGenerator &_RNG, ofstream &_sout){
 	// output the start time
 	outputTime(clockTime, "Backbone optimize "+_sequence+" Start", _sout);
 
@@ -1284,31 +1266,28 @@ void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vect
 
 	// save the pre backbone optimize energy and the replicate number in the 
 	_sequenceEnergyMap[_sequence]["preOptimizeEnergy"] = currentEnergy;
+	_sequenceEnergyMap[_sequence]["replicateNumber"] = _rep;
 	
 	// TODO: thread the below, run multiple, and get the one with the best energy
-	//thread{backboneOptimizeMonteCarlo, ref(_opt), ref(sys), ref(spm), ref(_sequenceEnergyMap), _sequence, _bestState, ref(helicalAxis),
-	// ref(axisA), ref(axisB), ref(apvChainA), ref(apvChainB), ref(trans), ref(_RNG), ref(_sout)};
-	backboneOptimizeMonteCarlo(_opt, sys, spm, _sequenceEnergyMap, _sequence, _bestState, helicalAxis, axisA, axisB, apvChainA, apvChainB,
-	 trans, _RNG, _sout);
+	thread{backboneOptimizeMonteCarlo, ref(_opt), ref(sys), ref(spm), ref(_sequenceEnergyMap), _sequence, _bestState, ref(helicalAxis),
+	 ref(axisA), ref(axisB), ref(apvChainA), ref(apvChainB), ref(trans), ref(_RNG), ref(_sout)};
 	
 	// assign the coordinates of our system to the given geometry (if I implement during the sequence search run, uncomment these)
 	//_startGeom.assignCoordinates(sys.getAtomPointers(),false);
 	//_startGeom.buildAllAtoms();
 
 	// output the end time
-	outputTime(clockTime, "Backbone optimize " + _sequence + " End", _sout);
+	outputTime(clockTime, "Backbone optimize replicate " + to_string(_rep) + " End", _sout);
 }
 
 // monte carlo backbone optimization function
-void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string, map<string,double>> &_sequenceEnergyMap,
+void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager _spm, map<string, map<string,double>> &_sequenceEnergyMap,
  string _sequence, vector<uint> _bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, ofstream &_sout){
-	cout << _sequence << ": 1" << endl;
 	// Setup backbone repack file
 	ofstream bbout;
 	string bboutfile  = _opt.outputDir + "/bbRepack_"+_sequence+".out";
 	bbout.open(bboutfile.c_str());
-	cout << _sequence << ": 2" << endl;
 
 	// Local Backbone Monte Carlo Repacks Time setup	
 	time_t startTimeMC, endTimeMC;
@@ -1326,19 +1305,15 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	double finalCrossingAngle = _opt.crossingAngle;
 	double finalAxialRotation = _opt.axialRotation;
 	double finalZShift = _opt.zShift;
-	cout << _sequence << ": 3" << endl;
 
 	// monomer energy
 	double monomerEnergy = _sequenceEnergyMap[_sequence]["Monomer"];
 
-	cout << _sequence << ": 4" << endl;
 	// replicate number
 	double replicateNumber = _sequenceEnergyMap[_sequence]["ReplicateNumber"];
-	cout << _sequence << ": 5" << endl;
 
 	bbout << "***STARTING GEOMETRY***" << endl;
 	outputGeometry(_opt, xShift, crossingAngle, axialRotation, zShift, bbout);
-	cout << _sequence << ": 2" << endl;
 
 	// calculate starting sasa
 	SasaCalculator startSasa(_sys.getAtomPointers());
@@ -1355,17 +1330,20 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	_sys.setActiveRotamers(_bestState);
 	double currentEnergy = _spm.getStateEnergy(_bestState)-monomerEnergy;
 	double dimer = _spm.getStateEnergy(_bestState);
+cout << _spm.getSummary(_bestState) << endl;	
 	double calcDimer = _sys.calcEnergy();
 	//cout << "Starting Energy: " << currentEnergy << endl;
 	//cout << "Starting Dimer Energy: " << dimer << endl;
 	//cout << "Monomer Energy: " << _monomerEnergy << endl;
 	//cout << "Calculated Dimer Energy: " << calcDimer << endl;
-	cout << _sequence << ": 3" << endl;
 	_sequenceEnergyMap[_sequence]["TotalPreOptimize"] = currentEnergy;
+	cout << 5 << endl;
 	_sequenceEnergyMap[_sequence]["VDWDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_VDW");
+	cout << 6 << endl;
 	_sequenceEnergyMap[_sequence]["IMM1DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	cout << 7 << endl;
 	_sequenceEnergyMap[_sequence]["HBONDDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
-	cout << _sequence << ": 4" << endl;
+	cout << 8 << endl;
 	
 	double bestEnergy = currentEnergy;
 	double prevBestEnergy = currentEnergy;
@@ -1387,7 +1365,6 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	addGeometryToEnergyMap(preOptimizeGeometry, _sequenceEnergyMap, _sequence);
 	// loop through the MC cycles for backbone repacks
 	bbout << "Starting Repack Cycles" << endl; 
-	cout << _sequence << ": Start" << endl;
 	while(!MCMngr.getComplete()) {
 		// get the current temperature of the MC
 		double startTemp = MCMngr.getCurrentT();
@@ -1467,7 +1444,6 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	bbout << "End Repack Cycles" << endl << endl; 
 	time(&endTimeMC);
 	diffTimeMC = difftime (endTimeMC, startTimeMC);
-	cout << _sequence << ": End ; Took " << diffTimeMC/60 << " minutes " << endl;
 	_bestState = MCOBest;	
 	_sys.applySavedCoor("savedRepackState");
 	double dimerEnergy = _spm.getStateEnergy(MCOBest);
@@ -1494,6 +1470,7 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	//_opt.zShift = finalZShift;
 	bbout << MCMngr.getReasonCompleted() << endl;	
 	bbout << "Backbone Optimization Monte Carlo repack complete. Time: " << diffTimeMC/60 << "min" << endl << endl;
+	cout << 4 << endl;
 
 	// add the geometry to the map post backbone optimization
 	map<string, double> endGeometry;
@@ -1503,10 +1480,12 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	endGeometry[description+"AxialRotation"] = finalAxialRotation;
 	endGeometry[description+"ZShift"] = finalZShift;
 	addGeometryToEnergyMap(endGeometry, _sequenceEnergyMap, _sequence);
+	cout << 5 << endl;
 
 	// write the pdb for the final state of the backbone optimization
 	string designNumber = _opt.runNumber+"_"+to_string(replicateNumber);
 	writePdb(_sys, _opt.outputDir, designNumber);
+	cout << 6 << endl;
 
 	// output the energy of the system post backbone repack
 	double repackEnergy = _sequenceEnergyMap[_sequence]["Total"];
