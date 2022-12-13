@@ -59,12 +59,12 @@ void searchForBestSequence(System &_startGeom, Options &_opt, PolymerSequence &_
  vector<unsigned int> &_bestState, string &_bestSequence, vector<uint> &_allInterfacialPositionsList,
  vector<uint> &_interfacialPositionsList, vector<uint> &_rotamerSampling,
  RandomNumberGenerator &_RNG, int _rep, ofstream &_sout, ofstream &_err);
-void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
+void sequenceSearchMonteCarlo(System &_sys, Options &_opt, CharmmSystemBuilder &_CSB, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
  vector<uint> &_bestState, string &_bestSequence, map<string, map<string,double>> &_sequenceEnergyMap, 
  map<string,double> _sequenceEntropyMap, vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList,
  vector<uint> &_rotamerSampling, int _rep, ofstream &_sout, ofstream &_err);
 map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
- string _bestSeq, double _bestEnergy, map<string,vector<uint>> &_sequenceStateMap, map<string,double> _sequenceEntropyMap,
+ int _interfacePos, string _bestSeq, double _bestEnergy, map<string,vector<uint>> &_sequenceStateMap, map<string,double> _sequenceEntropyMap,
  vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList, vector<uint> _rotamerSampling);
 string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap, string _energyTerm);
 string getSequenceUsingMetropolisCriteria(map<string,map<string,double>> &_sequenceEnergyMap, RandomNumberGenerator &_RNG, double _currTemp, string _energyTerm);
@@ -591,7 +591,80 @@ void searchForBestSequence(System &_startGeom, Options &_opt, PolymerSequence &_
 
 	// initialize the system	
 	System sys;
-	prepareSystem(_opt, sys, _startGeom, _PS, _opt.useBaseline);
+	// declare system
+	CharmmSystemBuilder CSB(sys,_opt.topFile,_opt.parFile,_opt.solvFile);
+	if (_opt.useElec == false){
+		CSB.setBuildTerm("CHARMM_ELEC", false);
+	} else {
+		CSB.setBuildTerm("CHARMM_ELEC", true);
+	}
+	CSB.setBuildTerm("CHARMM_ANGL", false);
+	CSB.setBuildTerm("CHARMM_BOND", false);
+	CSB.setBuildTerm("CHARMM_DIHE", false);
+	CSB.setBuildTerm("CHARMM_IMPR", false);
+	CSB.setBuildTerm("CHARMM_U-BR", false);
+	CSB.setBuildTerm("CHARMM_IMM1REF", true);
+	CSB.setBuildTerm("CHARMM_IMM1", true);
+
+	// load the membrane as solvent
+	CSB.setSolvent("MEMBRANE");
+	// set the midpoint length of the membrane and the exponential factor for the membrane (src/CharmmEnergy.cpp: IMM1ZtransFunction) 
+	CSB.setIMM1Params(15, 10);
+	// sets all nonbonded interactions to 0, excluding interactions between far atoms (src/CharmmSystemBuilder.cpp: updateNonbonded)
+	CSB.setBuildNonBondedInteractions(false);
+
+	// Setup polymer sequence and build the sequence using CharmmSystemBuilder
+	if(!CSB.buildSystem(_PS)) {
+		cerr << "Unable to build system from " << _PS << endl;
+		exit(0);
+	}
+	
+	// assign the coordinates of our system to the given geometry 
+	sys.assignCoordinates(_startGeom.getAtomPointers(),false);
+	sys.buildAllAtoms();
+	
+	// Add hydrogen bond term
+	HydrogenBondBuilder hb(sys, _opt.hbondFile);
+	hb.buildInteractions(50);//when this is here, the HB weight is correct
+
+	CSB.updateNonBonded(10,12,50);
+	/******************************************************************************
+	 *                     === INITIAL VARIABLE SET UP ===
+	 ******************************************************************************/
+	// Initialize EnergySet that contains energies for the chosen terms for our design
+	EnergySet* Eset = sys.getEnergySet();
+	// Set all terms inactive and explicitly set the given terms as active
+	Eset->setAllTermsInactive();
+	Eset->setTermActive("CHARMM_VDW", true);
+	Eset->setTermActive("SCWRL4_HBOND", true);
+	Eset->setTermActive("CHARMM_IMM1REF", true);
+	Eset->setTermActive("CHARMM_IMM1", true);
+
+	// Set weights
+	Eset->setWeight("CHARMM_VDW", _opt.weight_vdw);
+	Eset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
+	Eset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
+	Eset->setWeight("CHARMM_IMM1", _opt.weight_solv);
+
+	if (_opt.useElec == true){
+		Eset->setTermActive("CHARMM_ELEC", true);
+		Eset->setWeight("CHARMM_ELEC", _opt.weight_elec);
+	}
+
+	sys.calcEnergy();
+	/******************************************************************************
+	 *                === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
+	 ******************************************************************************/
+	// removes all bonding near the termini of our helices for a list of interactions
+    deleteTerminalBondInteractions(sys,_opt.deleteTerminalInteractions);
+
+	/******************************************************************************
+	 *                     === ADD IN BASELINE ENERGIES ===
+	 ******************************************************************************/
+	// add in an estimate of monomer energy for each sequence (calculated using CHARMM_VDW, SCWRL4_HBOND, CHARMM_IMM1, and CHARMM_IMM1REF)
+	if (_opt.useBaseline){
+		buildBaselines(sys, _opt.selfEnergyFile, _opt.pairEnergyFile);
+	}
 
 	// initialize the object for loading rotamers into our _system
 	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
@@ -613,7 +686,7 @@ void searchForBestSequence(System &_startGeom, Options &_opt, PolymerSequence &_
 	outputTime(clockTime, "  - SelfPairManager energy calculation " + to_string(_rep) + " End", _sout);
 	
 	// monte carlo for finding the best sequence
-	sequenceSearchMonteCarlo(sys, _opt, spm, _RNG, _bestState, _bestSequence, _sequenceEnergyMap,  
+	sequenceSearchMonteCarlo(sys, _opt, CSB, spm, _RNG, _bestState, _bestSequence, _sequenceEnergyMap,  
 	_sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling, _rep, _sout, _err);
 
 	outputTime(clockTime, "Monte Carlo Sequence Search Replicate " + to_string(_rep) + " End", _sout);
@@ -622,7 +695,7 @@ void searchForBestSequence(System &_startGeom, Options &_opt, PolymerSequence &_
 	cout << sys.getEnergySummary() << endl;	
 }
 
-void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
+void sequenceSearchMonteCarlo(System &_sys, Options &_opt, CharmmSystemBuilder &_CSB, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
  vector<uint> &_bestState, string &_bestSequence, map<string, map<string,double>> &_sequenceEnergyMap, 
  map<string,double> _sequenceEntropyMap, vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList,
  vector<uint> &_rotamerSampling, int _rep, ofstream &_sout, ofstream &_err){
@@ -687,9 +760,29 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 	string energyTermToEvaluate = "Totalw/Entropy";
 	double bestProb = sequenceProbability;
 	while (!MC.getComplete()){
+		// TODO: make this code faster by adding AAs here, calc energy, then remove AAs after a run (potentially can do this before this function is called)
 		// get the sequence entropy probability for the current best sequence
 		map<string,vector<uint>> sequenceVectorMap;
-		map<string,map<string,double>> sequenceEnergyMap = mutateRandomPosition(_sys, _opt, _spm, _RNG, bestSeq, bestEnergy, 
+		// Get a random integer to pick through the variable positions
+		int rand = _RNG.getRandomInt(0, _interfacialPositionsList.size()-1);
+		int interfacePosA = _interfacialPositionsList[rand];
+		int interfacePosB = interfacePosA+bestSeq.length();
+		// Get the random position from the system
+		Position &randPosA = _sys.getPosition(interfacePosA);
+		Position &randPosB = _sys.getPosition(interfacePosB);
+		//string posIdA = randPosA.getPositionId();
+		//string posIdB = randPosB.getPositionId();
+		// add all amino acids identities to the random position
+		_CSB.addIdentity(randPosA, _opt.Ids);
+		// initialize the object for loading rotamers into our _system
+		SystemRotamerLoader sysRot(_sys, _opt.rotLibFile);
+		sysRot.defineRotamerSamplingLevels();
+		// load rotamers for the random position
+		loadRotamers(_sys, sysRot, _opt.SL);
+		// calculate energies
+		_spm.calculateEnergies();
+
+		map<string,map<string,double>> sequenceEnergyMap = mutateRandomPosition(_sys, _opt, _spm, _RNG, interfacePosA, bestSeq, bestEnergy, 
 		 sequenceVectorMap, _sequenceEntropyMap, _allInterfacialPositionsList, _interfacialPositionsList, _rotamerSampling);
 		
 		// get the best sequence and energy for the current mutation position (picks sequence with energy including vdw, hbond, imm1, baseline, sequence entropy)
@@ -743,6 +836,7 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 			decreaseMCRun = true;
 		}
 		cycleCounter++;
+		// TODO: add in a way to remove all identities that are not the current identity here; convert the state vector if need be?
 	}
 	time(&endTimeSMC);
 	diffTimeSMC = difftime (endTimeSMC, startTimeSMC);
@@ -795,38 +889,20 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 }
 
 map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
- string _bestSeq, double _bestEnergy, map<string,vector<uint>> &_sequenceStateMap, map<string,double> _sequenceEntropyMap,
+ int _interfacePos, string _bestSeq, double _bestEnergy, map<string,vector<uint>> &_sequenceStateMap, map<string,double> _sequenceEntropyMap,
  vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList, vector<uint> _rotamerSampling){
-	// Get a random integer to pick through the variable positions
-	int rand = _RNG.getRandomInt(0, _interfacialPositionsList.size()-1);
-	int interfacePosA = _interfacialPositionsList[rand];
-	int interfacePosB = interfacePosA+_bestSeq.length();
-
-	// Get the random position from the system
-	Position &randPosA = _sys.getPosition(interfacePosA);
-	Position &randPosB = _sys.getPosition(interfacePosB);
-	string posIdA = randPosA.getPositionId();
-	string posIdB = randPosB.getPositionId();
-
-	// TODO: make this code faster by adding AAs here, calc energy, then remove AAs after a run (potentially can do this before this function is called)
-	// add all amino acids identities to the random position
-
-
 	// variable setup for current state
 	map<string,map<string,double>> sequenceEnergyMap;
 	vector<thread> threads;
 	for (uint i=0; i<_opt.Ids.size(); i++){
-		// pick an identity for each thread 
 		int idNum = i;
-		// generate polymer sequence for each identity at the corresponding chosen position
 		string id = _opt.Ids[idNum];
-		// input into the thread function for calculating energies
-		string currAA = MslTools::getThreeLetterCode(_bestSeq.substr(interfacePosA, 1));
+		string currAA = MslTools::getThreeLetterCode(_bestSeq.substr(_interfacePos, 1));
 		if (currAA != id){
 			// replace the id at the position in bestSeq with the current id to get current sequence
 			string currSeq = _bestSeq;
 			string oneLetterId = MslTools::getOneLetterCode(id);
-			currSeq.replace(interfacePosA, 1, oneLetterId);
+			currSeq.replace(_interfacePos, 1, oneLetterId);
 			// switch to the mutated sequence
 			setActiveSequence(_sys, currSeq);
 			// Set a mask and run a greedy to get the best state for the current sequence
