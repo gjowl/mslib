@@ -265,6 +265,8 @@ int main(int argc, char *argv[]){
 	map<string, double> startGeometries = getGeometryMap(opt, "start");
 	addGeometryToEnergyMap(startGeometries, sequenceEnergyMapBest, bestSequence);
 
+	string test = convertToPolymerSequenceNeutralPatch(seq, opt.thread);
+	PolymerSequence testPolySeq(test); 
 	// loop through sequence search and backbone optimization
 	// realized that my sequence search works well for a backbone, and my optimization works well for a sequence, so why am I doing them concurrently?
 	// instead, I can do more backbone cycles for multiple sequence searches? May be easier to explain than iterative sequence search and optimization
@@ -273,7 +275,7 @@ int main(int argc, char *argv[]){
 	for (uint i=0; i<opt.backboneSearchCycles; i++){
 		vector<uint> bestState;
 		// run state Monte Carlo to get a random sequence from the best state
-		searchForBestSequence(startGeom, opt, interfacePolySeq, sequenceEnergyMapBest, sequenceEntropyMap, bestState, bestSequence,
+		searchForBestSequence(startGeom, opt, testPolySeq, sequenceEnergyMapBest, sequenceEntropyMap, bestState, bestSequence,
 		 allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
 		// add in the starting geometries to the map	
 		addGeometryToEnergyMap(startGeometries, sequenceEnergyMapBest, bestSequence);
@@ -564,8 +566,7 @@ void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSeque
 	/******************************************************************************
 	 *                === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
 	 ******************************************************************************/
-	// removes all hydrogen bonding near the termini of our helices
-	// (remnant from CATM, but used in the code that was used to get baselines so keeping it to be consistent)
+	// removes all bonding near the termini of our helices for a list of interactions
     deleteTerminalBondInteractions(_sys,_opt.deleteTerminalInteractions);
 
 	/******************************************************************************
@@ -635,9 +636,6 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 	MC.setRandomNumberGenerator(&_RNG);
 
 	// Start from most probable state
-	switchSequence(_sys, _opt, _bestSequence); // switch sequence to the best sequence (from SCMF or input sequence)
-	vector<vector<bool>> mask = getActiveMask(_sys); // get the active mask for the current sequence
-	_spm.runGreedyOptimizer(_opt.greedyCycles, mask); // run the greedy optimizer to get the best state for the current sequence
 	_bestState = _spm.getMinStates()[0]; // set the best state to the best state from the greedy optimizer
 	_sys.setActiveRotamers(_bestState); // set the active rotamers to the best state
 	double bestEnergy = _spm.getStateEnergy(_bestState); // save the energy of the best state
@@ -809,6 +807,10 @@ map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt,
 	Position &randPosB = _sys.getPosition(interfacePosB);
 	string posIdA = randPosA.getPositionId();
 	string posIdB = randPosB.getPositionId();
+
+	// TODO: make this code faster by adding AAs here, calc energy, then remove AAs after a run (potentially can do this before this function is called)
+	// add all amino acids identities to the random position
+
 
 	// variable setup for current state
 	map<string,map<string,double>> sequenceEnergyMap;

@@ -612,7 +612,7 @@ void searchForBestSequences(System &_startGeom, Options &_opt, PolymerSequence &
 	spm.setSystem(&sys);
 	spm.setVerbose(false);
 	spm.getMinStates()[0];
-	spm.setOnTheFly(false);
+	spm.setOnTheFly(true);
 	spm.saveEnergiesByTerm(true);
 
 	// calculate the self and pair energies for each amino acid and rotamer combo in the sequence	
