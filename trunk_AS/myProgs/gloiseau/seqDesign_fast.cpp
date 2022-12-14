@@ -703,12 +703,13 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, CharmmSystemBuilder &
 	time_t startTimeSMC, endTimeSMC;
 	double diffTimeSMC;
 	time(&startTimeSMC);
-
+	
 	// Setup MonteCarloManager
 	MonteCarloManager MC(_opt.MCStartTemp, _opt.MCEndTemp, _opt.MCCycles, _opt.MCCurve, _opt.MCMaxRejects);
 	MC.setRandomNumberGenerator(&_RNG);
 
 	// Start from most probable state
+    _spm.runGreedyOptimizer(_opt.greedyCycles);
 	_bestState = _spm.getMinStates()[0]; // set the best state to the best state from the greedy optimizer
 	_sys.setActiveRotamers(_bestState); // set the active rotamers to the best state
 	double bestEnergy = _spm.getStateEnergy(_bestState); // save the energy of the best state
@@ -789,6 +790,7 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, CharmmSystemBuilder &
 		//string currSeq = getBestSequenceInMap(sequenceEnergyMap);
 		double currTemp = MC.getCurrentT();
 		string currSeq = getSequenceUsingMetropolisCriteria(sequenceEnergyMap, _RNG, currTemp, energyTermToEvaluate);
+		//cout << "Sequence at " << acceptCounter << " : " << currSeq << endl;
 		// extract energies from the sequence energy map for the chosen sequence
 		double currEnergy = sequenceEnergyMap[currSeq][energyTermToEvaluate]; // energy total for current sequence (dimer+baseline+sequence entropy)
 		double currStateEntropy = sequenceEnergyMap[currSeq]["SequenceEntropy"];
@@ -800,14 +802,14 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, CharmmSystemBuilder &
 		double acceptTemp = MC.getCurrentT();
 		if (!MC.accept(currEnergy)){
 			setActiveSequence(_sys, bestSeq);
-			_sys.setActiveRotamers(prevStateVec); // set rotamers to the previous state
+			//_sys.setActiveRotamers(prevStateVec); // set rotamers to the previous state
 			lout << "Reject\t" << cycleCounter << "\t" << prevStateSeq << "\t" << currSeq << "\t" << bestEnergy << "\t" << currEnergy << "\t";
 			lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << acceptTemp << "\t" << acceptCounter << endl;
 		} else {
 			acceptCounter++; // increase the accept counter by 1
 			//bestProb = currProb;
 			setActiveSequence(_sys, currSeq);
-			_sys.setActiveRotamers(currStateVec); // set rotamers to the current state
+			//_sys.setActiveRotamers(currStateVec); // set rotamers to the current state
 			map<string,double> energyMap = sequenceEnergyMap[currSeq];
 			lout << "Accept\t" << cycleCounter << "\t" << prevStateSeq << "\t" << currSeq << "\t" << bestEnergy << "\t" << currEnergy << "\t";
 			lout << prevStateEntropy << "\t" << currStateEntropy << "\t" << acceptTemp << "\t" << acceptCounter << endl;
@@ -895,6 +897,7 @@ map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt,
 	map<string,map<string,double>> sequenceEnergyMap;
 	vector<thread> threads;
 	for (uint i=0; i<_opt.Ids.size(); i++){
+		//cout << "Mutating position " << _interfacePos << " to " << _opt.Ids[i] << endl;
 		int idNum = i;
 		string id = _opt.Ids[idNum];
 		string currAA = MslTools::getThreeLetterCode(_bestSeq.substr(_interfacePos, 1));
