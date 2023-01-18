@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include "catmFunctions.h"
 #include "functions.h"
+#include "multiCodeFunctions.h"
 
 using namespace std;
 using namespace MSL;
@@ -758,6 +759,7 @@ double computeMonomerEnergy(System & _sys, Transforms & _trans, catmOptions & _o
 }
 
 void setupOutputDirectory(catmOptions &_opt, string &_logFile){
+	_opt.pdbOutputDir = string(get_current_dir_name()) + "/" + _opt.uniprotAccession;
 	string cmd = "mkdir -p " + _opt.pdbOutputDir;
 	_logFile = _opt.pdbOutputDir + "/" + _opt.uniprotAccession + ".log";
 	if (system(cmd.c_str())){
