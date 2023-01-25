@@ -113,6 +113,7 @@ int main(int argc, char *argv[]){
 
 	CSB.setSolvent("MEMBRANE");
 	CSB.setIMM1Params(15, 10);
+	CSB.setBuildNonBondedInteractions(false);
 
 	// read in the pdbfile
 	//sys.readPdb(opt.pdbFile);
@@ -120,7 +121,6 @@ int main(int argc, char *argv[]){
 	//cout << Eset->getSummary() << endl;
 
     CSB.buildSystemFromPDB(opt.pdbFile);
-	CSB.setBuildNonBondedInteractions(false);
 	// TODO: can I mutate the system here? or do I have to do a bunch of other stuff to get it to work (read sequence, geometry, etc)
 	// CSB addIdentity. Add identity to the system at the desired positions (ends for now, but maybe accept a list?)
 	// check if the terminal residues are the same as the identity
@@ -149,14 +149,11 @@ int main(int argc, char *argv[]){
 	// assign the coordinates of our system to the given geometry that was assigned without energies using System pdb
 	sys.buildAllAtoms();
 
-	// initialize the object for loading rotamers into our system
-	SystemRotamerLoader sysRot(sys, opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
-	
 	// Add hydrogen bond term
 	HydrogenBondBuilder hb(sys, opt.hbondFile);
 	hb.buildInteractions(50);//when this is here, the HB weight is correct
 
+	CSB.updateNonBonded(10,12,50);
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
 	 ******************************************************************************/
@@ -180,9 +177,12 @@ int main(int argc, char *argv[]){
     deleteTerminalBondInteractions(sys,opt.deleteTerminalInteractions);
 	cout << Eset->getSummary() << endl;
 	
+	// initialize the object for loading rotamers into our system
+	SystemRotamerLoader sysRot(sys, opt.rotLibFile);
+	sysRot.defineRotamerSamplingLevels();
+	
     // loading rotamers
 	loadRotamers(sys, sysRot, "SL95.00");
-	CSB.updateNonBonded(10,12,50);//This for some reason updates the energy terms and makes the IMM1 terms active (still need to check where, but did a couple of calcEnergy and outputs
 
 	/******************************************************************************
 	 *                  === GREEDY TO OPTIMIZE ROTAMERS ===
