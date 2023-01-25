@@ -148,12 +148,18 @@ int main(int argc, char *argv[]){
 	 ******************************************************************************/
 	// assign the coordinates of our system to the given geometry that was assigned without energies using System pdb
 	sys.buildAllAtoms();
+	
+	PDBWriter writer1;
+	writer1.open(outputDir + "/start.pdb");
+	writer1.write(sys.getAtomPointers(), true, false, true);
+	writer1.close();
 
 	// Add hydrogen bond term
 	HydrogenBondBuilder hb(sys, opt.hbondFile);
 	hb.buildInteractions(50);//when this is here, the HB weight is correct
 
 	CSB.updateNonBonded(10,12,50);
+
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
 	 ******************************************************************************/
@@ -172,10 +178,11 @@ int main(int argc, char *argv[]){
 	Eset->setWeight("CHARMM_IMM1REF", opt.weight_solv);
 	Eset->setWeight("CHARMM_IMM1", opt.weight_solv);
 
-	// removes all bonding near the termini of our helices for a list of interactions
 	sys.calcEnergy();
+    cout << sys.getEnergySummary() << endl;
+	
+	// removes all bonding near the termini of our helices for a list of interactions
     deleteTerminalBondInteractions(sys,opt.deleteTerminalInteractions);
-	cout << Eset->getSummary() << endl;
 	
 	// initialize the object for loading rotamers into our system
 	SystemRotamerLoader sysRot(sys, opt.rotLibFile);
@@ -207,6 +214,8 @@ int main(int argc, char *argv[]){
 	
 	double dimer = spm.getStateEnergy(stateVec);
     cout << "Dimer Energy: " << dimer << endl;
+	sys.calcEnergy();
+    cout << Eset->getSummary() << endl;
 
     if (opt.verbose){
         map<string,double> energyByTerm;
@@ -224,7 +233,6 @@ int main(int argc, char *argv[]){
 	double vdw = spm.getStateEnergy(spm.getMinStates()[0], "CHARMM_VDW");
 	double hbond = spm.getStateEnergy(spm.getMinStates()[0], "SCWRL4_HBOND");
 	double imm1 = spm.getStateEnergy(spm.getMinStates()[0], "CHARMM_IMM1")+spm.getStateEnergy(spm.getMinStates()[0], "CHARMM_IMM1REF");
-	cout << Eset->getSummary() << endl;
 	auto it = monomerEnergyByTerm.find("CHARMM_VDW");
 	double vdwMonomer = it->second;
 	it = monomerEnergyByTerm.find("SCWRL4_HBOND");
