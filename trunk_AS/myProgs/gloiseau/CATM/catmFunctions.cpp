@@ -466,6 +466,7 @@ double computeMonomerEnergy(System & _sys, Transforms & _trans, catmOptions & _o
 	HydrogenBondBuilder monohb(monoSys, _opt.hBondFile);
 	monohb.buildInteractions(30);
 
+	CSBMono.updateNonBonded(10,12,50);
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
 	 ******************************************************************************/
@@ -624,7 +625,8 @@ double computeMonomerEnergy(System & _sys, Transforms & _trans, catmOptions & _o
 		}
 	}
 
-	MonteCarloManager MCMngr(1000.0, 0.5, _MCCycles, MonteCarloManager::EXPONENTIAL, _MCMaxRejects);
+	//MonteCarloManager MCMngr(1000.0, 0.5, _MCCycles, MonteCarloManager::EXPONENTIAL, _MCMaxRejects);
+	MonteCarloManager MCMngr(0.5, 0.5, 100, MonteCarloManager::EXPONENTIAL, 5);
 	MCMngr.setEner(bestEnergy);
 
 	double zShift = bestZ;
