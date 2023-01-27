@@ -26,7 +26,7 @@
 #include "hbondInfo.h"
 #include "catmFunctions.h"
 #include "catmOptions.h"
-#include "functions.h"
+#include "versatileFunctions.h"
 
 using namespace MSL;
 using namespace std;
@@ -1234,6 +1234,7 @@ catmOptions parseOptions(int _argc, char * _argv[], catmOptions defaults) {
 		opt.warningFlag = true;
 		opt.deltaX = 0.1;
 	}
+	
 	opt.MCMaxRejects = OP.getInt("MCMaxRejects");
 	if (OP.fail()) {
 		opt.warningMessages += "MCMaxRejects not specified using 2\n";

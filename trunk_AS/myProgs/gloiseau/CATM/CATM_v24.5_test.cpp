@@ -26,14 +26,14 @@
 #include "hbondInfo.h"
 #include "catmFunctions.h"
 #include "catmOptions.h"
-#include "functions.h"
+#include "versatileFunctions.h"
 
 using namespace MSL;
 using namespace std;
 
 string programName = "CATM";
-string programDescription = "This program repacks two helices from a set starting position: electrostatics are on in this version;\n
- uncommented to no longer accept c1 mutations and hardcoded the monomer energy montecarlo parameters to be the same as seqDesign\n
+string programDescription = "This program repacks two helices from a set starting position: electrostatics are on in this version;\
+ uncommented to no longer accept c1 mutations and hardcoded the monomer energy montecarlo parameters to be the same as seqDesign\
  and hardcoded the rotamer level to 97";
 string programAuthor = "Benjamin K. Mueller, Sabareesh Subramaniam; functions, options, and classes organized into separate files by Gilbert Loiseau";
 string programVersion = "0.0.24.5";
@@ -613,6 +613,14 @@ END";
 		double diffTimeMC;
 		time(&startTimeMC);
 
+		// from Gilbert's seqDesign code, idea from Josh
+		// setup variables for shifts: as temp decreases, each move size decreases according to the given montecarlo shape
+		bool decreaseMoveSize = opt.decreaseMoveSize;
+		double deltaX = opt.deltaX;
+		double deltaCross = opt.deltaCross;
+		double deltaAx = opt.deltaAx;
+		double deltaZ = opt.deltaZ;
+
 		if (opt.MCCycles > 0) {
 			//MonteCarloManager MCMngr(1000.0, 0.5, opt.MCCycles, MonteCarloManager::EXPONENTIAL, opt.MCMaxRejects);
 			MonteCarloManager MCMngr(opt.MCStartTemp, opt.MCEndTemp, opt.MCCycles, opt.MCCurve, opt.MCMaxRejects);
@@ -620,6 +628,8 @@ END";
 			MCMngr.setEner(bestEnergy);
 
 			while(!MCMngr.getComplete()) {
+				// get the current temperature of the MC
+				double startTemp = MCMngr.getCurrentT();
 
 				sys.applySavedCoor("savedBestState");
 				helicalAxis.applySavedCoor("BestAxis");
@@ -636,28 +646,28 @@ END";
 				//======================================
 				if (moveToPreform == 0) {
 					//deltaZShift = getStandardNormal(RNG1) * 0.1;
-					deltaZShift = getStandardNormal(RNG1) * opt.deltaZ;
+					deltaZShift = getStandardNormal(RNG1) * deltaZ;
 					backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, deltaZShift, moveToPreform);
 				} else if (moveToPreform == 1) {
 				//===========================
 				//===== Axial Rotation ======
 				//===========================
 					//deltaAxialRotation = getStandardNormal(RNG1) * 1.0;
-					deltaAxialRotation = getStandardNormal(RNG1) * opt.deltaAx;
+					deltaAxialRotation = getStandardNormal(RNG1) * deltaAx;
 					backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, deltaAxialRotation, moveToPreform);
 				} else if (moveToPreform == 2) {
 				//==================================
 				//====== Local Crossing Angle ======
 				//==================================
 					//deltaCrossingAngle = getStandardNormal(RNG1) * 1.0;
-					deltaCrossingAngle = getStandardNormal(RNG1) * opt.deltaCross;
+					deltaCrossingAngle = getStandardNormal(RNG1) * deltaCross;
 					backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, deltaCrossingAngle, moveToPreform);
 				} else if (moveToPreform == 3) {
 				//==============================================
 				//====== X shift (Interhelical Distance) =======
 				//==============================================
 					//deltaXShift = getStandardNormal(RNG1) * 0.1;
-					deltaXShift = getStandardNormal(RNG1) * opt.deltaX;
+					deltaXShift = getStandardNormal(RNG1) * deltaX;
 					backboneMovement(apvChainA, apvChainB, axisA, axisB, trans, deltaXShift, moveToPreform);
 				}
 
@@ -666,10 +676,11 @@ END";
 
 				vector<unsigned int> MCOFinal = spm.getMinStates()[0];
 				sys.setActiveRotamers(MCOFinal);
-				currentEnergy = spm.getMinBound()[0];
+				currentEnergy = spm.getMinBound()[0]-monomerEnergy;
 
 				if (!MCMngr.accept(currentEnergy)) {
 					//fout << "state rejected   energy: " << currentEnergy << endl;
+					fout << "MCReject   xShift: " << xShift << " crossingAngle: " << crossingAngle << " axialRotation: " << axialRotation << " zShift: " << zShift << " energy: " << currentEnergy << endl;
 				}
 				else {
 					// check number of hydrogen bonds and if it is less than hydrogen bond option dont accept
@@ -687,7 +698,13 @@ END";
 						axialRotation = axialRotation + deltaAxialRotation;
 						zShift = zShift +  deltaZShift;
 
-						fout << "MCAccept   xShift: " << xShift << " crossingAngle: " << crossingAngle << " axialRotation: " << axialRotation << " zShift: " << zShift << " energy: " << currentEnergy-monomerEnergy << endl;
+						fout << "MCAccept   xShift: " << xShift << " crossingAngle: " << crossingAngle << " axialRotation: " << axialRotation << " zShift: " << zShift << " energy: " << currentEnergy << endl;
+						// if accept, decrease the value of the moves by the sigmoid function
+						if (decreaseMoveSize == true){
+							double endTemp = MCMngr.getCurrentT();
+							getCurrentMoveSizes(startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, opt.deltaXLimit,
+							 opt.deltaCrossLimit, opt.deltaAxLimit, opt.deltaZLimit, decreaseMoveSize);
+						}
 					}
 				}
 			}
@@ -924,6 +941,11 @@ catmOptions parseOptions(int _argc, char * _argv[], catmOptions defaults) {
 	opt.allowed.push_back("deltaAx");
 	opt.allowed.push_back("deltaCross");
 	opt.allowed.push_back("deltaX");
+	opt.allowed.push_back("deltaXLimit");
+	opt.allowed.push_back("deltaCrossLimit");
+	opt.allowed.push_back("deltaAxLimit");
+	opt.allowed.push_back("deltaZLimit");
+	opt.allowed.push_back("decreaseMoveSize");
 
 	opt.allowed.push_back("verbose");
 	opt.allowed.push_back("greedyOptimizer");
@@ -1236,6 +1258,36 @@ catmOptions parseOptions(int _argc, char * _argv[], catmOptions defaults) {
 		opt.warningMessages += "deltaX not specified using 0.1\n";
 		opt.warningFlag = true;
 		opt.deltaX = 0.1;
+	}
+	opt.deltaXLimit = OP.getDouble("deltaXLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaXLimit not specified using 0.1\n";
+		opt.warningFlag = true;
+		opt.deltaXLimit = 0.1;
+	}
+	opt.deltaCrossLimit = OP.getDouble("deltaCrossLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaCrossLimit not specified using 1.0\n";
+		opt.warningFlag = true;
+		opt.deltaCrossLimit = 1.0;
+	}
+	opt.deltaAxLimit = OP.getDouble("deltaAxLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaAxLimit not specified using 1.0\n";
+		opt.warningFlag = true;
+		opt.deltaAxLimit = 1.0;
+	}
+	opt.deltaZLimit = OP.getDouble("deltaZLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaZLimit not specified using 0.1\n";
+		opt.warningFlag = true;
+		opt.deltaZLimit = 0.1;
+	}
+	opt.decreaseMoveSize = OP.getBool("decreaseMoveSize");
+	if (OP.fail()) {
+		opt.warningMessages += "decreaseMoveSize not specified using true\n";
+		opt.warningFlag = true;
+		opt.decreaseMoveSize = true;
 	}
 	opt.MCMaxRejects = OP.getInt("MCMaxRejects");
 	if (OP.fail()) {

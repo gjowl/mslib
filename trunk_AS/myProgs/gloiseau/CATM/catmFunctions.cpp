@@ -2,8 +2,7 @@
 #include <iterator>
 #include <unistd.h>
 #include "catmFunctions.h"
-#include "functions.h"
-#include "multiCodeFunctions.h"
+#include "versatileFunctions.h"
 
 using namespace std;
 using namespace MSL;

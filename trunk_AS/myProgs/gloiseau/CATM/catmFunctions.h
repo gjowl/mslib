@@ -25,7 +25,6 @@
 #include "CRDWriter.h"
 #include "SysEnv.h"
 #include "catmOptions.h"
-#include "functions.h"
 
 //In no particular order at this point
 void printOptions(catmOptions & _op, ofstream & _fout);
