@@ -1,0 +1,12 @@
+uniprotName PROTEIN_UNK
+uniprotAccession P06028_1
+sequence RASLLLLILLCVLLGILLTILILIN
+sequenceStart 1
+originalSeq RASLLLLILLCVLLGILLTILILIN
+modelledSeq RASLLLLILLCVLLGILLTILILIN
+prolineMask 0000000000000000000000000
+resStart 1
+resEnd 25
+tmStart 4
+tmEnd 20
+CATMversion 0.0.24.5
