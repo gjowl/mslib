@@ -1,7 +1,7 @@
 #include <sstream>
 #include <iterator>
 #include <unistd.h>
-#include "multiCodeFunctions.h"
+#include "versatileFunctions.h"
 
 using namespace std;
 using namespace MSL;
@@ -331,6 +331,25 @@ double getStandardNormal(RandomNumberGenerator& RNG) {
 	return (retVal/10.0 - 0.5) * 1.2;
 }
 
+// adjust the move sizes based on the monte carlo function (decrease by multiplying by the change in temperature)
+void getCurrentMoveSizes(double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
+ double _deltaXLimit, double _deltaCrossLimit, double _deltaAxLimit, double _deltaZLimit, bool &_decreaseMoveSize) {
+	// define the temperature change
+	double decreaseMultiplier = _endTemp/_currTemp;
+	// setup the decrease booleans; if the move size has reached its minimum, don't decrease it further and set to false
+	bool decreaseX = true;
+	bool decreaseCross = true;
+	bool decreaseAx = true;
+	bool decreaseZ = true;
+	_deltaX = decreaseMoveSize(_deltaX, _deltaXLimit, decreaseMultiplier, decreaseX);
+	_deltaCross = decreaseMoveSize(_deltaCross, _deltaCrossLimit, decreaseMultiplier, decreaseCross);
+	_deltaAx = decreaseMoveSize(_deltaAx, _deltaAxLimit, decreaseMultiplier, decreaseAx);
+	_deltaZ = decreaseMoveSize(_deltaZ, _deltaZLimit, decreaseMultiplier, decreaseZ);
+	if (decreaseX == false && decreaseCross == false && decreaseAx == false && decreaseZ == false){
+		_decreaseMoveSize = false;
+	}
+}
+
 double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease) {
 	// edited to make sure that the move size is decreasing properly down to the move limit: add in detail here
 	double diffMoveSize = _moveSize-_moveLimit;
@@ -344,3 +363,230 @@ double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMul
 	}
 }
 
+/***********************************
+* general functions
+ ***********************************/
+string convertToPolymerSequence(string _seq, int _startResNum) {
+	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+	// A:{32}ALA ILE GLY GLY GLY
+	// B:{32}ALA ILE GLY GLY GLY
+	string ps = "";
+	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
+		stringstream ss;
+		ss << *it;
+		string resName = MslTools::getThreeLetterCode(ss.str());
+		if(resName == "HIS") {
+			ps = ps + " HSE";
+		} else {
+			ps = ps + " " + resName;
+		}
+	}
+	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+	return "A" + ps + "\nB" + ps;
+}
+
+string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum) {
+	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+	// A:{32}ALA ILE GLY GLY GLY
+	// B:{32}ALA ILE GLY GLY GLY
+	string ps = "";
+	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
+		if (it == _seq.begin() || it == _seq.end()-1){
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if (it == _seq.begin()){
+				if(resName == "HIS") {
+					ps = ps + " HSE-ACE";
+				} else {
+					ps = ps + " " + resName + "-ACE";
+				}
+			} else {
+				if(resName == "HIS") {
+					ps = ps + " HSE-CT2";
+				} else {
+					ps = ps + " " + resName + "-CT2";
+				}
+			}
+		} else {
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if(resName == "HIS") {
+				ps = ps + " HSE";
+			} else {
+				ps = ps + " " + resName;
+			}
+		}
+	}
+	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+	return "A" + ps + "\nB" + ps;
+}
+
+string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum) {
+	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+	// A:{32}ALA ILE GLY GLY GLY
+	string ps = "";
+	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
+		if (it == _seq.begin() || it == _seq.end()-1){
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if (it == _seq.begin()){
+				if(resName == "HIS") {
+					ps = ps + " HSE-ACE";
+				} else {
+					ps = ps + " " + resName + "-ACE";
+				}
+			} else {
+				if(resName == "HIS") {
+					ps = ps + " HSE-CT2";
+				} else {
+					ps = ps + " " + resName + "-CT2";
+				}
+			}
+		} else {
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if(resName == "HIS") {
+				ps = ps + " HSE";
+			} else {
+				ps = ps + " " + resName;
+			}
+		}
+	}
+	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+	return "A" + ps;
+}
+
+string convertVectorUintToString(vector<uint> _inputVector){
+	string outputString = "";
+	for (uint i=0; i<_inputVector.size(); i++){
+		outputString += MslTools::intToString(_inputVector[i]);
+	}
+	return outputString;
+}
+
+// get a backbone sequence with an alanine cap at the beginning and end as an option
+string generateBackboneSequence(string _backboneAA, int _length, bool _useAlaCap) {
+	// initial start of sequence
+	string str = "";
+	//2021-09-21: add in an alanine cap to allow for more variable positions at the leucine region
+	for (uint i=0; i<_length-3; i++){
+		if (i<3){
+			if (_useAlaCap == true){
+				str = str + "A";
+			} else {
+				str = str + _backboneAA;
+			}
+		} else {
+			str = str + _backboneAA;
+		}
+	}
+	// Adds in the LILI at the end of the sequence which is necessary for our TOXCAT plasmids
+	if (_useAlaCap == true){
+		str = str + "AAA";
+	} else {
+		str = str + "ILI";
+	}
+	return str;
+}
+
+// generate string for backbone sequence
+string generateString(string _backbone, int _length) {
+	string str = "";
+	for (uint i=0; i<_length; i++){
+		str = str + _backbone;
+	}
+	return str;
+}
+
+string generateMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions) {
+	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+	// A:{32}ALA ILE GLY GLY GLY
+	// B:{32}ALA ILE GLY GLY GLY
+	string ps = "";
+	int counter = 0;
+	int startPos = _startResNum;
+	int endPos = _startResNum+_seq.length();
+	for(string::iterator it = _seq.begin(); it != _seq.end(); it++) {
+		int pos = it-_seq.begin()+_startResNum;
+		if (it == _seq.begin() || it == _seq.end()-1){
+		//if (it == _seq.begin()){
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if (it == _seq.begin()){
+				if(resName == "HIS") {
+					ps = ps + " HSE-ACE";
+				} else {
+					ps = ps + " " + resName + "-ACE";
+				}
+			} else {
+				if(resName == "HIS") {
+					ps = ps + " HSE-CT2";
+				} else {
+					ps = ps + " " + resName + "-CT2";
+				}
+			}
+			counter++;
+		} else if (pos < startPos+3 || pos > endPos-5){
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if(resName == "HIS") {
+				ps = ps + " HSE";
+			} else {
+				ps = ps + " " + resName;
+			}
+		} else {
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			//cout << pos << endl;
+			if (find(_interfacialPositions.begin(), _interfacialPositions.end(), pos) != _interfacialPositions.end()){
+				ps = ps + " [";
+				for (uint i=0; i<_alternateIds.size(); i++){
+					if(_alternateIds[i] == "HIS") {
+						ps = ps + " HSE";
+					} else {
+						ps = ps + " " + _alternateIds[i];
+					}
+				}
+				ps = ps + "] ";
+			} else {
+				if(resName == "HIS") {
+					ps = ps + " HSE";
+				} else {
+					ps = ps + " " + resName;
+				}
+			}
+			counter++;
+		}
+	}
+	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+	return "A" + ps + "\nB" + ps;
+}
+
+string convertPolymerSeqToOneLetterSeq(Chain &_chain) {
+	string seq = "";
+	for (uint i=0; i<_chain.positionSize(); i++){
+		string resName = _chain.getPosition(i).getCurrentIdentity().getResidueName();
+		string resID = MslTools::getOneLetterCode(resName);
+		seq += resID;
+	}
+	return seq;
+}
+
+// define the rotamer level for each position in the backbone
+vector<uint> convertStringToVectorUint(string _inputString){
+	vector<uint> outputVec;
+	for (uint i=0; i<_inputString.size(); i++){
+		stringstream ss;
+		ss << _inputString[i];
+		uint stringToInt = MslTools::toUnsignedInt(ss.str());
+		outputVec.push_back(stringToInt);
+	}
+	return outputVec;
+}
