@@ -20,10 +20,9 @@
 #include "SasaCalculator.h"
 
 // My functions
-#include "multiCodeFunctions.h"
+#include "versatileFunctions.h"
 #include "designFunctions.h"
 #include "designOptions.h"
-#include "functions.h"
 
 using namespace MSL;
 using namespace std;
@@ -100,8 +99,6 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
  string _sequence, vector<uint> &_bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
  uint _rep, ofstream &_sout);
-void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
- bool &_decreaseMoveSize);
 
 // output functions
 void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPerPosition,
@@ -120,6 +117,9 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 double calculateInterfaceSequenceEntropy(string _sequence, map<string, double> _sequenceEntropyMap, vector<uint> _interfacePositions,
  double &_sequenceProbability, double _seqEntropyWeight);
 void outputStartDesignInfo(Options &_opt);
+
+// string functions
+string getAlternateIdString(vector<string> _alternateIds);
 
 // help functions
 void usage();
@@ -1310,9 +1310,10 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 				MCOBest = MCOFinal;
 
 				// if accept, decrease the value of the moves by the sigmoid function
-				if (_opt.decreaseMoveSize == true){
+				if (decreaseMoveSize == true){
 					double endTemp = MCMngr.getCurrentT();
-					getCurrentMoveSizes(_opt, startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, decreaseMoveSize);
+					getCurrentMoveSizes(startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, _opt.deltaXLimit,
+					 _opt.deltaCrossLimit, _opt.deltaAxLimit, _opt.deltaZLimit, decreaseMoveSize);
 				}
 				bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " sasa: " << sasa << " energy: " << currentEnergy << endl;
 				counter++;
@@ -1337,7 +1338,8 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 				// if accept, decrease the value of the moves by the sigmoid function
 				if (_opt.decreaseMoveSize == true){
 					double endTemp = MCMngr.getCurrentT();
-					getCurrentMoveSizes(_opt, startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, decreaseMoveSize);
+					getCurrentMoveSizes(startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, _opt.deltaXLimit,
+					_opt.deltaCrossLimit, _opt.deltaAxLimit, _opt.deltaZLimit, decreaseMoveSize);
 				}
 				bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
 				counter++;
@@ -1381,25 +1383,6 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		exit(0);
 	}
 	return finalEnergy;
-}
-
-// adjust the move sizes based on the monte carlo function (decrease by multiplying by the change in temperature)
-void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
- bool &_decreaseMoveSize) {
-	// define the temperature change
-	double decreaseMultiplier = _endTemp/_currTemp;
-	// setup the decrease booleans; if the move size has reached its minimum, don't decrease it further and set to false
-	bool decreaseX = true;
-	bool decreaseCross = true;
-	bool decreaseAx = true;
-	bool decreaseZ = true;
-	_deltaX = decreaseMoveSize(_deltaX, _opt.deltaXLimit, decreaseMultiplier, decreaseX);
-	_deltaCross = decreaseMoveSize(_deltaCross, _opt.deltaCrossLimit, decreaseMultiplier, decreaseCross);
-	_deltaAx = decreaseMoveSize(_deltaAx, _opt.deltaAxLimit, decreaseMultiplier, decreaseAx);
-	_deltaZ = decreaseMoveSize(_deltaZ, _opt.deltaZLimit, decreaseMultiplier, decreaseZ);
-	if (decreaseX == false && decreaseCross == false && decreaseAx == false && decreaseZ == false){
-		_decreaseMoveSize = false;
-	}
 }
 
 // define interface functions
@@ -1960,4 +1943,16 @@ void outputStartDesignInfo(Options &_opt){
 	// output the alternate ids to be used for design	
 	string alternateIds = getAlternateIdString(_opt.Ids);
 	cout << "Variable amino acids at the interface: " << alternateIds << endl << endl;
+}
+
+string getAlternateIdString(vector<string> _alternateIds){
+	string alternateIdsString = "";
+	for (uint i=0; i<_alternateIds.size(); i++){
+		if (i == _alternateIds.size()-1){
+			alternateIdsString += _alternateIds[i];
+		} else {
+			alternateIdsString += _alternateIds[i] += " ";
+		}
+	}
+	return alternateIdsString;
 }

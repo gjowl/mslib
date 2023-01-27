@@ -22,7 +22,7 @@
 #include "CRDWriter.h"
 #include "SysEnv.h"
 #include "ResidueSelection.h"
-#include "functions.h"
+#include "versatileFunctions.h"
 
 using namespace MSL;
 using namespace std;

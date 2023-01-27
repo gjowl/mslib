@@ -20,10 +20,9 @@
 #include "SasaCalculator.h"
 
 // My functions
-#include "multiCodeFunctions.h"
+#include "versatileFunctions.h"
 #include "designFunctions.h"
 #include "designOptions.h"
-#include "functions.h"
 
 using namespace MSL;
 using namespace std;

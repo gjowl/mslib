@@ -11,8 +11,7 @@
 #include <iterator>
 #include <unistd.h>
 #include "designFunctions.h"
-#include "multiCodeFunctions.h"
-#include "functions.h"
+#include "versatileFunctions.h"
 
 using namespace std;
 using namespace MSL;

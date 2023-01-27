@@ -22,7 +22,7 @@
 #include "CRDWriter.h"
 #include "SysEnv.h"
 #include "ResidueSelection.h"
-#include "multiCodeFunctions.h"
+#include "versatileFunctions.h"
 #include "calcPdbOptions.h"
 
 using namespace MSL;

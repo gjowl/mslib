@@ -25,7 +25,7 @@
 #include "SasaCalculator.h"
 #include "backboneOptimizerFunctions.h"
 #include "backboneOptimizerOptions.h"
-#include "functions.h"
+#include "versatileFunctions.h"
 
 using namespace MSL;
 using namespace std;

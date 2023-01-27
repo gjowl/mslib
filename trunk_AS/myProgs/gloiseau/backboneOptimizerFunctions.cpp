@@ -2,7 +2,7 @@
 #include <iterator>
 #include <unistd.h>
 #include "backboneOptimizerFunctions.h"
-#include "functions.h"
+#include "versatileFunctions.h"
 
 using namespace std;
 using namespace MSL;
