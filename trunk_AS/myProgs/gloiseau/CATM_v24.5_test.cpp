@@ -608,7 +608,7 @@ END";
 		/******************************************************************************
 		 *               === LOCAL BACKBONE MONTE CARLO REPACKS ===
 		 ******************************************************************************/
-		double bestEnergy = currentEnergy;
+		double bestEnergy = currentEnergy-monomerEnergy;
 		time_t startTimeMC, endTimeMC;
 		double diffTimeMC;
 		time(&startTimeMC);
