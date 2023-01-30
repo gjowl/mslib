@@ -101,6 +101,7 @@ int main(int argc, char *argv[]){
 	 ******************************************************************************/
 	string seq = "AAAYYLLGTLLGYLLSTLAAA";
 	string polySeq = convertToPolymerSequenceNeutralPatch(seq, 23);
+	
 	//string polySeq = generatePolymerSequenceFromSequence(opt.sequence, opt.thread);
 	PolymerSequence PS(polySeq);
 
@@ -166,13 +167,15 @@ int main(int argc, char *argv[]){
 
 	// read in the pdbfile
 
-    //CSB.buildSystemFromPDB(opt.pdbFile);
-	if(!CSB.buildSystem(PS)) {
-		cerr << "Unable to build system from pdb" << endl;
-		exit(0);
-	} else {
-		//fout << "CharmmSystem built for sequence" << endl;
-	}
+	// how do I mutate the sequence to the neutral patch AAs? the other terms are close when below is used,
+	// but the IMM1 is wrong because of this?
+    CSB.buildSystemFromPDB(opt.pdbFile);
+	//if(!CSB.buildSystem(PS)) {
+	//	cerr << "Unable to build system from pdb" << endl;
+	//	exit(0);
+	//} else {
+	//	//fout << "CharmmSystem built for sequence" << endl;
+	//}
 	
 	/******************************************************************************
 	 *           === TRANSFORM HELICES TO INITIAL STARTING POSITION ===
@@ -181,24 +184,37 @@ int main(int argc, char *argv[]){
 	// TODO: can I mutate the system here? or do I have to do a bunch of other stuff to get it to work (read sequence, geometry, etc)
 	// CSB addIdentity. Add identity to the system at the desired positions (ends for now, but maybe accept a list?)
 	// check if the terminal residues are the same as the identity
-	//for (uint i = 0; i < sys.chainSize(); i++){
-	//	// get the chain
-	//	Chain &chain = sys.getChain(i);
-	//	// get the positions
-	//	vector<Position*>& positions = chain.getPositions();
-	//	// loop through the positions
-	//	for (uint j=0; j<positions.size(); j++){
-	//		if (j < 3 || j > positions.size() - 4){
-	//			// get the position
-	//			Position &pos = *positions[i];
-	//			// loop through the alternate identity list
-	//			for (uint k=0; k< opt.alternateIds.size(); k++){
-	//				string id = opt.alternateIds[k];
-	//				CSB.addIdentity(pos, id);
-	//			}
-	//		}
-	//	}
-	//}
+	for (uint i = 0; i < sys.chainSize(); i++){
+		// get the chain
+		Chain &chain = sys.getChain(i);
+		// get the positions
+		vector<Position*>& positions = chain.getPositions();
+		// loop through the positions
+		for (uint j=0; j<positions.size(); j++){
+			Position &pos = *positions[j];
+			string posId = pos.getPositionId();
+			cout << posId << endl;
+			if (j<1){
+				CSB.removeIdentity(pos, "ALA");
+				CSB.addIdentity(pos, "ALA-ACE");
+				sys.setActiveIdentity(posId,"ALA-ACE");
+			} else if (j>positions.size()-2){
+				CSB.removeIdentity(pos, "ALA");
+				CSB.addIdentity(pos, "ALA-CT2");
+				sys.setActiveIdentity(posId,"ALA-CT2");
+			}
+			//if (j < 3 || j > positions.size() - 4){
+			//	// get the position
+			//	Position &pos = *positions[i];
+			//	// loop through the alternate identity list
+			//	for (uint k=0; k< opt.alternateIds.size(); k++){
+			//		string id = opt.alternateIds[k];
+			//		CSB.addIdentity(pos, id);
+			//	}
+			//}
+		}
+	}
+	cout << sys.toString() << endl;
 
     /******************************************************************************
 	 *                     === COPY BACKBONE COORDINATES ===
