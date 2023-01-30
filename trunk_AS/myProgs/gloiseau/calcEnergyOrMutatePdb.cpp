@@ -96,6 +96,55 @@ int main(int argc, char *argv[]){
 
 	rerun << opt.rerunConf << endl;
 	rerun.close();
+	/******************************************************************************
+	 *                   === INITIALIZE POLYMER SEQUENCE ===
+	 ******************************************************************************/
+	string seq = "AAAYYLLGTLLGYLLSTLAAA";
+	string polySeq = convertToPolymerSequenceNeutralPatch(seq, 23);
+	//string polySeq = generatePolymerSequenceFromSequence(opt.sequence, opt.thread);
+	PolymerSequence PS(polySeq);
+
+	/******************************************************************************
+	 *                     === COPY BACKBONE COORDINATES ===
+	 ******************************************************************************/
+	System pdb;
+	pdb.readPdb(opt.pdbFile);//gly69 pdb file; changed from the CRD file during testing to fix a bug but both work and the bug was separate
+	AtomPointerVector & apv = pdb.getAtomPointers();
+
+	Chain & chainA1 = pdb.getChain("A");
+	Chain & chainB1 = pdb.getChain("B");
+
+	// Set up chain A and chain B atom pointer vectors
+	AtomPointerVector & apvChainA1 = chainA1.getAtomPointers();
+	AtomPointerVector & apvChainB1 = chainB1.getAtomPointers();
+	
+	/******************************************************************************
+	 *                      === TRANSFORM TO COORDINATES ===
+	 ******************************************************************************/
+	// Objects used for transformations
+	Transforms trans; 
+	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
+	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
+	
+	// Reference points for Helices
+	CartesianPoint ori(0.0,0.0,0.0);
+	CartesianPoint zAxis(0.0,0.0,1.0);
+	CartesianPoint xAxis(1.0,0.0,0.0);
+	
+	/*******************************************
+	 *       === HELICAL AXIS SET UP ===
+	 *******************************************/
+	// System for the helical axis that sets protein around the origin (0.0, 0.0, 0.0)
+	System helicalAxis;
+	helicalAxis.readPdb(opt.helicalAxis);
+
+	// AtomPointerVector for the helical axis for each chain
+	AtomPointerVector &axisA = helicalAxis.getChain("A").getAtomPointers();
+	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
+	
+	// Transformation to zShift, axialRotation, crossingAngle, and xShift
+	transformation(apvChainA1, apvChainB1, axisA, axisB, ori, xAxis, zAxis, 0, 0, 0, 0, trans);
+	//moveZCenterOfCAMassToOrigin(pdb.getAtomPointers(), helicalAxis.getAtomPointers(), trans);
 
 	/******************************************************************************
 	 *                     === DECLARE SYSTEM ===
@@ -116,11 +165,19 @@ int main(int argc, char *argv[]){
 	CSB.setBuildNonBondedInteractions(false);
 
 	// read in the pdbfile
-	//sys.readPdb(opt.pdbFile);
-	//cout << sys.calcEnergy() << endl;
-	//cout << Eset->getSummary() << endl;
 
-    CSB.buildSystemFromPDB(opt.pdbFile);
+    //CSB.buildSystemFromPDB(opt.pdbFile);
+	if(!CSB.buildSystem(PS)) {
+		cerr << "Unable to build system from pdb" << endl;
+		exit(0);
+	} else {
+		//fout << "CharmmSystem built for sequence" << endl;
+	}
+	
+	/******************************************************************************
+	 *           === TRANSFORM HELICES TO INITIAL STARTING POSITION ===
+	 ******************************************************************************/
+	sys.assignCoordinates(apv,false);
 	// TODO: can I mutate the system here? or do I have to do a bunch of other stuff to get it to work (read sequence, geometry, etc)
 	// CSB addIdentity. Add identity to the system at the desired positions (ends for now, but maybe accept a list?)
 	// check if the terminal residues are the same as the identity
@@ -148,6 +205,7 @@ int main(int argc, char *argv[]){
 	 ******************************************************************************/
 	// assign the coordinates of our system to the given geometry that was assigned without energies using System pdb
 	sys.buildAllAtoms();
+	//moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), helicalAxis.getAtomPointers(), trans);
 	
 	PDBWriter writer1;
 	writer1.open(outputDir + "/start.pdb");
@@ -159,7 +217,6 @@ int main(int argc, char *argv[]){
 	hb.buildInteractions(50);//when this is here, the HB weight is correct
 
 	CSB.updateNonBonded(10,12,50);
-
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
 	 ******************************************************************************/
@@ -189,8 +246,9 @@ int main(int argc, char *argv[]){
 	sysRot.defineRotamerSamplingLevels();
 	
     // loading rotamers
-	loadRotamers(sys, sysRot, "SL95.00");
+	loadRotamers(sys, sysRot, opt.SL);
 
+	CSB.updateNonBonded(10,12,50);
 	/******************************************************************************
 	 *                  === GREEDY TO OPTIMIZE ROTAMERS ===
 	 ******************************************************************************/
@@ -301,7 +359,7 @@ double computeMonomerEnergy(System & _sys, Options& _opt, RandomNumberGenerator 
 	 *                     === HELICAL AXIS SET UP ===
 	 ******************************************************************************/
 	System helicalAxis;
-	helicalAxis.readPdb(_opt.helicalAxisFile);
+	helicalAxis.readPdb(_opt.helicalAxis);
 
 	Chain & inputChain = _sys.getChain(0);
 	AtomPointerVector &axisA = helicalAxis.getChain("A").getAtomPointers();
@@ -661,6 +719,8 @@ Options parseCalcEnergyOptions(int _argc, char * _argv[]){
 
 	opt.allowed.push_back("verbose");
 	opt.allowed.push_back("deleteTerminalBonds");
+	opt.allowed.push_back("deleteTerminalInteractions");
+	opt.allowed.push_back("SL");
 
 	//Input Files
 	opt.allowed.push_back("topFile");
@@ -670,7 +730,7 @@ Options parseCalcEnergyOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("hbondFile");
 	opt.allowed.push_back("outputDirName");
 	opt.allowed.push_back("pdbFile");
-	opt.allowed.push_back("helicalAxisFile");
+	opt.allowed.push_back("helicalAxis");
 	opt.allowed.push_back("configfile");
 
 	//
@@ -728,12 +788,27 @@ Options parseCalcEnergyOptions(int _argc, char * _argv[]){
 		opt.warningMessages += "deleteTerminalHbonds not specified using true\n";
 		opt.warningFlag = true;
 	}
-
+	opt.deleteTerminalInteractions = OP.getMultiString("deleteTerminalInteractions");
+	if (OP.fail()) {
+		opt.deleteTerminalInteractions.push_back("SCWRL4_HBOND");
+		opt.warningMessages += "deleteTerminalInteractions not specified, defaulting to delete SCWRL4_HBOND\n";
+		opt.warningFlag = true;
+	}
 	opt.verbose = OP.getBool("verbose");
 	if (OP.fail()) {
 		opt.warningMessages += "verbose not specified using false\n";
 		opt.warningFlag = true;
 		opt.verbose = false;
+	}
+	
+	//rotlevel
+	opt.SL = OP.getString("SL");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "SL not specified, default to SL95.00\n";
+		opt.SL = "SL95.00";
+	} else {
+		opt.SL = "SL"+opt.SL;
 	}
 
     //Weights
@@ -827,9 +902,9 @@ Options parseCalcEnergyOptions(int _argc, char * _argv[]){
 		opt.errorFlag = true;
 	}
 
-	opt.helicalAxisFile = OP.getString("helicalAxisFile");
+	opt.helicalAxis = OP.getString("helicalAxis");
 	if (OP.fail()) {
-		opt.errorMessages += "helicalAxisFile not specified";
+		opt.errorMessages += "helicalAxis file not specified";
 		opt.errorFlag = true;
 	}
 	opt.outputDirName = OP.getString("outputDirName");
