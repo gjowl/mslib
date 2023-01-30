@@ -20,7 +20,7 @@ struct Options{
 	string hbondFile; //hydrogen bonding energy file
 	string rotLibFile; //rotamer library file
 	string pdbFile; //input pdb file
-	string helicalAxisFile; //file with helical axis information
+	string helicalAxis; //file with helical axis information
 	
 	// Monte Carlo parameters
     int MCCycles;
