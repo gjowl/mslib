@@ -725,23 +725,28 @@ END";
 			}
 		}
 //TODO: I think if all of the below was a function that took a system, it would be possible to just take the best positive structure
-
+	fout << 1 << ": " << originalTMSeq << endl;
 		// Renumber structures (all should go 1 - N, or from starting point determined by user)
 		//int currStartNum = positions[0]->getResidueNumber();
 		chainA.renumberChain(opt.startResNum);
+	fout << 2 << ": " << originalTMSeq << endl;
 		chainB.renumberChain(opt.startResNum);
+	fout << 3 << ": " << originalTMSeq << endl;
 		//renumberResidues(sys,opt.startResNum);
 
 		// get vector of Hbonds, check size
 		vector<string> interHelicalHbonds =  getInterHelicalHbonds(Eset);
+	fout << 4 << ": " << originalTMSeq << endl;
 
 		// Store everything
 		// create class structure to store data
 		HelixDimer * st = new HelixDimer("",finalEnergy,thread);
+	fout << 5 << ": " << originalTMSeq << endl;
 
 		st->addAtoms(sys.getAtomPointers());
 		// save the structure interface residues, energy, hbond list, CA of closest approach mark it with 2 in the mask
 		map<string, unsigned int> interfaceMap = interfaceResidueCheck(apvChainA, apvChainB);
+	fout << 6 << ": " << originalTMSeq << endl;
 
 		//unsigned int closestCA = CAOfClosestApproach(chainA,chainB);
 		string interfaceString = "";
@@ -756,6 +761,7 @@ END";
 			}
 		}
 
+	fout << 7 << ": " << originalTMSeq << endl;
 		//mark residue with CA of closest approach with 2
 		//interfaceString.replace(closestCA - opt.startResNum,1,"2");
 
@@ -764,6 +770,7 @@ END";
 			st->setDeltaEnergyByTerm(energyByTerm);
 		}
 
+	fout << 8 << ": " << originalTMSeq << endl;
 		if (opt.clusterSolutions) {
 			// Save structure to vector of structures
 			fout << "clustering structure with Energy: " << finalEnergy << endl;
@@ -817,6 +824,7 @@ END";
 			fout << sys.getEnergySummary();
 			fout << endl;
 		}
+	fout << 9 << ": " << originalTMSeq << endl;
 
 	}
 
