@@ -169,13 +169,13 @@ int main(int argc, char *argv[]){
 
 	// how do I mutate the sequence to the neutral patch AAs? the other terms are close when below is used,
 	// but the IMM1 is wrong because of this?
-    CSB.buildSystemFromPDB(opt.pdbFile);
-	//if(!CSB.buildSystem(PS)) {
-	//	cerr << "Unable to build system from pdb" << endl;
-	//	exit(0);
-	//} else {
-	//	//fout << "CharmmSystem built for sequence" << endl;
-	//}
+    //CSB.buildSystemFromPDB(opt.pdbFile);
+	if(!CSB.buildSystem(PS)) {
+		cerr << "Unable to build system from pdb" << endl;
+		exit(0);
+	} else {
+		//fout << "CharmmSystem built for sequence" << endl;
+	}
 	
 	/******************************************************************************
 	 *           === TRANSFORM HELICES TO INITIAL STARTING POSITION ===
@@ -191,27 +191,35 @@ int main(int argc, char *argv[]){
 		vector<Position*>& positions = chain.getPositions();
 		// loop through the positions
 		for (uint j=0; j<positions.size(); j++){
-			Position &pos = *positions[j];
-			string posId = pos.getPositionId();
-			cout << posId << endl;
-			if (j<1){
-				CSB.removeIdentity(pos, "ALA");
-				CSB.addIdentity(pos, "ALA-ACE");
-				sys.setActiveIdentity(posId,"ALA-ACE");
-			} else if (j>positions.size()-2){
-				CSB.removeIdentity(pos, "ALA");
-				CSB.addIdentity(pos, "ALA-CT2");
-				sys.setActiveIdentity(posId,"ALA-CT2");
-			}
-			//if (j < 3 || j > positions.size() - 4){
-			//	// get the position
-			//	Position &pos = *positions[i];
-			//	// loop through the alternate identity list
-			//	for (uint k=0; k< opt.alternateIds.size(); k++){
-			//		string id = opt.alternateIds[k];
-			//		CSB.addIdentity(pos, id);
-			//	}
+			// for trying to fix the buildSystemFromPDB;
+			// have to fix this anyways to add the neutral patches properly
+			//Position &pos = *positions[j];
+			//string posId = pos.getPositionId();
+			//cout << posId << endl;
+			//if (j<1){
+			//	CSB.removeIdentity(pos, "ALA");
+			//	CSB.addIdentity(pos, "ALA-ACE");
+			//	sys.setActiveIdentity(posId,"ALA-ACE");
+			//} else if (j>positions.size()-2){
+			//	CSB.removeIdentity(pos, "ALA");
+			//	CSB.addIdentity(pos, "ALA-CT2");
+			//	sys.setActiveIdentity(posId,"ALA-CT2");
 			//}
+			// according to the top file, can only add in the ace and ct2 during the generation of the polySeq...
+			// which means I likely need to input the sequence as a string and then use the polySeq to generate the system
+			// for all of these and just use the pdb as a backbone rather than reading directly from the pdb
+			if (j < 3 || j > positions.size() - 4){
+				// get the position
+				Position &pos = *positions[j];
+				string posId = pos.getPositionId();
+				// loop through the alternate identity list
+				for (uint k=0; k< opt.alternateIds.size(); k++){
+					//string id = opt.alternateIds[k];
+					string id = "LEU";
+					CSB.addIdentity(pos, id);
+					sys.setActiveIdentity(posId,"LEU");
+				}
+			}
 		}
 	}
 	cout << sys.toString() << endl;
