@@ -126,6 +126,148 @@ void usage();
 void help(Options defaults);
 void outputErrorMessage(Options &_opt);
 
+// directory setup functions
+void setupDesignDirectory(Options &_opt){
+	_opt.outputDir = string(get_current_dir_name()) + "/design_" + _opt.runNumber;
+	//_opt.outputDir = "/exports/home/gloiseau/mslib/trunk_AS/design_" + _opt.runNumber;
+	string cmd = "mkdir -p " + _opt.outputDir;
+	if (system(cmd.c_str())){
+		cout << "Unable to make directory" << endl;
+		exit(0);
+	}
+}
+
+//Calculate Residue Burial and output a PDB that highlights the interface
+std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &_startGeom, string _seq) {
+	// polymer sequences have: chain, starting position of chain residue, three letter AA code
+	string polySeq = convertToPolymerSequence(_seq, _opt.thread);
+	PolymerSequence PS(polySeq);
+
+	// Declare system for dimer
+	System sys;
+	CharmmSystemBuilder CSB(sys,_opt.topFile,_opt.parFile);
+	CSB.setBuildTerm("CHARMM_ELEC", false);
+	CSB.setBuildTerm("CHARMM_ANGL", false);
+	CSB.setBuildTerm("CHARMM_BOND", false);
+	CSB.setBuildTerm("CHARMM_DIHE", false);
+	CSB.setBuildTerm("CHARMM_IMPR", false);
+	CSB.setBuildTerm("CHARMM_U-BR", false);
+
+	CSB.setBuildNonBondedInteractions(false);
+	//CSB.setBuildNoTerms();
+
+	if(!CSB.buildSystem(PS)) {
+		cout << "Unable to build system from " << PS << endl;
+		exit(0);
+	} else {
+		//fout << "CharmmSystem built for sequence" << endl;
+	}
+	/******************************************************************************
+	 *                     === INITIAL VARIABLE SET UP ===
+	 ******************************************************************************/
+	EnergySet* Eset = sys.getEnergySet();
+	// Set all terms active, besides Charmm-Elec
+	Eset->setAllTermsInactive();
+	Eset->setTermActive("CHARMM_VDW", true);
+	Eset->setTermActive("SCWRL4_HBOND", true);
+
+	// Set weights
+	Eset->setWeight("CHARMM_VDW", 1);
+	Eset->setWeight("SCWRL4_HBOND", 1);
+
+	CSB.updateNonBonded(10,12,50);
+
+	// initialize the object for loading rotamers into our _system
+	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
+	sysRot.defineRotamerSamplingLevels();
+
+	// Add hydrogen bond term
+	HydrogenBondBuilder hb(sys, _opt.hbondFile);
+	hb.buildInteractions(50);//when this is here, the HB weight is correct
+
+	/******************************************************************************
+	 *                     === COPY BACKBONE COORDINATES ===
+	 ******************************************************************************/
+	sys.assignCoordinates(_startGeom.getAtomPointers(),false);
+	sys.buildAllAtoms();
+
+	string monoPolySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, 1);
+	PolymerSequence MPS(monoPolySeq);
+
+	// Declare new system
+	System monoSys;
+	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile);
+	CSBMono.setBuildTerm("CHARMM_ELEC", false);
+	CSBMono.setBuildTerm("CHARMM_ANGL", false);
+	CSBMono.setBuildTerm("CHARMM_BOND", false);
+	CSBMono.setBuildTerm("CHARMM_DIHE", false);
+	CSBMono.setBuildTerm("CHARMM_IMPR", false);
+	CSBMono.setBuildTerm("CHARMM_U-BR", false);
+
+	CSBMono.setBuildNonBondedInteractions(false);
+	if (!CSBMono.buildSystem(MPS)){
+		cerr << "Unable to build system from " << monoPolySeq << endl;
+	}
+
+	/******************************************************************************
+	 *                         === INITIALIZE POLYGLY ===
+	 ******************************************************************************/
+	// Read in Gly-69 to use as backbone coordinate template
+	CRDReader cRead;
+	cRead.open(_opt.backboneCrd);
+	if(!cRead.read()) {
+		cerr << "Unable to read " << _opt.backboneCrd << endl;
+		exit(0);
+	}
+	cRead.close();
+
+	AtomPointerVector& glyAPV = cRead.getAtomPointers();//*/
+
+	/******************************************************************************
+	 *                         === INITIALIZE POLYGLY ===
+	 ******************************************************************************/
+	monoSys.assignCoordinates(glyAPV,false);
+	monoSys.buildAllAtoms();
+
+	std::vector<pair <int, double> > residueBurial;
+	SasaCalculator dimerSasa(sys.getAtomPointers());
+	SasaCalculator monoSasa(monoSys.getAtomPointers());
+	dimerSasa.calcSasa();
+	monoSasa.calcSasa();
+	dimerSasa.setTempFactorWithSasa(true);
+
+	for (uint i = 0; i < monoSys.positionSize(); i++) {//Changed this to account for linked positions in the dimer; gives each AA same number of rotamers as correspnding chain
+		string posIdMonomer = monoSys.getPosition(i).getPositionId();
+		string posIdDimer = sys.getPosition(i).getPositionId();
+		double resiSasaMonomer = monoSasa.getResidueSasa(posIdMonomer);
+		double resiSasaDimer = dimerSasa.getResidueSasa(posIdDimer);
+		double burial = resiSasaDimer/resiSasaMonomer;
+		residueBurial.push_back(pair<int,double>(i, burial));
+
+		//set sasa for each residue in the b-factor
+		AtomSelection selA(sys.getPosition(i).getAtomPointers());
+		AtomSelection selB(sys.getPosition(i+_opt.backboneLength).getAtomPointers());
+		AtomPointerVector atomsA = selA.select("all");
+		AtomPointerVector atomsB = selB.select("all");
+		for (AtomPointerVector::iterator k=atomsA.begin(); k!=atomsA.end();k++) {
+			// set the residue sasa in the b-factor
+			(*k)->setTempFactor(burial);
+		}
+		for (AtomPointerVector::iterator k=atomsB.begin(); k!=atomsB.end();k++) {
+			// set the residue sasa in the b-factor
+			(*k)->setTempFactor(burial);
+		}
+	}
+	// sort in descending order of burial (most buried first)
+	sort(residueBurial.begin(), residueBurial.end(), [](auto &left, auto &right) {
+			return left.second < right.second;
+	});
+	return residueBurial;
+}
+
+// parse config file for given options
+Options parseOptions(int _argc, char * _argv[]);
+
 /******************************************
  *  =======  BEGIN MAIN =======
  ******************************************/
@@ -225,7 +367,7 @@ int main(int argc, char *argv[]){
 	// initialize the object for loading rotamers into system
 	SystemRotamerLoader sysRot(sys, opt.rotLibFile);
 	sysRot.defineRotamerSamplingLevels();
-	loadRotamers(sys, sysRot, opt, rotamerSamplingPerPosition);
+	loadRotamers(sys, sysRot, opt.useSasaBurial, opt.sasaRepackLevel, opt.SL, rotamerSamplingPerPosition);
 	switchSequence(sys, opt, opt.sequence);
 
 	/******************************************************************************
@@ -595,7 +737,7 @@ void searchForBestSequence(System &_startGeom, Options &_opt, PolymerSequence &_
 	// initialize the object for loading rotamers into our _system
 	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
 	sysRot.defineRotamerSamplingLevels();
-	loadRotamers(sys, sysRot, _opt, _rotamerSampling);
+	loadRotamers(sys, sysRot, _opt.useSasaBurial, _opt.sasaRepackLevel, _opt.SL, _rotamerSampling);
 
 	// Setup self pair manager to calculate the self and pair energies for each sequence
 	SelfPairManager spm;
@@ -1007,8 +1149,8 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 			}
 		}
 	} else {
-		_interfacePositions = getInterfacePositions(_opt, rotamerSamplingPerPosition, backboneSeq.length());
-		_allInterfacePositions = getAllInterfacePositions(_opt, rotamerSamplingPerPosition, backboneSeq.length());
+		_interfacePositions = getInterfacePositions(_opt.interfaceLevel, rotamerSamplingPerPosition, backboneSeq.length());
+		_allInterfacePositions = getAllInterfacePositions(_opt.interfaceLevel, rotamerSamplingPerPosition, backboneSeq.length());
 	}
 
 	//String for the positions of the sequences that are considered interface for positions amd high rotamers
@@ -1921,7 +2063,6 @@ void runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNumberGener
 	
 	//Add energies for initial sequences into the sequenceEnergyMap
 	pair<string,vector<uint>> startSequenceStatePair = make_pair(startSequence, bestState);
-	getEnergiesForStartingSequence(_opt, spm, startSequence, bestState, _interfacePositions, _sequenceEnergyMap, _sequenceEntropyMap);
 	getSasaForStartingSequence(_sys, startSequence, bestState, _sequenceEnergyMap);
 	
 	// reset the energy set
@@ -1955,4 +2096,797 @@ string getAlternateIdString(vector<string> _alternateIds){
 		}
 	}
 	return alternateIdsString;
+}
+
+/****************************************
+ *
+ *  ======= CONFIG FILE OPTIONS =======
+ *
+ ****************************************/
+Options parseOptions(int _argc, char * _argv[]){
+	/******************************************
+	 *  Pass the array of argument and the name of
+	 *  a configuration file to the ArgumentParser
+	 *  object.  Then ask for the value of the argument
+	 *  and collect error and warnings.
+	 *
+	 *  This function returns a Options structure
+	 *  defined at the head of this file
+	 ******************************************/
+
+	Options opt;
+
+	/******************************************
+	 *  Set the allowed and required options:
+	 *
+	 *  Example of configuration file:
+	 *
+	 *  /exports/home/gloiseau/mslib/trunk_AS/config/seqDesign.config
+	 *
+	 ******************************************/
+
+	vector<string> required;
+	vector<string> allowed;
+
+	//opt.required.push_back("");
+	//opt.allowed.push_back("");
+	
+	// Input Files
+	opt.allowed.push_back("topFile");
+	opt.allowed.push_back("parFile");
+	opt.allowed.push_back("geometryDensityFile");
+	opt.allowed.push_back("solvFile");
+	opt.allowed.push_back("rotLibFile");
+	opt.allowed.push_back("backboneCrd");
+	opt.allowed.push_back("hbondFile");
+	opt.allowed.push_back("outputDir");
+	opt.allowed.push_back("backboneFile");
+	opt.allowed.push_back("selfEnergyFile");
+	opt.allowed.push_back("pairEnergyFile");
+	opt.allowed.push_back("sequenceEntropyFile");
+	opt.allowed.push_back("configfile");
+	opt.allowed.push_back("helicalAxis");
+
+	// sequence parameters
+	opt.allowed.push_back("sequence");
+	opt.allowed.push_back("backboneAA");
+	opt.allowed.push_back("backboneLength");
+	opt.allowed.push_back("interface");
+	opt.allowed.push_back("numberOfSequencesToSave");
+
+	// booleans
+	opt.allowed.push_back("getGeoFromPDBData");
+	opt.allowed.push_back("verbose");
+	opt.allowed.push_back("useSasaBurial");
+	opt.allowed.push_back("useTimeBasedSeed");
+	opt.allowed.push_back("deleteTerminalBonds");
+	opt.allowed.push_back("linkInterfacialPositions");
+	opt.allowed.push_back("useAlaAtTermini");
+	opt.allowed.push_back("useBaseline");
+	opt.allowed.push_back("getRandomAxRotAndZShift");
+
+	// repack parameters
+	opt.allowed.push_back("greedyCycles");
+	opt.allowed.push_back("seed");
+
+
+	opt.allowed.push_back("startResNum");
+	opt.allowed.push_back("endResNum");
+
+	//Geometry
+	opt.allowed.push_back("xShift");
+	opt.allowed.push_back("crossingAngle");
+	opt.allowed.push_back("axialRotation");
+	opt.allowed.push_back("zShift");
+	opt.allowed.push_back("density");
+	opt.allowed.push_back("negAngle");
+	opt.allowed.push_back("negRot");
+	opt.allowed.push_back("thread");
+
+	//Monte Carlo variables
+	opt.allowed.push_back("MCCycles");
+	opt.allowed.push_back("MCMaxRejects");
+	opt.allowed.push_back("MCStartTemp");
+	opt.allowed.push_back("MCEndTemp");
+	opt.allowed.push_back("MCCurve");
+	opt.allowed.push_back("MCConvergedSteps");
+	opt.allowed.push_back("MCConvergedE");
+	opt.allowed.push_back("MCResetTemp");
+	opt.allowed.push_back("MCResetCycles");
+
+	// Backbone Monte Carlo variables
+	opt.allowed.push_back("backboneMCCycles");
+	opt.allowed.push_back("backboneMCMaxRejects");
+	opt.allowed.push_back("backboneMCStartTemp");
+	opt.allowed.push_back("backboneMCEndTemp");
+	opt.allowed.push_back("backboneMCCurve");
+	opt.allowed.push_back("backboneConvergedSteps");
+	opt.allowed.push_back("backboneConvergedE");
+	opt.allowed.push_back("backboneSearchCycles");
+
+	// use different energy parameters
+	opt.allowed.push_back("useIMM1");
+	opt.allowed.push_back("useElec");
+	opt.allowed.push_back("compareSasa");
+	
+	//Weights
+	opt.allowed.push_back("weight_vdw");
+	opt.allowed.push_back("weight_solv");
+	opt.allowed.push_back("weight_elec");
+	opt.allowed.push_back("weight_hbond");
+	opt.allowed.push_back("weight_seqEntropy");
+
+	// Alternate Identities
+	opt.allowed.push_back("Ids");
+
+	// MonteCarlo Arguments
+	opt.allowed.push_back("numStatesToSave");
+
+	// SelfPairManager Arguments
+	opt.allowed.push_back("runDEESingles");
+	opt.allowed.push_back("runDEEPairs");
+	opt.allowed.push_back("runSCMF");
+
+	// Energy Terms to Output
+	opt.allowed.push_back("energyTermList");
+	opt.allowed.push_back("deleteTerminalInteractions");
+
+	//Rotamers
+	// Load Rotamers from SASA values (from sgfc)
+	opt.allowed.push_back("sasaRepackLevel");
+	opt.allowed.push_back("interfaceLevel");
+	opt.allowed.push_back("SL");
+	
+	// Shift Size
+	opt.allowed.push_back("deltaX");
+	opt.allowed.push_back("deltaCross");
+	opt.allowed.push_back("deltaAx");
+	opt.allowed.push_back("deltaZ");
+	opt.allowed.push_back("deltaXLimit");
+	opt.allowed.push_back("deltaCrossLimit");
+	opt.allowed.push_back("deltaAxLimit");
+	opt.allowed.push_back("deltaZLimit");
+	opt.allowed.push_back("decreaseMoveSize");
+
+	opt.allowed.push_back("runNumber");
+
+	// Begin Parsing through the options
+	OptionParser OP;
+	OP.readArgv(_argc, _argv);
+	OP.setDefaultArguments(opt.defaultArgs);
+	OP.setRequired(opt.required);
+	OP.setAllowed(opt.allowed);
+	OP.autoExtendOptions();
+
+	opt.errorFlag = false;
+	opt.warningFlag = false;
+
+	opt.errorMessages = "";
+	opt.warningMessages = "";
+	
+	if (OP.countOptions() == 0){
+		opt.errorMessages += "No options given!\n";
+		return opt;
+	}
+
+	/*****************************************
+	 *  CHECK THE GIVEN OPTIONS
+	 *****************************************/
+	if (!OP.checkOptions()) {
+		opt.errorFlag = true;
+		opt.OPerrors = OP.getErrors();
+		return opt;
+	}
+	
+	/*****************************************
+	 *  CHECK THE GIVEN OPTIONS
+	 *****************************************/
+	opt.configfile = OP.getString("configfile");
+	if (opt.configfile != "") {
+		OP.readFile(opt.configfile);
+		if (OP.fail()) {
+			opt.errorFlag = true;
+			opt.errorMessages += "Cannot read configuration file " + opt.configfile + "\n";
+		}
+	}
+
+	// Input Files
+	opt.topFile = OP.getString("topFile");
+	if (OP.fail()) {
+		string envVar = "MSL_CHARMM_TOP";
+		if(SYSENV.isDefined(envVar)) {
+			opt.topFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "topFile not specified using " + opt.topFile + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine topFile - " + envVar + " - not set\n"	;
+			opt.errorFlag = true;
+		}
+	}
+	opt.parFile = OP.getString("parFile");
+	if (OP.fail()) {
+		string envVar = "MSL_CHARMM_PAR";
+		if(SYSENV.isDefined(envVar)) {
+			opt.parFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "parFile not specified using " + opt.parFile + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine parFile - " + envVar + " - not set\n"	;
+			opt.errorFlag = true;
+		}
+	}
+	opt.geometryDensityFile = OP.getString("geometryDensityFile");
+	if (OP.fail()) {
+		opt.warningMessages += "Unable to determine geometryDensityFile, defaulting to original density file\n";
+		opt.warningFlag = true;
+		opt.geometryDensityFile = "/exports/home/gloiseau/mslib/trunk_AS/designFiles/2021_09_28_geometryDensityFile.txt";
+	}
+	opt.solvFile = OP.getString("solvFile");
+	if (OP.fail()) {
+		string envVar = "MSL_CHARMM_SOLV";
+		if(SYSENV.isDefined(envVar)) {
+			opt.solvFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "solvFile not specified using " + opt.solvFile + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine solvFile - " + envVar + " - not set\n";
+			opt.errorFlag = true;
+		}
+	}
+	opt.rotLibFile = OP.getString("rotLibFile");
+	if (OP.fail()) {
+		string envVar = "MSL_ROTLIB";
+		if(SYSENV.isDefined(envVar)) {
+			opt.rotLibFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "rotLibFile not specified using " + opt.rotLibFile + ", defaulting to " + SYSENV.getEnv(envVar) + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine rotLibFile - " + envVar + " - not set\n";
+			opt.errorFlag = true;
+		}
+	}
+	opt.backboneCrd = OP.getString("backboneCrd");
+	if (OP.fail()) {
+		opt.errorMessages += "Unable to determine backboneCrd";
+		opt.errorFlag = true;
+	}
+	opt.hbondFile = OP.getString("hbondFile");
+	if (OP.fail()) {
+		string envVar = "MSL_HBOND_CA_PAR";
+		if(SYSENV.isDefined(envVar)) {
+			opt.hbondFile = SYSENV.getEnv(envVar);
+			opt.warningMessages += "hbondFile not specified using " + opt.hbondFile + "\n";
+			opt.warningFlag = true;
+		} else {
+			opt.errorMessages += "Unable to determine hbondFile - MSL_HBOND_CA_PAR - not set\n"	;
+			opt.errorFlag = true;
+		}
+	}
+	opt.backboneFile = OP.getString("backboneFile");
+	if (OP.fail()) {
+		opt.warningMessages += "backboneFile not specified, default to /data01/sabs/tmRepacks/pdbFiles/69-gly-residue-helix.pdbi\n";
+		opt.warningFlag = true;
+		opt.backboneFile = "/data01/sabs/tmRepacks/pdbFiles/69-gly-residue-helix.pdb";
+	}
+	opt.selfEnergyFile = OP.getString("selfEnergyFile");
+	if (OP.fail()) {
+		opt.warningMessages += "selfEnergyFile not specified, default \n";
+		opt.warningFlag = true;
+		opt.selfEnergyFile = "/exports/home/gloiseau/mslib/trunk_AS/DesignFiles/2020_10_07_meanSelf_par.txt";
+	}
+	opt.pairEnergyFile = OP.getString("pairEnergyFile");
+	if (OP.fail()) {
+		opt.warningMessages += "pairEnergyFile not specified, default \n";
+		opt.warningFlag = true;
+		opt.pairEnergyFile = "/exports/home/gloiseau/mslib/trunk_AS/DesignFiles/2020_10_07_meanPair_par.txt";
+	}
+	opt.sequenceEntropyFile = OP.getString("seqEntropyFile");
+	if (OP.fail()) {
+		opt.warningMessages += "seqEntropyFile not specified, default to /data01/sabs/tmRepacks/pdbFiles/69-gly-residue-helix.pdbi\n";
+		opt.warningFlag = true;
+		opt.sequenceEntropyFile = "/exports/home/gloiseau/mslib/trunk_AS/myProgs/gloiseau/sequenceEntropies.txt";
+	}
+	opt.helicalAxis = OP.getString("helicalAxis");
+	if (OP.fail()) {
+		opt.warningMessages += "helicalAxis not specified\n";
+		opt.warningFlag = true;
+		opt.helicalAxis = "/exports/home/gloiseau/mslib/trunk_AS/myProgs/parameterFiles/helicalAxis.pdb";
+	}
+	opt.outputDir = OP.getString("outputDir");
+	if (OP.fail()) {
+		opt.warningMessages += "Unable to determine outputDir, default to current directory\n";
+		opt.warningFlag = true;
+	}
+	
+	// sequence parameters
+	opt.sequence = OP.getString("sequence");
+	if (OP.fail()) {
+		opt.warningMessages += "sequence not specified, defaulting to polyleu\n";
+		opt.warningFlag = true;
+		opt.sequence = "";
+	}
+	opt.backboneAA = OP.getString("backboneAA");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "backboneAA not specified, default to V\n";
+		opt.backboneAA = "V";
+	}
+	opt.backboneLength = OP.getInt("backboneLength");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "backboneLength not specified, default to 21\n";
+		opt.backboneLength = 21;
+	}
+	opt.numberOfSequencesToSave = OP.getInt("numberOfSequencesToSave");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "numberOfSequencesToSave not specified, default to 5\n";
+		opt.numberOfSequencesToSave = 5;
+	}
+	// override backboneLength if a sequence is specified
+	if (opt.sequence != "") {
+		opt.backboneLength = opt.sequence.length();
+	}
+	opt.startResNum = OP.getInt("startResNum");
+	if (OP.fail()) {
+		opt.warningMessages += "startResNum not specified using " + MslTools::intToString(1) + "\n";
+		opt.warningFlag = true;
+		opt.startResNum = 1;
+	}
+	opt.endResNum = OP.getInt("endResNum");
+	if (OP.fail()) {
+		opt.warningMessages += "endResNum not specified using " + MslTools::intToString(opt.startResNum+opt.backboneLength) + "\n";
+		opt.warningFlag = true;
+		opt.endResNum = opt.startResNum+opt.backboneLength;
+	}
+	opt.interface = OP.getString("interface");
+	if (OP.fail()) {
+		opt.warningMessages += "interface not specified\n";
+		opt.warningFlag = true;
+		opt.interface = "";
+	}
+	// if sequence is specified, define interface for sequence
+	if (opt.sequence != "" && opt.interface == "") {
+		opt.interface = "";
+		for (uint i=0; i<opt.sequence.length(); i++) {
+			// assumes polyLeu backbone
+			if (i > 3 || i < opt.sequence.length()-5) {
+				// if not Leu, then interface
+				if (opt.sequence[i] != 'L') {
+					opt.interface += "1";
+				} else {
+					opt.interface += "0";
+				}
+			} else {
+				opt.interface += "0";
+			}
+		}
+	}
+	if (opt.interface != "") {
+		if (opt.interface.length() != opt.backboneLength) {
+			opt.errorMessages += "interface string and backbone length must be the same length\n";
+			opt.errorFlag = true;
+		}
+	}
+
+	// booleans
+	opt.getGeoFromPDBData = OP.getBool("getGeoFromPDBData");
+	if (OP.fail()) {
+		opt.warningMessages += "getGeoFromPDBData not specified, defaulting to false\n";
+		opt.warningFlag = true;
+		opt.getGeoFromPDBData = false;
+	}
+	opt.deleteTerminalBonds = OP.getBool("deleteTerminalBonds");
+	if (OP.fail()) {
+		opt.deleteTerminalBonds = true;
+		opt.warningMessages += "deleteTerminalBonds not specified using true\n";
+		opt.warningFlag = true;
+	}
+	opt.deleteTerminalInteractions = OP.getMultiString("deleteTerminalInteractions");
+	if (OP.fail()) {
+		opt.deleteTerminalInteractions.push_back("SCWRL4_HBOND");
+		opt.warningMessages += "deleteTerminalInteractions not specified, defaulting to delete SCWRL4_HBOND\n";
+		opt.warningFlag = true;
+	}
+	opt.verbose = OP.getBool("verbose");
+	if (OP.fail()) {
+		opt.warningMessages += "verbose not specified using false\n";
+		opt.warningFlag = true;
+		opt.verbose = false;
+	}
+	opt.linkInterfacialPositions = OP.getBool("linkInterfacialPositions");
+	if (OP.fail()) {
+		opt.warningMessages += "linkInterfacialPositions not specified using true\n";
+		opt.warningFlag = true;
+		opt.linkInterfacialPositions = true;
+	}
+	opt.useTimeBasedSeed = OP.getBool("useTimeBasedSeed");
+	if (OP.fail()) {
+		opt.warningMessages += "useTimeBasedSeed not specified, defaulting to false";
+		opt.warningFlag = true;
+		opt.useTimeBasedSeed = false;
+	}
+	opt.useAlaAtTermini = OP.getBool("useAlaAtTermini");
+	if (OP.fail()) {
+		opt.warningMessages += "useAlaAtTermini not specified, defaulting to false";
+		opt.warningFlag = true;
+		opt.useAlaAtTermini = false;
+	}
+	opt.useBaseline = OP.getBool("useBaseline");
+	if (OP.fail()) {
+		opt.warningMessages += "useBaseline not specified, defaulting to false";
+		opt.warningFlag = true;
+		opt.useBaseline = false;
+	}
+	opt.getRandomAxRotAndZShift = OP.getBool("getRandomAxRotAndZShift");
+	if (OP.fail()) {
+		opt.warningMessages += "getRandomAxRotAndZShift not specified, defaulting to false";
+		opt.warningFlag = true;
+		opt.getRandomAxRotAndZShift = false;
+	}
+	//use different energy parameters
+	opt.useIMM1 = OP.getBool("useIMM1");
+	if (OP.fail()) {
+		opt.warningMessages += "useIMM1 not specified, defaulting to true\n";
+		opt.warningFlag = true;
+		opt.useIMM1 = true;
+	}
+	opt.useElec = OP.getBool("useElec");
+	if (OP.fail()) {
+		opt.warningMessages += "useElec not specified using false\n";
+		opt.warningFlag = true;
+		opt.useElec = false;
+	}
+	opt.compareSasa = OP.getBool("compareSasa");
+	if (OP.fail()) {
+		opt.warningMessages += "compareSasa not specified, defaulting to false\n";
+		opt.warningFlag = true;
+		opt.compareSasa = false;
+	}
+	
+	// starting geometry
+	opt.xShift = OP.getDouble("xShift");
+	if (OP.fail()) {
+		opt.warningMessages += "xShift not specified, defaulting getGeoFromPDBData true\n";
+		opt.warningFlag = true;
+		opt.getGeoFromPDBData = true;
+	}
+	opt.zShift = OP.getDouble("zShift");
+	if (OP.fail()) {
+		opt.warningMessages += "zShift not specified, defaulting getGeoFromPDBData true\n";
+		opt.warningFlag = true;
+		opt.getGeoFromPDBData = true;
+	}
+	opt.axialRotation = OP.getDouble("axialRotation");
+	if (OP.fail()) {
+		opt.warningMessages += "axialRotation not specified, defaulting getGeoFromPDBData true\n";
+		opt.warningFlag = true;
+		opt.getGeoFromPDBData = true;
+	}
+	opt.crossingAngle = OP.getDouble("crossingAngle");
+	if (OP.fail()) {
+		opt.warningMessages += "crossingAngle not specified, defaulting getGeoFromPDBData true\n";
+		opt.warningFlag = true;
+		opt.getGeoFromPDBData = true;
+	}
+	opt.density = OP.getDouble("density");
+	if (OP.fail()) {
+		opt.warningMessages += "density not specified, defaulting to 0\n";
+		opt.warningFlag = true;
+		opt.density = 0;
+	}
+	opt.negAngle = OP.getBool("negAngle");
+	if (OP.fail()) {
+		opt.warningMessages += "negAngle not specified using false\n";
+		opt.warningFlag = true;
+		opt.negAngle = false;
+	}
+	if (opt.negAngle == true){
+		opt.crossingAngle = -opt.crossingAngle;
+	}
+	opt.negRot = OP.getBool("negRot");
+	if (OP.fail()) {
+		opt.warningMessages += "negRot not specified using false\n";
+		opt.warningFlag = true;
+		opt.negRot = false;
+	}
+	if (opt.negRot == true){
+		opt.axialRotation = opt.axialRotation-100;
+		//opt.axialRotation = -opt.axialRotation;//for CATM geometries?
+	}
+	opt.thread = OP.getInt("thread");
+	if (OP.fail()) {
+		opt.warningMessages += "thread not specified, defaulting to 0\n";
+		opt.warningFlag = true;
+		opt.thread = 0;
+	}
+
+	//Load Rotamers using SASA values (from sgfc)
+	opt.useSasaBurial = OP.getBool("useSasaBurial");
+	if (OP.fail()) {
+		opt.warningMessages += "useSasaBurial not specified, default true\n";
+		opt.warningFlag = true;
+		opt.useSasaBurial = true;
+	}
+	opt.sasaRepackLevel = OP.getMultiString("sasaRepackLevel");
+	if (OP.fail()) {
+		opt.warningMessages += "sasaRepacklevel not specified! Default to one level at " + opt.SL;
+		opt.sasaRepackLevel.push_back(opt.SL);
+	}
+	opt.interfaceLevel = OP.getInt("interfaceLevel");
+	if (OP.fail()) {
+		opt.warningMessages += "interfaceLevel not specified using 1\n";
+		opt.warningFlag = true;
+		opt.interfaceLevel = 1;
+	}
+	//rotlevel
+	opt.SL = OP.getString("SL");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "SL not specified, default to SL95.00\n";
+		opt.SL = "SL95.00";
+	} else {
+		opt.SL = "SL"+opt.SL;
+	}
+
+	//Monte Carlo parameters
+	opt.MCCycles = OP.getInt("MCCycles");
+	if (OP.fail()) {
+		opt.warningMessages += "Number of MCResetCycles not specified, using 100\n";
+		opt.warningFlag = true;
+		opt.MCCycles = 100;
+	}
+	opt.MCMaxRejects = OP.getInt("MCMaxRejects");
+	if (OP.fail()) {
+		opt.MCMaxRejects = 10;
+		opt.warningMessages += "Number of MC max rejects not specified, default to using 10\n";
+		opt.warningFlag = true;
+	}
+	opt.MCStartTemp = OP.getDouble("MCStartTemp");
+	if (OP.fail()) {
+		opt.warningMessages += "MCStartTemp not specified using 1000.0\n";
+		opt.warningFlag = true;
+		opt.MCStartTemp = 1000.0;
+	}
+	opt.MCEndTemp = OP.getDouble("MCEndTemp");
+	if (OP.fail()) {
+		opt.warningMessages += "MCEndTemp not specified using 0.5\n";
+		opt.warningFlag = true;
+		opt.MCEndTemp = 0.5;
+	}
+	opt.MCCurve = OP.getInt("MCCurve");
+	if (OP.fail()) {
+		opt.warningMessages += "MCCurve not specified using EXPONENTIAL(2)\n";
+		opt.warningFlag = true;
+		opt.MCCurve = 2;
+	}
+	opt.MCConvergedSteps = OP.getInt("MCConvergedSteps");
+	if (OP.fail()) {
+		opt.warningMessages += "MCConvergedSteps not specified using 10\n";
+		opt.warningFlag = true;
+		opt.MCConvergedSteps = 10;
+	}
+	//opt.MCConvergedE = OP.getDouble("MCConvergedE");
+	//if (OP.fail()) {
+	//	opt.warningMessages += "MCConvergedE not specified using 0.01\n";
+	//	opt.warningFlag = true;
+	//	opt.MCConvergedE = 0.01;
+	//}
+	opt.MCResetTemp = OP.getDouble("MCResetTemp");
+	if (OP.fail()) {
+		opt.warningMessages += "MCResetTemp not specified using 1000.0\n";
+		opt.warningFlag = true;
+		opt.MCResetTemp = 3649; // 50% likelihood of accepting a solution within 5kcals
+	}
+	opt.MCResetCycles = OP.getInt("MCResetCycles");
+	if (OP.fail()) {
+		opt.warningMessages += "Number of MCResetCycles not specified, using 100\n";
+		opt.warningFlag = true;
+		opt.MCResetCycles = 100;
+	}
+
+	// Backbone Monte Carlo parameters
+	opt.backboneMCCycles = OP.getInt("backboneMCCycles");
+	if (OP.fail()) {
+		opt.backboneMCCycles = 100;
+		opt.warningMessages += "Number of backboneMC cycles not specified, default to 100\n";
+		opt.warningFlag = true;
+	}
+	opt.backboneMCMaxRejects = OP.getInt("backboneMCMaxRejects");
+	if (OP.fail()) {
+		opt.backboneMCMaxRejects = 5;
+		opt.warningMessages += "Number of backboneMC max rejects not specified, default to using 5\n";
+		opt.warningFlag = true;
+	}
+	opt.backboneMCStartTemp = OP.getDouble("backboneMCStartTemp");
+	if (OP.fail()) {
+		opt.warningMessages += "backboneMCStartTemp not specified using 100.0\n";
+		opt.warningFlag = true;
+		opt.backboneMCStartTemp = 100.0;
+	}
+	opt.backboneMCEndTemp = OP.getDouble("backboneMCEndTemp");
+	if (OP.fail()) {
+		opt.warningMessages += "backboneMCEndTemp not specified using 0.5\n";
+		opt.warningFlag = true;
+		opt.backboneMCEndTemp = 0.5;
+	}
+	opt.backboneMCCurve = OP.getInt("backboneMCCurve");
+	if (OP.fail()) {
+		opt.warningMessages += "backboneMCCurve not specified using EXPONENTIAL(2)\n";
+		opt.warningFlag = true;
+		opt.backboneMCCurve = 2;
+	}
+	opt.backboneConvergedSteps = OP.getInt("backboneConvergedSteps");
+	if (OP.fail()) {
+		opt.backboneConvergedSteps = opt.backboneMCCycles/2;
+		opt.warningMessages += "backboneConvergedSteps not specified using half of given cycles (" + to_string(opt.backboneConvergedSteps) + "\n";
+		opt.warningFlag = true;
+	}
+	opt.backboneConvergedE = OP.getDouble("backboneConvergedE");
+	if (OP.fail()) {
+		opt.warningMessages += "backboneConvergedE not specified using 0.001\n";
+		opt.warningFlag = true;
+		opt.backboneConvergedE = 0.001;
+	}
+	opt.backboneSearchCycles = OP.getInt("backboneSearchCycles");
+	if (OP.fail()) {
+		opt.backboneSearchCycles = 5;
+		opt.warningMessages += "Number of backbone search cycles not specified, default to 5\n";
+		opt.warningFlag = true;
+	}
+
+	// repack parameters	
+	opt.greedyCycles = OP.getInt("greedyCycles");
+	if (OP.fail()) {
+		opt.warningMessages += "greedyCycles not specified using 10\n";
+		opt.warningFlag = true;
+		opt.greedyCycles = 10;
+	}
+
+	// energy weights
+	opt.weight_vdw = OP.getDouble("weight_vdw");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_vdw not specified, default 1.0\n";
+		opt.weight_vdw = 1.0;
+	}
+	opt.weight_hbond = OP.getDouble("weight_hbond");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_hbond not specified, default 1.0\n";
+		opt.weight_hbond = 1.0;
+	}
+	opt.weight_solv = OP.getDouble("weight_solv");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_solv not specified, default 1.0\n";
+		opt.weight_solv = 1.0;
+	}
+	opt.weight_seqEntropy = OP.getDouble("weight_seqEntropy");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_seqEntropy not specified, default 1.0\n";
+		opt.weight_seqEntropy = 1.0;
+	}
+	opt.weight_elec = OP.getDouble("weight_elec");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_elec not specified, default 1.0\n";
+		opt.weight_elec = 1.0;
+	}
+
+	// alternate identities
+	opt.Ids = OP.getStringVector("Ids");
+	if (OP.fail()) {
+		opt.errorMessages += "Unable to identify alternate AA identities, make sure they are space separated\n";
+		opt.errorFlag = true;
+	}
+	// String for the alternateIds at the interface
+	if (opt.xShift <= 7.5){
+		opt.Ids.push_back("GLY");
+	}
+
+	//SelfPairManager Optimization Options
+	opt.runDEESingles = OP.getBool("runDEESingles");
+	if (OP.fail()) {
+		opt.warningMessages += "runDEESingles not specified, defaulting to false";
+		opt.warningFlag = true;
+		opt.runDEESingles = false;
+	}
+	opt.runDEEPairs = OP.getBool("runDEEPairs");
+	if (OP.fail()) {
+		opt.warningMessages += "runDEEPairs not specified, defaulting to false";
+		opt.warningFlag = true;
+		opt.runDEEPairs = false;
+	}
+	opt.runSCMF = OP.getBool("runSCMF");
+	if (OP.fail()) {
+		opt.warningMessages += "runSCMF not specified, defaulting to true";
+		opt.warningFlag = true;
+		opt.runSCMF = true;
+	}
+
+	//Energy Terms to Output
+	opt.energyTermList = OP.getStringVector("energyTermList");
+	if (OP.fail()) {
+		//This works, but I think if you ever want to output more terms in the future, need to add them to the terms above
+		//TODO: write in an error that will tell you if the above is the case
+		opt.energyTermList.push_back("CHARMM_VDW");
+		opt.energyTermList.push_back("SCWRL4_HBOND");
+		opt.energyTermList.push_back("CHARMM_IMM1");
+		opt.energyTermList.push_back("CHARMM_IMM1REF");
+	}
+	
+	// backbone repack variables
+	opt.deltaX = OP.getDouble("deltaX");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaX not specified using 0.5\n";
+		opt.warningFlag = true;
+		opt.deltaX = 0.5;
+	}
+	opt.deltaCross = OP.getDouble("deltaCross");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaCross not specified using 3.0\n";
+		opt.warningFlag = true;
+		opt.deltaCross = 3.0;
+	}
+	opt.deltaAx = OP.getDouble("deltaAx");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaAx not specified using 3.0\n";
+		opt.warningFlag = true;
+		opt.deltaAx = 3.0;
+	}
+	opt.deltaZ = OP.getDouble("deltaZ");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaZ not specified using 0.5\n";
+		opt.warningFlag = true;
+		opt.deltaZ = 0.5;
+	}
+	opt.deltaXLimit = OP.getDouble("deltaXLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaXLimit not specified using 0.1\n";
+		opt.warningFlag = true;
+		opt.deltaXLimit = 0.1;
+	}
+	opt.deltaCrossLimit = OP.getDouble("deltaCrossLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaCrossLimit not specified using 1.0\n";
+		opt.warningFlag = true;
+		opt.deltaCrossLimit = 1.0;
+	}
+	opt.deltaAxLimit = OP.getDouble("deltaAxLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaAxLimit not specified using 1.0\n";
+		opt.warningFlag = true;
+		opt.deltaAxLimit = 1.0;
+	}
+	opt.deltaZLimit = OP.getDouble("deltaZLimit");
+	if (OP.fail()) {
+		opt.warningMessages += "deltaZLimit not specified using 0.1\n";
+		opt.warningFlag = true;
+		opt.deltaZLimit = 0.1;
+	}
+	opt.decreaseMoveSize = OP.getBool("decreaseMoveSize");
+	if (OP.fail()) {
+		opt.warningMessages += "decreaseMoveSize not specified using true\n";
+		opt.warningFlag = true;
+		opt.decreaseMoveSize = true;
+	}
+	
+	// run parameters	
+	opt.runNumber = OP.getString("runNumber");
+	if (OP.fail()) {
+		opt.warningMessages += "runNumber not specified, using 1\n";
+		opt.warningFlag = true;
+		opt.runNumber = MslTools::intToString(1);
+	}
+	opt.seed = OP.getInt("seed");
+	if (OP.fail()) {
+		opt.seed = 1;
+		opt.warningMessages += "Seed not specified!\n";
+		opt.warningFlag = true;
+	}
+	opt.rerunConf = OP.getConfFile();
+
+	return opt;
 }
