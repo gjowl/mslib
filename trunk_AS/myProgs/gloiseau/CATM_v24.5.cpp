@@ -761,11 +761,16 @@ END";
 			}
 		}
 
-	fout << 7 << ": " << originalTMSeq << endl;
+	fout << "Interface String: " << interfaceString << endl;
+	fout << "InterhelicalHbonds: " << interHelicalHbonds.size() << endl;
+	fout << "centroid: " << centroidIDNum << endl;
+	fout << "prolineMask: " << prolineMask << endl;
+
 		//mark residue with CA of closest approach with 2
 		//interfaceString.replace(closestCA - opt.startResNum,1,"2");
 
 		st->setHelixDimerDetails(xShift,zShift,axialRotation,crossingAngle,interfaceString,prolineMask,interHelicalHbonds,centroidIDNum);
+	fout << "helixDimerDetails set: energyByTermIssue" << endl;
 		if(opt.printTermEnergies) {
 			st->setDeltaEnergyByTerm(energyByTerm);
 		}
