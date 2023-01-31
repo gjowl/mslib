@@ -45,14 +45,11 @@ time_t rawtime;
 struct tm * timeinfo;
 char buffer[80];
 
-
 // Functions
 /*
 	I have left the most important functions within this code in case they need to be looked at or changed.
 	Many of the auxiliary functions are found within the designFunctions.cpp file.
 */
-
-void switchSequence(System &_sys, Options &_opt, string _sequence);
 
 // geometry setup functions
 void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS);
@@ -76,8 +73,6 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
  string _sequence, vector<uint> &_bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
  uint _rep, ofstream &_sout);
-void getCurrentMoveSizes(Options &_opt, double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
- bool &_decreaseMoveSize);
 
 // output functions
 void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPerPosition,
@@ -98,162 +93,11 @@ double calculateInterfaceSequenceEntropy(string _sequence, map<string, double> _
 void outputStartDesignInfo(Options &_opt);
 
 //Calculate Residue Burial and output a PDB that highlights the interface
-std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &_startGeom, string _seq) {
-	// polymer sequences have: chain, starting position of chain residue, three letter AA code
-	string polySeq = convertToPolymerSequence(_seq, _opt.thread);
-	PolymerSequence PS(polySeq);
-
-	// Declare system for dimer
-	System sys;
-	CharmmSystemBuilder CSB(sys,_opt.topFile,_opt.parFile);
-	CSB.setBuildTerm("CHARMM_ELEC", false);
-	CSB.setBuildTerm("CHARMM_ANGL", false);
-	CSB.setBuildTerm("CHARMM_BOND", false);
-	CSB.setBuildTerm("CHARMM_DIHE", false);
-	CSB.setBuildTerm("CHARMM_IMPR", false);
-	CSB.setBuildTerm("CHARMM_U-BR", false);
-
-	CSB.setBuildNonBondedInteractions(false);
-	//CSB.setBuildNoTerms();
-
-	if(!CSB.buildSystem(PS)) {
-		cout << "Unable to build system from " << PS << endl;
-		exit(0);
-	} else {
-		//fout << "CharmmSystem built for sequence" << endl;
-	}
-	/******************************************************************************
-	 *                     === INITIAL VARIABLE SET UP ===
-	 ******************************************************************************/
-	EnergySet* Eset = sys.getEnergySet();
-	// Set all terms active, besides Charmm-Elec
-	Eset->setAllTermsInactive();
-	Eset->setTermActive("CHARMM_VDW", true);
-	Eset->setTermActive("SCWRL4_HBOND", true);
-
-	// Set weights
-	Eset->setWeight("CHARMM_VDW", 1);
-	Eset->setWeight("SCWRL4_HBOND", 1);
-
-	CSB.updateNonBonded(10,12,50);
-
-	// initialize the object for loading rotamers into our _system
-	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
-
-	// Add hydrogen bond term
-	HydrogenBondBuilder hb(sys, _opt.hbondFile);
-	hb.buildInteractions(50);//when this is here, the HB weight is correct
-
-	/******************************************************************************
-	 *                     === COPY BACKBONE COORDINATES ===
-	 ******************************************************************************/
-	sys.assignCoordinates(_startGeom.getAtomPointers(),false);
-	sys.buildAllAtoms();
-
-	string monoPolySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, 1);
-	PolymerSequence MPS(monoPolySeq);
-
-	// Declare new system
-	System monoSys;
-	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile);
-	CSBMono.setBuildTerm("CHARMM_ELEC", false);
-	CSBMono.setBuildTerm("CHARMM_ANGL", false);
-	CSBMono.setBuildTerm("CHARMM_BOND", false);
-	CSBMono.setBuildTerm("CHARMM_DIHE", false);
-	CSBMono.setBuildTerm("CHARMM_IMPR", false);
-	CSBMono.setBuildTerm("CHARMM_U-BR", false);
-
-	CSBMono.setBuildNonBondedInteractions(false);
-	if (!CSBMono.buildSystem(MPS)){
-		cerr << "Unable to build system from " << monoPolySeq << endl;
-	}
-
-	/******************************************************************************
-	 *                         === INITIALIZE POLYGLY ===
-	 ******************************************************************************/
-	// Read in Gly-69 to use as backbone coordinate template
-	CRDReader cRead;
-	cRead.open(_opt.backboneCrd);
-	if(!cRead.read()) {
-		cerr << "Unable to read " << _opt.backboneCrd << endl;
-		exit(0);
-	}
-	cRead.close();
-
-	AtomPointerVector& glyAPV = cRead.getAtomPointers();//*/
-
-	/******************************************************************************
-	 *                         === INITIALIZE POLYGLY ===
-	 ******************************************************************************/
-	monoSys.assignCoordinates(glyAPV,false);
-	monoSys.buildAllAtoms();
-
-	std::vector<pair <int, double> > residueBurial;
-	SasaCalculator dimerSasa(sys.getAtomPointers());
-	SasaCalculator monoSasa(monoSys.getAtomPointers());
-	dimerSasa.calcSasa();
-	monoSasa.calcSasa();
-	dimerSasa.setTempFactorWithSasa(true);
-
-	for (uint i = 0; i < monoSys.positionSize(); i++) {//Changed this to account for linked positions in the dimer; gives each AA same number of rotamers as correspnding chain
-		string posIdMonomer = monoSys.getPosition(i).getPositionId();
-		string posIdDimer = sys.getPosition(i).getPositionId();
-		double resiSasaMonomer = monoSasa.getResidueSasa(posIdMonomer);
-		double resiSasaDimer = dimerSasa.getResidueSasa(posIdDimer);
-		double burial = resiSasaDimer/resiSasaMonomer;
-		residueBurial.push_back(pair<int,double>(i, burial));
-
-		//set sasa for each residue in the b-factor
-		AtomSelection selA(sys.getPosition(i).getAtomPointers());
-		AtomSelection selB(sys.getPosition(i+_opt.sequence.length()).getAtomPointers());
-		AtomPointerVector atomsA = selA.select("all");
-		AtomPointerVector atomsB = selB.select("all");
-		for (AtomPointerVector::iterator k=atomsA.begin(); k!=atomsA.end();k++) {
-			// set the residue sasa in the b-factor
-			(*k)->setTempFactor(burial);
-		}
-		for (AtomPointerVector::iterator k=atomsB.begin(); k!=atomsB.end();k++) {
-			// set the residue sasa in the b-factor
-			(*k)->setTempFactor(burial);
-		}
-	}
-	// sort in descending order of burial (most buried first)
-	sort(residueBurial.begin(), residueBurial.end(), [](auto &left, auto &right) {
-			return left.second < right.second;
-	});
-	return residueBurial;
-}
+std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &_startGeom, string _seq);
 
 // get rotamer levels
-vector<uint> getRotamerLevels(Options &_opt, System &_startGeom){
-	// generate a backboneSequence to determine the interface positions using residue burial (defaults to poly-Valine sequence)
-	string polyVal = generateString("V", _opt.sequence.length());
+vector<uint> getRotamerLevels(Options &_opt, System &_startGeom);
 
-	// save into vector of backbone positions and residue burial pairs
-	vector<pair <int, double> > resiBurial = calculateResidueBurial(_opt, _startGeom, polyVal);
-	vector<int> interfacePositions;
-	
-	// setup 0 string to represent variable positions and rotamer levels
-	string variablePositionString = generateString("0", _opt.sequence.length());
-	string rotamerLevels = generateString("0", _opt.sequence.length());
-	cout << rotamerLevels << endl;
-
-	// define rotamer levels for each position based on residue burial
-	defineRotamerLevels(_opt, resiBurial, interfacePositions, rotamerLevels, variablePositionString);
-
-	// checks if interface is defined; if so, check the position and set those positions to the highest rotamer level
-	if (_opt.interface != ""){
-		interfacePositions.clear(); // reset the interface from the defineRotamerLevels function
-		useInputInterface(_opt, variablePositionString, rotamerLevels, interfacePositions);
-	}	
-	cout << rotamerLevels << endl;
-
-	// save the rotamer levels for all positions  
-	vector<uint> rotamerSamplingPerPosition = convertStringToVectorUint(rotamerLevels); // converts the rotamer sampling for each position as a vector
-	return rotamerSamplingPerPosition;
-}
-	
 // help functions
 void usage();
 void help(Options defaults);
@@ -372,6 +216,7 @@ int main(int argc, char *argv[]){
 	string polySeq = convertToPolymerSequenceNeutralPatch(sequence, opt.thread);
 	PolymerSequence PS(polySeq);
 
+	//TODO: compare the rotamer levels here
 	/******************************************************************************
 	 *  === DECLARE SYSTEM FOR POLYLEU WITH ALTERNATE IDENTITIES AT INTERFACE ===
 	 ******************************************************************************/
@@ -1189,14 +1034,6 @@ void getStartingGeometry(Options &_opt, ofstream &_sout){
 	_sout << "zShift:        " << _opt.zShift << endl << endl;
 	_sout << "axRotAndZShift:" << _opt.density << endl << endl;
 }
-
-// switches to the starting sequence (if given, otherwise set to polyleu)
-//void switchSequence(System &_sys, Options &_opt, string _sequence){
-//	if (_sequence == ""){
-//		_sequence = generateBackboneSequence(_opt.backboneAA, _opt.backboneLength, _opt.useAlaAtTermini);
-//	}
-//	setActiveSequence(_sys, _sequence);
-//}
 
 // function to prepare the system for design:
 // - sets up CharmmSystemBuilder
@@ -2116,3 +1953,160 @@ string getAlternateIdString(vector<string> _alternateIds){
 	}
 	return alternateIdsString;
 }
+
+//Calculate Residue Burial and output a PDB that highlights the interface
+std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &_startGeom, string _seq) {
+	// polymer sequences have: chain, starting position of chain residue, three letter AA code
+	string polySeq = convertToPolymerSequence(_seq, _opt.thread);
+	PolymerSequence PS(polySeq);
+
+	// Declare system for dimer
+	System sys;
+	CharmmSystemBuilder CSB(sys,_opt.topFile,_opt.parFile);
+	CSB.setBuildTerm("CHARMM_ELEC", false);
+	CSB.setBuildTerm("CHARMM_ANGL", false);
+	CSB.setBuildTerm("CHARMM_BOND", false);
+	CSB.setBuildTerm("CHARMM_DIHE", false);
+	CSB.setBuildTerm("CHARMM_IMPR", false);
+	CSB.setBuildTerm("CHARMM_U-BR", false);
+
+	CSB.setBuildNonBondedInteractions(false);
+	//CSB.setBuildNoTerms();
+
+	if(!CSB.buildSystem(PS)) {
+		cout << "Unable to build system from " << PS << endl;
+		exit(0);
+	} else {
+		//fout << "CharmmSystem built for sequence" << endl;
+	}
+	/******************************************************************************
+	 *                     === INITIAL VARIABLE SET UP ===
+	 ******************************************************************************/
+	EnergySet* Eset = sys.getEnergySet();
+	// Set all terms active, besides Charmm-Elec
+	Eset->setAllTermsInactive();
+	Eset->setTermActive("CHARMM_VDW", true);
+	Eset->setTermActive("SCWRL4_HBOND", true);
+
+	// Set weights
+	Eset->setWeight("CHARMM_VDW", 1);
+	Eset->setWeight("SCWRL4_HBOND", 1);
+
+	CSB.updateNonBonded(10,12,50);
+
+	// initialize the object for loading rotamers into our _system
+	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
+	sysRot.defineRotamerSamplingLevels();
+
+	// Add hydrogen bond term
+	HydrogenBondBuilder hb(sys, _opt.hbondFile);
+	hb.buildInteractions(50);//when this is here, the HB weight is correct
+
+	/******************************************************************************
+	 *                     === COPY BACKBONE COORDINATES ===
+	 ******************************************************************************/
+	sys.assignCoordinates(_startGeom.getAtomPointers(),false);
+	sys.buildAllAtoms();
+
+	string monoPolySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, 1);
+	PolymerSequence MPS(monoPolySeq);
+
+	// Declare new system
+	System monoSys;
+	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile);
+	CSBMono.setBuildTerm("CHARMM_ELEC", false);
+	CSBMono.setBuildTerm("CHARMM_ANGL", false);
+	CSBMono.setBuildTerm("CHARMM_BOND", false);
+	CSBMono.setBuildTerm("CHARMM_DIHE", false);
+	CSBMono.setBuildTerm("CHARMM_IMPR", false);
+	CSBMono.setBuildTerm("CHARMM_U-BR", false);
+
+	CSBMono.setBuildNonBondedInteractions(false);
+	if (!CSBMono.buildSystem(MPS)){
+		cerr << "Unable to build system from " << monoPolySeq << endl;
+	}
+
+	/******************************************************************************
+	 *                         === INITIALIZE POLYGLY ===
+	 ******************************************************************************/
+	// Read in Gly-69 to use as backbone coordinate template
+	CRDReader cRead;
+	cRead.open(_opt.backboneCrd);
+	if(!cRead.read()) {
+		cerr << "Unable to read " << _opt.backboneCrd << endl;
+		exit(0);
+	}
+	cRead.close();
+
+	AtomPointerVector& glyAPV = cRead.getAtomPointers();//*/
+
+	/******************************************************************************
+	 *                         === INITIALIZE POLYGLY ===
+	 ******************************************************************************/
+	monoSys.assignCoordinates(glyAPV,false);
+	monoSys.buildAllAtoms();
+
+	std::vector<pair <int, double> > residueBurial;
+	SasaCalculator dimerSasa(sys.getAtomPointers());
+	SasaCalculator monoSasa(monoSys.getAtomPointers());
+	dimerSasa.calcSasa();
+	monoSasa.calcSasa();
+	dimerSasa.setTempFactorWithSasa(true);
+
+	for (uint i = 0; i < monoSys.positionSize(); i++) {//Changed this to account for linked positions in the dimer; gives each AA same number of rotamers as correspnding chain
+		string posIdMonomer = monoSys.getPosition(i).getPositionId();
+		string posIdDimer = sys.getPosition(i).getPositionId();
+		double resiSasaMonomer = monoSasa.getResidueSasa(posIdMonomer);
+		double resiSasaDimer = dimerSasa.getResidueSasa(posIdDimer);
+		double burial = resiSasaDimer/resiSasaMonomer;
+		residueBurial.push_back(pair<int,double>(i, burial));
+
+		//set sasa for each residue in the b-factor
+		AtomSelection selA(sys.getPosition(i).getAtomPointers());
+		AtomSelection selB(sys.getPosition(i+_opt.sequence.length()).getAtomPointers());
+		AtomPointerVector atomsA = selA.select("all");
+		AtomPointerVector atomsB = selB.select("all");
+		for (AtomPointerVector::iterator k=atomsA.begin(); k!=atomsA.end();k++) {
+			// set the residue sasa in the b-factor
+			(*k)->setTempFactor(burial);
+		}
+		for (AtomPointerVector::iterator k=atomsB.begin(); k!=atomsB.end();k++) {
+			// set the residue sasa in the b-factor
+			(*k)->setTempFactor(burial);
+		}
+	}
+	// sort in descending order of burial (most buried first)
+	sort(residueBurial.begin(), residueBurial.end(), [](auto &left, auto &right) {
+			return left.second < right.second;
+	});
+	return residueBurial;
+}
+
+vector<uint> getRotamerLevels(Options &_opt, System &_startGeom){
+	// generate a backboneSequence to determine the interface positions using residue burial (defaults to poly-Valine sequence)
+	string polyVal = generateString("V", _opt.sequence.length());
+
+	// save into vector of backbone positions and residue burial pairs
+	vector<pair <int, double> > resiBurial = calculateResidueBurial(_opt, _startGeom, polyVal);
+	vector<int> interfacePositions;
+	
+	// setup 0 string to represent variable positions and rotamer levels
+	string variablePositionString = generateString("0", _opt.sequence.length());
+	string rotamerLevels = generateString("0", _opt.sequence.length());
+	cout << rotamerLevels << endl;
+
+	// define rotamer levels for each position based on residue burial
+	defineRotamerLevels(_opt, resiBurial, interfacePositions, rotamerLevels, variablePositionString);
+
+	// checks if interface is defined; if so, check the position and set those positions to the highest rotamer level
+	if (_opt.interface != ""){
+		interfacePositions.clear(); // reset the interface from the defineRotamerLevels function
+		useInputInterface(_opt, variablePositionString, rotamerLevels, interfacePositions);
+	}	
+	cout << rotamerLevels << endl;
+
+	// save the rotamer levels for all positions  
+	vector<uint> rotamerSamplingPerPosition = convertStringToVectorUint(rotamerLevels); // converts the rotamer sampling for each position as a vector
+	return rotamerSamplingPerPosition;
+}
+	
