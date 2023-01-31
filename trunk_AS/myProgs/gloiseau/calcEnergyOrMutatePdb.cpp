@@ -96,9 +96,11 @@ int main(int argc, char *argv[]){
 
 	rerun << opt.rerunConf << endl;
 	rerun.close();
+
 	/******************************************************************************
 	 *                   === INITIALIZE POLYMER SEQUENCE ===
 	 ******************************************************************************/
+	// TODO: add in options for sequences and thread
 	string seq = "AAAYYLLGTLLGYLLSTLAAA";
 	string polySeq = convertToPolymerSequenceNeutralPatch(seq, 23);
 	
@@ -442,7 +444,6 @@ double computeMonomerEnergy(System & _sys, Options& _opt, RandomNumberGenerator 
 			}
 		}
 	}
-
 
 	monoEset->setWeight("CHARMM_VDW", _opt.weight_vdw);
 	monoEset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
