@@ -34,7 +34,6 @@
 #include "ResidueSelection.h"
 #include "BaselineEnergyBuilder.h"
 #include "BaselineInteraction.h"
-#include "designOptions.h"
 
 // Design Functions: TODO figure out which of these are necessary; a lot of this code I just added internally I believe
 #include "BaselinePairInteraction.h"
@@ -46,10 +45,11 @@ using namespace MSL;
 /***********************************
  *load rotamer functions
  ***********************************/
-//Uses rotamer sampling defined by SASA values to load rotamers by position
-void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt, vector<uint> &_rotamerSampling);
+//Uses rotamer sampling defined by given interface values to load rotamers by position
+void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, bool _useInterfaceBurial, vector<string> _repackLevels, string _SL,
+ vector<uint> _rotamerSampling);
 //load rotamers for dimer with different rotamer levels at each position
-void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, vector<string> _repackLevels, vector<uint> _rotamerSampling);
+void loadRotamersByBurial(System &_sys, SystemRotamerLoader &_sysRot, vector<string> _repackLevels, vector<uint> _rotamerSampling);
 //load rotamers for interfacial positions
 void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<uint> _interface);
 
@@ -68,10 +68,6 @@ vector<uint> unlinkBestState(vector<uint> _bestState, vector<uint> _interfacePos
  ***********************************/
 // moves the helices to the origin in 3D space (x=0, y=0, z=0)
 void moveZCenterOfCAMassToOrigin(AtomPointerVector& _apV, AtomPointerVector& _axis, Transforms & _trans);
-// reads through geometry density file and randomly chooses a geometry for the dimer
-void getGeometry(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out);
-// reads through geometry density file and chooses random axial rotation and zShift only
-void getAxialRotAndZShift(Options &_opt, RandomNumberGenerator &_RNG, vector<double> &_densities, ofstream &_out);
 
 /***********************************
  *string output functions
@@ -90,18 +86,8 @@ string getInterfaceSequence(int _interfaceLevelLimit, string _interface, string 
 vector<uint> getVariablePositions(vector<uint> &_interfacialPositions);
 //
 std::vector<pair <int, double> > calculateResidueBurial (System &_sys);
-// Calculate Residue Burial for use in identifying the interfacial positions and output a PDB that highlights the interface
-std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &_startGeom, string _seq);
-vector<uint> getAllInterfacePositions(Options &_opt, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength);
-vector<uint> getInterfacePositions(Options &_opt, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength);
-
-/***********************************
- *output file functions
- ***********************************/
-// function to setup the output directory
-void setupDesignDirectory(Options &_opt);
-// function for outputting and writing and energy file
-void outputEnergyFile(Options &_opt, string _interface, vector<string> _allDesigns);
+vector<uint> getAllInterfacePositions(int _interfaceLevel, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength);
+vector<uint> getInterfacePositions(int _interfaceLevel, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength);
 
 /***********************************
  *baseline energy helper functions
@@ -122,58 +108,31 @@ void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>
 /***********************************
  *sequence entropy functions
  ***********************************/
-void calculateInterfaceSequenceEntropy(Options &_opt, string _prevSeq, string _currSeq,
-map<string,double> _entropyMap, double &_prevSEProb, double &_currSEProb, double &_prevEntropy,
-double &_currEntropy, double _bestEnergy, double _currEnergy, double &_bestEnergyTotal, double &_currEnergyTotal, vector<uint> _interfacePositionsList);
-void calculateInternalSequenceEntropy(Options &_opt, string _prevSeq, string _currSeq,
-map<string,double> _entropyMap, double &_prevSEProb, double &_currSEProb, double &_prevEntropy,
-double &_currEntropy, double _bestEnergy, double _currEnergy, double &_bestEnergyTotal, double &_currEnergyTotal, vector<uint> _interfacePositionsList);
 // counts the number of each AA in a sequence and outputs a map<string(AA),int(numAA)> ...
 map<string,int> getAACountMap(vector<string> _seq);
 // calculates the number of permutations possible for a sequence
 double calcNumberOfPermutations(map<string,int> _seqAACounts, int _seqLength);
 // sets up calculating sequence entropy for an interface (gets the AA counts for the interface
 // and calculates the number of permutations for those AAs and the number of interfacial positions)
-void interfaceAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, vector<uint> _interfacialPositionsList);
-double getInterfaceSequenceEntropyProbability(Options &_opt, string _sequence, map<string,double> &_entropyMap, vector<uint> _interfacialPositionsList);
-void internalAASequenceEntropySetup(string _seq, map<string,int> &_seqCountMap, double &_numberOfPermutations, vector<uint> _interfacialPositionsList);
-double getInternalSequenceEntropyProbability(Options &_opt, string _sequence, map<string,double> &_entropyMap, vector<uint> _interfacialPositionsList);
 double calculateSequenceProbability(map<string,int> &_seqCountMap, map<string,double> &_entropyMap, double _numberOfPermutations);
-
-/***********************************
- *calculate energies
- ***********************************/
-// function to setup calculating the monomer energies of a vector<pair<string(sequence),vector<uint>(rotamer state)>>
-void computeMonomerEnergies(Options &_opt, Transforms &_trans, map<string, map<string,double>> &_sequenceEnergyMap, vector<string> &_seqs, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
-// helper function for computeMonomerEnergies: calculates energy for monomer without solvation energy
-void computeMonomerEnergyNoIMM1(Options& _opt, map<string,map<string,double>> &_sequenceEnergyMap, string &_seq, RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
-// helper function for computeMonomerEnergies: calculates energy for monomer with solvation energy
-void computeMonomerEnergyIMM1(System &_sys, System &_helicalAxis, Options &_opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq,
- RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
 
 //
 void getSasaForStartingSequence(System &_sys, string _sequence, vector<uint> _state, map<string, map<string,double>> &_sequenceEnergyMap);
 
 // gets the interfacial positions from a vector
-vector<uint> getAllInterfacePositions(Options &_opt, vector<uint> &_rotamerSamplingPerPosition);
-vector<uint> getInterfacePositions(Options &_opt, vector<uint> &_rotamerSamplingPerPosition);
+vector<uint> getAllInterfacePositions(int _interfaceLevel, vector<uint> &_rotamerSamplingPerPosition);
+vector<uint> getInterfacePositions(int _interfaceLevel, vector<uint> &_rotamerSamplingPerPosition);
 
 /***********************************
 * sequence search functions
  ***********************************/
 // outputs for runSCMFToGetStartingSequence
 void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfaceSeq, ofstream &_out);
-// redacted old version without multithreading
-void searchForBestSequences(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG, vector<string> &_allSeqs, vector<uint> &_bestState,
- map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> _sequenceEntropyMap, vector<pair<string,vector<uint>>> &_sequenceStatePair, 
- vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList, vector<uint> &_rotamerSampling, ofstream &_out, ofstream &_err);
 // gets the sasa score for sequences found during monte carlo search
 void getDimerSasa(System &_sys, map<string, vector<uint>> &_sequenceVectorMap, map<string, map<string,double>> &_sequenceEnergyMap);
-void getEnergiesForStartingSequence(Options &_opt, SelfPairManager &_spm, string _startSequence,
-vector<uint> &_stateVector, vector<uint> _interfacialPositions, map<string, map<string, double>> &_sequenceEnergyMap, map<string, double> &_entropyMap);
-
-// parse config file for given options
-Options parseOptions(int _argc, char * _argv[]);
+void getEnergiesForStartingSequence(SelfPairManager &_spm, string _startSequence, vector<uint> &_stateVector,
+ vector<uint> _interfacialPositions, map<string, map<string, double>> &_sequenceEnergyMap, map<string, double> &_entropyMap,
+ bool _useBaseline);
 
 // for uncommenting and adding to the cpp file from functions.cpp
 //string generateMonomerPolymerSequenceFromSequence(string _sequence, int _startResNum);
