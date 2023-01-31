@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
 
 	//cout << modelledTMSeq << endl;
 
-	string sequence = convertToPolymerSequence(modelledTMSeq,1); // so that the 4th residue will be the middle one (35th) on the GLY 69 backbone
+	string sequence = convertToPolymerSequenceNeutralPatch(modelledTMSeq,1); // so that the 4th residue will be the middle one (35th) on the GLY 69 backbone
 	PolymerSequence PS(sequence);
 
 	// Create system with sequence - a string with the following format
