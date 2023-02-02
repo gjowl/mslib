@@ -66,13 +66,10 @@ void defineRotamerLevels(Options &_opt, vector<pair <int, double> > &_resiBurial
 void useInputInterface(Options &_opt, string &_variablePositionString, string &_rotamerLevels, vector<int> &_interfacePositions);
 
 // backbone optimization functions
-void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vector<uint> _bestState, map<string, map<string,double>> &_sequenceEnergyMap,
- uint _rep, System &_helicalAxis, AtomPointerVector &_axisA,  AtomPointerVector &_axisB, vector<uint> _rotamerSampling, Transforms &_trans,
- RandomNumberGenerator &_RNG, ofstream &_sout);
 void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string, map<string,double>> &_sequenceEnergyMap,
  string _sequence, vector<uint> &_bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
- uint _rep, ofstream &_sout);
+ string _outputDir, int _rep, ofstream &_sout);
 
 // output functions
 void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPerPosition,
@@ -88,8 +85,6 @@ void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, map<st
 
 double computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Transforms & _trans, string _seq,
  RandomNumberGenerator &_RNG, map<string,double> & _monomerEnergyByTerm, ofstream &_sout);
-double calculateInterfaceSequenceEntropy(string _sequence, map<string, double> _sequenceEntropyMap, vector<uint> _interfacePositions,
- double &_sequenceProbability, double _seqEntropyWeight);
 
 //Calculate Residue Burial and output a PDB that highlights the interface
 std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &_startGeom, string _seq);
@@ -106,9 +101,8 @@ void help(Options defaults);
 void outputErrorMessage(Options &_opt);
 
 // directory setup functions
-void setupDesignDirectory(Options &_opt){
+void setupOutputDirectory(Options &_opt){
 	_opt.outputDir = string(get_current_dir_name()) + "/geometrySearch_" + _opt.runNumber;
-	//_opt.outputDir = "/exports/home/gloiseau/mslib/trunk_AS/design_" + _opt.runNumber;
 	string cmd = "mkdir -p " + _opt.outputDir;
 	if (system(cmd.c_str())){
 		cout << "Unable to make directory" << endl;
@@ -148,7 +142,7 @@ int main(int argc, char *argv[]){
 		exit(0);
 	}
 	
-	setupDesignDirectory(opt); // makes a directory in the directory that you run from, with design_<runNumber> as the name
+	setupOutputDirectory(opt); // makes a directory in the directory that you run from, with geometrySearch_<runNumber> as the name
 	
 	// setup the rerun config file
 	ofstream rerun; // rerun config output
@@ -170,7 +164,6 @@ int main(int argc, char *argv[]){
 
 	// get the starting geometries; convert to parallelogram axialRot and Z (Mueller 2014; Fig. S1)
 	convertToAxAndZForTranformation(opt);
-
 	string sequence = opt.sequence;
 
 	/*******************************************
@@ -189,14 +182,11 @@ int main(int argc, char *argv[]){
 	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
 	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
 
-	// setup variables to hold the outputs here
-	map<string,double> geometry;
-	// read through the backbone geometry file to get the first geometry
-	geometry["xShift"] = 8.0;
-	geometry["crossingAngle"] = 30.0;
-	geometry["zShift"] = 3.0;
-	geometry["axialRotation"] = 20.0;
+	// get the starting geometries from the input file
+	map<string, map<string,double>> startingGeometries = getGeometriesFromInputFile(opt.backboneGeometryFile);
 
+	// get the first geometry from the starting geometries
+	map<string,double> geometry = startingGeometries.begin()->second;//this is the geometry that will be used to measure the monomer energy
 	/******************************************************************************
 	 *      === COPY BACKBONE COORDINATES AND TRANSFORM TO INPUT GEOMETRY ===
 	 ******************************************************************************/
@@ -227,54 +217,25 @@ int main(int argc, char *argv[]){
     map<string,double> monomerEnergyByTerm;
 	double monomerEnergy = computeMonomerEnergy(sys, helicalAxis, opt, trans, sequence, RNG, monomerEnergyByTerm, sout);
     
-	// loop over all lines of the backbone geometry file
-	//for (uint n=0; n<opt.numRepacks; n++){
-	//	// start multithreading through different backbones here
-	//	vector<thread> ths;
-	//	// loop 
-	//	for (uint j=0; j<opt.crossAngle.size();j++){
-	//		double crossingAngle = opt.crossAngle[j]; 
-	//		//cout << "Angle: " << crossingAngle << endl;
-	//		ths.push_back(thread(threadThroughBB, ref(opt), ref(RNG), PS, monomerEnergy, ref(monomerEnergyByTerm), startGeometry, ref(sequenceEnergyMapFinal), rotamerSamplingPerPosition, ref(sout)));
-	//	}
-	//	for (auto &t : ths){
-	//		t.join();
-	//	}
-	//}
-	// setup for saving the best sets of geometries 
-	/******************************************************************************
-	 *           === VARIABLES FOR SAVING ENERGIES AND SEQUENCES ===
-	 ******************************************************************************/
-	map<string, map<string,double>> sequenceEnergyMapFinalSeqs; // energyMap to hold all energies for output into a summary file
-	map<string, map<string,double>> sequenceEnergyMapBest; // energyMap to hold all energies for output into a summary file
-	map<string, double> sequenceEntropyMap = readSingleParameters(opt.sequenceEntropyFile); // Get sequence entropy map
-	
-	/******************************************************************************
-	 *           === MULTITHREADING THROUGH BACKBONE GEOMETRIES ===
-	 ******************************************************************************/
-	map<string, map<string,double>> startingGeometries = getGeometriesFromInputFile(opt.backboneGeometryFile);
+	// initialize variables for saving energies and sequences
+	map<string, map<string,double>> sequenceEnergyMapOutput; // energyMap to hold all energies for output into a summary file
 
-	// start multithreading through different backbones here
-	// loop through the starting geometry map
+	// initialize the threads for multithreading
 	vector<thread> ths;
+	// loop through the starting geometry map
 	for (auto &geometry : startingGeometries){
-		string geometryNumber = geometry.first;
-		cout << geometryNumber << endl;
+		string geometryNumber = "Geometry"+geometry.first;
 		map<string, double> startGeometry = geometry.second;
-		ths.push_back(thread(threadThroughBB, ref(opt), ref(RNG), PS, monomerEnergy, ref(monomerEnergyByTerm), startGeometry, geometryNumber, ref(sequenceEnergyMapFinalSeqs), 
+		ths.push_back(thread(threadThroughBB, ref(opt), ref(RNG), PS, monomerEnergy, ref(monomerEnergyByTerm), startGeometry, geometryNumber, ref(sequenceEnergyMapOutput), 
 		rotamerSamplingPerPosition, ref(sout)));
 	}
 	for (auto &t : ths){
 		t.join();
 	}
-	//map<string, double> startGeometry = geometry;
-	//threadThroughBB(opt, RNG, PS, monomerEnergy, monomerEnergyByTerm, startGeometry, sequenceEnergyMapFinalSeqs, rotamerSamplingPerPosition, sout);
 
-	/******************************************************************************
-	 *                   === WRITE OUT ENERGY AND DESIGN FILES ===
-	 ******************************************************************************/
+	// write out the summary file
 	double seed = RNG.getSeed();
-	outputFiles(opt, seed, rotamerSamplingPerPosition, sequenceEnergyMapFinalSeqs, sout);
+	outputFiles(opt, seed, rotamerSamplingPerPosition, sequenceEnergyMapOutput, sout);
 
 	time(&endTime);
 	diffTime = difftime (endTime, startTime);
@@ -284,8 +245,6 @@ int main(int argc, char *argv[]){
 	err.close();
 	sout.close();
 }
-
-
 
 /****************************************
  *
@@ -957,27 +916,6 @@ Options parseOptions(int _argc, char * _argv[]){
 }
 
 //Functions
-double calculateInterfaceSequenceEntropy(string _sequence, map<string, double> _sequenceEntropyMap, vector<uint> _interfacePositions,
- double &_sequenceProbability, double _seqEntropyWeight){
-	//Get residue name for each interfacial identity
-	vector<string> seqVector;
-	int numInterfacials = _interfacePositions.size();
-	for (uint i=0; i<numInterfacials; i++){
-		stringstream tmp;
-		tmp << _sequence[_interfacePositions[i]];
-		string aa = tmp.str();
-		string resName = MslTools::getThreeLetterCode(aa);
-		seqVector.push_back(resName);
-		//cout << _interfacialPositionsList[i] << " : " << resName << endl;
-	}
-	map<string,int> seqCountMap = getAACountMap(seqVector); // get the count of each amino acid in the sequence
-	double numberOfPermutations = calcNumberOfPermutations(seqCountMap, numInterfacials); // calculate the number of permutations for the sequence
-	_sequenceProbability = calculateSequenceProbability(seqCountMap, _sequenceEntropyMap, numberOfPermutations); // calculate the sequence probability
-	double seqEntropy = -log(_sequenceProbability)*0.592*_seqEntropyWeight; // multiply by the weight and -1
-	//double seqEntropy = _seqEntropyWeight/_sequenceProbability; // divide the weight by the probability to get the entropy
-	return seqEntropy;
-}
-
 map<string, double> getGeometryMap(map<string,double> _geometry, string _descriptor){
 	// get geometries from the initial geometry map
 	double xShift = _geometry["xShift"];
@@ -1163,7 +1101,6 @@ void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxi
  ****************************************************************/
 void threadThroughBB(Options &_opt, RandomNumberGenerator &_RNG, PolymerSequence _PS, double _monomerEnergy, map<string, double> &_monomerEnergyByTerm, 
  map<string,double> _startGeometry, string _geometryNumber, map<string, map<string, double>> &_sequenceEnergyMapFinal, vector<uint> _rotamerSampling, ofstream &_eout){
-	string sequence = _opt.sequence;
 	/*******************************************
 	 *       === HELICAL AXIS SET UP ===
 	 *******************************************/
@@ -1237,9 +1174,23 @@ void threadThroughBB(Options &_opt, RandomNumberGenerator &_RNG, PolymerSequence
 	sys.setActiveRotamers(bestState);
 	double currentEnergy = sys.calcEnergy();
 
+	string sequence = _opt.sequence;
+
+	// make the directory for the output
+	string outputName = _geometryNumber;
+	string repackDir = _opt.outputDir + "/" + outputName;	
+	string cmd = "mkdir -p " + repackDir;
+	if (system(cmd.c_str())){
+		cout << "Unable to make directory" << endl;
+		exit(0);
+	}
+	// loop through the number of backbone repack cycles
 	for (uint i=0; i<_opt.backboneRepackCycles; i++){
 		// output the start time
 		outputTime(clockTime, "Backbone optimize replicate " + to_string(i) + " Start", _eout);
+
+		// define the repack name
+		string repackName = outputName+"_"+to_string(i);
 
 		// initialize the sequence energy map
 		map<string, map<string, double>> sequenceEnergyMap;
@@ -1251,16 +1202,16 @@ void threadThroughBB(Options &_opt, RandomNumberGenerator &_RNG, PolymerSequence
 		// save the pre backbone optimize energy and the replicate number in the 
 		sequenceEnergyMap[sequence]["preOptimizeEnergy"] = currentEnergy;
 		sequenceEnergyMap[sequence]["replicateNumber"] = i;
-	
+		
+		// backbone optimizer function
 		backboneOptimizeMonteCarlo(_opt, sys, spm, sequenceEnergyMap, sequence, bestState, helicalAxis, axisA, axisB, apvChainA, apvChainB,
-		 trans, _RNG, _monomerEnergy, i, _eout);
+		 trans, _RNG, _monomerEnergy, repackDir, i, _eout);
 	
 		// write the pdb for the final state of the backbone optimization
-		string designNumber = _opt.runNumber+"_"+to_string(i);
-		writePdb(sys, _opt.outputDir, designNumber);
+		writePdb(sys, repackDir, to_string(i));
 
 		// get the best sequence from the energy map
-		_sequenceEnergyMapFinal[_geometryNumber+"_Repack"+to_string(i)] = sequenceEnergyMap[sequence];	
+		_sequenceEnergyMapFinal[repackName] = sequenceEnergyMap[sequence];	
 
 		// reset the energy map
 		sequenceEnergyMap.clear(); // reset the energyMap for the next cycle
@@ -1274,84 +1225,14 @@ void threadThroughBB(Options &_opt, RandomNumberGenerator &_RNG, PolymerSequence
 	}
 }
 
-// backbone optimization function, setting up the system with a single sequence to run the optimization
-void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vector<uint> _bestState, map<string, map<string,double>> &_sequenceEnergyMap,
- uint _rep, System &_helicalAxis, AtomPointerVector &_axisA,  AtomPointerVector &_axisB, vector<uint> _rotamerSampling, Transforms &_trans,
- RandomNumberGenerator &_RNG, ofstream &_sout){
-	// output the start time
-	outputTime(clockTime, "Backbone optimize replicate " + to_string(_rep) + " Start", _sout);
-
-	// get the polymer sequence for the input sequence
-	string polySeq = convertToPolymerSequenceNeutralPatch(_sequence, _opt.thread);
-	PolymerSequence PS(polySeq);
-
-	// set up the system for the input sequence
-	System sys;
-	prepareSystem(_opt, sys, _startGeom, PS);
-	
-	// initialize the object for loading rotamers into our _system
-	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
-
-	// load the rotamers
-	loadRotamers(sys, sysRot, _opt.SL);
-
-	// get chain A and B from the system
-	Chain & chainA = sys.getChain("A");
-	Chain & chainB = sys.getChain("B");
-
-	// Set up chain A and chain B atom pointer vectors
-	AtomPointerVector & apvChainA = chainA.getAtomPointers();
-	AtomPointerVector & apvChainB = chainB.getAtomPointers();
-	
-	// Setup the SelfPairManager object
-	SelfPairManager spm;
-	spm.seed(_RNG.getSeed());
-	spm.setSystem(&sys);
-	spm.setVerbose(false);
-	spm.getMinStates()[0];
-	spm.setOnTheFly(true);
-	spm.saveEnergiesByTerm(true);
-	spm.calculateEnergies();
-	spm.runGreedyOptimizer(_opt.greedyCycles);
-
-	// get monomer energy
-	double monomerEnergy = _sequenceEnergyMap[_sequence]["Monomer"];
-	double currentEnergy = spm.getStateEnergy(_bestState)-monomerEnergy;
-	double dimer = spm.getStateEnergy(_bestState); // best state is too long when rotamer level 60, but works otherwise
-	double calcDimer = sys.calcEnergy();
-	sys.setActiveRotamers(_bestState);
-
-	// save the pre backbone optimize energy and the replicate number in the 
-	_sequenceEnergyMap[_sequence]["preOptimizeEnergy"] = currentEnergy;
-	_sequenceEnergyMap[_sequence]["replicateNumber"] = _rep;
-	
-	//double finalEnergy = backboneOptimizeMonteCarlo(_opt, sys, spm, _sequenceEnergyMap, _sequence, _bestState, _helicalAxis, _axisA, _axisB, apvChainA, apvChainB,
-	// _trans, _RNG, monomerEnergy, _rep, _sout);
-	
-	// write the pdb for the final state of the backbone optimization
-	string designNumber = _opt.runNumber+"_"+to_string(_rep);
-	writePdb(sys, _opt.outputDir, designNumber);
-
-	// assign the coordinates of our system to the given geometry 
-	_startGeom.assignCoordinates(sys.getAtomPointers(),false);
-	_startGeom.buildAllAtoms();
-
-	// output the energy of the system post backbone repack
-	double repackEnergy = _sequenceEnergyMap[_sequence]["Total"];
-
-	// output the end time
-	outputTime(clockTime, "Backbone optimize replicate " + to_string(_rep) + " End", _sout);
-}
-
 // monte carlo backbone optimization function
 void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string, map<string,double>> &_sequenceEnergyMap,
  string _sequence, vector<uint> &_bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
- uint _rep, ofstream &_sout){
+ string _outputDir, int _rep, ofstream &_sout){
 	// Setup backbone repack file
 	ofstream bbout;
-	string bboutfile  = _opt.outputDir + "/bbRepack_" + to_string(_rep) + ".out";
+	string bboutfile = _outputDir + "/" + to_string(_rep) + "_repack.out";
 	bbout.open(bboutfile.c_str());
 
 	// Local Backbone Monte Carlo Repacks Time setup	
@@ -1385,7 +1266,6 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	MonteCarloManager MCMngr(_opt.backboneMCStartTemp, _opt.backboneMCEndTemp, _opt.backboneMCCycles, _opt.backboneMCCurve, _opt.backboneMCMaxRejects, _opt.backboneConvergedSteps, _opt.backboneConvergedE);
 
 	vector<unsigned int> MCOBest = _bestState;
-	
 	unsigned int counter = 0;
 	_sys.setActiveRotamers(_bestState);
 	double currentEnergy = _spm.getStateEnergy(_bestState)-_monomerEnergy;
@@ -1558,11 +1438,6 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	
 	bbout << MCMngr.getReasonCompleted() << endl;	
 	bbout << "Monte Carlo repack complete. Time: " << diffTimeMC/60 << "min" << endl << endl;
-	//if (finalEnergy > 100){
- //       bbout << "Final energy is " << finalEnergy << " after repack, indicating clashes. Choose a different geometry" << endl;
-	//	_sout << "Final energy is " << finalEnergy << " after repack, indicating clashes. Choose a different geometry" << endl;
-	//	exit(0);
-	//}
 }
 
 void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPositionVector,
@@ -1598,9 +1473,9 @@ void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPosit
 	ofstream eout;
 	string eoutfile = _opt.outputDir + "/energyFile.csv";
 	eout.open(eoutfile.c_str());
-	eout << "Sequence" << t << "RotamerValues" << t << "Interface" << t << "Seed" << t;
+	eout << "Geometry" << t << "RotamerValues" << t << "Interface" << t << "Seed" << t;
 	eout << enerTerms.str() << endl;
-	_sout << "Sequence" << t << "RotamerValues" << t << "Interface" << t << "Seed" << t;
+	_sout << "Geometry" << t << "RotamerValues" << t << "Interface" << t << "Seed" << t;
 	_sout << enerTerms.str() << endl;
 	for (uint i=0; i<energyLines.size() ; i++){
 		eout << energyLines[i] << endl;
@@ -2196,14 +2071,12 @@ vector<uint> getRotamerLevels(Options &_opt, System &_startGeom){
 	
 	// define rotamer levels for each position based on residue burial
 	defineRotamerLevels(_opt, resiBurial, interfacePositions, rotamerLevels, variablePositionString);
-	cout << "Burial: " << rotamerLevels << endl;
 
 	// checks if interface is defined; if so, check the position and set those positions to the highest rotamer level, keeping the rest of the residue burial levels
 	if (_opt.interface != ""){
 		interfacePositions.clear(); // reset the interface from the defineRotamerLevels function
 		useInputInterface(_opt, variablePositionString, rotamerLevels, interfacePositions);
 	}	
-	cout << "Interface: " << rotamerLevels << endl;
 
 	// save the rotamer levels for all positions  
 	vector<uint> rotamerSamplingPerPosition = convertStringToVectorUint(rotamerLevels); // converts the rotamer sampling for each position as a vector
