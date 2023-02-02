@@ -21,7 +21,10 @@ struct Options{
 	string rotLibFile; //rotamer library file
 	string pdbFile; //input pdb file
 	string helicalAxis; //file with helical axis information
-	
+
+	string sequence; //sequence of the protein
+	int thread; //thread number on the gly69 helix: depending on the sequence length, proper thread number can be used to center the helix in the membrane
+
 	// Monte Carlo parameters
     int MCCycles;
 	int MCMaxRejects;

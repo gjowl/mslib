@@ -53,8 +53,8 @@ char buffer[80];
 
 // geometry setup functions
 void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS);
-void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis,
- AtomPointerVector &_axisA, AtomPointerVector &_axisB, Transforms &_trans);
+void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB,
+ map<string,double> _geometry, Transforms &_trans);
 void getStartingGeometry(Options &_opt, ofstream &_sout);
 void checkForClashing(System &_startGeom, Options &_opt, vector<uint> _interfacePositions, ofstream &_sout);
 
@@ -175,6 +175,7 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *           === VARIABLES FOR SAVING ENERGIES AND SEQUENCES ===
 	 ******************************************************************************/
+	map<string, map<string,double>> sequenceEnergyMapFinalSeqs; // energyMap to hold all energies for output into a summary file
 	map<string, map<string,double>> sequenceEnergyMapBest; // energyMap to hold all energies for output into a summary file
 	map<string, double> sequenceEntropyMap = readSingleParameters(opt.sequenceEntropyFile); // Get sequence entropy map
 	
@@ -204,19 +205,26 @@ int main(int argc, char *argv[]){
 	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
 	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
 
-	// start multithreading through different backbones here
+	// setup variables to hold the outputs here
+
+	map<string,double> geometry;
+	// read through the backbone geometry file to get the first geometry
+	double xShift = 0.0;
+	double crossingAngle = 0.0;
+	double zShift = 0.0;
+	double axialRotation = 0.0;
+
 	/******************************************************************************
 	 *      === COPY BACKBONE COORDINATES AND TRANSFORM TO INPUT GEOMETRY ===
 	 ******************************************************************************/
 	// get the starting geometry using polyglycine
 	System startGeom;
-	setGly69ToStartingGeometry(opt,startGeom,helicalAxis,axisA,axisB,trans);
-
+	setGly69ToStartingGeometry(opt,startGeom,helicalAxis,axisA,axisB,geometry,trans);
+	
 	vector<uint> rotamerSamplingPerPosition = getRotamerLevels(opt, startGeom);
 	string polySeq = convertToPolymerSequenceNeutralPatch(sequence, opt.thread);
 	PolymerSequence PS(polySeq);
 
-	//TODO: compare the rotamer levels here
 	/******************************************************************************
 	 *  === DECLARE SYSTEM FOR POLYLEU WITH ALTERNATE IDENTITIES AT INTERFACE ===
 	 ******************************************************************************/
@@ -225,35 +233,23 @@ int main(int argc, char *argv[]){
 	prepareSystem(opt, sys, startGeom, PS);
 	
 	// compute monomer energy
-	computeMonomerEnergy(sys, helicalAxis, opt, trans, sequenceEnergyMapBest, sequence, RNG, sout, err);
-	
-	// initialize the object for loading rotamers into system
-	SystemRotamerLoader sysRot(sys, opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
+	double monomerEnergy = computeMonomerEnergy(sys, helicalAxis, opt, trans, sequenceEnergyMapBest, sequence, RNG, sout, err);
+    map<string,double> monomerEnergyByTerm;
+    double monomerEnergy = computeMonomerEnergy(sys, opt, RNG, monomerEnergyByTerm, mout);
 
-	// how to define rotamer sampling levels? probably input positions?
-	loadRotamers(sys, sysRot, opt.useSasaBurial, opt.sasaRepackLevel, opt.SL, rotamerSamplingPerPosition);
-	
-	/******************************************************************************
-	 *   === MONTE CARLO TO SEARCH FOR BEST SEQUENCES AND BACKBONE OPTIMIZE ===
-	 ******************************************************************************/
-	map<string, map<string,double>> sequenceEnergyMapFinalSeqs; // energyMap to hold all energies for output into a summary file
-	map<string, double> startGeometries = getGeometryMap(opt, "start");
-	addGeometryToEnergyMap(startGeometries, sequenceEnergyMapBest, sequence);
-
-	for (uint i=0; i<opt.backboneSearchCycles; i++){
-		vector<uint> bestState;
-		// run state Monte Carlo to get a random sequence from the best state
-		addGeometryToEnergyMap(startGeometries, sequenceEnergyMapBest, sequence);
-		// TODO: going to set up this today; save x number of sequences from the search and then optimize them with threading
-		// if the sequence is different, optimize the backbone
-		// optimize the backbone for the sequence
-		backboneOptimizer(opt, startGeom, sequence, bestState, sequenceEnergyMapBest, i, helicalAxis, axisA, axisB,
-		 rotamerSamplingPerPosition, trans, RNG, sout);
-		// get the best sequence from the energy map
-		sequenceEnergyMapFinalSeqs[sequence] = sequenceEnergyMapBest[sequence];	
-		// reset the energy map
-		sequenceEnergyMapBest.clear(); // energyMap to hold all energies for output into a summary file
+	// loop over all lines of the backbone geometry file
+	for (uint n=0; n<opt.numRepacks; n++){
+		// start multithreading through different backbones here
+		vector<thread> ths;
+		// loop 
+		for (uint j=0; j<opt.crossAngle.size();j++){
+			double crossingAngle = opt.crossAngle[j]; 
+			//cout << "Angle: " << crossingAngle << endl;
+			ths.push_back(thread(threadThroughBB, ref(opt), ref(RNG), PS, monomerEnergy, ref(monomerEnergyByTerm), startGeometry, ref(sequenceEnergyMapFinal), rotamerSamplingPerPosition, ref(sout)));
+		}
+		for (auto &t : ths){
+			t.join();
+		}
 	}
 
 	/******************************************************************************
@@ -269,6 +265,87 @@ int main(int argc, char *argv[]){
 
 	err.close();
 	sout.close();
+}
+
+void threadThroughBB(Options &_opt, RandomNumberGenerator &_RNG, PolymerSequence _PS, double _monomerEnergy, map<string, double> &_monomerEnergyByTerm, map<string,double> _startGeometry,
+ map<string, map<string, double>> _sequenceEnergyMapFinal, vector<uint> _rotamerSampling, ofstream &_eout){
+	string sequence = _opt.sequence;
+	/*******************************************
+	 *       === HELICAL AXIS SET UP ===
+	 *******************************************/
+	System helicalAxis;
+	helicalAxis.readPdb(_opt.helicalAxis);
+
+	// System for the helical axis that sets protein around the origin (0.0, 0.0, 0.0)
+	// AtomPointerVector for the helical axis for each chain
+	AtomPointerVector &axisA = helicalAxis.getChain("A").getAtomPointers();
+	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
+	
+	// Set up object used for transformations
+	Transforms trans;
+	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
+	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
+
+	// setup variables to hold the outputs here
+
+	/******************************************************************************
+	 *      === COPY BACKBONE COORDINATES AND TRANSFORM TO INPUT GEOMETRY ===
+	 ******************************************************************************/
+	// get the starting geometry using polyglycine
+	System startGeom;
+	setGly69ToStartingGeometry(_opt,startGeom,helicalAxis,axisA,axisB,_geometry,trans);
+	
+	/******************************************************************************
+	 *  === DECLARE SYSTEM FOR POLYLEU WITH ALTERNATE IDENTITIES AT INTERFACE ===
+	 ******************************************************************************/
+	// set up the system for the input sequence
+	System sys;
+	prepareSystem(_opt, sys, startGeom, _PS);
+
+	// initialize the object for loading rotamers into system
+	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
+	sysRot.defineRotamerSamplingLevels();
+
+	// how to define rotamer sampling levels? probably input positions?
+	loadRotamers(sys, sysRot, _opt.useSasaBurial, _opt.sasaRepackLevel, _opt.SL, _rotamerSampling);
+	
+	// Optimize Initial Starting Position
+	SelfPairManager spm;
+	spm.seed(_RNG.getSeed());
+	spm.setSystem(&sys);
+	spm.setVerbose(false);
+	spm.getMinStates()[0];
+	spm.updateWeights();
+	spm.setOnTheFly(true);
+	spm.saveEnergiesByTerm(true);
+	spm.calculateEnergies();
+    
+    repackSideChains(spm, _opt.greedyCycles);
+	vector<uint> stateVec = spm.getMinStates()[0];
+	sys.setActiveRotamers(stateVec);
+	
+	/******************************************************************************
+	 *   === MONTE CARLO TO SEARCH FOR BEST SEQUENCES AND BACKBONE OPTIMIZE ===
+	 ******************************************************************************/
+	map<string, map<string,double>> sequenceEnergyMap; // energyMap to hold all energies for output into a summary file
+	addGeometryToEnergyMap(_startGeometry, sequenceEnergyMap, sequence);
+
+	for (uint i=0; i<opt.backboneSearchCycles; i++){
+		// define the best state
+		vector<uint> bestState = stateVec;
+		// run state Monte Carlo to get a random sequence from the best state
+		addGeometryToEnergyMap(_startGeometry, sequenceEnergyMap, sequence);
+		// TODO: going to set up this today; save x number of sequences from the search and then optimize them with threading
+		// if the sequence is different, optimize the backbone
+		// optimize the backbone for the sequence
+		backboneOptimizer(_opt, startGeom, sequence, bestState, sequenceEnergyMap, i, helicalAxis, axisA, axisB,
+		 _rotamerSampling, trans, _RNG, _eout);
+		// get the best sequence from the energy map
+		string outputName = "Geometry" + to_string(i);
+		_sequenceEnergyMapFinal[outputName] = sequenceEnergyMap[sequence];	
+		// reset the energy map
+		sequenceEnergyMap.clear(); // energyMap to hold all energies for output into a summary file
+	}
 }
 
 /****************************************
@@ -1111,8 +1188,8 @@ void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSeque
 }
 
 // sets the gly69 backbone to starting geometry
-void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis,
- AtomPointerVector &_axisA, AtomPointerVector &_axisB, Transforms &_trans) {
+void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB,
+ map<string,double> _geometry, Transforms &_trans) {
 	/******************************************************************************
 	 *         === COPY BACKBONE COORDINATES AND TRANSFORM TO GEOMETRY ===
 	 ******************************************************************************/
@@ -1130,8 +1207,13 @@ void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxi
 	CartesianPoint xAxis(1.0,0.0,0.0);
 	CartesianPoint zAxis(0.0,0.0,1.0);
 
+	double xShift = _geometry["xShift"];
+	double zShift = _geometry["zShift"];
+	double axialRotation = _geometry["axialRotation"];
+	double crossingAngle = _geometry["crossingAngle"];
+
 	// Transform to chosen geometry
-	transformation(apvChainA, apvChainB, _axisA, _axisB, ori, xAxis, zAxis, _opt.zShift, _opt.axialRotation, _opt.crossingAngle, _opt.xShift, _trans);
+	transformation(apvChainA, apvChainB, _axisA, _axisB, ori, xAxis, zAxis, zShift, axialRotation, crossingAngle, xShift, _trans);
 	moveZCenterOfCAMassToOrigin(_sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);
 }
 
@@ -2093,17 +2175,17 @@ vector<uint> getRotamerLevels(Options &_opt, System &_startGeom){
 	// setup 0 string to represent variable positions and rotamer levels
 	string variablePositionString = generateString("0", _opt.sequence.length());
 	string rotamerLevels = generateString("0", _opt.sequence.length());
-	cout << rotamerLevels << endl;
-
+	
 	// define rotamer levels for each position based on residue burial
 	defineRotamerLevels(_opt, resiBurial, interfacePositions, rotamerLevels, variablePositionString);
+	cout << "Burial: " << rotamerLevels << endl;
 
-	// checks if interface is defined; if so, check the position and set those positions to the highest rotamer level
+	// checks if interface is defined; if so, check the position and set those positions to the highest rotamer level, keeping the rest of the residue burial levels
 	if (_opt.interface != ""){
 		interfacePositions.clear(); // reset the interface from the defineRotamerLevels function
 		useInputInterface(_opt, variablePositionString, rotamerLevels, interfacePositions);
 	}	
-	cout << rotamerLevels << endl;
+	cout << "Interface: " << rotamerLevels << endl;
 
 	// save the rotamer levels for all positions  
 	vector<uint> rotamerSamplingPerPosition = convertStringToVectorUint(rotamerLevels); // converts the rotamer sampling for each position as a vector

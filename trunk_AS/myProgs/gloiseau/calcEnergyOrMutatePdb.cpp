@@ -30,7 +30,7 @@ using namespace std;
 
 static SysEnv SYSENV;
 string programName = "calcEnergyOrMutatePdb"; //I think this should get the filename?
-string programDescription = "Reads a PDB into MSL and then calculates the energy";
+string programDescription = "Reads a PDB into MSL and then calculates the energy; can also mutate the PDB";
 string programAuthor = "Gilbert Loiseau";
 string programVersion = "1";
 string programDate = "19 April 2022";
@@ -44,7 +44,16 @@ string setupOutputDirectory(string _dirName);
 void outputErrorMessage(string _message, string _optionParserErrors);
 void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTerminalInteractionList);
 double computeMonomerEnergy(System & _sys, Options& _opt, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _mout);
-Options parseCalcEnergyOptions(int _argc, char * _argv[]);
+Options parseOptions(int _argc, char * _argv[]);
+
+// backbone optimization functions
+void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vector<uint> _bestState, map<string, map<string,double>> &_sequenceEnergyMap,
+ uint _rep, System &_helicalAxis, AtomPointerVector &_axisA,  AtomPointerVector &_axisB, vector<uint> _rotamerSampling, Transforms &_trans,
+ RandomNumberGenerator &_RNG, ofstream &_sout);
+double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string, map<string,double>> &_sequenceEnergyMap,
+ string _sequence, vector<uint> &_bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
+ AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
+ uint _rep, ofstream &_sout);
 
 int main(int argc, char *argv[]){
 
@@ -63,7 +72,7 @@ int main(int argc, char *argv[]){
 	 *                 === PARSE THE COMMAND LINE OPTIONS ===
 	 ******************************************************************************/
 	//Add in some default options that can easily be changed here
-	Options opt = parseCalcEnergyOptions(argc, argv);
+	Options opt = parseOptions(argc, argv);
 
 	if (opt.errorFlag) {
 		outputErrorMessage(opt.errorMessages, opt.OPErrors);
@@ -100,9 +109,8 @@ int main(int argc, char *argv[]){
 	/******************************************************************************
 	 *                   === INITIALIZE POLYMER SEQUENCE ===
 	 ******************************************************************************/
-	// TODO: add in options for sequences and thread
-	string seq = "AAAYYLLGTLLGYLLSTLAAA";
-	string polySeq = convertToPolymerSequenceNeutralPatch(seq, 23);
+	string seq = opt.sequence;
+	string polySeq = convertToPolymerSequenceNeutralPatch(seq, opt.thread);
 	
 	//string polySeq = generatePolymerSequenceFromSequence(opt.sequence, opt.thread);
 	PolymerSequence PS(polySeq);
@@ -114,12 +122,12 @@ int main(int argc, char *argv[]){
 	pdb.readPdb(opt.pdbFile);//gly69 pdb file; changed from the CRD file during testing to fix a bug but both work and the bug was separate
 	AtomPointerVector & apv = pdb.getAtomPointers();
 
-	Chain & chainA1 = pdb.getChain("A");
-	Chain & chainB1 = pdb.getChain("B");
+	Chain & chainA = pdb.getChain("A");
+	Chain & chainB = pdb.getChain("B");
 
 	// Set up chain A and chain B atom pointer vectors
-	AtomPointerVector & apvChainA1 = chainA1.getAtomPointers();
-	AtomPointerVector & apvChainB1 = chainB1.getAtomPointers();
+	AtomPointerVector & apvChainA = chainA.getAtomPointers();
+	AtomPointerVector & apvChainB = chainB.getAtomPointers();
 	
 	/******************************************************************************
 	 *                      === TRANSFORM TO COORDINATES ===
@@ -146,8 +154,7 @@ int main(int argc, char *argv[]){
 	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
 	
 	// Transformation to zShift, axialRotation, crossingAngle, and xShift
-	transformation(apvChainA1, apvChainB1, axisA, axisB, ori, xAxis, zAxis, 0, 0, 0, 0, trans);
-	//moveZCenterOfCAMassToOrigin(pdb.getAtomPointers(), helicalAxis.getAtomPointers(), trans);
+	transformation(apvChainA, apvChainB, axisA, axisB, ori, xAxis, zAxis, 0, 0, 0, 0, trans);
 
 	/******************************************************************************
 	 *                     === DECLARE SYSTEM ===
@@ -167,11 +174,7 @@ int main(int argc, char *argv[]){
 	CSB.setIMM1Params(15, 10);
 	CSB.setBuildNonBondedInteractions(false);
 
-	// read in the pdbfile
-
-	// how do I mutate the sequence to the neutral patch AAs? the other terms are close when below is used,
-	// but the IMM1 is wrong because of this?
-    //CSB.buildSystemFromPDB(opt.pdbFile);
+	// Build the system using the polymer sequence
 	if(!CSB.buildSystem(PS)) {
 		cerr << "Unable to build system from pdb" << endl;
 		exit(0);
@@ -231,7 +234,6 @@ int main(int argc, char *argv[]){
 	 ******************************************************************************/
 	// assign the coordinates of our system to the given geometry that was assigned without energies using System pdb
 	sys.buildAllAtoms();
-	//moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), helicalAxis.getAtomPointers(), trans);
 	
 	PDBWriter writer1;
 	writer1.open(outputDir + "/start.pdb");
@@ -243,6 +245,7 @@ int main(int argc, char *argv[]){
 	hb.buildInteractions(50);//when this is here, the HB weight is correct
 
 	CSB.updateNonBonded(10,12,50);
+
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
 	 ******************************************************************************/
@@ -336,12 +339,14 @@ int main(int argc, char *argv[]){
 	cout << "energy,dimerEnergy,monomerEnergy,vdwDiff,hbondDiff,imm1Diff" << endl;
 	cout << finalEnergy << ',' << dimer << ',' << monomer << ',' << vdwDiff << ',' << hbondDiff << ',' << imm1Diff << endl;
 
-    //outputs a pdb file for the structure (already have the pdb, but the sidechains may be in different positions now)
 	// Initialize PDBWriter
+    //outputs a pdb file for the structure (already have the pdb, but the sidechains may be in different positions now)
 	PDBWriter writer;
 	writer.open(outputDir + "/sideChainRepack.pdb");
 	writer.write(sys.getAtomPointers(), true, false, true);
 	writer.close();
+
+	// add in the backbone geometry repack for the sequence (adapted from my sequence design code)
 
     // close all of the output file writers
     sout.close();
@@ -710,7 +715,7 @@ void usage() {
 	cout << endl;
 }
 
-Options parseCalcEnergyOptions(int _argc, char * _argv[]){
+Options parseOptions(int _argc, char * _argv[]){
 
 	/******************************************
 	 *  Pass the array of argument and the name of
@@ -757,6 +762,10 @@ Options parseCalcEnergyOptions(int _argc, char * _argv[]){
 	opt.allowed.push_back("pdbFile");
 	opt.allowed.push_back("helicalAxis");
 	opt.allowed.push_back("configfile");
+
+	//
+	opt.allowed.push_back("sequence");
+	opt.allowed.push_back("thread");
 
 	//
 	opt.allowed.push_back("seed");
@@ -936,6 +945,20 @@ Options parseCalcEnergyOptions(int _argc, char * _argv[]){
 	if (OP.fail()) {
 		opt.errorMessages += "Unable to determine outputDirName";
 		opt.errorFlag = true;
+	}
+
+	// sequence parameters
+	opt.sequence = OP.getString("sequence");
+	if (OP.fail()) {
+		opt.warningMessages += "sequence not specified, defaulting to polyleu\n";
+		opt.warningFlag = true;
+		opt.sequence = "";
+	}
+	opt.thread = OP.getInt("thread");
+	if (OP.fail()) {
+		opt.warningMessages += "thread not specified, defaulting to 0\n";
+		opt.warningFlag = true;
+		opt.thread = 0;
 	}
 
 	// alternate identities
