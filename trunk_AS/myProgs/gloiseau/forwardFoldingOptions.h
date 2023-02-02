@@ -27,7 +27,6 @@ struct Options{
 
 	// sequence parameters
 	string sequence; //input sequence
-	int numberOfSequencesToSave; //total number of sequences to save
 	string interface; //interface to design on; if empty, use SASA
 
 	// booleans: changing these will ..TODO: add more here
@@ -109,7 +108,7 @@ struct Options{
 	double deltaAxLimit;
 	double deltaZLimit;
 	bool decreaseMoveSize;
-	int backboneSearchCycles;
+	int backboneRepackCycles;
 
 	// energy weights
 	double weight_vdw; //weight of vdw energy contribution to total energy: default = 1

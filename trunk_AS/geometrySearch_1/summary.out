@@ -1,0 +1,34 @@
+02_02_2023
+Compute Monomer Energy Start Time: Thu Feb  2 14:43:15 2023
+Elapsed time of program: 0.0356min
+
+Backbone optimize replicate 0 Start Time: Thu Feb  2 14:44:03 2023
+Elapsed time of program: 0.826min
+
+Backbone optimize replicate 0 Start Time: Thu Feb  2 14:44:03 2023
+Elapsed time of program: 0.826min
+
+Backbone optimize replicate 0 End Time: Thu Feb  2 14:44:06 2023
+Elapsed time of program: 0.88min
+
+Backbone optimize replicate 1 Start Time: Thu Feb  2 14:44:06 2023
+Elapsed time of program: 0.88min
+
+Backbone optimize replicate 0 End Time: Thu Feb  2 14:44:08 2023
+Elapsed time of program: 0.918min
+
+Backbone optimize replicate 1 Start Time: Thu Feb  2 14:44:08 2023
+Elapsed time of program: 0.918min
+
+Backbone optimize replicate 1 End Time: Thu Feb  2 14:44:10 2023
+Elapsed time of program: 0.938min
+
+Backbone optimize replicate 1 End Time: Thu Feb  2 14:44:15 2023
+Elapsed time of program: 1.03min
+
+Sequence,RotamerValues,Interface,Seed,HBONDDimerOptimize,HBONDDimerPreOptimize,IMM1DimerOptimize,IMM1DimerPreOptimize,MonomerSasa,OptimizeSasa,PreBBOptimizeSasa,Total,TotalPreOptimize,VDWDimerOptimize,VDWDimerPreOptimize,endAxialRotation,endAxialRotationPrime,endCrossingAngle,endXShift,endZShift,endZShiftPrime,firstRepackEnergy,preOptimizeAxialRotation,preOptimizeAxialRotationPrime,preOptimizeCrossingAngle,preOptimizeEnergy,preOptimizeXShift,preOptimizeZShift,preOptimizeZShiftPrime,replicateNumber,
+1_Repack0,111000100030023003202,000110011001100110000,1,-60.9156,-61.2631,-185.55,-188.11,0,3144.24,3155.71,2.82388e+08,3.19793e+08,2.82388e+08,3.19793e+08,-67.0816,57.4783,25,9.17726,4.32181,3.68398,3.19649e+08,60,188.889,30,3.19792e+08,7,3,4.33333,0,
+1_Repack1,111000100030023003202,000110011001100110000,1,-60.2809,-60.9156,-186.539,-185.55,0,3158.78,3155.71,2.68484e+08,2.82388e+08,2.68484e+08,2.82388e+08,-66.6667,60.4251,25.7471,9.22007,4.65739,4.06377,2.77897e+08,60,188.889,30,3.19792e+08,7,3,4.33333,1,
+2_Repack0,111000100030023003202,000110011001100110000,1,-56.9992,-56.9992,-181.021,-182.255,0,3172.36,3175.81,6.03576e+07,4.53335e+08,6.03575e+07,4.53335e+08,-65.9839,60.0246,25.203,9.1709,4.50091,3.90128,4.5224e+08,60,188.889,20,4.53334e+08,8,3,4.33333,0,
+2_Repack1,111000100030023003202,000110011001100110000,1,-56.9992,-56.9992,-179.506,-181.021,0,3170.31,3175.81,1.87562e+07,6.03576e+07,1.87561e+07,6.03575e+07,-65.4575,61.015,25.8741,9.13227,4.55564,3.97087,3.77578e+07,60,188.889,20,4.53334e+08,8,3,4.33333,1,
+Total Time: 1 minutes
