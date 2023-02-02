@@ -412,7 +412,6 @@ void localXShiftDocking(System &_sys, BBOptions &_opt, double &_bestEnergy, doub
 	_out << "Thread " << _thread << " Best Energy at x shift: " << _bestEnergy << " at " << _savedXShift << endl;
 }
 
-
 void localBackboneRepack(BBOptions &_opt, System &_sys, map<string,double> _geometries, vector<double> _densities, SelfPairManager &_spm,
  System &_helicalAxis, Transforms &_trans, RandomNumberGenerator &_RNG, map<string,double> _monomerEnergyByTerm,
  double _monomerEnergy, int _thread, ofstream &_out, ofstream &_eout){
