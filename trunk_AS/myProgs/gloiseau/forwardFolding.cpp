@@ -646,7 +646,7 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.negRot = false;
 	}
 	if (opt.negRot == true){
-		opt.axialRotation = opt.axialRotation-100;
+		opt.axialRotation = -opt.axialRotation;
 		//opt.axialRotation = -opt.axialRotation;//for CATM geometries?
 	}
 	opt.thread = OP.getInt("thread");
@@ -1194,6 +1194,10 @@ void threadThroughBB(Options &_opt, RandomNumberGenerator &_RNG, PolymerSequence
 
 		// initialize the sequence energy map
 		map<string, map<string, double>> sequenceEnergyMap;
+		// add the monomer energy terms to the sequence energy map
+		for (auto &term : _monomerEnergyByTerm){
+			sequenceEnergyMap[sequence][term.first] = term.second;
+		}
 
 		// add the starting geometry to the energy map
 		map<string, double> startGeometry = getGeometryMap(_startGeometry, "preOptimize");
@@ -1241,16 +1245,16 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	time(&startTimeMC);
 	
 	// starting geometry
-	double xShift = _sequenceEnergyMap[_sequence]["xShift"];	
-	double crossingAngle = _sequenceEnergyMap[_sequence]["crossingAngle"];
-	double axialRotation = _sequenceEnergyMap[_sequence]["axialRotation"];
-	double zShift = _sequenceEnergyMap[_sequence]["zShift"];
+	double xShift = _sequenceEnergyMap[_sequence]["preOptimizeXShift"];	
+	double crossingAngle = _sequenceEnergyMap[_sequence]["preOptimizeCrossingAngle"];
+	double axialRotation = _sequenceEnergyMap[_sequence]["preOptimizeAxialRotation"];
+	double zShift = _sequenceEnergyMap[_sequence]["preOptimizeZShift"];
 
 	// final geometry
-	double finalXShift = _sequenceEnergyMap[_sequence]["xShift"];	
-	double finalCrossingAngle = _sequenceEnergyMap[_sequence]["crossingAngle"];
-	double finalAxialRotation = _sequenceEnergyMap[_sequence]["axialRotation"];
-	double finalZShift = _sequenceEnergyMap[_sequence]["zShift"];
+	double finalXShift = _sequenceEnergyMap[_sequence]["preOptimizeXShift"];	
+	double finalCrossingAngle = _sequenceEnergyMap[_sequence]["preOptimizeCrossingAngle"];
+	double finalAxialRotation = _sequenceEnergyMap[_sequence]["preOptimizeAxialRotation"];
+	double finalZShift = _sequenceEnergyMap[_sequence]["preOptimizeZShift"];
 
 	bbout << "***STARTING GEOMETRY***" << endl;
 	outputGeometry(_opt, xShift, crossingAngle, axialRotation, zShift, bbout);
@@ -1438,6 +1442,10 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	
 	bbout << MCMngr.getReasonCompleted() << endl;	
 	bbout << "Monte Carlo repack complete. Time: " << diffTimeMC/60 << "min" << endl << endl;
+
+	// clear the saved repack state
+	_sys.clearSavedCoor("savedRepackState");
+	_helicalAxis.clearSavedCoor("BestRepack");
 }
 
 void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPositionVector,
@@ -1863,6 +1871,8 @@ double computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, T
 	double totalMonomerSasa = monomerSasa*2;
 
 	_monomerEnergyByTerm = getEnergyByTermDoubled(monoSys.getEnergySet()); // must double the energy, as only computed energy for 1 helix
+	_monomerEnergyByTerm["Monomer"] = monomerEnergy;
+	_monomerEnergyByTerm["MonomerSasa"] = totalMonomerSasa;
 	return monomerEnergy;
 }
 
