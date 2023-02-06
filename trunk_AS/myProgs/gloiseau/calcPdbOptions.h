@@ -13,7 +13,9 @@ using namespace std;
  ******************************************/
 struct Options{
 	// input files
-	string outputDirName; //output directory for all files
+	string backboneCrd; //initial coordinates for helix backbones: crd file
+	string backboneFile; //initial coordinates for helix backbones: pdb file
+	string outputDir; //output directory for all files
 	string topFile; //topology file (default CHARMM22: defines distances between atoms)
 	string parFile; //parameter file (defines Hbonding distances)
 	string solvFile; //solvation file
@@ -24,6 +26,7 @@ struct Options{
 
 	string sequence; //sequence of the protein
 	int thread; //thread number on the gly69 helix: depending on the sequence length, proper thread number can be used to center the helix in the membrane
+	string interface; //interface to design on; if empty, use SASA
 
 	// Monte Carlo parameters
     int MCCycles;
@@ -35,17 +38,19 @@ struct Options{
 	// booleans
 	bool verbose; //TRUE: write energy outputs and calculations throughout the run to the terminal OR FALSE: only write outputs to output files
 	bool deleteTerminalBonds; //TRUE: delete hydrogen bonds at the termini of sequences to not be considered in hydrogen bonding score OR FALSE: keep hydrogen bonds at termini
+	bool useSasaBurial; //TRUE: use solvent accessible surface area to designated the number of rotamers at each position on the dimer OR FALSE: input set number of rotamers for both interface and non-interface
 
 	// use different energy parameters
 	bool useIMM1;
 	bool useElec;
-	bool compareSasa; //TRUE: use SASA to compare backboneOptimize states OR FALSE: use energy
 
 	// repack parameters
 	int greedyCycles;
 
 	// load rotamers useSasa = false
 	string SL; //number of rotamers
+	std::vector<string> sasaRepackLevel; //vector of levels
+	int interfaceLevel; // level for the interface
 
     // energy weights
 	double weight_vdw; //weight of vdw energy contribution to total energy: default = 1
@@ -53,11 +58,42 @@ struct Options{
 	double weight_elec; //weight of electrostatic energy contribution to total energy: default = 1
 	double weight_hbond; //weight of hbond energy contribution to total energy: default = 1
 
+	// Starting Geometry
+	double xShift; //distance between helices
+	double crossingAngle; //crossing angle between helices
+	double axialRotation; //rotation of helices
+	double zShift; //position of the crossing point between helices
+	double density; //density of axialRotation and zShift from clashing tests at different geometries
+	bool negAngle; //designates if the crossing angle is negative or positive
+	bool negRot; //designates if the axial rotation is negative or positive
+	
+	// Backbone Monte Carlo parameters
+	int backboneMCCycles;
+	int backboneMCMaxRejects;
+	double backboneMCStartTemp;
+	double backboneMCEndTemp;
+	int backboneMCCurve;
+	int backboneConvergedSteps;
+	double backboneConvergedE;
+
+	// backbone repack variables
+	double deltaZ;
+	double deltaAx;
+	double deltaCross;
+	double deltaX;
+	double deltaXLimit; 
+	double deltaCrossLimit;
+	double deltaAxLimit;
+	double deltaZLimit;
+	bool decreaseMoveSize;
+	int backboneRepackCycles;
+
 	// alternate identities
 	vector<string> alternateIds; //alternate AA identities for interfacial positions
     
     // terminal interactions
     vector<string> deleteTerminalInteractions; //terminal interactions to be considered in the energy calculation
+	vector<string> energyTermList; // list of energy terms to evaluate and save (not yet fully implemented for usage, only for saving)
 
 	/***** MANAGEMENT VARIABLES ******/
 	string pwd; // the present working directory obtained with a getenv

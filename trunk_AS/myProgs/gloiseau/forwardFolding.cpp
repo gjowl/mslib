@@ -1241,16 +1241,16 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	time(&startTimeMC);
 	
 	// starting geometry
-	double xShift = _opt.xShift;	
-	double crossingAngle = _opt.crossingAngle;
-	double axialRotation = _opt.axialRotation;
-	double zShift = _opt.zShift;
+	double xShift = _sequenceEnergyMap[_sequence]["xShift"];	
+	double crossingAngle = _sequenceEnergyMap[_sequence]["crossingAngle"];
+	double axialRotation = _sequenceEnergyMap[_sequence]["axialRotation"];
+	double zShift = _sequenceEnergyMap[_sequence]["zShift"];
 
 	// final geometry
-	double finalXShift = _opt.xShift;
-	double finalCrossingAngle = _opt.crossingAngle;
-	double finalAxialRotation = _opt.axialRotation;
-	double finalZShift = _opt.zShift;
+	double finalXShift = _sequenceEnergyMap[_sequence]["xShift"];	
+	double finalCrossingAngle = _sequenceEnergyMap[_sequence]["crossingAngle"];
+	double finalAxialRotation = _sequenceEnergyMap[_sequence]["axialRotation"];
+	double finalZShift = _sequenceEnergyMap[_sequence]["zShift"];
 
 	bbout << "***STARTING GEOMETRY***" << endl;
 	outputGeometry(_opt, xShift, crossingAngle, axialRotation, zShift, bbout);

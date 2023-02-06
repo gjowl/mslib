@@ -137,7 +137,7 @@ struct Options{
 	bool runSCMF;
 
 	// energy terms vectors
-	vector<string> energyTermList;
+	vector<string> energyTermList; // list of energy terms to evaluate and save (not yet fully implemented for usage, only for saving)
 	vector<string> deleteTerminalInteractions;
 
 	/***** MANAGEMENT VARIABLES ******/
