@@ -1,22 +1,16 @@
 ***STARTING GEOMETRY***
 Starting Repack Cycles
-MCAccept 0 xShift: 9.2 crossingAngle: 25 axialRotation: 39.5258 zShift: 4 energy: 93.8671
-MCAccept 1 xShift: 9.2 crossingAngle: 25 axialRotation: 39.5258 zShift: 3.71289 energy: 93.8671
-MCAccept 2 xShift: 9.2 crossingAngle: 25 axialRotation: 39.5258 zShift: 3.69049 energy: 93.8671
-MCAccept 3 xShift: 9.2 crossingAngle: 24.9432 axialRotation: 39.5258 zShift: 3.69049 energy: 93.775
-MCAccept 4 xShift: 9.2 crossingAngle: 24.9432 axialRotation: 39.3124 zShift: 3.69049 energy: 93.8671
-MCAccept 5 xShift: 9.2 crossingAngle: 24.9432 axialRotation: 39.305 zShift: 3.69049 energy: 93.775
-MCReject   xShift: 9.2 crossingAngle: 24.9432 axialRotation: 39.229 zShift: 3.69049 energy: 93.8671
-MCAccept 6 xShift: 9.18765 crossingAngle: 24.9432 axialRotation: 39.305 zShift: 3.69049 energy: 93.775
-MCReject   xShift: 9.18765 crossingAngle: 24.9432 axialRotation: 39.305 zShift: 3.69558 energy: 93.8671
-MCAccept 7 xShift: 9.19718 crossingAngle: 24.9432 axialRotation: 39.305 zShift: 3.69049 energy: 93.775
-MCAccept 8 xShift: 9.18864 crossingAngle: 24.9432 axialRotation: 39.305 zShift: 3.69049 energy: 93.775
-MCAccept 9 xShift: 9.18864 crossingAngle: 24.9934 axialRotation: 39.305 zShift: 3.69049 energy: 93.775
+MCReject   xShift: 9.2 crossingAngle: 25 axialRotation: 40.27 zShift: 4.22345 energy: 4.57
+MCReject   xShift: 9.2 crossingAngle: 25 axialRotation: 40.27 zShift: 4.25339 energy: -4.54501
+MCReject   xShift: 9.36216 crossingAngle: 25 axialRotation: 40.27 zShift: 4.13 energy: 0.939478
+MCReject   xShift: 9.2 crossingAngle: 25 axialRotation: 40.27 zShift: 4.07138 energy: -2.54105
+MCReject   xShift: 9.2 crossingAngle: 25 axialRotation: 40.27 zShift: 4.15465 energy: 8.45437
+MCReject   xShift: 9.2 crossingAngle: 25 axialRotation: 40.3325 zShift: 4.13 energy: -2.21805
 End Repack Cycles
 
 ***REPACK GEOMETRY***
-Energy;        Before: 93.8671; After: 93.775
+Energy;        Before: -16.5115; After: -16.5115
 
-Completed all cycles. Accepted 10/12
-Monte Carlo repack complete. Time: 0min
+Completed all cycles. Accepted 0/6
+Monte Carlo repack complete. Time: 0.866667min
 

@@ -54,7 +54,7 @@ void useInputInterface(Options &_opt, string &_variablePositionString, string &_
 void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS);
 // backbone optimization functions
 void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _sequence, PolymerSequence _PS, AtomPointerVector &_startPdb, map<string,double> _startGeometry,
- map<string, map<string, double>> &_sequenceEnergyMapFinal, vector<uint> _rotamerSampling, ofstream &_eout);
+ map<string, map<string, double>> &_sequenceEnergyMapFinal, ofstream &_eout);
 void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string,double> &_sequenceEnergyMap,
  string _sequence, vector<uint> _bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
@@ -69,108 +69,7 @@ void defineRotamerLevels(Options &_opt, string _sequence, vector<pair <int, doub
 void convertToRelativeAxAndZ(double _axialRotation, double _zShift, double &_relativeAx, double &_relativeZ);
 map<string, double> getGeometryMap(map<string,double> _geometry, string _descriptor);
 void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, double> &_energyMap);
-void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPositionVector,
- map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout);
-
-void calculateStartSequenceEnergy(Options &_opt, AtomPointerVector &_pdb, string _sequence, System &_helicalAxis, Transforms &_trans, map<string,map<string,double>> _sequenceEnergyMap, ofstream &_mout){
-	// initialize polymer sequence
-	string polySeq = convertToPolymerSequenceNeutralPatch(_sequence, _opt.thread);
-	PolymerSequence PS(polySeq);
-
-	// declare system
-	System sys;
-	CharmmSystemBuilder CSB(sys,_opt.topFile,_opt.parFile,_opt.solvFile);
-	CSB.setBuildTerm("CHARMM_ELEC", false);
-	CSB.setBuildTerm("CHARMM_ANGL", false);
-	CSB.setBuildTerm("CHARMM_BOND", false);
-	CSB.setBuildTerm("CHARMM_DIHE", false);
-	CSB.setBuildTerm("CHARMM_IMPR", false);
-	CSB.setBuildTerm("CHARMM_U-BR", false);
-	CSB.setBuildTerm("CHARMM_IMM1REF", true);
-	CSB.setBuildTerm("CHARMM_IMM1", true);
-
-	CSB.setSolvent("MEMBRANE");
-	CSB.setIMM1Params(15, 10);
-	CSB.setBuildNonBondedInteractions(false);
-
-	// Build the system using the polymer sequence
-	if(!CSB.buildSystem(PS)) {
-		cerr << "Unable to build system from pdb" << endl;
-		exit(0);
-	} else {
-		//fout << "CharmmSystem built for sequence" << endl;
-	}
-	
-	// transform helices to start geometry
-	sys.assignCoordinates(_pdb,false);
-	// assign the coordinates of our system to the given geometry that was assigned without energies using System pdb
-	sys.buildAllAtoms();
-	
-	// Add hydrogen bond term
-	HydrogenBondBuilder hb(sys, _opt.hbondFile);
-	hb.buildInteractions(50);//when this is here, the HB weight is correct
-
-	/******************************************************************************
-	 *                     === INITIAL VARIABLE SET UP ===
-	 ******************************************************************************/
-	// Initialize EnergySet that contains energies for the chosen terms for our design
-	EnergySet* Eset = sys.getEnergySet();
-	// Set all terms active, besides Charmm-Elec
-	Eset->setAllTermsInactive();
-	Eset->setTermActive("CHARMM_VDW", true);
-	Eset->setTermActive("SCWRL4_HBOND", true);
-	Eset->setTermActive("CHARMM_IMM1REF", true);
-	Eset->setTermActive("CHARMM_IMM1", true);
-
-	// Set weights
-	Eset->setWeight("CHARMM_VDW", _opt.weight_vdw);
-	Eset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
-	Eset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
-	Eset->setWeight("CHARMM_IMM1", _opt.weight_solv);
-
-	// removes all bonding near the termini of our helices for a list of interactions
-    deleteTerminalBondInteractions(sys,_opt.deleteTerminalInteractions);
-	
-	// initialize the object for loading rotamers into our system
-	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
-	
-    // loading rotamers
-	loadRotamers(sys, sysRot, _opt.SL);
-	CSB.updateNonBonded(10,12,50);
-
-	/******************************************************************************
-	 *                  === GREEDY TO _optIMIZE ROTAMERS ===
-	 ******************************************************************************/
-	RandomNumberGenerator RNG;
-	RNG.setSeed(_opt.seed); 
-
-	// _optimize Initial Starting Position
-	SelfPairManager spm;
-	spm.seed(RNG.getSeed());
-	spm.setSystem(&sys);
-	spm.setVerbose(false);
-	spm.getMinStates()[0];
-	spm.updateWeights();
-	spm.setOnTheFly(true);
-	spm.saveEnergiesByTerm(true);
-	spm.calculateEnergies();
-    
-    repackSideChains(spm, _opt.greedyCycles);
-	vector<uint> stateVec = spm.getMinStates()[0];
-	sys.setActiveRotamers(stateVec);
-	
-	double dimer = spm.getStateEnergy(stateVec);
-    cout << "Dimer Energy: " << dimer << endl;
-	sys.calcEnergy();
-    cout << Eset->getSummary() << endl;
-	exit(0);
-	
-	// Add energy to sequence energy map
-	map<string,double> &energyMap = _sequenceEnergyMap[_sequence];
-	outputEnergiesByTerm(spm, stateVec, energyMap, _opt.energyTermList, "Dimer", true);
-	//computeMonomerEnergy(sys, _helicalAxis, _opt, _trans, _sequenceEnergyMap, _sequence, RNG, _mout);
-}
+void outputFiles(Options &_opt, double _seed, map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout);
 
 // set the active identity for each position to the identity in the given sequence (only for homodimers)
 string extractSequence(System &_sys){
@@ -192,7 +91,6 @@ string extractSequence(System &_sys){
 	return sequence;
 }
 
-vector<string> getMutatedSequenceList(string _seq, vector<uint> _rotamerSampling, vector<string> _alternateIds, int _interfaceLevel);
 int main(int argc, char *argv[]){
 
 	time_t rawtime;
@@ -299,108 +197,13 @@ int main(int argc, char *argv[]){
 	AtomPointerVector &axisA = helicalAxis.getChain("A").getAtomPointers();
 	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
 	
-	// Transformation to zShift, axialRotation, crossingAngle, and xShift
-	//transformation(apvChainA, apvChainB, axisA, axisB, ori, xAxis, zAxis, opt.zShift, opt.crossingAngle, opt.axialRotation, opt.xShift, trans);
-	
-	vector<uint> rotamerSampling = getRotamerLevels(opt, pdb, seq);
-
-	/******************************************************************************
-	 *                     === DECLARE SYSTEM ===
-	 ******************************************************************************/
-    System sys;
-	CharmmSystemBuilder CSB(sys,opt.topFile,opt.parFile,opt.solvFile);
-	CSB.setBuildTerm("CHARMM_ELEC", false);
-	CSB.setBuildTerm("CHARMM_ANGL", false);
-	CSB.setBuildTerm("CHARMM_BOND", false);
-	CSB.setBuildTerm("CHARMM_DIHE", false);
-	CSB.setBuildTerm("CHARMM_IMPR", false);
-	CSB.setBuildTerm("CHARMM_U-BR", false);
-	CSB.setBuildTerm("CHARMM_IMM1REF", true);
-	CSB.setBuildTerm("CHARMM_IMM1", true);
-
-	CSB.setSolvent("MEMBRANE");
-	CSB.setIMM1Params(15, 10);
-	CSB.setBuildNonBondedInteractions(false);
-
-	// Build the system using the polymer sequence
-	if(!CSB.buildSystem(PS)) {
-		cerr << "Unable to build system from pdb" << endl;
-		exit(0);
-	} else {
-		//fout << "CharmmSystem built for sequence" << endl;
-	}
-	
-	/******************************************************************************
-	 *           === TRANSFORM HELICES TO INITIAL STARTING POSITION ===
-	 ******************************************************************************/
-	sys.assignCoordinates(apv,false);
-
-    /******************************************************************************
-	 *                     === COPY BACKBONE COORDINATES ===
-	 ******************************************************************************/
-	// assign the coordinates of our system to the given geometry that was assigned without energies using System pdb
-	sys.buildAllAtoms();
-	
-	// Add hydrogen bond term
-	HydrogenBondBuilder hb(sys, opt.hbondFile);
-	hb.buildInteractions(50);//when this is here, the HB weight is correct
-
-	/******************************************************************************
-	 *                     === INITIAL VARIABLE SET UP ===
-	 ******************************************************************************/
-	// Initialize EnergySet that contains energies for the chosen terms for our design
-	EnergySet* Eset = sys.getEnergySet();
-	// Set all terms active, besides Charmm-Elec
-	Eset->setAllTermsInactive();
-	Eset->setTermActive("CHARMM_VDW", true);
-	Eset->setTermActive("SCWRL4_HBOND", true);
-	Eset->setTermActive("CHARMM_IMM1REF", true);
-	Eset->setTermActive("CHARMM_IMM1", true);
-
-	// Set weights
-	Eset->setWeight("CHARMM_VDW", opt.weight_vdw);
-	Eset->setWeight("SCWRL4_HBOND", opt.weight_hbond);
-	Eset->setWeight("CHARMM_IMM1REF", opt.weight_solv);
-	Eset->setWeight("CHARMM_IMM1", opt.weight_solv);
-
-	// removes all bonding near the termini of our helices for a list of interactions
-    deleteTerminalBondInteractions(sys,opt.deleteTerminalInteractions);
-	
-	// initialize the object for loading rotamers into our system
-	SystemRotamerLoader sysRot(sys, opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
-	
-    // loading rotamers
-	loadRotamers(sys, sysRot, opt.SL);
-	CSB.updateNonBonded(10,12,50);
-
-	/******************************************************************************
-	 *                  === GREEDY TO OPTIMIZE ROTAMERS ===
-	 ******************************************************************************/
+	// Setup random number generator
 	RandomNumberGenerator RNG;
 	RNG.setSeed(opt.seed); 
 
-	// Optimize Initial Starting Position
-	SelfPairManager spm;
-	spm.seed(RNG.getSeed());
-	spm.setSystem(&sys);
-	spm.setVerbose(false);
-	spm.getMinStates()[0];
-	spm.updateWeights();
-	spm.setOnTheFly(true);
-	spm.saveEnergiesByTerm(true);
-	spm.calculateEnergies();
-
-	repackSideChains(spm, opt.greedyCycles);
-	vector<uint> stateVec = spm.getMinStates()[0];
-	sys.setActiveRotamers(stateVec);
-	
-	double dimer = sys.calcEnergy();
-    cout << "Dimer Energy: " << dimer << endl;
-    cout << Eset->getSummary() << endl;
-	// added in way to get the differences between monomer and dimer for different energy terms
 	// initialize the sequenceEnergyMap
 	map<string, map<string, double>> sequenceEnergyMap;
+
 	// add in the backbone geometry repack for the sequence (adapted from my sequence design code)
 	map<string,double> geometry;
 	// add the backbone geometry to the geometry map
@@ -409,12 +212,12 @@ int main(int argc, char *argv[]){
 	geometry["axialRotation"] = opt.axialRotation;
 	geometry["zShift"] = opt.zShift;
 	
-	computeMonomerEnergy(sys, helicalAxis, opt, trans, sequenceEnergyMap, seq, RNG, sout);
-	backboneOptimizer(opt, RNG, seq, PS, apv, geometry, sequenceEnergyMap, rotamerSampling, sout);
+	//computeMonomerEnergy(sys, helicalAxis, opt, trans, sequenceEnergyMap, seq, RNG, sout);
+	backboneOptimizer(opt, RNG, seq, PS, apv, geometry, sequenceEnergyMap, sout);
 
 	// write out the summary file
 	double seed = RNG.getSeed();
-	outputFiles(opt, seed, rotamerSampling, sequenceEnergyMap, sout);
+	outputFiles(opt, seed, sequenceEnergyMap, sout);
 
 	time(&endTime);
 	diffTime = difftime (endTime, startTime);
@@ -428,6 +231,7 @@ int main(int argc, char *argv[]){
 	exit(0);
 }
 
+// not working and not of use for now; just going to run individual jobs for each mutant
 vector<string> getMutatedSequenceList(string _seq, vector<uint> _rotamerSampling, vector<string> _alternateIds, int _interfaceLevel){
 	// initialize mutated sequence list
 	vector<string> mutatedSeqList;
@@ -455,8 +259,7 @@ vector<string> getMutatedSequenceList(string _seq, vector<uint> _rotamerSampling
 	}
 	return mutatedSeqList;
 }
-void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPositionVector,
- map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout){
+void outputFiles(Options &_opt, double _seed, map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout){
 	// Setup vector to hold energy file lines
 	vector<string> energyLines;
 	// get the run parameters
@@ -464,12 +267,11 @@ void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPosit
 	stringstream enerTerms;
 	// For loop to setup the energy file
 	uint i = 0;
-	string rotamerValues = convertVectorUintToString(_rotamerSamplingPositionVector); // string of rotamer sampling number (if 4 rotamer levels, 0-3 for each position)
 	for (auto &seq : _sequenceEnergyMap){
 		stringstream seqLine;
 		string geometry = seq.first;
 		// get the interface sequence
-		seqLine << geometry << t << rotamerValues << t << _opt.interface << t << _seed << t;
+		seqLine << geometry << t << _opt.interface << t << _seed << t;
 		map<string,double> energyMap = _sequenceEnergyMap[geometry];
 		// For adding in strings to a line for the energy file; looping through the terms instead of my input terms this time; sort later
 		for (auto &ener: energyMap){
@@ -488,9 +290,9 @@ void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPosit
 	ofstream eout;
 	string eoutfile = _opt.outputDir + "/energyFile.csv";
 	eout.open(eoutfile.c_str());
-	eout << "Geometry" << t << "RotamerValues" << t << "Interface" << t << "Seed" << t;
+	eout << "Geometry" << t << "Interface" << t << "Seed" << t;
 	eout << enerTerms.str() << endl;
-	_sout << "Geometry" << t << "RotamerValues" << t << "Interface" << t << "Seed" << t;
+	_sout << "Geometry" << t << "Interface" << t << "Seed" << t;
 	_sout << enerTerms.str() << endl;
 	for (uint i=0; i<energyLines.size() ; i++){
 		eout << energyLines[i] << endl;
@@ -807,9 +609,7 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 	monoSys.clearSavedCoor("bestZ");
 	_helicalAxis.clearSavedCoor("BestMonomerAxis");
 	_helicalAxis.clearSavedCoor("bestZ");
-	cout << "Monomer Energy: " << monomerEnergy << endl;
 	monoSys.printEnergySummary();
-	exit(0);
 
 	// output end time
 	outputTime(clockTime, "Compute Monomer Energy End", _sout);
@@ -846,7 +646,7 @@ void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxi
 }
 
 void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _sequence, PolymerSequence _PS, AtomPointerVector &_startPdb, map<string,double> _startGeometry,
- map<string, map<string, double>> &_sequenceEnergyMapFinal, vector<uint> _rotamerSampling, ofstream &_eout){
+ map<string, map<string, double>> &_sequenceEnergyMapFinal, ofstream &_eout){
 	/*******************************************
 	 *       === HELICAL AXIS SET UP ===
 	 *******************************************/
@@ -876,12 +676,14 @@ void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _seque
 
 	sys.assignCoordinates(_startPdb,false);
 	
+	double dimer = sys.calcEnergy();
+    cout << "Dimer Energy: " << dimer << endl;
+	sys.printEnergySummary();
 	// initialize the object for loading rotamers into system
 	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
 	sysRot.defineRotamerSamplingLevels();
 
-	// how to define rotamer sampling levels? probably input positions?
-	loadRotamers(sys, sysRot, _opt.useSasaBurial, _opt.sasaRepackLevel, _opt.SL, _rotamerSampling);
+	loadRotamers(sys, sysRot, _opt.SL);
 	
 	// Optimize Initial Starting Position
 	SelfPairManager spm;
@@ -893,12 +695,12 @@ void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _seque
 	spm.setOnTheFly(true);
 	spm.saveEnergiesByTerm(true);
 	spm.calculateEnergies();
-    
-	repackSideChains(spm, _opt.greedyCycles);
+	//repackSideChains(spm, _opt.greedyCycles);
+	repackSideChains(spm, 50);
 	vector<uint> stateVec = spm.getMinStates()[0];
 	sys.setActiveRotamers(stateVec);
 	
-	double dimer = sys.calcEnergy();
+	dimer = sys.calcEnergy();
     cout << "Dimer Energy: " << dimer << endl;
     sys.printEnergySummary();
 	/******************************************************************************
@@ -1030,7 +832,6 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	double bestEnergy = currentEnergy;
 	double prevBestEnergy = currentEnergy;
 	MCMngr.setEner(currentEnergy);
-	//double startDimer = _prevBestEnergy;
 
 	// setup variables for shifts: ensures that they start from the proper values for every repack and not just the final value from the initial repack
 	bool decreaseMoveSize = _opt.decreaseMoveSize;
@@ -1039,6 +840,8 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	double deltaAx = _opt.deltaAx;
 	double deltaZ = _opt.deltaZ;
 
+	_sys.saveAltCoor("savedRepackState");
+	_helicalAxis.saveAltCoor("BestRepack");
 	// uncomment the below and add the end of the accept to output the geometry trajectory pdb
 	//PDBWriter writer;
 	//writer.open(_opt.outputDir + "/bbRepack_"+to_string(_rep)+".pdb");
@@ -1125,6 +928,8 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	time(&endTimeMC);
 	diffTimeMC = difftime (endTimeMC, startTimeMC);
 	_sys.applySavedCoor("savedRepackState");
+	_helicalAxis.applySavedCoor("BestRepack");
+	repackSideChains(_spm, _opt.greedyCycles);
 	double dimerEnergy = _spm.getStateEnergy(MCOBest);
 	double finalEnergy = dimerEnergy-_monomerEnergy;
 	
