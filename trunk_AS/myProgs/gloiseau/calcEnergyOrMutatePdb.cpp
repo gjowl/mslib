@@ -164,6 +164,7 @@ void calculateStartSequenceEnergy(Options &_opt, AtomPointerVector &_pdb, string
     cout << "Dimer Energy: " << dimer << endl;
 	sys.calcEnergy();
     cout << Eset->getSummary() << endl;
+	exit(0);
 	
 	// Add energy to sequence energy map
 	map<string,double> &energyMap = _sequenceEnergyMap[_sequence];
@@ -299,7 +300,7 @@ int main(int argc, char *argv[]){
 	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
 	
 	// Transformation to zShift, axialRotation, crossingAngle, and xShift
-	transformation(apvChainA, apvChainB, axisA, axisB, ori, xAxis, zAxis, opt.zShift, opt.crossingAngle, opt.axialRotation, opt.xShift, trans);
+	//transformation(apvChainA, apvChainB, axisA, axisB, ori, xAxis, zAxis, opt.zShift, opt.crossingAngle, opt.axialRotation, opt.xShift, trans);
 	
 	vector<uint> rotamerSampling = getRotamerLevels(opt, pdb, seq);
 
@@ -394,6 +395,9 @@ int main(int argc, char *argv[]){
 	vector<uint> stateVec = spm.getMinStates()[0];
 	sys.setActiveRotamers(stateVec);
 	
+	double dimer = sys.calcEnergy();
+    cout << "Dimer Energy: " << dimer << endl;
+    cout << Eset->getSummary() << endl;
 	// added in way to get the differences between monomer and dimer for different energy terms
 	// initialize the sequenceEnergyMap
 	map<string, map<string, double>> sequenceEnergyMap;
@@ -405,6 +409,7 @@ int main(int argc, char *argv[]){
 	geometry["axialRotation"] = opt.axialRotation;
 	geometry["zShift"] = opt.zShift;
 	
+	computeMonomerEnergy(sys, helicalAxis, opt, trans, sequenceEnergyMap, seq, RNG, sout);
 	backboneOptimizer(opt, RNG, seq, PS, apv, geometry, sequenceEnergyMap, rotamerSampling, sout);
 
 	// write out the summary file
@@ -566,8 +571,8 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
 	 ******************************************************************************/
 	// removes all bonding near the termini of our helices for a list of interactions
-    deleteTerminalBondInteractions(_sys,_opt.deleteTerminalInteractions);
-
+    deleteTerminalBondInteractions(monoSys,_opt.deleteTerminalInteractions);
+	
 	/*****************************************************************************
 	 *              === LOAD ROTAMERS FOR MONOMER & SET-UP SPM ===
 	 ******************************************************************************/
@@ -802,6 +807,9 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 	monoSys.clearSavedCoor("bestZ");
 	_helicalAxis.clearSavedCoor("BestMonomerAxis");
 	_helicalAxis.clearSavedCoor("bestZ");
+	cout << "Monomer Energy: " << monomerEnergy << endl;
+	monoSys.printEnergySummary();
+	exit(0);
 
 	// output end time
 	outputTime(clockTime, "Compute Monomer Energy End", _sout);
@@ -886,10 +894,13 @@ void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _seque
 	spm.saveEnergiesByTerm(true);
 	spm.calculateEnergies();
     
-    repackSideChains(spm, _opt.greedyCycles);
+	repackSideChains(spm, _opt.greedyCycles);
 	vector<uint> stateVec = spm.getMinStates()[0];
 	sys.setActiveRotamers(stateVec);
 	
+	double dimer = sys.calcEnergy();
+    cout << "Dimer Energy: " << dimer << endl;
+    sys.printEnergySummary();
 	/******************************************************************************
 	 *   === MONTE CARLO TO SEARCH FOR BEST SEQUENCES AND BACKBONE OPTIMIZE ===
 	 ******************************************************************************/
@@ -911,6 +922,7 @@ void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _seque
 
 	string repackDir = _opt.outputDir;
 	computeMonomerEnergy(sys, helicalAxis, _opt, trans, _sequenceEnergyMapFinal, _sequence, _RNG, _eout);
+
 	// get the monomer energy from the sequence energy map
 	double monomerEnergy = _sequenceEnergyMapFinal[_sequence]["Monomer"];
 	map<string,double> monomerEnergyTerms;

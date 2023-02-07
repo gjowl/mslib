@@ -38,18 +38,18 @@ void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTermina
 	for(int i = 0; i < chainSize; i++) {
 		Chain & thisChain = _sys.getChain(i);
 		vector<Position*>& positions = thisChain.getPositions();
-		int firstResidueNumber = positions[0]->getResidueNumber();
+		int firstResidueNumber = 0; // hardcoded, this is done stupidly but works
 		int lastResidueNumber = positions[positions.size()-1]->getResidueNumber();
-		for(int i = 0; i < 3; i++) {
+		for(int i = firstResidueNumber; i < firstResidueNumber+3; i++) {
 			// rid of hbonds from first 3 positions
 			if(firstResidueNumber <= i) {
 				atoms += positions[i]->getAtomPointers();
-				//cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
+				cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
 			}
 			// rid of hbonds from last 3 positions
 			if(lastResidueNumber > i) {
 				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
-				//cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
+				cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
 			}
 		}
 	}
