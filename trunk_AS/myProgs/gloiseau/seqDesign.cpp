@@ -1302,6 +1302,10 @@ void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vect
 	double repackEnergy = _sequenceEnergyMap[_sequence]["Total"];
 	cout << "Energy After BBoptimize: " << repackEnergy << endl;
 
+	// clear the saved repack state
+	sys.clearSavedCoor("savedRepackState");
+	_helicalAxis.clearSavedCoor("BestRepack");
+
 	// output the end time
 	outputTime(clockTime, "Backbone optimize replicate " + to_string(_rep) + " End", _sout);
 }
@@ -1379,6 +1383,8 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	double deltaAx = _opt.deltaAx;
 	double deltaZ = _opt.deltaZ;
 
+	_sys.saveAltCoor("savedRepackState");
+	_helicalAxis.saveAltCoor("BestRepack");
 	// uncomment the below and add the end of the accept to output the geometry trajectory pdb
 	//PDBWriter writer;
 	//writer.open(_opt.outputDir + "/bbRepack_"+to_string(_rep)+".pdb");
@@ -1495,6 +1501,8 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	diffTimeMC = difftime (endTimeMC, startTimeMC);
 	_bestState = MCOBest;	
 	_sys.applySavedCoor("savedRepackState");
+	_helicalAxis.applySavedCoor("BestRepack");
+	repackSideChains(_spm, _opt.greedyCycles);
 	double dimerEnergy = _spm.getStateEnergy(MCOBest);
 	double finalEnergy = dimerEnergy-_monomerEnergy;
 	

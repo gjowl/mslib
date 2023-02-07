@@ -44,12 +44,12 @@ void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTermina
 			// rid of hbonds from first 3 positions
 			if(firstResidueNumber <= i) {
 				atoms += positions[i]->getAtomPointers();
-				cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
+				//cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
 			}
 			// rid of hbonds from last 3 positions
 			if(lastResidueNumber > i) {
 				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
-				cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
+				//cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
 			}
 		}
 	}
