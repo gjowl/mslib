@@ -1763,7 +1763,7 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
 	 ******************************************************************************/
 	// removes all bonding near the termini of our helices for a list of interactions
-    deleteTerminalBondInteractions(_sys,_opt.deleteTerminalInteractions);
+    deleteTerminalBondInteractions(monoSys,_opt.deleteTerminalInteractions);
 
 	/*****************************************************************************
 	 *              === LOAD ROTAMERS FOR MONOMER & SET-UP SPM ===
