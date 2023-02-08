@@ -155,6 +155,9 @@ int main(int argc, char *argv[]){
 	AtomPointerVector & apvChainA = chainA.getAtomPointers();
 	AtomPointerVector & apvChainB = chainB.getAtomPointers();
 	
+	// write the pdb for the final state of the backbone optimization
+	writePdb(pdb, outputDir, "initialPdb");
+
 	string originalSeq = extractSequence(pdb);
 	// replace the first and last positions with the patch residues
 	// mutate the sequence here; should I add in a check to make sure that the sequence is calculate normally too?
@@ -757,9 +760,7 @@ void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _seque
 		backboneOptimizeMonteCarlo(_opt, sys, spm, energyMap, _sequence, bestState, helicalAxis, axisA, axisB, apvChainA, apvChainB,
 		 trans, _RNG, monomerEnergy, repackDir, i, _eout);
 	
-		// write the pdb for the final state of the backbone optimization
-		writePdb(sys, repackDir, to_string(i));
-
+		
 		// append the sequence energy map to the final sequence energy map by looping through the sequence energy map
 		for (auto &energy : energyMap){
 			_sequenceEnergyMapFinal[_sequence+"_"+to_string(i)][energy.first] = energy.second;
@@ -959,6 +960,9 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	
 	bbout << MCMngr.getReasonCompleted() << endl;	
 	bbout << "Monte Carlo repack complete. Time: " << diffTimeMC/60 << "min" << endl << endl;
+
+	// write the pdb for the final state of the backbone optimization
+	writePdb(_sys, _outputDir, to_string(_rep));
 
 	// clear the saved repack state
 	_sys.clearSavedCoor("savedRepackState");
