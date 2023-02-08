@@ -694,7 +694,6 @@ void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _seque
 	spm.updateWeights();
 	spm.setOnTheFly(true);
 	spm.saveEnergiesByTerm(true);
-	spm.calculateEnergies();
 	//repackSideChains(spm, _opt.greedyCycles);
 	repackSideChains(spm, 50);
 	vector<uint> stateVec = spm.getMinStates()[0];
