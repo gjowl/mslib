@@ -1148,9 +1148,7 @@ void threadThroughBB(Options &_opt, RandomNumberGenerator &_RNG, PolymerSequence
 	spm.updateWeights();
 	spm.setOnTheFly(true);
 	spm.saveEnergiesByTerm(true);
-	spm.calculateEnergies();
-    
-    repackSideChains(spm, _opt.greedyCycles);
+    repackSideChains(spm, 50);
 	vector<uint> stateVec = spm.getMinStates()[0];
 	sys.setActiveRotamers(stateVec);
 	
@@ -1296,6 +1294,8 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	double deltaAx = _opt.deltaAx;
 	double deltaZ = _opt.deltaZ;
 
+	_sys.saveAltCoor("savedRepackState");
+	_helicalAxis.saveAltCoor("BestRepack");
 	// uncomment the below and add the end of the accept to output the geometry trajectory pdb
 	//PDBWriter writer;
 	//writer.open(_opt.outputDir + "/bbRepack_"+to_string(_rep)+".pdb");
@@ -1412,6 +1412,8 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	diffTimeMC = difftime (endTimeMC, startTimeMC);
 	_bestState = MCOBest;	
 	_sys.applySavedCoor("savedRepackState");
+	_helicalAxis.applySavedCoor("BestRepack");
+	repackSideChains(_spm, _opt.greedyCycles);
 	double dimerEnergy = _spm.getStateEnergy(MCOBest);
 	double finalEnergy = dimerEnergy-_monomerEnergy;
 	
