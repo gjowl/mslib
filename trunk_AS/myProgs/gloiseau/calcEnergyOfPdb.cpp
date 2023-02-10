@@ -357,6 +357,8 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 	monohb.buildInteractions(30);
 	
 	CSBMono.updateNonBonded(10,12,50);
+	monoSys.buildAllAtoms();
+
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
 	 ******************************************************************************/
@@ -371,7 +373,7 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 	monoEset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
 	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
 	monoEset->setWeight("CHARMM_IMM1", _opt.weight_solv);
-
+	
 	/*****************************************************************************
 	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
 	 ******************************************************************************/
@@ -613,6 +615,7 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 	_helicalAxis.clearSavedCoor("BestMonomerAxis");
 	_helicalAxis.clearSavedCoor("bestZ");
 	monoSys.printEnergySummary();
+	writePdb(monoSys, _opt.outputDir, "monomer");
 
 	// output end time
 	outputTime(clockTime, "Compute Monomer Energy End", _sout);

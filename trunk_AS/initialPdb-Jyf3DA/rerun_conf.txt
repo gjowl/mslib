@@ -6,7 +6,7 @@
 #
 #    % interhelicalCoordinates --configfile 
 #
-#  Job started on Thu Oct 27 16:36:05 2022
+#  Job started on Fri Feb 10 15:03:05 2023
 #  on host , path 
 ########################################################
 
@@ -16,8 +16,7 @@
 #  NOTE: command line options take priority over the
 #        ones entered with the configuration file.
 ########################################################
-outputdir                     test1/
-filename                      /exports/home/gloiseau/Downloads/Rosetta Results/GAS3/GAS3_output/duplicated_GAS3_ignorechain_0001_ignorechain_0520.pdb
+filename                      test/initialPdb.pdb ic_test
 
 ########################################################
 #  Options from configuration file :
