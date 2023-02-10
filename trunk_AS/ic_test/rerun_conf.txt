@@ -6,7 +6,7 @@
 #
 #    % interhelicalCoordinates --configfile 
 #
-#  Job started on Fri Feb 10 15:03:05 2023
+#  Job started on Fri Feb 10 16:24:18 2023
 #  on host , path 
 ########################################################
 
@@ -16,7 +16,9 @@
 #  NOTE: command line options take priority over the
 #        ones entered with the configuration file.
 ########################################################
-filename                      test/initialPdb.pdb ic_test
+outputdir                     /exports/home/gloiseau/mslib/trunk_AS/ic_test
+numberOfCAinAlignment         4
+filename                      test/initialPdb.pdb
 
 ########################################################
 #  Options from configuration file :
