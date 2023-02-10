@@ -895,7 +895,7 @@ void findHelicalSegments(vector<vector<ResidueProperties> > & _chainResidues, ui
 					
 	// lets create the helical segments
 	for (uint i=0; i<_chainResidues.size(); i++) {
-	//	cout << "UUU adding segments for chain " << i << endl;
+		cout << "UUU adding segments for chain " << i << endl;
 		bool helixFound = false;
 		uint segStart = 0;
 		uint segEnd = 0;
@@ -929,7 +929,7 @@ void findHelicalSegments(vector<vector<ResidueProperties> > & _chainResidues, ui
 				}
 			}
 
-		//	cout << "   UUU scanning chain " << i << ", position" << j <<  endl;
+			cout << "   UUU scanning chain " << i << ", position" << j <<  endl;
 			if (!helixFound) {
 				if (_chainResidues[i][j].isLooselyHelical) {
 					// the start of a helix
@@ -937,7 +937,7 @@ void findHelicalSegments(vector<vector<ResidueProperties> > & _chainResidues, ui
 					segStart = j;
 					segEnd = j;
 					segLength = 1;
-		//			cout << "UUU found helix start at " << segStart << endl;
+					cout << "UUU found helix start at " << segStart << endl;
 				}
 				// if this residue is not bonded to the next, break the helix
 				if (!_chainResidues[i][j].isBondedPosition) { 
@@ -949,7 +949,7 @@ void findHelicalSegments(vector<vector<ResidueProperties> > & _chainResidues, ui
 					// increment the helix
 					segEnd = j;
 					segLength = segEnd - segStart + 1;
-		//			cout << "UUU increasing helix lenght, start " << segStart << ", end " << segEnd << endl;
+					cout << "UUU increasing helix lenght, start " << segStart << ", end " << segEnd << endl;
 					if (segLength >= _minSegmentSize) {
 						// if the helix is long enough, set to add it to the list
 				//		cout << "UUUU set to add helix for start " << segStart << ", end " << segEnd << endl;
@@ -965,7 +965,7 @@ void findHelicalSegments(vector<vector<ResidueProperties> > & _chainResidues, ui
 				}
 			}
 			if ((!helixFound || j==_chainResidues.size()-1) && addHelix) {
-		//		cout << "UUUU adding segment: chain " << i << ", start " << segStart << ", end " << segEnd << endl;
+				cout << "UUUU adding segment: chain " << i << ", start " << segStart << ", end " << segEnd << endl;
 				// if we found the end of the helix or we are at the end of the chain
 				// add the helix, if the addHelix flag is on
 				//_segmentList.push_back(vector<uint>(3, 0));

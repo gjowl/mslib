@@ -6,7 +6,7 @@
 #
 #    % interhelicalCoordinates --configfile 
 #
-#  Job started on Fri Feb 10 16:24:18 2023
+#  Job started on Fri Feb 10 16:53:37 2023
 #  on host , path 
 ########################################################
 
@@ -17,7 +17,7 @@
 #        ones entered with the configuration file.
 ########################################################
 outputdir                     /exports/home/gloiseau/mslib/trunk_AS/ic_test
-numberOfCAinAlignment         4
+minHelicalSegmentSize         1
 filename                      test/initialPdb.pdb
 
 ########################################################
