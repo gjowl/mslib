@@ -681,6 +681,7 @@ void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _seque
 	prepareSystem(_opt, sys, startGeom, _PS);
 
 	sys.assignCoordinates(_startPdb,false);
+	sys.buildAllAtoms();
 	
 	double dimer = sys.calcEnergy();
     cout << "Dimer Energy: " << dimer << endl;
