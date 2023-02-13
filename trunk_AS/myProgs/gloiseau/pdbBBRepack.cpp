@@ -139,6 +139,7 @@ int main(int argc, char *argv[]){
 	string originalSeq = extractSequence(pdb);
 	// replace the first and last positions with the patch residues
 	// mutate the sequence here; should I add in a check to make sure that the sequence is calculate normally too?
+	// TODO: add in option useAlaAtTermini to switch AAs to Ala at termini
 	string seq;
 	if (opt.sequence == ""){
 		seq = originalSeq;
