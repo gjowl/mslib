@@ -1,15 +1,15 @@
-Compute Monomer Energy Start Time: Fri Feb 10 11:21:30 2023
-Elapsed time of program: 1.18min
+Compute Monomer Energy Start Time: Mon Feb 13 10:17:34 2023
+Elapsed time of program: 0.279min
 
-Compute Monomer Energy End Time: Fri Feb 10 11:27:24 2023
-Elapsed time of program: 7.08min
+Compute Monomer Energy End Time: Mon Feb 13 10:18:03 2023
+Elapsed time of program: 0.752min
 
-Backbone optimize replicate 0 Start Time: Fri Feb 10 11:27:24 2023
-Elapsed time of program: 7.09min
+Backbone optimize replicate 0 Start Time: Mon Feb 13 10:18:03 2023
+Elapsed time of program: 0.753min
 
-Backbone optimize replicate 0 End Time: Fri Feb 10 11:28:18 2023
-Elapsed time of program: 7.99min
+Backbone optimize replicate 0 End Time: Mon Feb 13 10:18:07 2023
+Elapsed time of program: 0.819min
 
 Geometry,Interface,Seed,HBONDDimerOptimize,HBONDDimerPreOptimize,HBONDMonomer,IMM1DimerOptimize,IMM1DimerPreOptimize,IMM1Monomer,Monomer,MonomerSasa,OptimizeSasa,PreBBOptimizeSasa,Total,TotalPreOptimize,VDWDimerOptimize,VDWDimerPreOptimize,VDWMonomer,endAxialRotation,endAxialRotationPrime,endCrossingAngle,endXShift,endZShift,endZShiftPrime,firstRepackEnergy,preOptimizeAxialRotation,preOptimizeAxialRotationPrime,preOptimizeCrossingAngle,preOptimizeEnergy,preOptimizeXShift,preOptimizeZShift,preOptimizeZShiftPrime,replicateNumber,
-AAAYYLLGTLLGYLLSTLAAA_0,000110011001100110000,1,-94.0469,-94.0469,-87.7626,-226.675,-226.675,-257.826,-337.011,4152.66,3315.73,3318.96,-15.8223,-15.8223,-32.112,-32.112,8.5769,40.27,175.337,25,9.2,4.13,5.26006,7.79282,40.27,175.337,25,-352.834,9.2,4.13,5.26006,0,
-Total Time: 8 minutes
+AAAAALLGFLVGLLTTLLAAA_0,000110011001100110000,1,-65.5987,-65.5987,-72.6415,-218.546,-218.575,-242.54,-331.533,3980.75,3435.39,3462.88,5.80658,6.82297,-41.5818,-40.537,-16.3517,90.689,228.084,-39.741,7.858,3.688,5.60926,5.80658,90.689,228.084,-39.7445,-324.71,7.858,3.688,5.60926,0,
+Total Time: 1 minutes
