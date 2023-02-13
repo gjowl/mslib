@@ -30,7 +30,7 @@ using namespace MSL;
 using namespace std;
 
 static SysEnv SYSENV;
-string programName = "bbRepackOfPdb";
+string programName = "pdbBBRepack";
 string programDescription = "Reads a PDB, does a backbone repack, and calculates the energy. Can also take an input sequence using input pdb as a backbone";
 string programAuthor = "Gilbert Loiseau";
 string programVersion = "1";
@@ -50,8 +50,8 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
  RandomNumberGenerator &_RNG, ofstream &_sout);
 Options parseOptions(int _argc, char * _argv[]);
 
-void useInputInterface(Options &_opt, string &_variablePositionString, string &_rotamerLevels, vector<int> &_interfacePositions);
 void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS);
+
 // backbone optimization functions
 void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _sequence, PolymerSequence _PS, AtomPointerVector &_startPdb, map<string,double> _startGeometry,
  map<string, map<string, double>> &_sequenceEnergyMapFinal, ofstream &_eout);
@@ -60,11 +60,6 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
  string _outputDir, int _rep, ofstream &_sout);
 
-std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &_startGeom, string _seq);
-vector<uint> getRotamerLevels(Options &_opt, System &_startGeom, string _sequence);
-void defineRotamerLevels(Options &_opt, string _sequence, vector<pair <int, double> > &_resiBurial, vector<int> &_interfacePositions,
- string &_rotamerLevels, string &_variablePositionString);
-
 // axial rotation and zShift conversion from given input ax' and z' to ax and z (Mueller 2014; Fig. S1)
 void convertToRelativeAxAndZ(double _axialRotation, double _zShift, double &_relativeAx, double &_relativeZ);
 map<string, double> getGeometryMap(map<string,double> _geometry, string _descriptor);
@@ -72,24 +67,7 @@ void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, double
 void outputFiles(Options &_opt, double _seed, map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout);
 
 // set the active identity for each position to the identity in the given sequence (only for homodimers)
-string extractSequence(System &_sys){
-	// initialize the sequence string
-	string sequence = "";
-	// get the first chain from the system
-	Chain &chain = _sys.getChain(0);
-	// loop through the chain
-	for (uint i=0; i<chain.positionSize(); i++){
-		// get the ith position in the system
-		Position &pos = chain.getPosition(i);
-		// get the residue name of the ith position
-		string res = pos.getResidueName();
-		// convert the residue name to one letter code
-		string aa = MslTools::getOneLetterCode(res);
-		// add the one letter code to the sequence string
-		sequence += aa;
-	}
-	return sequence;
-}
+string extractSequence(System &_sys);
 
 int main(int argc, char *argv[]){
 
@@ -234,34 +212,6 @@ int main(int argc, char *argv[]){
 	exit(0);
 }
 
-// not working and not of use for now; just going to run individual jobs for each mutant
-vector<string> getMutatedSequenceList(string _seq, vector<uint> _rotamerSampling, vector<string> _alternateIds, int _interfaceLevel){
-	// initialize mutated sequence list
-	vector<string> mutatedSeqList;
-	// loop through the list of rotamerSamplingLevels
-	for (uint i=0; i<_rotamerSampling.size(); i++){
-		// only change AAs between 3 and 18
-		if (i < 3 || i > _rotamerSampling.size()-3){
-			continue;
-		}
-		// get the rotamer sampling level
-		int SL = _rotamerSampling[i];
-		// check if the level is less than the interface level
-		if (SL < _interfaceLevel){
-			// if it is, then loop through the list of alternate identities
-			for(uint j = 0; j < _alternateIds.size(); j++) {
-				// get the alternate identity
-				string altId = _alternateIds[j];
-				string altAA = MslTools::getOneLetterCode(altId);
-				// mutate the sequence
-				string mutatedSeq = _seq.replace(i, i+1, altAA);
-				// add mutated sequence to list of mutation sequences
-				mutatedSeqList.push_back(mutatedSeq);
-			}
-		}
-	}
-	return mutatedSeqList;
-}
 void outputFiles(Options &_opt, double _seed, map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout){
 	// Setup vector to hold energy file lines
 	vector<string> energyLines;
@@ -1527,160 +1477,6 @@ Options parseOptions(int _argc, char * _argv[]){
 	return opt;
 }
 
-//Calculate Residue Burial and output a PDB that highlights the interface
-std::vector<pair <int, double> > calculateResidueBurial (Options &_opt, System &_startGeom, string _seq) {
-	// polymer sequences have: chain, starting position of chain residue, three letter AA code
-	string polySeq = convertToPolymerSequence(_seq, _opt.thread);
-	PolymerSequence PS(polySeq);
-
-	// Declare system for dimer
-	System sys;
-	CharmmSystemBuilder CSB(sys,_opt.topFile,_opt.parFile);
-	CSB.setBuildTerm("CHARMM_ELEC", false);
-	CSB.setBuildTerm("CHARMM_ANGL", false);
-	CSB.setBuildTerm("CHARMM_BOND", false);
-	CSB.setBuildTerm("CHARMM_DIHE", false);
-	CSB.setBuildTerm("CHARMM_IMPR", false);
-	CSB.setBuildTerm("CHARMM_U-BR", false);
-
-	CSB.setBuildNonBondedInteractions(false);
-	//CSB.setBuildNoTerms();
-
-	if(!CSB.buildSystem(PS)) {
-		cout << "Unable to build system from " << PS << endl;
-		exit(0);
-	} else {
-		//fout << "CharmmSystem built for sequence" << endl;
-	}
-	/******************************************************************************
-	 *                     === INITIAL VARIABLE SET UP ===
-	 ******************************************************************************/
-	EnergySet* Eset = sys.getEnergySet();
-	// Set all terms active, besides Charmm-Elec
-	Eset->setAllTermsInactive();
-	Eset->setTermActive("CHARMM_VDW", true);
-	Eset->setTermActive("SCWRL4_HBOND", true);
-
-	// Set weights
-	Eset->setWeight("CHARMM_VDW", 1);
-	Eset->setWeight("SCWRL4_HBOND", 1);
-
-	CSB.updateNonBonded(10,12,50);
-
-	// initialize the object for loading rotamers into our _system
-	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
-
-	// Add hydrogen bond term
-	HydrogenBondBuilder hb(sys, _opt.hbondFile);
-	hb.buildInteractions(50);//when this is here, the HB weight is correct
-
-	/******************************************************************************
-	 *                     === COPY BACKBONE COORDINATES ===
-	 ******************************************************************************/
-	sys.assignCoordinates(_startGeom.getAtomPointers(),false);
-	sys.buildAllAtoms();
-
-	string monoPolySeq = convertToPolymerSequenceNeutralPatchMonomer(_seq, 1);
-	PolymerSequence MPS(monoPolySeq);
-
-	// Declare new system
-	System monoSys;
-	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile);
-	CSBMono.setBuildTerm("CHARMM_ELEC", false);
-	CSBMono.setBuildTerm("CHARMM_ANGL", false);
-	CSBMono.setBuildTerm("CHARMM_BOND", false);
-	CSBMono.setBuildTerm("CHARMM_DIHE", false);
-	CSBMono.setBuildTerm("CHARMM_IMPR", false);
-	CSBMono.setBuildTerm("CHARMM_U-BR", false);
-
-	CSBMono.setBuildNonBondedInteractions(false);
-	if (!CSBMono.buildSystem(MPS)){
-		cerr << "Unable to build system from " << monoPolySeq << endl;
-	}
-
-	/******************************************************************************
-	 *                         === INITIALIZE POLYGLY ===
-	 ******************************************************************************/
-	// Read in Gly-69 to use as backbone coordinate template
-	CRDReader cRead;
-	cRead.open(_opt.backboneCrd);
-	if(!cRead.read()) {
-		cerr << "Unable to read " << _opt.backboneCrd << endl;
-		exit(0);
-	}
-	cRead.close();
-
-	AtomPointerVector& glyAPV = cRead.getAtomPointers();//*/
-
-	/******************************************************************************
-	 *                         === INITIALIZE POLYGLY ===
-	 ******************************************************************************/
-	monoSys.assignCoordinates(glyAPV,false);
-	monoSys.buildAllAtoms();
-
-	std::vector<pair <int, double> > residueBurial;
-	SasaCalculator dimerSasa(sys.getAtomPointers());
-	SasaCalculator monoSasa(monoSys.getAtomPointers());
-	dimerSasa.calcSasa();
-	monoSasa.calcSasa();
-	dimerSasa.setTempFactorWithSasa(true);
-
-	for (uint i = 0; i < monoSys.positionSize(); i++) {//Changed this to account for linked positions in the dimer; gives each AA same number of rotamers as correspnding chain
-		string posIdMonomer = monoSys.getPosition(i).getPositionId();
-		string posIdDimer = sys.getPosition(i).getPositionId();
-		double resiSasaMonomer = monoSasa.getResidueSasa(posIdMonomer);
-		double resiSasaDimer = dimerSasa.getResidueSasa(posIdDimer);
-		double burial = resiSasaDimer/resiSasaMonomer;
-		residueBurial.push_back(pair<int,double>(i, burial));
-
-		//set sasa for each residue in the b-factor
-		AtomSelection selA(sys.getPosition(i).getAtomPointers());
-		AtomSelection selB(sys.getPosition(i+_opt.sequence.length()).getAtomPointers());
-		AtomPointerVector atomsA = selA.select("all");
-		AtomPointerVector atomsB = selB.select("all");
-		for (AtomPointerVector::iterator k=atomsA.begin(); k!=atomsA.end();k++) {
-			// set the residue sasa in the b-factor
-			(*k)->setTempFactor(burial);
-		}
-		for (AtomPointerVector::iterator k=atomsB.begin(); k!=atomsB.end();k++) {
-			// set the residue sasa in the b-factor
-			(*k)->setTempFactor(burial);
-		}
-	}
-	// sort in descending order of burial (most buried first)
-	sort(residueBurial.begin(), residueBurial.end(), [](auto &left, auto &right) {
-			return left.second < right.second;
-	});
-	return residueBurial;
-}
-
-vector<uint> getRotamerLevels(Options &_opt, System &_startGeom, string _sequence){
-	// generate a backboneSequence to determine the interface positions using residue burial (defaults to poly-Valine sequence)
-	string polyVal = generateString("V", _sequence.length());
-
-	// save into vector of backbone positions and residue burial pairs
-	vector<pair <int, double> > resiBurial = calculateResidueBurial(_opt, _startGeom, polyVal);
-	vector<int> interfacePositions;
-	
-	// setup 0 string to represent variable positions and rotamer levels
-	string variablePositionString = generateString("0", _sequence.length());
-	string rotamerLevels = generateString("0", _sequence.length());
-	
-	// define rotamer levels for each position based on residue burial
-	defineRotamerLevels(_opt, _sequence, resiBurial, interfacePositions, rotamerLevels, variablePositionString);
-
-	// checks if interface is defined; if so, check the position and set those positions to the highest rotamer level, keeping the rest of the residue burial levels
-	if (_opt.interface != ""){
-		interfacePositions.clear(); // reset the interface from the defineRotamerLevels function
-		useInputInterface(_opt, variablePositionString, rotamerLevels, interfacePositions);
-	}	
-
-	// save the rotamer levels for all positions  
-	vector<uint> rotamerSamplingPerPosition = convertStringToVectorUint(rotamerLevels); // converts the rotamer sampling for each position as a vector
-	return rotamerSamplingPerPosition;
-}
-	
 map<string, double> getGeometryMap(map<string,double> _geometry, string _descriptor){
 	// get geometries from the initial geometry map
 	double xShift = _geometry["xShift"];
@@ -1792,29 +1588,6 @@ void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, double
 	}
 }
 
-// define interface functions
-void useInputInterface(Options &_opt, string &_variablePositionString, string &_rotamerLevels, vector<int> &_interfacePositions){
-	for (uint i=3; i<_opt.interface.length()-4; i++){
-		if (_opt.interface[i] == '0'){
-			if (_variablePositionString[i] != '0'){
-				_variablePositionString.replace(_variablePositionString.begin()+i, _variablePositionString.begin()+i+1, "0");
-			}
-		} else if (_opt.interface[i] == '1'){
-			if (_rotamerLevels[i] != '0'){
-				_rotamerLevels.replace(_rotamerLevels.begin()+i, _rotamerLevels.begin()+i+1, "0");
-			}
-			if (_variablePositionString[i] == '0'){
-				_variablePositionString.replace(_variablePositionString.begin()+i, _variablePositionString.begin()+i+1, "1");
-			}
-		}
-	}
-	for (uint i=0; i<_variablePositionString.length(); i++){
-		if (_variablePositionString[i] == '1'){
-			_interfacePositions.push_back(i+_opt.thread);
-		}
-	}
-}
-
 void convertToRelativeAxAndZ(double _axialRotation, double _zShift, double &_relativeAx, double &_relativeZ){
 	// use the positive axial rotation for conversion since our axial rotations are negative
 	//double axialRotation = abs(_axialRot);
@@ -1825,30 +1598,21 @@ void convertToRelativeAxAndZ(double _axialRotation, double _zShift, double &_rel
 	_relativeZ = (10*_zShift/9)+(0.15*axialRotation/9);
 }
 
-// define the rotamer levels for each position based on residue burial
-void defineRotamerLevels(Options &_opt, string _sequence, vector<pair <int, double> > &_resiBurial, vector<int> &_interfacePositions,
- string &_rotamerLevels, string &_variablePositionString){
-	// initialize variables
-	int levelCounter = 0;
-	int numberOfRotamerLevels = _opt.sasaRepackLevel.size();
-	// loop through the residue burial values calculated above for each position (these are ordered by most to least buried)
-	for (uint i = 0; i < _resiBurial.size(); i++) {
-		double sasaPercentile = double(i) / double(_resiBurial.size()); // calculate the SASA percentile for this position
-		// if percentile is greater, move on to the next rotamer level
-		if (sasaPercentile > (levelCounter+1)/double(numberOfRotamerLevels)) {
-			levelCounter++;
-		}
-		int positionNumber = _resiBurial[i].first; // get the backbone position for this position
-		int resiNum = positionNumber+_opt.thread;
-		// check if the current interface level is below the accepted option for interface levels (SASA repack level)
-		if (levelCounter < _opt.interfaceLevel) {
-			_interfacePositions.push_back(resiNum);
-			// check to see if the position is found within the core of protein (i.e. not the first 3 residues or the last 4 residues)
-			if (positionNumber > 2 && positionNumber < _sequence.length()-4){//backbone position goes from 0-20, so numbers need to be 2 and 4 here instead of 3 and 5 to prevent changes at the interface like others
-				// replace 0 with 1 for variable positions that are found at the interface
-				_variablePositionString.replace(_variablePositionString.begin()+positionNumber, _variablePositionString.begin()+positionNumber+1, "1");
-			}
-		}
-		_rotamerLevels.replace(_rotamerLevels.begin()+positionNumber, _rotamerLevels.begin()+positionNumber+1, MslTools::intToString(levelCounter));
+string extractSequence(System &_sys){
+	// initialize the sequence string
+	string sequence = "";
+	// get the first chain from the system
+	Chain &chain = _sys.getChain(0);
+	// loop through the chain
+	for (uint i=0; i<chain.positionSize(); i++){
+		// get the ith position in the system
+		Position &pos = chain.getPosition(i);
+		// get the residue name of the ith position
+		string res = pos.getResidueName();
+		// convert the residue name to one letter code
+		string aa = MslTools::getOneLetterCode(res);
+		// add the one letter code to the sequence string
+		sequence += aa;
 	}
+	return sequence;
 }
