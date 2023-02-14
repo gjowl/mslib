@@ -952,11 +952,11 @@ void findHelicalSegments(vector<vector<ResidueProperties> > & _chainResidues, ui
 					cout << "UUU increasing helix lenght, start " << segStart << ", end " << segEnd << endl;
 					if (segLength >= _minSegmentSize) {
 						// if the helix is long enough, set to add it to the list
-				//		cout << "UUUU set to add helix for start " << segStart << ", end " << segEnd << endl;
 						addHelix = true;
 					}
 					// if this residue is not bonded to the next, break the helix
 					if (!_chainResidues[i][j].isBondedPosition) { 
+						cout << "UUU breaking helix at " << j << endl;
 						helixFound = false;
 					}
 				} else {
@@ -964,7 +964,9 @@ void findHelicalSegments(vector<vector<ResidueProperties> > & _chainResidues, ui
 					helixFound = false;
 				}
 			}
-			if ((!helixFound || j==_chainResidues.size()-1) && addHelix) {
+			// the below was previously j==_chainResidues.size()-1, which led to it not finding some chains. It works and finds chains for designed sequences now
+			// the axialRotation prime is a bit off, but I'm going to try to run a test with it and see if it matters too much 
+			if ((!helixFound || j==_chainResidues[i].size()-1) && addHelix) { 
 				cout << "UUUU adding segment: chain " << i << ", start " << segStart << ", end " << segEnd << endl;
 				// if we found the end of the helix or we are at the end of the chain
 				// add the helix, if the addHelix flag is on
