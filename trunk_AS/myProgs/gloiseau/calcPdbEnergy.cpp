@@ -53,6 +53,7 @@ Options parseOptions(int _argc, char * _argv[]);
 
 void useInputInterface(Options &_opt, string &_variablePositionString, string &_rotamerLevels, vector<int> &_interfacePositions);
 void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS);
+void prepareSystem(Options &_opt, System &_sys, AtomPointerVector &_pdb);
 // backbone optimization functions
 void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _sequence, PolymerSequence _PS, AtomPointerVector &_startPdb, map<string,double> _startGeometry,
  map<string, map<string, double>> &_sequenceEnergyMapFinal, ofstream &_eout);
@@ -164,30 +165,47 @@ int main(int argc, char *argv[]){
 
 	// get the sequence from the pdb
 	string sequence = extractSequence(pdb);
+	System sys;
+	prepareSystem(opt, sys, pdb.getAtomPointers());
+	
+	writePdb(sys, opt.outputDir, "preOptimize");
+	
+	RandomNumberGenerator RNG;
+	RNG.setSeed(opt.seed); 
 
+	// Optimize Initial Starting Position
+	SelfPairManager spm;
+	spm.seed(RNG.getSeed());
+	spm.setSystem(&sys);
+	spm.setVerbose(false);
+	spm.getMinStates()[0];
+	spm.updateWeights();
+	spm.setOnTheFly(true);
+	spm.saveEnergiesByTerm(true);
+	//repackSideChains(spm, _opt.greedyCycles);
+	repackSideChains(spm, 50);
+	vector<uint> stateVec = spm.getMinStates()[0];
+	sys.setActiveRotamers(stateVec);
+	writePdb(sys, opt.outputDir, "MSLOptimized");
 	// calculate the energy and add it to the sequenceEnergyMap
-	double dimerEnergy = pdb.calcEnergy();
+	double dimerEnergy = sys.calcEnergy();
 	sequenceEnergyMap[sequence]["Dimer"] = dimerEnergy;
 
-	// extract the EnergySet from the pdb
-	EnergySet *es = pdb.getEnergySet();
-
 	// loop through the energy terms
+	EnergySet *Eset = sys.getEnergySet();
 	for (uint i=0; i<opt.energyTermList.size(); i++){
 		// get the ith energy term
 		string energyTerm = opt.energyTermList[i];
 		// get the energy for the ith energy term
-		double energy = es->getTermEnergy(energyTerm);
+		double energy = Eset->getTermEnergy(energyTerm);
 		// add the term to the energy map
 		sequenceEnergyMap[sequence][energyTerm] = energy;
 	}
 
-	// need to figure out how to calculate the monomer energy of the initial pdb; usually need the helical axis to do so
-	// if the case, I think I need to first get the geometry from the pdb to do so; workout interhelical coordinates to do so
-	
+	// print the energy
+	sys.printEnergySummary();
 
 	// compute the monomer energy of the initial pdb
-	//computeMonomerEnergy(pdb, helicalAxis, opt, trans, sequenceEnergyMap, seq, RNG, sout);
 	computeMonomerEnergy(pdb, opt, sequenceEnergyMap, sequence, sout);
 
 	// write out the summary file
@@ -2006,6 +2024,57 @@ void outputTime(auto _start, string _descriptor, ofstream &_sout){
 	_sout << "Elapsed time of program: " << elapsedTime.count()/60 << "min" << endl << endl;
 	cout << _descriptor << " Time: " << ctime(&endTimeFormatted);
 	cout << "Elapsed time of program: " << elapsedTime.count()/60 << "min" << endl << endl;
+}
+
+void prepareSystem(Options &_opt, System &_sys, AtomPointerVector &_pdb){
+	CharmmSystemBuilder CSB(_sys, _opt.topFile, _opt.parFile, _opt.solvFile);
+	CSB.setBuildTerm("CHARMM_ANGL", false);
+	CSB.setBuildTerm("CHARMM_BOND", false);
+	CSB.setBuildTerm("CHARMM_DIHE", false);
+	CSB.setBuildTerm("CHARMM_IMPR", false);
+	CSB.setBuildTerm("CHARMM_U-BR", false);
+	CSB.setBuildTerm("CHARMM_IMM1REF", true);
+	CSB.setBuildTerm("CHARMM_IMM1", true);
+
+	// load the membrane as solvent
+	CSB.setSolvent("MEMBRANE");
+	// set the midpoint length of the membrane and the exponential factor for the membrane (src/CharmmEnergy.cpp: IMM1ZtransFunction) 
+	CSB.setIMM1Params(15, 10);
+	// sets all nonbonded interactions to 0, excluding interactions between far atoms (src/CharmmSystemBuilder.cpp: updateNonbonded)
+	CSB.setBuildNonBondedInteractions(false);
+
+	// build the system
+	CSB.buildSystemFromPDB(_pdb);
+	
+	// Add hydrogen bond term
+	HydrogenBondBuilder hb(_sys, _opt.hbondFile);
+	hb.buildInteractions(50);//when this is here, the HB weight is correct
+
+	CSB.updateNonBonded(10,12,50);
+
+	// extract the EnergySet from the pdb
+	EnergySet *Eset = _sys.getEnergySet();
+	// Set all terms inactive and explicitly set the given terms as active
+	Eset->setAllTermsInactive();
+	Eset->setTermActive("CHARMM_VDW", true);
+	Eset->setTermActive("SCWRL4_HBOND", true);
+	Eset->setTermActive("CHARMM_IMM1REF", true);
+	Eset->setTermActive("CHARMM_IMM1", true);
+
+	// Set weights
+	Eset->setWeight("CHARMM_VDW", _opt.weight_vdw);
+	Eset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
+	Eset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
+	Eset->setWeight("CHARMM_IMM1", _opt.weight_solv);
+
+	// removes all hydrogen bonding near the termini of our helices
+    deleteTerminalBondInteractions(_sys, _opt.deleteTerminalInteractions);
+	
+	// initialize the object for loading rotamers into system
+	SystemRotamerLoader sysRot(_sys, _opt.rotLibFile);
+	sysRot.defineRotamerSamplingLevels();
+
+	loadRotamers(_sys, sysRot, _opt.SL);
 }
 
 void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS){	
