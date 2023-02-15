@@ -1,0 +1,9 @@
+Compute Monomer Energy Start Time: Tue Feb 14 20:57:30 2023
+Elapsed time of program: 0.000811min
+
+Compute Monomer Energy End Time: Tue Feb 14 20:58:15 2023
+Elapsed time of program: 0.742min
+
+Geometry,Interface,CHARMM_IMM1,CHARMM_IMM1REF,CHARMM_VDW,Dimer,HBONDMonomer,IMM1Monomer,Monomer,MonomerSasa,SCWRL4_HBOND,VDWMonomer,
+LLLAALLGFLVGLLTTLLILI,000110011001100110000,0,0,0,0,-72.6404,-234.364,-345.881,4417.46,0,-38.8771,
+Total Time: 1 minutes

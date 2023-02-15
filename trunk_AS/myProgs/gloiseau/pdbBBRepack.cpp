@@ -717,7 +717,6 @@ void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _seque
 		// backbone optimizer function
 		backboneOptimizeMonteCarlo(_opt, sys, spm, energyMap, _sequence, bestState, helicalAxis, axisA, axisB, apvChainA, apvChainB,
 		 trans, _RNG, monomerEnergy, repackDir, i, _eout);
-	
 		
 		// append the sequence energy map to the final sequence energy map by looping through the sequence energy map
 		for (auto &energy : energyMap){

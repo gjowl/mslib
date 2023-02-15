@@ -1,16 +1,11 @@
 ***STARTING GEOMETRY***
 Starting Repack Cycles
-MCReject   xShift: 9.2 crossingAngle: 25 axialRotation: 40.27 zShift: 4.0914 energy: 7.75718
-MCReject   xShift: 9.2 crossingAngle: 25 axialRotation: 40.9278 zShift: 4.13 energy: 6.35288
-MCReject   xShift: 9.2 crossingAngle: 25 axialRotation: 40.27 zShift: 3.92244 energy: 5.1871
-MCReject   xShift: 9.2 crossingAngle: 25 axialRotation: 40.27 zShift: 4.22995 energy: -13.6412
-MCReject   xShift: 9.17548 crossingAngle: 25 axialRotation: 40.27 zShift: 4.13 energy: 7.9007
-MCReject   xShift: 9.2 crossingAngle: 25 axialRotation: 40.27 zShift: 4.11474 energy: -1.72853
+MCAccept 0 xShift: 7.858 crossingAngle: -38.8731 axialRotation: 90.689 zShift: 3.688 energy: 5.10703
 End Repack Cycles
 
 ***REPACK GEOMETRY***
-Energy;        Before: -16.0385; After: -16.0385
+Energy;        Before: 6.82553; After: 5.10703
 
-Completed all cycles. Accepted 0/6
-Monte Carlo repack complete. Time: 0.766667min
+Completed all cycles. Accepted 1/1
+Monte Carlo repack complete. Time: 0.05min
 
