@@ -371,7 +371,7 @@ END";
 			Position &pos = sys.getPosition(k);
 
 			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-				if (!sysRot.loadRotamers(&pos, pos.getResidueName(),"SL95.00")) {
+				if (!sysRot.loadRotamers(&pos, pos.getResidueName(),opt.SL)) {
 					cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
 				}
 			}
@@ -572,7 +572,7 @@ END";
 			Position &pos = sys.getPosition(k);
 
 			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-				if (!sysRot.loadRotamers(&pos, pos.getResidueName(),"SL97.00")) {
+				if (!sysRot.loadRotamers(&pos, pos.getResidueName(),opt.SL)) {
 					cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
 				}
 			}
@@ -935,6 +935,7 @@ catmOptions parseOptions(int _argc, char * _argv[], catmOptions defaults) {
 	opt.allowed.push_back("pdbOutputDir");
 	opt.allowed.push_back("tmStart");
 	opt.allowed.push_back("tmEnd");
+	opt.allowed.push_back("SL");
 
 	opt.allowed.push_back("helixGeoFile");
 	opt.allowed.push_back("rulesFile");
@@ -1219,6 +1220,16 @@ catmOptions parseOptions(int _argc, char * _argv[], catmOptions defaults) {
 			opt.errorFlag = true;
 		}
 	}
+	//rotlevel
+	opt.SL = OP.getString("SL");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "SL not specified, default to SL95.00\n";
+		opt.SL = "SL95.00";
+	} else {
+		opt.SL = "SL"+opt.SL;
+	}
+
 	opt.monoRotLibFile = OP.getString("monoRotLibFile");
 	if (OP.fail()) {
 		opt.errorMessages += "monoRotLibFile not specified\n";

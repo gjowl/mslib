@@ -77,6 +77,7 @@ struct catmOptions {
 	bool verbose;
 	int greedyCycles;
 	int seed;
+	string SL;
 
 	int numberOfStructuresToMCRepack;
 	double energyCutOff;
