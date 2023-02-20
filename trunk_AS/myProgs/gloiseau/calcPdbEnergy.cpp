@@ -148,7 +148,7 @@ int main(int argc, char *argv[]){
 	 ******************************************************************************/
 	System pdb;
 	pdb.readPdb(opt.pdbFile);//gly69 pdb file; changed from the CRD file during testing to fix a bug but both work and the bug was separate
-	AtomPointerVector & apv = pdb.getAtomPointers();
+	AtomPointerVector & apv = pdb.getAllAtomPointers();
 
 	Chain & chainA = pdb.getChain("A");
 	Chain & chainB = pdb.getChain("B");
@@ -166,9 +166,10 @@ int main(int argc, char *argv[]){
 	// get the sequence from the pdb
 	string sequence = extractSequence(pdb);
 	System sys;
-	prepareSystem(opt, sys, pdb.getAtomPointers());
-	
-	writePdb(sys, opt.outputDir, "preOptimize");
+	prepareSystem(opt, sys, apv);
+
+	sys.buildAllAtoms();
+	writePdb(sys, opt.outputDir, "preOptimized");
 	
 	RandomNumberGenerator RNG;
 	RNG.setSeed(opt.seed); 
@@ -206,7 +207,7 @@ int main(int argc, char *argv[]){
 	sys.printEnergySummary();
 
 	// compute the monomer energy of the initial pdb
-	computeMonomerEnergy(pdb, opt, sequenceEnergyMap, sequence, sout);
+	computeMonomerEnergy(sys, opt, sequenceEnergyMap, sequence, sout);
 
 	// write out the summary file
 	outputFiles(opt, sequenceEnergyMap, sout);
@@ -359,7 +360,7 @@ void computeMonomerEnergy(System &_sys, Options &_opt, map<string,map<string,dou
 
 	CSBMono.setSolvent("MEMBRANE");
 	CSBMono.setIMM1Params(15, 10);
-	CSBMono.buildSystemFromPDB(inputChain.getAtomPointers());
+	CSBMono.buildSystemFromPDB(inputChain.getAllAtomPointers());
 
 	SystemRotamerLoader monoRot(monoSys, _opt.rotLibFile);
 	monoRot.defineRotamerSamplingLevels();
@@ -369,7 +370,6 @@ void computeMonomerEnergy(System &_sys, Options &_opt, map<string,map<string,dou
 	monohb.buildInteractions(30);
 	
 	CSBMono.updateNonBonded(10,12,50);
-	monoSys.buildAllAtoms();
 
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
@@ -396,6 +396,7 @@ void computeMonomerEnergy(System &_sys, Options &_opt, map<string,map<string,dou
 	 *              === LOAD ROTAMERS FOR MONOMER & SET-UP SPM ===
 	 ******************************************************************************/
 	loadRotamers(monoSys, monoRot, _opt.SL);
+	monoSys.buildAllAtoms();
 
 	// Optimize Initial Starting Position (using Baseline to get back to original result)
 	SelfPairManager monoSpm;
@@ -409,7 +410,7 @@ void computeMonomerEnergy(System &_sys, Options &_opt, map<string,map<string,dou
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
 	 ******************************************************************************/
-	AtomPointerVector &chainA = monoSys.getAtomPointers();
+	AtomPointerVector &chainA = monoSys.getAllAtomPointers();
 
 	/******************************************************************************
 	 *                     === SHIFT HELICES INTO MEMBRANE ===
@@ -605,6 +606,7 @@ void computeMonomerEnergy(System &_sys, Options &_opt, map<string,map<string,dou
 	//Calculate Monomer energy for output
 	monoSys.applySavedCoor("savedBestMonomer");
 	helicalAxis.applySavedCoor("BestMonomerAxis");
+	monoSpm.runGreedyOptimizer(_opt.greedyCycles);
 	vector<uint> stateVec = monoSpm.getMinStates()[0];
 	monoSys.setActiveRotamers(stateVec);
 	double monomerEnergy = monoSpm.getMinBound()[0]*2;
