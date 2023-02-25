@@ -308,7 +308,6 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 	monohb.buildInteractions(30);
 	
 	CSBMono.updateNonBonded(10,12,50);
-	monoSys.buildAllAtoms();
 
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
@@ -335,6 +334,7 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 	 *              === LOAD ROTAMERS FOR MONOMER & SET-UP SPM ===
 	 ******************************************************************************/
 	loadRotamers(monoSys, monoRot, _opt.SL);
+	monoSys.buildAllAtoms();
 
 	// Optimize Initial Starting Position (using Baseline to get back to original result)
 	SelfPairManager monoSpm;
@@ -644,6 +644,7 @@ void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _seque
 	sysRot.defineRotamerSamplingLevels();
 
 	loadRotamers(sys, sysRot, _opt.SL);
+	sys.buildAllAtoms();
 	writePdb(sys, _opt.outputDir, "test3");
 	
 	// Optimize Initial Starting Position
