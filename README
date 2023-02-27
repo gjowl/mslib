@@ -1,7 +1,25 @@
+If using from a windows computer:
+Install WSL (windows subsystem for linux)
 
-If using from WSL on a windows computer:
-sudo apt install make
-sudo apt install g++
+When initializing on a computer for the first time:
+    sudo apt install make
+    sudo apt install g++-10
 
-Change the .cshrc file to accomodate file paths on your computer
+Change the .cshrc file to accomodate file paths on your computer for the MSL environment variables.
 
+When running the first time, make sure to look that the -I during the make is /your/path/to/environment/variables and not /usr/lib.
+
+If it is /usr/lib, then it is likely not reading your .cshrc file. Make sure that tcsh is downloaded on your computer by running:
+    sudo apt install tcsh
+    
+Then on the command line, run csh to set your terminal to a csh terminal (in some cases it defaults to bash). Run:
+    source /path/to/.cshrc
+
+To make the objects and the binary files, first run the following in mslib/trunk_AS:
+    mkdir bin
+    mkdir objs
+
+Finally, run:
+    make
+
+This should make all of the objs and start making the binary files as well.
