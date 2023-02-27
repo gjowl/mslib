@@ -37,8 +37,9 @@
 
 # Define compiler command
 #CC  = g++ 
-CCOPTIM = g++ -Wall -Wno-sign-compare -O3 -msse3 -mfpmath=sse -funroll-loops -g 
-CCDEBUG = g++ -Wall -Wno-sign-compare -msse3 -mfpmath=sse -funroll-loops -g
+# switched to g++-10; g++-11 is not compatible with MSL
+CCOPTIM = g++-10 -Wall -Wno-sign-compare -O3 -msse3 -mfpmath=sse -funroll-loops -g 
+CCDEBUG = g++-10 -Wall -Wno-sign-compare -msse3 -mfpmath=sse -funroll-loops -g
 
 
 GSLDEFAULT = F
