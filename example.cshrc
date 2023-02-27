@@ -16,6 +16,7 @@ set smartcase
 #TODO: CHANGE LINES 18, 25, AND 26 IN FILE IF MSLIB IS EVER MOVED TO A NEW DIRECTORY
 # MSL ENVIRONMENTAL VARIABLES FOR INCLUSION OF EXTERNAL LIBRARIES
 setenv MSL_DIR "/mnt/d/github/mslib/trunk_AS"
+setenv MSL_DIR "/mnt/d/github/mslib/trunk_AS"
 
 setenv MSL_GSL T
 setenv MSL_GLPK F
