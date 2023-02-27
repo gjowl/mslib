@@ -1,2 +1,0 @@
-PDB Id	Segment 1 #	Seg 1 Chain #	Seg 1 Pos start #	Seg 1 Pos end #	Seg 1 size	Seg 1 Pos start Id	Seg 1 Pos end Id	Segment 2 #	Seg 2 Chain #	Seg 2 Pos start #	Seg 2 Pos end #	Seg 2 size	Seg 2 Pos start Id	Seg 2 Pos end Id	Helanal 1 #	Helanal 2 #	Axial distance	Local distance	Angle
-0	0	0	0	20	21	A,25,ALA	A,45,ALA	1	1	0	20	21	B,25,ALA	B,45,ALA	6	6	7.85896	7.85896	-39.7553
