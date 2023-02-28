@@ -15,7 +15,7 @@ If it is /usr/lib, then it is likely not reading your .cshrc file. Make sure tha
 Then on the command line, run csh to set your terminal to a csh terminal (in some cases it defaults to bash). Run:
     source /path/to/.cshrc
 
-To make the objects and the binary files, first run the following in mslib/trunk_AS:
+To make the objects and the binary files, first run the following in mslib/trunk_AS to make the directories needed:
     mkdir bin
     mkdir objs
 
