@@ -147,7 +147,7 @@ int main(int argc, char *argv[]){
 	 *                     === COPY BACKBONE COORDINATES ===
 	 ******************************************************************************/
 	System pdb;
-	pdb.readPdb(opt.pdbFile);
+	pdb.readPdb(opt.pdbFile,true);
 	AtomPointerVector & apv = pdb.getAllAtomPointers();
 	Chain & chainA = pdb.getChain("A");
 	Chain & chainB = pdb.getChain("B");
