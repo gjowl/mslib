@@ -147,9 +147,8 @@ int main(int argc, char *argv[]){
 	 *                     === COPY BACKBONE COORDINATES ===
 	 ******************************************************************************/
 	System pdb;
-	pdb.readPdb(opt.pdbFile);//gly69 pdb file; changed from the CRD file during testing to fix a bug but both work and the bug was separate
+	pdb.readPdb(opt.pdbFile);
 	AtomPointerVector & apv = pdb.getAllAtomPointers();
-
 	Chain & chainA = pdb.getChain("A");
 	Chain & chainB = pdb.getChain("B");
 
@@ -221,7 +220,6 @@ int main(int argc, char *argv[]){
     sout.close();
     mout.close();
     err.close();
-	exit(0);
 }
 
 // not working and not of use for now; just going to run individual jobs for each mutant
