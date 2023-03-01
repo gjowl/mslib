@@ -45,7 +45,6 @@ time_t rawtime;
 struct tm * timeinfo;
 char buffer[80];
 
-
 // Functions
 /*
 	I have left the most important functions within this code in case they need to be looked at or changed.
