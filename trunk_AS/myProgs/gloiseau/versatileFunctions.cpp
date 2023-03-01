@@ -341,20 +341,23 @@ void getCurrentMoveSizes(double &_currTemp, double &_endTemp, double &_deltaX, d
 	bool decreaseAx = false;
 	bool decreaseCross = false;
 	bool decreaseX = false;
+
+	// move to perform is the move that was just performed from the backboneMovements function
 	if (_moveToPerform == 0){
 		decreaseZ = true;
+		_deltaZ = decreaseMoveSize(_deltaZ, _deltaZLimit, decreaseMultiplier, decreaseZ);
 	} else if (_moveToPerform == 1) {
 		decreaseAx = true;
+		_deltaAx = decreaseMoveSize(_deltaAx, _deltaAxLimit, decreaseMultiplier, decreaseAx);
 	} else if (_moveToPerform == 2) {
 		decreaseCross = true;
+		_deltaCross = decreaseMoveSize(_deltaCross, _deltaCrossLimit, decreaseMultiplier, decreaseCross);
 	} else if (_moveToPerform == 3) {
 		decreaseX = true;
+		_deltaX = decreaseMoveSize(_deltaX, _deltaXLimit, decreaseMultiplier, decreaseX);
 	}
-	
-	_deltaX = decreaseMoveSize(_deltaX, _deltaXLimit, decreaseMultiplier, decreaseX);
-	_deltaCross = decreaseMoveSize(_deltaCross, _deltaCrossLimit, decreaseMultiplier, decreaseCross);
-	_deltaAx = decreaseMoveSize(_deltaAx, _deltaAxLimit, decreaseMultiplier, decreaseAx);
-	_deltaZ = decreaseMoveSize(_deltaZ, _deltaZLimit, decreaseMultiplier, decreaseZ);
+
+	// if all of the move sizes have reached their minimum, set the decrease move size boolean to false	
 	if (decreaseX == false && decreaseCross == false && decreaseAx == false && decreaseZ == false){
 		_decreaseMoveSize = false;
 	}
