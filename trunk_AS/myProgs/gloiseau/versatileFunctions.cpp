@@ -342,7 +342,7 @@ void getCurrentMoveSizes(double &_currTemp, double &_endTemp, double &_deltaX, d
 	bool decreaseCross = false;
 	bool decreaseX = false;
 	if (_moveToPerform == 0){
-		decreaseZ = true
+		decreaseZ = true;
 	} else if (_moveToPerform == 1) {
 		decreaseAx = true;
 	} else if (_moveToPerform == 2) {
