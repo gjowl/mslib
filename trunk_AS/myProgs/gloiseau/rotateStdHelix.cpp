@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 	for (uint i = 0; i < sys.getChain("A").atomSize(); i++) {
 		Atom& modifiedAtom = sys.getChain("A").getAtom(i);
 		tr.rotate(modifiedAtom, 180.0, Zaxis);
-}
+	}
 
     sys.writePdb("monomer_b.pdb");
 }
