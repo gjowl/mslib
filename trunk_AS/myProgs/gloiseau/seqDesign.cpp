@@ -1349,7 +1349,6 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 
 	// Monte Carlo Repack Manager Setup
 	MonteCarloManager MCMngr(_opt.backboneMCStartTemp, _opt.backboneMCEndTemp, _opt.backboneMCCycles, _opt.backboneMCCurve, _opt.backboneMCMaxRejects, _opt.backboneConvergedSteps, _opt.backboneConvergedE);
-
 	vector<unsigned int> MCOBest = _bestState;
 	
 	unsigned int counter = 0;
@@ -1368,11 +1367,7 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	
 	double bestEnergy = currentEnergy;
 	double prevBestEnergy = currentEnergy;
-	if (_opt.compareSasa){
-		MCMngr.setEner(bestSasa);
-	} else {
-		MCMngr.setEner(currentEnergy);
-	}
+	MCMngr.setEner(currentEnergy);
 	//double startDimer = _prevBestEnergy;
 
 	// setup variables for shifts: ensures that they start from the proper values for every repack and not just the final value from the initial repack
@@ -1438,60 +1433,31 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		vector<unsigned int> MCOFinal = _spm.getMinStates()[0];
 		currentEnergy = _spm.getMinBound()[0]-_monomerEnergy;
 		_sys.setActiveRotamers(MCOFinal);//THIS WAS NOT HERE BEFORE 2022-8-26 NIGHT! MAKE SURE IT'S IN ALL OTHER CODE, IT'S CRUCIAL TO SAVING THE STATE
-		if (_opt.compareSasa){
-			SasaCalculator startSasa(_sys.getAtomPointers());
-			startSasa.calcSasa();
-			double sasa = startSasa.getTotalSasa()-monomerSasa;
-			if (!MCMngr.accept(sasa)) {
-				bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " sasa: " << sasa << " energy: " << currentEnergy << endl;
-			} else {
-				bestEnergy = currentEnergy;
-				bestSasa = sasa;
-				_sys.saveAltCoor("savedRepackState");
-				_helicalAxis.saveAltCoor("BestRepack");
-		
-				finalXShift = finalXShift + deltaXShift;
-				finalCrossingAngle = finalCrossingAngle + deltaCrossingAngle;
-				finalAxialRotation = finalAxialRotation + deltaAxialRotation;
-				finalZShift = finalZShift + deltaZShift;
-				MCOBest = MCOFinal;
-
-				// if accept, decrease the value of the moves by the sigmoid function
-				if (decreaseMoveSize == true){
-					double endTemp = MCMngr.getCurrentT();
-					getCurrentMoveSizes(startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, _opt.deltaXLimit,
-					 _opt.deltaCrossLimit, _opt.deltaAxLimit, _opt.deltaZLimit, decreaseMoveSize);
-				}
-				bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " sasa: " << sasa << " energy: " << currentEnergy << endl;
-				counter++;
-			}
+		if (counter == 0){
+			_sequenceEnergyMap[_sequence]["firstRepackEnergy"] = currentEnergy;
+		}
+		if (!MCMngr.accept(currentEnergy)) {
+			bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " energy: " << currentEnergy << endl;
 		} else {
-			if (counter == 0){
-				_sequenceEnergyMap[_sequence]["firstRepackEnergy"] = currentEnergy;
-			}
-			if (!MCMngr.accept(currentEnergy)) {
-				bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " energy: " << currentEnergy << endl;
-			} else {
-				bestEnergy = currentEnergy;
-				_sys.saveAltCoor("savedRepackState");
-				_helicalAxis.saveAltCoor("BestRepack");
+			bestEnergy = currentEnergy;
+			_sys.saveAltCoor("savedRepackState");
+			_helicalAxis.saveAltCoor("BestRepack");
 		
-				finalXShift = finalXShift + deltaXShift;
-				finalCrossingAngle = finalCrossingAngle + deltaCrossingAngle;
-				finalAxialRotation = finalAxialRotation + deltaAxialRotation;
-				finalZShift = finalZShift + deltaZShift;
-				MCOBest = MCOFinal;
+			finalXShift = finalXShift + deltaXShift;
+			finalCrossingAngle = finalCrossingAngle + deltaCrossingAngle;
+			finalAxialRotation = finalAxialRotation + deltaAxialRotation;
+			finalZShift = finalZShift + deltaZShift;
+			MCOBest = MCOFinal;
 
-				// if accept, decrease the value of the moves by the sigmoid function
-				if (_opt.decreaseMoveSize == true){
-					double endTemp = MCMngr.getCurrentT();
-					getCurrentMoveSizes(startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, _opt.deltaXLimit,
-					_opt.deltaCrossLimit, _opt.deltaAxLimit, _opt.deltaZLimit, decreaseMoveSize);
-				}
-				bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
-				counter++;
-				//writer.write(_sys.getAtomPointers(), true, false, true);
+			// if accept, decrease the value of the moves by the sigmoid function
+			if (_opt.decreaseMoveSize == true){
+				double endTemp = MCMngr.getCurrentT();
+				getCurrentMoveSizes(startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, _opt.deltaXLimit,
+				_opt.deltaCrossLimit, _opt.deltaAxLimit, _opt.deltaZLimit, decreaseMoveSize);
 			}
+			bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
+			counter++;
+			//writer.write(_sys.getAtomPointers(), true, false, true);
 		}
 	}
 	//writer.close();
@@ -2214,7 +2180,6 @@ Options parseOptions(int _argc, char * _argv[]){
 	// use different energy parameters
 	opt.allowed.push_back("useIMM1");
 	opt.allowed.push_back("useElec");
-	opt.allowed.push_back("compareSasa");
 	
 	//Weights
 	opt.allowed.push_back("weight_vdw");
@@ -2543,12 +2508,6 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningMessages += "useElec not specified using false\n";
 		opt.warningFlag = true;
 		opt.useElec = false;
-	}
-	opt.compareSasa = OP.getBool("compareSasa");
-	if (OP.fail()) {
-		opt.warningMessages += "compareSasa not specified, defaulting to false\n";
-		opt.warningFlag = true;
-		opt.compareSasa = false;
 	}
 	
 	// starting geometry

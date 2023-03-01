@@ -50,7 +50,6 @@ struct Options{
 	// use different energy parameters
 	bool useIMM1;
 	bool useElec;
-	bool compareSasa; //TRUE: use SASA to compare backboneOptimize states OR FALSE: use energy
 
 	// repack parameters
 	int greedyCycles;
