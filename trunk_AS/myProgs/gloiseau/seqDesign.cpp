@@ -1461,7 +1461,7 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		}
 		if (!MCMngr.accept(currentEnergy)) {
 			bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " energy: " << currentEnergy << endl;
-		} else if (acceptX && acceptCross && acceptAx && acceptZ) {
+		} else if (MCMngr.accept(currentEnergy) && acceptX && acceptCross && acceptAx && acceptZ) {
 			bestEnergy = currentEnergy;
 			_sys.saveAltCoor("savedRepackState");
 			_helicalAxis.saveAltCoor("BestRepack");
