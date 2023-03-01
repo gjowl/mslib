@@ -919,7 +919,7 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 				rotamerState.push_back(statePositionIdRotamerIndeces[i-offset][2]);
 				//cout << statePositionIdRotamerIndeces[i-offset][2] << ",";
 			} else {
-				if (i > 17 && i < 24 || pos.getResidueName() == "ALA"){
+				if (i > 17 && i < 24 || pos.getResidueName() == "ALA"){//TODO: change this to be more general
 					offset++;
 				}
 			}
@@ -1368,7 +1368,6 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	double bestEnergy = currentEnergy;
 	double prevBestEnergy = currentEnergy;
 	MCMngr.setEner(currentEnergy);
-	//double startDimer = _prevBestEnergy;
 
 	// setup variables for shifts: ensures that they start from the proper values for every repack and not just the final value from the initial repack
 	bool decreaseMoveSize = _opt.decreaseMoveSize;
@@ -1391,41 +1390,38 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		_sys.applySavedCoor("savedRepackState");
 		_helicalAxis.applySavedCoor("BestRepack");
 		
-		int moveToPreform = _RNG.getRandomInt(3);
-		
+		// setup the move variables	
 		double deltaXShift = 0.0;
 		double deltaZShift = 0.0;
 		double deltaCrossingAngle = 0.0;
 		double deltaAxialRotation = 0.0; 
 		
+		// choose the move to perform	
+		int moveToPerform = _RNG.getRandomInt(3);
+		if (moveToPerform == 0) {
 		//======================================
 		//====== Z Shift (Crossing Point) ======
 		//======================================
-		if (moveToPreform == 0) {
-			//deltaZShift = getStandardNormal(RNG1) * 0.1;
 			deltaZShift = getStandardNormal(_RNG) * deltaZ;
-			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPreform);
-		} else if (moveToPreform == 1) {
+			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPerform);
+		} else if (moveToPerform == 1) {
 		//===========================
 		//===== Axial Rotation ======
 		//===========================
-			//deltaAxialRotation = getStandardNormal(_RNG1) * 1.0;
 			deltaAxialRotation = getStandardNormal(_RNG) * deltaAx;
-			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaAxialRotation, moveToPreform);
-		} else if (moveToPreform == 2) {
+			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaAxialRotation, moveToPerform);
+		} else if (moveToPerform == 2) {
 		//==================================
 		//====== Local Crossing Angle ======
 		//==================================
-			//deltaCrossingAngle = getStandardNormal(_RNG1) * 1.0;
 			deltaCrossingAngle = getStandardNormal(_RNG) * deltaCross;
-			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaCrossingAngle, moveToPreform);
-		} else if (moveToPreform == 3) {
+			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaCrossingAngle, moveToPerform);
+		} else if (moveToPerform == 3) {
 		//==============================================
 		//====== X shift (Interhelical Distance) =======
 		//==============================================
-			//deltaXShift = getStandardNormal(_RNG1) * 0.1;
 			deltaXShift = getStandardNormal(_RNG) * deltaX;
-			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaXShift, moveToPreform);
+			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaXShift, moveToPerform);
 		}
 
 		// Run optimization
@@ -1453,7 +1449,7 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 			if (_opt.decreaseMoveSize == true){
 				double endTemp = MCMngr.getCurrentT();
 				getCurrentMoveSizes(startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, _opt.deltaXLimit,
-				_opt.deltaCrossLimit, _opt.deltaAxLimit, _opt.deltaZLimit, decreaseMoveSize);
+				_opt.deltaCrossLimit, _opt.deltaAxLimit, _opt.deltaZLimit, decreaseMoveSize, moveToPerform);
 			}
 			bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
 			counter++;

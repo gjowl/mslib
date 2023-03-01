@@ -703,7 +703,7 @@ END";
 						if (decreaseMoveSize == true){
 							double endTemp = MCMngr.getCurrentT();
 							getCurrentMoveSizes(startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, opt.deltaXLimit,
-							 opt.deltaCrossLimit, opt.deltaAxLimit, opt.deltaZLimit, decreaseMoveSize);
+							 opt.deltaCrossLimit, opt.deltaAxLimit, opt.deltaZLimit, decreaseMoveSize, moveToPreform);
 						}
 					}
 				}

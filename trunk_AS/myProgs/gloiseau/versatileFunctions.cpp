@@ -333,14 +333,24 @@ double getStandardNormal(RandomNumberGenerator& RNG) {
 
 // adjust the move sizes based on the monte carlo function (decrease by multiplying by the change in temperature)
 void getCurrentMoveSizes(double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
- double _deltaXLimit, double _deltaCrossLimit, double _deltaAxLimit, double _deltaZLimit, bool &_decreaseMoveSize) {
+ double _deltaXLimit, double _deltaCrossLimit, double _deltaAxLimit, double _deltaZLimit, bool &_decreaseMoveSize, int _moveToPerform) {
 	// define the temperature change
 	double decreaseMultiplier = _endTemp/_currTemp;
 	// setup the decrease booleans; if the move size has reached its minimum, don't decrease it further and set to false
-	bool decreaseX = true;
-	bool decreaseCross = true;
-	bool decreaseAx = true;
-	bool decreaseZ = true;
+	bool decreaseZ = false;
+	bool decreaseAx = false;
+	bool decreaseCross = false;
+	bool decreaseX = false;
+	if (_moveToPerform == 0){
+		decreaseZ = true
+	} else if (_moveToPerform == 1) {
+		decreaseAx = true;
+	} else if (_moveToPerform == 2) {
+		decreaseCross = true;
+	} else if (_moveToPerform == 3) {
+		decreaseX = true;
+	}
+	
 	_deltaX = decreaseMoveSize(_deltaX, _deltaXLimit, decreaseMultiplier, decreaseX);
 	_deltaCross = decreaseMoveSize(_deltaCross, _deltaCrossLimit, decreaseMultiplier, decreaseCross);
 	_deltaAx = decreaseMoveSize(_deltaAx, _deltaAxLimit, decreaseMultiplier, decreaseAx);
