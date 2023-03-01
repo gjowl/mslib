@@ -1383,6 +1383,15 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	//writer.open(_opt.outputDir + "/bbRepack_"+to_string(_rep)+".pdb");
 	// loop through the MC cycles for backbone repacks
 	bbout << "Starting Repack Cycles" << endl; 
+	// define the min and max values for the shifts
+	double minX = xShift-0.2;
+	double maxX = xShift+0.2;
+	double minCross = crossingAngle+7;
+	double maxCross = crossingAngle-7;
+	double minAx = 0;
+	double maxAx = 100;
+	double minZ = 0;
+	double maxZ = 6;
 	while(!MCMngr.getComplete()) {
 		// get the current temperature of the MC
 		double startTemp = MCMngr.getCurrentT();
@@ -1396,6 +1405,12 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		double deltaCrossingAngle = 0.0;
 		double deltaAxialRotation = 0.0; 
 		
+		// define bool for acceptable moves
+		bool acceptX = true;
+		bool acceptCross = true;
+		bool acceptAx = true;
+		bool acceptZ = true;
+
 		// choose the move to perform	
 		int moveToPerform = _RNG.getRandomInt(3);
 		if (moveToPerform == 0) {
@@ -1404,24 +1419,36 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		//======================================
 			deltaZShift = getStandardNormal(_RNG) * deltaZ;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPerform);
+			if (finalZShift+deltaZShift > minZ && finalZShift+deltaZShift < maxZ){
+				acceptZ = false;
+			}
 		} else if (moveToPerform == 1) {
 		//===========================
 		//===== Axial Rotation ======
 		//===========================
 			deltaAxialRotation = getStandardNormal(_RNG) * deltaAx;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaAxialRotation, moveToPerform);
+			if (finalAxialRotation+deltaAxialRotation > minAx && finalAxialRotation+deltaAxialRotation < maxAx){
+				acceptAx = false;
+			}
 		} else if (moveToPerform == 2) {
 		//==================================
 		//====== Local Crossing Angle ======
 		//==================================
 			deltaCrossingAngle = getStandardNormal(_RNG) * deltaCross;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaCrossingAngle, moveToPerform);
+			if (finalCrossingAngle+deltaCrossingAngle > minCross && finalCrossingAngle+deltaCrossingAngle < maxCross){
+				acceptCross = false;
+			}
 		} else if (moveToPerform == 3) {
 		//==============================================
 		//====== X shift (Interhelical Distance) =======
 		//==============================================
 			deltaXShift = getStandardNormal(_RNG) * deltaX;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaXShift, moveToPerform);
+			if (finalXShift+deltaXShift > minX && finalXShift+deltaXShift > maxX){
+				acceptX = false;
+			}
 		}
 
 		// Run optimization
@@ -1434,7 +1461,7 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		}
 		if (!MCMngr.accept(currentEnergy)) {
 			bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " energy: " << currentEnergy << endl;
-		} else {
+		} else if (acceptX && acceptCross && acceptAx && acceptZ) {
 			bestEnergy = currentEnergy;
 			_sys.saveAltCoor("savedRepackState");
 			_helicalAxis.saveAltCoor("BestRepack");
