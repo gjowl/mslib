@@ -283,7 +283,7 @@ void backboneMovement(AtomPointerVector & _chainA, AtomPointerVector & _chainB, 
 	 if (moveType == 0) {
 		// Z Shift
 		CartesianPoint translateA = _axisA(1).getCoor() - _axisA(0).getCoor(); // vector minus helical center
-		translateA = translateA.getUnit() * _deltaMove; // unit vector of helical _axis times the amount to shift by
+		translateA = translateA.getUnit() * _deltaMove; // unit vector of helical axis times the amount to shift by
 
 		_trans.translate(_chainA, translateA);
 
@@ -342,7 +342,7 @@ void getCurrentMoveSizes(double &_currTemp, double &_endTemp, double &_deltaX, d
 	bool decreaseCross = false;
 	bool decreaseX = false;
 
-	// move to perform is the move that was just performed from the backboneMovements function
+	// move to perform is the move that was just performed from the backboneOptimizer function
 	if (_moveToPerform == 0){
 		decreaseZ = true;
 		_deltaZ = decreaseMoveSize(_deltaZ, _deltaZLimit, decreaseMultiplier, decreaseZ);
