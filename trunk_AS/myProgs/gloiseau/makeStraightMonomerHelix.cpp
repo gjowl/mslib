@@ -51,6 +51,10 @@ int main(int argc, char *argv[]){
     OptionParser OP;
 	OP.readArgv(argc, argv);
 	OP.autoExtendOptions();
+	// check if there is a config file
+	if(OP.getString("config") != "NA"){
+		OP.readFile(OP.getString("config"));
+	}
     int thread = OP.getInt("thread"); // thread of the helix
     string sequence = OP.getString("sequence"); // sequence of the helix
     string topFile = OP.getString("topFile"); // topology file
