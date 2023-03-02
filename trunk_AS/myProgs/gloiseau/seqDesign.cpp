@@ -1419,7 +1419,7 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		//======================================
 			deltaZShift = getStandardNormal(_RNG) * deltaZ;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPerform);
-			if (finalZShift+deltaZShift > minZ && finalZShift+deltaZShift < maxZ){
+			if (finalZShift+deltaZShift < minZ || finalZShift+deltaZShift > maxZ){
 				acceptZ = false;
 			}
 		} else if (moveToPerform == 1) {
@@ -1428,7 +1428,7 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		//===========================
 			deltaAxialRotation = getStandardNormal(_RNG) * deltaAx;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaAxialRotation, moveToPerform);
-			if (finalAxialRotation+deltaAxialRotation > minAx && finalAxialRotation+deltaAxialRotation < maxAx){
+			if (finalAxialRotation+deltaAxialRotation < minAx || finalAxialRotation+deltaAxialRotation > maxAx){
 				acceptAx = false;
 			}
 		} else if (moveToPerform == 2) {
@@ -1437,7 +1437,7 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		//==================================
 			deltaCrossingAngle = getStandardNormal(_RNG) * deltaCross;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaCrossingAngle, moveToPerform);
-			if (finalCrossingAngle+deltaCrossingAngle > minCross && finalCrossingAngle+deltaCrossingAngle < maxCross){
+			if (finalCrossingAngle+deltaCrossingAngle < minCross || finalCrossingAngle+deltaCrossingAngle > maxCross){
 				acceptCross = false;
 			}
 		} else if (moveToPerform == 3) {
@@ -1446,7 +1446,7 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		//==============================================
 			deltaXShift = getStandardNormal(_RNG) * deltaX;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaXShift, moveToPerform);
-			if (finalXShift+deltaXShift > minX && finalXShift+deltaXShift > maxX){
+			if (finalXShift+deltaXShift < minX || finalXShift+deltaXShift > maxX){
 				acceptX = false;
 			}
 		}
@@ -1461,26 +1461,28 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		}
 		if (!MCMngr.accept(currentEnergy)) {
 			bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " energy: " << currentEnergy << endl;
-		} else if (MCMngr.accept(currentEnergy) && acceptX && acceptCross && acceptAx && acceptZ) {
-			bestEnergy = currentEnergy;
-			_sys.saveAltCoor("savedRepackState");
-			_helicalAxis.saveAltCoor("BestRepack");
+		} else {
+			if (acceptX && acceptCross && acceptAx && acceptZ) {
+				bestEnergy = currentEnergy;
+				_sys.saveAltCoor("savedRepackState");
+				_helicalAxis.saveAltCoor("BestRepack");
 		
-			finalXShift = finalXShift + deltaXShift;
-			finalCrossingAngle = finalCrossingAngle + deltaCrossingAngle;
-			finalAxialRotation = finalAxialRotation + deltaAxialRotation;
-			finalZShift = finalZShift + deltaZShift;
-			MCOBest = MCOFinal;
+				finalXShift = finalXShift + deltaXShift;
+				finalCrossingAngle = finalCrossingAngle + deltaCrossingAngle;
+				finalAxialRotation = finalAxialRotation + deltaAxialRotation;
+				finalZShift = finalZShift + deltaZShift;
+				MCOBest = MCOFinal;
 
-			// if accept, decrease the value of the moves by the sigmoid function
-			if (_opt.decreaseMoveSize == true){
-				double endTemp = MCMngr.getCurrentT();
-				getCurrentMoveSizes(startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, _opt.deltaXLimit,
-				_opt.deltaCrossLimit, _opt.deltaAxLimit, _opt.deltaZLimit, decreaseMoveSize, moveToPerform);
+				// if accept, decrease the value of the moves by the sigmoid function
+				if (_opt.decreaseMoveSize == true){
+					double endTemp = MCMngr.getCurrentT();
+					getCurrentMoveSizes(startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, _opt.deltaXLimit,
+					_opt.deltaCrossLimit, _opt.deltaAxLimit, _opt.deltaZLimit, decreaseMoveSize, moveToPerform);
+				}
+				bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
+				counter++;
+				//writer.write(_sys.getAtomPointers(), true, false, true);
 			}
-			bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
-			counter++;
-			//writer.write(_sys.getAtomPointers(), true, false, true);
 		}
 	}
 	//writer.close();
@@ -1551,7 +1553,7 @@ void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPosit
 	// Setup vector to hold energy file lines
 	vector<string> energyLines;
 	// get the run parameters
-	string t = "\t";
+	string t = ",";
 	stringstream enerTerms;
 	// For loop to setup the energy file
 	uint i = 0;
@@ -1561,7 +1563,7 @@ void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPosit
 		string sequence = seq.first;
 		// get the interface sequence
 		string interfaceSequence = getInterfaceSequence(_opt.interfaceLevel, rotamerValues, sequence);
-		seqLine << sequence << t << rotamerValues << t << _opt.interface << t << interfaceSequence << t << _seed << t;
+		seqLine << sequence << t << rotamerValues << t << _opt.interface << t << interfaceSequence << t << _seed << t << _opt.density << t;
 		map<string,double> energyMap = _sequenceEnergyMap[sequence];
 		// For adding in strings to a line for the energy file; looping through the terms instead of my input terms this time; sort later
 		for (auto &ener: energyMap){
@@ -1580,9 +1582,9 @@ void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPosit
 	ofstream eout;
 	string eoutfile = _opt.outputDir + "/energyFile.csv";
 	eout.open(eoutfile.c_str());
-	eout << "Sequence" << t << "RotamerValues" << t << "Interface" << t << "InterfaceSequence" << t << "Seed" << t;
+	eout << "Sequence" << t << "RotamerValues" << t << "Interface" << t << "InterfaceSequence" << t << "Seed" << t << "Density" << t;
 	eout << enerTerms.str() << endl;
-	_sout << "Sequence" << t << "RotamerValues" << t << "Interface" << t << "InterfaceSequence" << t << "Seed" << t;
+	_sout << "Sequence" << t << "RotamerValues" << t << "Interface" << t << "InterfaceSequence" << t << "Seed" << t << "Density" << t;
 	_sout << enerTerms.str() << endl;
 	for (uint i=0; i<energyLines.size() ; i++){
 		eout << energyLines[i] << endl;
