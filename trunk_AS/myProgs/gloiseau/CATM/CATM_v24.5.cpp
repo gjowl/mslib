@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
 	 ******************************************************************************/
 	System sys;
 	CharmmSystemBuilder CSB(sys,opt.topFile,opt.parFile,opt.solvFile);
-	CSB.setBuildTerm("CHARMM_ELEC", true);
+	CSB.setBuildTerm("CHARMM_ELEC", false);
 	CSB.setBuildTerm("CHARMM_ANGL", false);
 	CSB.setBuildTerm("CHARMM_BOND", false);
 	CSB.setBuildTerm("CHARMM_DIHE", false);
@@ -225,7 +225,7 @@ int main(int argc, char *argv[]) {
 	EnergySet* Eset = sys.getEnergySet();
 	// Set all terms active, besides Charmm-Elec
 	Eset->setAllTermsActive();
-	Eset->setTermActive("CHARMM_ELEC", true);
+	Eset->setTermActive("CHARMM_ELEC", false);
 	Eset->setTermActive("CHARMM_ANGL", false);
 	Eset->setTermActive("CHARMM_BOND", false);
 	Eset->setTermActive("CHARMM_DIHE", false);
@@ -368,7 +368,7 @@ END";
 			Position &pos = sys.getPosition(k);
 
 			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-				if (!sysRot.loadRotamers(&pos, pos.getResidueName(),"SL95.00")) {
+				if (!sysRot.loadRotamers(&pos, pos.getResidueName(),"SL97.00")) {
 					cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
 				}
 			}
@@ -569,7 +569,7 @@ END";
 			Position &pos = sys.getPosition(k);
 
 			if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-				if (!sysRot.loadRotamers(&pos, pos.getResidueName(),"SL95.00")) {
+				if (!sysRot.loadRotamers(&pos, pos.getResidueName(),"SL97.00")) {
 					cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
 				}
 			}
