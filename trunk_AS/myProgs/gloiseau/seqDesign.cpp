@@ -1420,7 +1420,11 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 			deltaZShift = getStandardNormal(_RNG) * deltaZ;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPerform);
 			if (finalZShift+deltaZShift < minZ || finalZShift+deltaZShift > maxZ){
+<<<<<<< HEAD
 				rejectZ = true;
+=======
+				acceptZ = false;
+>>>>>>> 7b132435cf7f1c47880c2513c3fb5ee7f1b1fa20
 			}
 		} else if (moveToPerform == 1) {
 		//===========================
@@ -1429,7 +1433,11 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 			deltaAxialRotation = getStandardNormal(_RNG) * deltaAx;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaAxialRotation, moveToPerform);
 			if (finalAxialRotation+deltaAxialRotation < minAx || finalAxialRotation+deltaAxialRotation > maxAx){
+<<<<<<< HEAD
 				rejectAx = true;
+=======
+				acceptAx = false;
+>>>>>>> 7b132435cf7f1c47880c2513c3fb5ee7f1b1fa20
 			}
 		} else if (moveToPerform == 2) {
 		//==================================
@@ -1438,7 +1446,11 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 			deltaCrossingAngle = getStandardNormal(_RNG) * deltaCross;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaCrossingAngle, moveToPerform);
 			if (finalCrossingAngle+deltaCrossingAngle < minCross || finalCrossingAngle+deltaCrossingAngle > maxCross){
+<<<<<<< HEAD
 				rejectCross = true;
+=======
+				acceptCross = false;
+>>>>>>> 7b132435cf7f1c47880c2513c3fb5ee7f1b1fa20
 			}
 		} else if (moveToPerform == 3) {
 		//==============================================
@@ -1447,7 +1459,11 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 			deltaXShift = getStandardNormal(_RNG) * deltaX;
 			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaXShift, moveToPerform);
 			if (finalXShift+deltaXShift < minX || finalXShift+deltaXShift > maxX){
+<<<<<<< HEAD
 				rejectX = true;
+=======
+				acceptX = false;
+>>>>>>> 7b132435cf7f1c47880c2513c3fb5ee7f1b1fa20
 			}
 		}
 
@@ -1462,8 +1478,12 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 		if (!MCMngr.accept(currentEnergy)) {
 			bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " energy: " << currentEnergy << endl;
 		} else {
+<<<<<<< HEAD
 			// reject the change if all of the moves are rejected
 			if (!rejectX && !rejectCross && !rejectAx && !rejectZ) {
+=======
+			if (acceptX && acceptCross && acceptAx && acceptZ) {
+>>>>>>> 7b132435cf7f1c47880c2513c3fb5ee7f1b1fa20
 				bestEnergy = currentEnergy;
 				_sys.saveAltCoor("savedRepackState");
 				_helicalAxis.saveAltCoor("BestRepack");
