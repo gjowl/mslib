@@ -1,64 +1,41 @@
-#include <iostream>
 #include <sstream>
 #include <iterator>
 #include <unistd.h>
-#include <thread>
-#include <chrono>
 
 // MSL Functions
 #include "System.h"
 #include "CharmmSystemBuilder.h"
-#include "AtomSelection.h"
 #include "SystemRotamerLoader.h"
 #include "OptionParser.h"
 #include "SelfPairManager.h"
 #include "MslTools.h"
+#include "DeadEndElimination.h"
+#include "SelfConsistentMeanField.h"
 #include "HydrogenBondBuilder.h"
 #include "Transforms.h"
+#include "RandomNumberGenerator.h"
 #include "MonteCarloManager.h"
+#include "AtomSelection.h"
+#include "AtomContainer.h"
+#include "FormatConverter.h"
 #include "CRDReader.h"
+#include "CRDWriter.h"
 #include "SysEnv.h"
+#include "ResidueSelection.h"
 #include "versatileFunctions.h"
 
 using namespace MSL;
 using namespace std;
 
 static SysEnv SYSENV;
-string programName = "makeStraightMonomerHelix";
-string programDescription = "Makes a straight monomer helix for rosetta";
+string programName = "outputPdbWithNormalEnds";
+string programDescription = "converts a pdb file from msl with alternate ends (ACE and ...) to a pdb file with normal ends for use in rosetta docking";
 string programAuthor = "Gilbert Loiseau";
 string programVersion = "1";
-string programDate = "28 February 2023";
+string programDate = "3 March 2023";
 string mslVersion = MSLVERSION;
 string mslDate = MSLDATE;
 
-time_t startTime, endTime;
-double diffTime, spmTime;
-auto clockTime = chrono::system_clock::now();
-
-// initialize time variables
-time_t rawtime;
-struct tm * timeinfo;
-char buffer[80];
-
-string convertToPolymerSequenceMonomer(string _seq, int _startResNum) {
-	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
-	// A:{32}ALA ILE GLY GLY GLY
-	// B:{32}ALA ILE GLY GLY GLY
-	string ps = "";
-	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
-		stringstream ss;
-		ss << *it;
-		string resName = MslTools::getThreeLetterCode(ss.str());
-		if(resName == "HIS") {
-			ps = ps + " HSE";
-		} else {
-			ps = ps + " " + resName;
-		}
-	}
-	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
-	return "A" + ps;
-}
 int main(int argc, char *argv[]){
     // get the current working directory
     char cwd[1024];
@@ -74,20 +51,32 @@ int main(int argc, char *argv[]){
 		OP.readFile(OP.getString("config"));
 	}
     int thread = OP.getInt("thread"); // thread of the helix
-    string sequence = OP.getString("sequence"); // sequence of the helix
+	string pdbFile = OP.getString("pdbFile"); // input pdb file
     string topFile = OP.getString("topFile"); // topology file
     string parFile = OP.getString("parFile"); // parameter file
     string solvFile = OP.getString("solvFile"); // solvent file
     string backboneFile = OP.getString("backboneFile"); // backbone file
     string helicalAxisFile = OP.getString("helicalAxisFile"); // helical axis file
 
-    // make the polymer sequence
-	string polySeq = convertToPolymerSequenceMonomer(sequence, thread);
-    PolymerSequence PS(polySeq);
+	// output the command line arguments
+    cout << "Command line arguments:" << endl;
+	cout << "thread: " << thread << endl;
+	cout << "pdbFile: " << pdbFile << endl;
+	cout << "topFile: " << topFile << endl;
+	cout << "parFile: " << parFile << endl;
+	cout << "solvFile: " << solvFile << endl;
+	cout << "backboneFile: " << backboneFile << endl;
+	cout << "helicalAxisFile: " << helicalAxisFile << endl;
 
-    // load the backbone coordinates
-	System gly69;
-	gly69.readPdb(backboneFile,true);
+	// read in the input pdb file
+	System pdb;
+	pdb.readPdb(pdbFile,true);
+	// get the sequence from the pdb
+	string sequence = extractSequence(pdb);
+    // make the polymer sequence
+	string polySeq = convertToPolymerSequence(sequence, thread);
+    PolymerSequence PS(polySeq);
+	cout << PS << endl;
 
     // initialize system
     System sys;
@@ -105,19 +94,9 @@ int main(int argc, char *argv[]){
 	}
 
 	// assign the coordinates of our system to the given geometry 
-	sys.assignCoordinates(gly69.getAtomPointers(),false);
+	sys.assignCoordinates(pdb.getAtomPointers(),false);
 	sys.buildAllAtoms();
 
-    // load the helical axis coordinates
-    System helicalAxis;
-    helicalAxis.readPdb(helicalAxisFile);
-
-    // setup the Transforms object
-	Transforms trans; 
-	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
-	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
-
-    // move the system to the origin
-	moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), helicalAxis.getAtomPointers(), trans);
-	writePdb(sys, outputDir, "monomer");
+	// write the pdb
+	writePdb(sys, outputDir, "dimer");
 }

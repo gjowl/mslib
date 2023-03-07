@@ -73,25 +73,6 @@ map<string, double> getGeometryMap(map<string,double> _geometry, string _descrip
 void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, double> &_energyMap);
 void outputFiles(Options &_opt, map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout);
 
-// set the active identity for each position to the identity in the given sequence (only for homodimers)
-string extractSequence(System &_sys){
-	// initialize the sequence string
-	string sequence = "";
-	// get the first chain from the system
-	Chain &chain = _sys.getChain(0);
-	// loop through the chain
-	for (uint i=0; i<chain.positionSize(); i++){
-		// get the ith position in the system
-		Position &pos = chain.getPosition(i);
-		// get the residue name of the ith position
-		string res = pos.getResidueName();
-		// convert the residue name to one letter code
-		string aa = MslTools::getOneLetterCode(res);
-		// add the one letter code to the sequence string
-		sequence += aa;
-	}
-	return sequence;
-}
 
 int main(int argc, char *argv[]){
 

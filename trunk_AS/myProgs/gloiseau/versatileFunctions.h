@@ -63,6 +63,7 @@ void backboneMovement(AtomPointerVector & _chainA, AtomPointerVector & _chainB, 
 * general functions
  ***********************************/
 // string functions
+string extractSequence(System &_sys);
 string convertToPolymerSequence(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
 string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum);

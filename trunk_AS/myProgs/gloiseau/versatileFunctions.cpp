@@ -379,6 +379,26 @@ double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMul
 /***********************************
 * general functions
  ***********************************/
+// set the active identity for each position to the identity in the given sequence (only for homodimers)
+string extractSequence(System &_sys){
+	// initialize the sequence string
+	string sequence = "";
+	// get the first chain from the system
+	Chain &chain = _sys.getChain(0);
+	// loop through the chain
+	for (uint i=0; i<chain.positionSize(); i++){
+		// get the ith position in the system
+		Position &pos = chain.getPosition(i);
+		// get the residue name of the ith position
+		string res = pos.getResidueName();
+		// convert the residue name to one letter code
+		string aa = MslTools::getOneLetterCode(res);
+		// add the one letter code to the sequence string
+		sequence += aa;
+	}
+	return sequence;
+}
+
 string convertToPolymerSequence(string _seq, int _startResNum) {
 	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
 	// A:{32}ALA ILE GLY GLY GLY
