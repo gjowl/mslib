@@ -66,6 +66,8 @@ map<string, double> getGeometryMap(map<string,double> _geometry, string _descrip
 void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, double> &_energyMap);
 void outputFiles(Options &_opt, map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout);
 
+void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_pdb, System &_helicalAxis);
+
 
 int main(int argc, char *argv[]){
 
@@ -126,6 +128,13 @@ int main(int argc, char *argv[]){
 	Chain & chainA = pdb.getChain("A");
 	Chain & chainB = pdb.getChain("B");
 
+	// System for the helical axis that sets protein around the origin (0.0, 0.0, 0.0)
+	//System helicalAxis;
+	//helicalAxis.readPdb(opt.helicalAxis);
+	
+	//System startGeom;
+	//setGly69ToStartingGeometry(opt, startGeom, pdb, helicalAxis);
+
 	// Set up chain A and chain B atom pointer vectors
 	AtomPointerVector & apvChainA = chainA.getAtomPointers();
 	AtomPointerVector & apvChainB = chainB.getAtomPointers();
@@ -138,6 +147,9 @@ int main(int argc, char *argv[]){
 
 	// get the sequence from the pdb
 	string sequence = extractSequence(pdb);
+	string polyseq = convertToPolymerSequence(sequence, opt.thread);
+	PolymerSequence PS(polyseq);
+
 	System sys;
 	prepareSystem(opt, sys, apv);
 
@@ -288,33 +300,21 @@ void outputErrorMessage(string _message, string _optionParserErrors){
 
 
 // sets the gly69 backbone to starting geometry
-void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB,
- map<string,double> _geometry, Transforms &_trans) {
+void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_pdb, System &_helicalAxis) {
 	/******************************************************************************
 	 *         === COPY BACKBONE COORDINATES AND TRANSFORM TO GEOMETRY ===
 	 ******************************************************************************/
 	// initialize the gly69 backbone coordinates and transform it to the chosen geometry
 	_sys.readPdb(_opt.backboneFile);
 
-	// Set up chain A and chain B atom pointer vectors
-	Chain & chainA = _sys.getChain("A");
-	Chain & chainB = _sys.getChain("B");
-	AtomPointerVector & apvChainA = chainA.getAtomPointers();
-	AtomPointerVector & apvChainB = chainB.getAtomPointers();
-	
-	// Reference points for Helices
-	CartesianPoint ori(0.0,0.0,0.0);
-	CartesianPoint xAxis(1.0,0.0,0.0);
-	CartesianPoint zAxis(0.0,0.0,1.0);
-
-	double xShift = _geometry["xShift"];
-	double zShift = _geometry["zShift"];
-	double axialRotation = _geometry["axialRotation"];
-	double crossingAngle = _geometry["crossingAngle"];
+	// Set up object used for transformations
+	Transforms trans;
+	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
+	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
 
 	// Transform to chosen geometry
-	transformation(apvChainA, apvChainB, _axisA, _axisB, ori, xAxis, zAxis, zShift, axialRotation, crossingAngle, xShift, _trans);
-	moveZCenterOfCAMassToOrigin(_sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);
+	_sys.assignCoordinates(_pdb.getAtomPointers(),false);
+	moveZCenterOfCAMassToOrigin(_sys.getAtomPointers(), _helicalAxis.getAtomPointers(), trans);
 }
 
 void usage() {
@@ -796,9 +796,9 @@ Options parseOptions(int _argc, char * _argv[]){
 	}
 	opt.greedyCycles = OP.getInt("greedyCycles");
 	if (OP.fail()) {
-		opt.warningMessages += "greedyCycles not specified using 1\n";
+		opt.warningMessages += "greedyCycles not specified using 10\n";
 		opt.warningFlag = true;
-		opt.greedyCycles = 1;
+		opt.greedyCycles = 10;
 	}
 	opt.MCCycles = OP.getInt("MCCycles");
 	if (OP.fail()) {
@@ -1278,10 +1278,13 @@ void computeMonomerEnergy(System &_sys, Options &_opt, map<string,map<string,dou
 	RandomNumberGenerator RNG;
 	RNG.setSeed(_opt.seed); 
 
+	System test;
+	test.readPdb(_opt.backboneFile);
+	//Chain &inputChain = test.getChain(0);
 	Chain & inputChain = _sys.getChain(0);
 	AtomPointerVector &axisA = helicalAxis.getChain("A").getAtomPointers();
 	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
-
+	
 	// Declare new system
 	System monoSys;
 	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile, _opt.solvFile);
@@ -1297,17 +1300,15 @@ void computeMonomerEnergy(System &_sys, Options &_opt, map<string,map<string,dou
 	CSBMono.setSolvent("MEMBRANE");
 	CSBMono.setIMM1Params(15, 10);
 	// Setup polymer sequence and build the sequence using CharmmSystemBuilder
-	if(!CSBMono.buildSystem(PS)) {
-		cerr << "Unable to build system from " << PS << endl;
-		exit(0);
-	}
+	//if(!CSBMono.buildSystem(PS)) {
+	//	cerr << "Unable to build system from " << PS << endl;
+	//	exit(0);
+	//}
+	CSBMono.buildSystemFromPDB(inputChain.getAtomPointers());
 	
 	// assign the coordinates of our system to the given geometry 
 	monoSys.assignCoordinates(inputChain.getAtomPointers(),false);
 	monoSys.buildAllAtoms();
-
-	SystemRotamerLoader monoRot(monoSys, _opt.rotLibFile);
-	monoRot.defineRotamerSamplingLevels();
 
 	// Add hydrogen bond term
 	HydrogenBondBuilder monohb(monoSys, _opt.hbondFile);
@@ -1339,6 +1340,9 @@ void computeMonomerEnergy(System &_sys, Options &_opt, map<string,map<string,dou
 	/*****************************************************************************
 	 *              === LOAD ROTAMERS FOR MONOMER & SET-UP SPM ===
 	 ******************************************************************************/
+	SystemRotamerLoader monoRot(monoSys, _opt.rotLibFile);
+	monoRot.defineRotamerSamplingLevels();
+
 	loadRotamers(monoSys, monoRot, _opt.SL);
 	monoSys.buildAllAtoms();
 
@@ -1350,6 +1354,12 @@ void computeMonomerEnergy(System &_sys, Options &_opt, map<string,map<string,dou
 	monoSpm.updateWeights();
 	monoSpm.saveEnergiesByTerm(true);
 	monoSpm.calculateEnergies();
+    monoSpm.runGreedyOptimizer(_opt.greedyCycles);
+	//repackSideChains(monoSpm, 50);
+	vector<uint> testVec = monoSpm.getMinStates()[0];
+	monoSys.setActiveRotamers(testVec);
+	monoSys.calcEnergy();
+	monoSys.printEnergySummary();
 
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
@@ -1554,6 +1564,10 @@ void computeMonomerEnergy(System &_sys, Options &_opt, map<string,map<string,dou
 	vector<uint> stateVec = monoSpm.getMinStates()[0];
 	monoSys.setActiveRotamers(stateVec);
 	double monomerEnergy = monoSpm.getMinBound()[0]*2;
+	cout << "Monomer Energy: " << monomerEnergy << endl;
+	monoSys.calcEnergy();
+	monomerEnergy = monoSpm.getMinBound()[0]*2;
+	cout << "Monomer Energy: " << monomerEnergy << endl;
 
 	//Setup SasaCalculator to calculate the monomer SASA
 	SasaCalculator monoSasa(monoSys.getAtomPointers());
