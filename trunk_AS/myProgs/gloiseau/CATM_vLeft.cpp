@@ -410,7 +410,7 @@ END";
 			/******************************************************************************
 			 *                     === HYDROGEN BOND COUNT CHECK ===
 			 ******************************************************************************/
-			double xShiftStart = 0;
+			double xShiftStart = 10;
 			//if(!hydrogenBondCheck(sys, opt, parsedGeoInformation, xShiftStart)) {
 			//	fout << "less than " << opt.hbondCheckNumber << " hbonds" << endl;
 
