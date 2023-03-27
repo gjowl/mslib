@@ -80,4 +80,5 @@ vector<uint> convertStringToVectorUint(string _rotamerLevels);
 void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
   vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1);
 
+
 #endif

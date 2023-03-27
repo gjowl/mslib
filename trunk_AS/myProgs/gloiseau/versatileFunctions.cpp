@@ -623,3 +623,4 @@ vector<uint> convertStringToVectorUint(string _inputString){
 	}
 	return outputVec;
 }
+
