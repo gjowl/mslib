@@ -98,9 +98,13 @@ int main(int argc, char *argv[]){
     for (uint i=0; i<chains.size(); i++){
         chainIds.push_back(chains[i]->getChainId());
     }
-    for (uint i=0; i<chains[i].positionSize(); i++){
+    for (uint i=0; i<chains.positionSize(); i++){
         // get the previous identity of the position
-        string prevIdentity;
+        string prevIdentity = positions[i]->getActiveIdentity();
+        // check if the position is an alanine
+        if (prevIdentity == "ALA"){
+            continue;
+        }
         // loop through the chains
         for (uint j=0; chains.size(); j++){
             // get the position on the chain
