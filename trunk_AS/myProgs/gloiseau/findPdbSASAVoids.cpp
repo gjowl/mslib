@@ -37,7 +37,7 @@ string programDate = "13 Feb 2023";
 string mslVersion = MSLVERSION;
 string mslDate = MSLDATE;
 
-double getSasaAtPosition(System &_pdb, vector<string> _chainIds, int _position){
+double getSasaAtPosition(System &_pdb, vector<string> _chainIds, int _position, double &_totalSasa){
     double positionSasa = 0;
 	SasaCalculator sasa(_pdb.getAtomPointers());
 	sasa.calcSasa();
@@ -47,9 +47,9 @@ double getSasaAtPosition(System &_pdb, vector<string> _chainIds, int _position){
         // calculate the SASA of the mutated pdb
         double resiSasa = sasa.getResidueSasa(chainResi);
         positionSasa += resiSasa;
-        cout << "chainResi: " << chainResi << "; resiSasa: " << resiSasa << endl;
-        cout << sasa.getResidueSasaTable() << endl;
     }
+    // calculate the total SASA of the mutated pdb
+    _totalSasa = sasa.getTotalSasa();
     return positionSasa;
 }
 
@@ -73,6 +73,79 @@ void setupDirectory(string &_outputDir){
 		cout << "Unable to make directory" << endl;
 		exit(0);
 	}
+}
+
+map<string, map<string, double>> getMonomerSasa(System &_pdb, string _topFile, string _parFile, string _solvFile){
+	Chain & inputChain = _pdb.getChain(0);
+
+	// Declare new system
+	System monoSys;
+	CharmmSystemBuilder CSBMono(monoSys, _topFile, _parFile, _solvFile);
+	CSBMono.setSolvent("MEMBRANE");
+	CSBMono.setIMM1Params(15, 10);
+	CSBMono.buildSystemFromPDB(inputChain.getAtomPointers());
+    
+    for (uint i=0; i<inputChain.positionSize(); i++){
+        // get the position
+        Position& pos = inputChain.getPosition(i);
+        string posId = pos.getPositionId();
+        // add identity to the position
+        Residue prevResi = pos.getCurrentIdentity();
+        string resi = prevResi.getResidueName();
+        if (resi == "ALA"){
+            continue;
+        } else {
+            CSBMono.addIdentity(posId,"ALA");
+        }
+    }
+
+    // save the coordinates of the monomer
+    monoSys.saveAltCoor("start");
+
+    // get the initial sasa of the monomer
+    SasaCalculator startSasa(monoSys.getAtomPointers());
+    startSasa.calcSasa();
+    double startTotalSasa = startSasa.getTotalSasa()*2;
+
+    // get the sequence 
+    string startSeq = extractSequence(monoSys);
+
+    // initialize the map to store the SASA
+    map<string, map<string, double>> sasaMap;
+    // loop through the identities at each position and get the SASA
+    for (uint i=0; i< inputChain.positionSize(); i++){
+        // get the position on the chain
+        Position& pos = inputChain.getPosition(i);
+        Residue currResi = pos.getCurrentIdentity();
+        string resi = currResi.getResidueName();
+        string posId = pos.getPositionId();
+
+        // check if the position is an alanine
+        if (resi == "ALA"){
+            continue;
+        }
+
+        // set the identity to alanine
+        monoSys.setActiveIdentity(posId,"ALA");
+        cout << posId << endl;
+        
+        string mutantSeq = extractSequence(monoSys);
+    
+	    //Setup SasaCalculator to calculate the monomer SASA
+	    SasaCalculator monoSasa(monoSys.getAtomPointers());
+	    monoSasa.calcSasa();
+	    double monomerSasa = monoSasa.getTotalSasa();
+	    double totalMonomerSasa = monomerSasa*2;
+
+        // add values to the sasaMap
+        sasaMap[mutantSeq]["Mut_MonomerSasa"] = totalMonomerSasa;
+        sasaMap[mutantSeq]["WT_MonomerSasa"] = startTotalSasa;
+
+        // reset the monomer to the original identity and coordinates
+        monoSys.setActiveIdentity(posId,resi);
+        monoSys.applySavedCoor("start");
+    }
+    return sasaMap;
 }
 
 int main(int argc, char *argv[]){
@@ -167,7 +240,8 @@ int main(int argc, char *argv[]){
         // initialize the sasa map
         map<string,double> sasaMap;
         // get the sasa of the position
-        double startSasa = getSasaAtPosition(pdb, chainIds, chainPos);
+        double startTotalSasa = 0;
+        double startSasa = getSasaAtPosition(pdb, chainIds, chainPos, startTotalSasa);
         cout << "Start SASA: " << startSasa << endl;
 
         // switch the identity to alanine
@@ -178,13 +252,15 @@ int main(int argc, char *argv[]){
         double posSasa = positions[pos]->getSasa();
         
         // initialize the sasa for the position; make this a function and add this to before switching the aa
-        double currentSasa = getSasaAtPosition(pdb, chainIds, chainPos);
-        cout << "Current SASA: " << currentSasa << endl;
+        double mutantTotalSasa = 0;
+        double currentSasa = getSasaAtPosition(pdb, chainIds, chainPos, mutantTotalSasa);
+        cout << "Mutant SASA: " << currentSasa << endl;
 
 	    string currentSequence = extractSequence(pdb);
         sasaMap["Start"] = startSasa;
-        sasaMap["Current"] = currentSasa;
-        sasaMap["SasaDifference"] = startSasa - currentSasa;
+        sasaMap["Total"] = startTotalSasa;
+        sasaMap["Mutant"] = currentSasa;
+        sasaMap["TotalMutant"] = mutantTotalSasa;
         sequenceSasaMap[currentSequence] = sasaMap;
 
 	    // write the pdb
@@ -194,11 +270,17 @@ int main(int argc, char *argv[]){
         // reset the pdb
         pdb.applySavedCoor("start");
     }
+    map<string, map<string, double>> monomerSasas = getMonomerSasa(pdb, topFile, parFile, solvFile);
+    // append the monomer sasas to the sequence sasa map
+    for (auto it=monomerSasas.begin(); it!=monomerSasas.end(); it++){
+        sequenceSasaMap[it->first]["WT_MonomerSasa"] = it->second["WT_MonomerSasa"];
+        sequenceSasaMap[it->first]["Mut_MonomerSasa"] = it->second["Mut_MonomerSasa"];
+    }
 
     // write the sasa map to a file
     ofstream sasaFile;
     sasaFile.open(outputDir + "/" + "sasaMap.txt");
-    sasaFile << "Sequence,CurrentSasa,SasaDifference,StartSasa" << endl;
+    sasaFile << "Sequence,Mutant_MonomerSasa,Mutant_AA,SasaDifference,WT_AA,WT_Sasa,Mutant_Sasa,WT_MonomerSasa" << endl;
     for (auto it=sequenceSasaMap.begin(); it!=sequenceSasaMap.end(); it++){
         sasaFile << it->first << ",";
         for (auto it2=it->second.begin(); it2!=it->second.end(); it2++){
