@@ -65,12 +65,17 @@ void setAminoAcidAtPosition(System &_pdb, vector<Chain*> _chains, int _position,
     }
 }
 
-int main(int argc, char *argv[]){
-    // get the current working directory
-    char cwd[1024];
-    getcwd(cwd, sizeof(cwd));
-    string outputDir = string(cwd) + "/";
+void setupDirectory(string &_outputDir){
+	_outputDir = string(get_current_dir_name()) + "/" + _outputDir;
+	//_opt.outputDir = "/exports/home/gloiseau/mslib/trunk_AS/design_" + _opt.runNumber;
+	string cmd = "mkdir -p " + _outputDir;
+	if (system(cmd.c_str())){
+		cout << "Unable to make directory" << endl;
+		exit(0);
+	}
+}
 
+int main(int argc, char *argv[]){
     // parse through the command line arguments
     OptionParser OP;
 	OP.readArgv(argc, argv);
@@ -86,6 +91,7 @@ int main(int argc, char *argv[]){
     string solvFile = OP.getString("solvFile"); // solvent file
     string backboneFile = OP.getString("backboneFile"); // backbone file
     string helicalAxisFile = OP.getString("helicalAxisFile"); // helical axis file
+    string outputDir = OP.getString("outputDir"); // output directory
     vector<string> ids = OP.getStringVector("ids"); // chain ids
     vector<int> interfacePositions = OP.getIntVector("interfacePositions"); // interface positions
 
@@ -98,6 +104,9 @@ int main(int argc, char *argv[]){
 	cout << "solvFile: " << solvFile << endl;
 	cout << "backboneFile: " << backboneFile << endl;
 	cout << "helicalAxisFile: " << helicalAxisFile << endl;
+	
+    // setup the output directory
+    setupDirectory(outputDir);
 
 	// read in the input pdb file
     System pdb;
@@ -107,21 +116,20 @@ int main(int argc, char *argv[]){
     CSB.setBuildNonBondedInteractions(false);
     CSB.buildSystemFromPDB(pdbFile);
 
+	string startSequence = extractSequence(pdb);
 	PDBWriter writer;
-	writer.open(outputDir + "/" +  "test.pdb");
+	writer.open(outputDir + "/" + startSequence + "_voids.pdb");
 	writer.write(pdb.getAtomPointers(), true, false, true);
-    // save the starting state of the pdb
+
+    // save the starting state of the pdb (already repacked, don't need to load energy terms for another repack)
     pdb.saveAltCoor("start");
-    // initialize the SASA calculator
-	SasaCalculator sasa(pdb.getAtomPointers());
-	sasa.calcSasa();
-    
+
     // get the chains from the pdb
     vector<Chain*> chains = pdb.getChains();
     vector<Position*> positions = pdb.getPositions();
 
+    // get the start position and convert to a number
     string startPosition = positions[0]->getPositionId(1);
-    // convert start position to a number
     int startPos = MslTools::toInt(startPosition);
 
     // get the chains from the pdb
@@ -132,19 +140,10 @@ int main(int argc, char *argv[]){
         // add identity to the position
         Residue prevResi = positions[i]->getCurrentIdentity();
         string resi = prevResi.getResidueName();
-        //double resiSasa = sasa.getResidueSasa(posId);
-        cout << "Position " << posId << " is " << resi << endl;
         CSB.addIdentity(posId,"ALA");
-        pdb.setActiveIdentity(posId,"ALA");
-        Residue currResi = positions[i]->getCurrentIdentity();
-        string resi1 = currResi.getResidueName();
-        cout << "Position " << posId << " is " << resi1 << endl;
-        //resiSasa = sasa.getResidueSasa(posId);
-        pdb.setActiveIdentity(posId,resi);
     }
     pdb.buildAllAtoms();
 
-	
     // get the chain ids
     vector<string> chainIds;
     for (uint i=0; i<chains.size(); i++){
@@ -165,31 +164,22 @@ int main(int argc, char *argv[]){
             continue;
         }
         cout << "Position " << pos << " is " << resi << endl;
-        cout << sasa.getResidueSasaTable() << endl;
         // initialize the sasa map
         map<string,double> sasaMap;
         // get the sasa of the position
         double startSasa = getSasaAtPosition(pdb, chainIds, chainPos);
         cout << "Start SASA: " << startSasa << endl;
-	    sasa.calcSasa();
-        //cout << pdb.getAtomPointers().toString() << endl;
-	    double totalSasa = sasa.getTotalSasa();
+
+        // switch the identity to alanine
         setAminoAcidAtPosition(pdb, chains, pos, chainPos, "ALA");
         Residue currResi = positions[pos]->getCurrentIdentity();
         string resi1 = currResi.getResidueName();
         cout << "Position " << pos << " is " << resi1 << endl;
-        pdb.buildAllAtoms();
-	    sasa.calcSasa();
-	    totalSasa = sasa.getTotalSasa();
-        //cout << totalSasa << endl;
-        //cout << sasa.getResidueSasaTable() << endl;
         double posSasa = positions[pos]->getSasa();
-        //cout << "Position " << pos << " SASA: " << posSasa << endl;
         
         // initialize the sasa for the position; make this a function and add this to before switching the aa
         double currentSasa = getSasaAtPosition(pdb, chainIds, chainPos);
         cout << "Current SASA: " << currentSasa << endl;
-        exit(0);
 
 	    string currentSequence = extractSequence(pdb);
         sasaMap["Start"] = startSasa;
@@ -199,35 +189,25 @@ int main(int argc, char *argv[]){
 
 	    // write the pdb
 	    writer.write(pdb.getAtomPointers(), true, false, true);
+        // set the amino acid back to the original
         setAminoAcidAtPosition(pdb, chains, pos, chainPos, resi);
+        // reset the pdb
         pdb.applySavedCoor("start");
     }
-    cout << sasa.getResidueSasaTable() << endl;
-    exit(0);
-    
-    // TODO:
-    // 1. loop through the pdb positions
-    // 2. mutate each position on both helices to ala
-    // 3. calculate the SASA of the mutated pdb; SASA of the pdb at that position before and after that change
-    // 4. save that value to a map with the sequence as a key
-    // 5. output the map to a csv file
-    string sequence = extractSequence(pdb);
-    // make the polymer sequence
-    string polySeq = generateMultiIDPolymerSequence(sequence, thread, ids, interfacePositions);
-    PolymerSequence PS(polySeq);
-    System sys;
-    //CharmmSystemBuilder CSB(sys,topFile,parFile,solvFile);
-    //// load the membrane as solvent
-    //CSB.setSolvent("MEMBRANE");
-    //// set the midpoint length of the membrane and the exponential factor for the membrane (src/CharmmEnergy.cpp: IMM1ZtransFunction) 
-    //CSB.setIMM1Params(15, 10);
-    //// sets all nonbonded interactions to 0, excluding interactions between far atoms (src/CharmmSystemBuilder.cpp: updateNonbonded)
-    //CSB.setBuildNonBondedInteractions(false);
-    //// Setup polymer sequence and build the sequence using CharmmSystemBuilder
-    //if(!CSB.buildSystem(PS)) {
-    //	cerr << "Unable to build system from " << PS << endl;
-    //	exit(0);
-    //}
 
+    // write the sasa map to a file
+    ofstream sasaFile;
+    sasaFile.open(outputDir + "/" + "sasaMap.txt");
+    sasaFile << "Sequence,CurrentSasa,SasaDifference,StartSasa" << endl;
+    for (auto it=sequenceSasaMap.begin(); it!=sequenceSasaMap.end(); it++){
+        sasaFile << it->first << ",";
+        for (auto it2=it->second.begin(); it2!=it->second.end(); it2++){
+            sasaFile << it2->second << ",";
+        }
+        sasaFile << endl;
+    }
+    sasaFile.close();
+
+    // close the pdb writer
 	writer.close();
 }
