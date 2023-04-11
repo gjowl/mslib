@@ -181,6 +181,10 @@ int main(int argc, char *argv[]){
     // setup the output directory
     setupDirectory(outputDir);
 
+    // read in the input pdb file
+    System startGeom;
+    startGeom.readPdb(pdbFile);
+
 	// read in the input pdb file
     System pdb;
     CharmmSystemBuilder CSB(pdb,topFile,parFile,solvFile);
@@ -213,8 +217,14 @@ int main(int argc, char *argv[]){
         // add identity to the position
         Residue prevResi = positions[i]->getCurrentIdentity();
         string resi = prevResi.getResidueName();
+        // if the first or last position of a chain, remove the identity (saw issues with unbuilt atoms in the center of the pdb at 0,0,0)
+        if (i == 0 || i == chains[0]->positionSize()-1 || i == chains[0]->positionSize() || i == positions.size()-1){
+            CSB.removeIdentity(posId,resi);
+            cout << i << " " << posId << " " << resi << endl;
+        }
         CSB.addIdentity(posId,"ALA");
     }
+    pdb.assignCoordinates(startGeom.getAtomPointers());
     pdb.buildAllAtoms();
 
     // get the chain ids
@@ -224,6 +234,7 @@ int main(int argc, char *argv[]){
     }
 
     // get the SASA of mutated pdbs
+    cout << "Getting SASA of mutated pdbs" << endl;
     map<string, map<string, double>> sequenceSasaMap;
     for (uint i=0; i<chains[0]->positionSize(); i++){
         int pos = i;
@@ -231,6 +242,7 @@ int main(int argc, char *argv[]){
         // get the previous identity of the position
         Residue prevResi = positions[pos]->getCurrentIdentity();
         string resi = prevResi.getResidueName();
+        cout << pos << endl;
         // check if the position is an alanine
         if (resi == "ALA"){
             cout << "Position " << pos << " is ALA" << endl;
