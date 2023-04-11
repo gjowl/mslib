@@ -98,6 +98,13 @@ map<string, map<string, double>> getMonomerSasa(System &_pdb, string _topFile, s
             CSBMono.addIdentity(posId,"ALA");
         }
     }
+    monoSys.assignCoordinates(inputChain.getAtomPointers());
+    monoSys.buildAllAtoms();
+
+    PDBWriter pdbWriter;
+    pdbWriter.open("monomer.pdb");
+    pdbWriter.write(monoSys.getAtomPointers());
+    pdbWriter.close();
 
     // save the coordinates of the monomer
     monoSys.saveAltCoor("start");
@@ -109,6 +116,11 @@ map<string, map<string, double>> getMonomerSasa(System &_pdb, string _topFile, s
 
     // get the sequence 
     string startSeq = extractSequence(monoSys);
+    // setup the chainIds vector
+    vector<string> chainIds;
+    for (uint i=0; i<monoSys.chainSize(); i++){
+        chainIds.push_back(monoSys.getChain(i).getChainId());
+    } 
 
     // initialize the map to store the SASA
     map<string, map<string, double>> sasaMap;
@@ -119,11 +131,17 @@ map<string, map<string, double>> getMonomerSasa(System &_pdb, string _topFile, s
         Residue currResi = pos.getCurrentIdentity();
         string resi = currResi.getResidueName();
         string posId = pos.getPositionId();
+        string chainPos = pos.getPositionId(1);
+        int chainPosInt = MslTools::toInt(chainPos);
 
         // check if the position is an alanine
         if (resi == "ALA"){
             continue;
         }
+
+        double wtMonomerSasa = 0;
+        double positionWtSasa = getSasaAtPosition(monoSys, chainIds, chainPosInt, wtMonomerSasa);
+	    double totalWtMonomerSasa = wtMonomerSasa*2;
 
         // set the identity to alanine
         monoSys.setActiveIdentity(posId,"ALA");
@@ -131,13 +149,13 @@ map<string, map<string, double>> getMonomerSasa(System &_pdb, string _topFile, s
         
         string mutantSeq = extractSequence(monoSys);
     
-	    //Setup SasaCalculator to calculate the monomer SASA
-	    SasaCalculator monoSasa(monoSys.getAtomPointers());
-	    monoSasa.calcSasa();
-	    double monomerSasa = monoSasa.getTotalSasa();
-	    double totalMonomerSasa = monomerSasa*2;
+        double mutMonomerSasa = 0;
+        double positionMutSasa = getSasaAtPosition(monoSys, chainIds, chainPosInt, mutMonomerSasa);
+	    double totalMonomerSasa = mutMonomerSasa*2;
 
         // add values to the sasaMap
+        sasaMap[mutantSeq]["WT_Position_MonomerSasa"] = positionWtSasa;
+        sasaMap[mutantSeq]["Mut_Position_MonomerSasa"] = positionMutSasa;
         sasaMap[mutantSeq]["Mut_MonomerSasa"] = totalMonomerSasa;
         sasaMap[mutantSeq]["WT_MonomerSasa"] = startTotalSasa;
 
@@ -194,9 +212,7 @@ int main(int argc, char *argv[]){
     CSB.buildSystemFromPDB(pdbFile);
 
 	string startSequence = extractSequence(pdb);
-	PDBWriter writer;
-	writer.open(outputDir + "/" + startSequence + "_voids.pdb");
-	writer.write(pdb.getAtomPointers(), true, false, true);
+	
 
     // save the starting state of the pdb (already repacked, don't need to load energy terms for another repack)
     pdb.saveAltCoor("start");
@@ -220,13 +236,17 @@ int main(int argc, char *argv[]){
         // if the first or last position of a chain, remove the identity (saw issues with unbuilt atoms in the center of the pdb at 0,0,0)
         if (i == 0 || i == chains[0]->positionSize()-1 || i == chains[0]->positionSize() || i == positions.size()-1){
             CSB.removeIdentity(posId,resi);
-            cout << i << " " << posId << " " << resi << endl;
+            CSB.addIdentity(posId,resi);
+        } else {
+            CSB.addIdentity(posId,"ALA");
         }
-        CSB.addIdentity(posId,"ALA");
     }
-    pdb.assignCoordinates(startGeom.getAtomPointers());
+    pdb.assignCoordinates(startGeom.getAtomPointers(), false);
     pdb.buildAllAtoms();
 
+	PDBWriter writer;
+	writer.open(outputDir + "/" + startSequence + "_voids.pdb");
+	writer.write(pdb.getAtomPointers(), true, false, true);
     // get the chain ids
     vector<string> chainIds;
     for (uint i=0; i<chains.size(); i++){
@@ -242,7 +262,6 @@ int main(int argc, char *argv[]){
         // get the previous identity of the position
         Residue prevResi = positions[pos]->getCurrentIdentity();
         string resi = prevResi.getResidueName();
-        cout << pos << endl;
         // check if the position is an alanine
         if (resi == "ALA"){
             cout << "Position " << pos << " is ALA" << endl;
@@ -260,7 +279,6 @@ int main(int argc, char *argv[]){
         setAminoAcidAtPosition(pdb, chains, pos, chainPos, "ALA");
         Residue currResi = positions[pos]->getCurrentIdentity();
         string resi1 = currResi.getResidueName();
-        cout << "Position " << pos << " is " << resi1 << endl;
         double posSasa = positions[pos]->getSasa();
         
         // initialize the sasa for the position; make this a function and add this to before switching the aa
@@ -284,15 +302,27 @@ int main(int argc, char *argv[]){
     }
     map<string, map<string, double>> monomerSasas = getMonomerSasa(pdb, topFile, parFile, solvFile);
     // append the monomer sasas to the sequence sasa map
-    for (auto it=monomerSasas.begin(); it!=monomerSasas.end(); it++){
-        sequenceSasaMap[it->first]["WT_MonomerSasa"] = it->second["WT_MonomerSasa"];
-        sequenceSasaMap[it->first]["Mut_MonomerSasa"] = it->second["Mut_MonomerSasa"];
+    for (auto it=sequenceSasaMap.begin(); it!=sequenceSasaMap.end(); it++){
+        string sequence = it->first;
+        map<string, double> sasaMap = it->second;
+        map<string, double> monomerSasaMap = monomerSasas[sequence];
+        for (auto it2=monomerSasaMap.begin(); it2!=monomerSasaMap.end(); it2++){
+            sasaMap[it2->first] = it2->second;
+        }
+        sequenceSasaMap[sequence] = sasaMap;
     }
 
     // write the sasa map to a file
     ofstream sasaFile;
     sasaFile.open(outputDir + "/" + "sasaMap.txt");
-    sasaFile << "Sequence,Mutant_MonomerSasa,Mutant_AA,SasaDifference,WT_AA,WT_Sasa,Mutant_Sasa,WT_MonomerSasa" << endl;
+    // write the header by iterating through the first sequence
+    map<string, double> firstSequence = sequenceSasaMap.begin()->second;
+    sasaFile << "Sequence,";
+    for (auto it2=firstSequence.begin(); it2!=firstSequence.end(); it2++){
+        sasaFile << it2->first << ",";
+    }
+    sasaFile << endl;
+    // write the output sasa values
     for (auto it=sequenceSasaMap.begin(); it!=sequenceSasaMap.end(); it++){
         sasaFile << it->first << ",";
         for (auto it2=it->second.begin(); it2!=it->second.end(); it2++){
