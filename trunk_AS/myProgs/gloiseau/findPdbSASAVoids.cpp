@@ -59,7 +59,6 @@ void setAminoAcidAtPosition(System &_pdb, vector<Chain*> _chains, int _position,
         Position& pos = _chains[j]->getPosition(_position);
         string chain = _chains[j]->getChainId();
         string posId = chain+','+MslTools::intToString(_chainPosition);
-        cout << "posId: " << posId << endl;
         // switch the identity to alanine
         _pdb.setActiveIdentity(posId,_aa);
     }
@@ -145,7 +144,6 @@ map<string, map<string, double>> getMonomerSasa(System &_pdb, string _topFile, s
 
         // set the identity to alanine
         monoSys.setActiveIdentity(posId,"ALA");
-        cout << posId << endl;
         
         string mutantSeq = extractSequence(monoSys);
     
@@ -155,8 +153,8 @@ map<string, map<string, double>> getMonomerSasa(System &_pdb, string _topFile, s
 
         // add values to the sasaMap
         sasaMap[mutantSeq]["WT_Position_MonomerSasa"] = positionWtSasa;
-        sasaMap[mutantSeq]["Mut_Position_MonomerSasa"] = positionMutSasa;
-        sasaMap[mutantSeq]["Mut_MonomerSasa"] = totalMonomerSasa;
+        sasaMap[mutantSeq]["Mutant_Position_MonomerSasa"] = positionMutSasa;
+        sasaMap[mutantSeq]["Mutant_MonomerSasa"] = totalMonomerSasa;
         sasaMap[mutantSeq]["WT_MonomerSasa"] = startTotalSasa;
 
         // reset the monomer to the original identity and coordinates
@@ -212,7 +210,6 @@ int main(int argc, char *argv[]){
     CSB.buildSystemFromPDB(pdbFile);
 
 	string startSequence = extractSequence(pdb);
-	
 
     // save the starting state of the pdb (already repacked, don't need to load energy terms for another repack)
     pdb.saveAltCoor("start");
@@ -241,12 +238,15 @@ int main(int argc, char *argv[]){
             CSB.addIdentity(posId,"ALA");
         }
     }
-    pdb.assignCoordinates(startGeom.getAtomPointers(), false);
+    pdb.assignCoordinates(startGeom.getAtomPointers(), true);
     pdb.buildAllAtoms();
 
+    // write the pdb
 	PDBWriter writer;
-	writer.open(outputDir + "/" + startSequence + "_voids.pdb");
-	writer.write(pdb.getAtomPointers(), true, false, true);
+	writer.open(outputDir + "/" + startSequence + ".pdb");
+	writer.write(pdb.getAtomPointers(), true, false, false);
+    writer.close();
+
     // get the chain ids
     vector<string> chainIds;
     for (uint i=0; i<chains.size(); i++){
@@ -256,7 +256,7 @@ int main(int argc, char *argv[]){
     // get the SASA of mutated pdbs
     cout << "Getting SASA of mutated pdbs" << endl;
     map<string, map<string, double>> sequenceSasaMap;
-    for (uint i=0; i<chains[0]->positionSize(); i++){
+    for (uint i=1; i<chains[0]->positionSize()-1; i++){
         int pos = i;
         int chainPos = i+startPos;
         // get the previous identity of the position
@@ -277,29 +277,36 @@ int main(int argc, char *argv[]){
 
         // switch the identity to alanine
         setAminoAcidAtPosition(pdb, chains, pos, chainPos, "ALA");
+        pdb.buildAllAtoms();
+
         Residue currResi = positions[pos]->getCurrentIdentity();
         string resi1 = currResi.getResidueName();
         double posSasa = positions[pos]->getSasa();
-        
+
         // initialize the sasa for the position; make this a function and add this to before switching the aa
         double mutantTotalSasa = 0;
         double currentSasa = getSasaAtPosition(pdb, chainIds, chainPos, mutantTotalSasa);
         cout << "Mutant SASA: " << currentSasa << endl;
 
 	    string currentSequence = extractSequence(pdb);
-        sasaMap["Start"] = startSasa;
-        sasaMap["Total"] = startTotalSasa;
-        sasaMap["Mutant"] = currentSasa;
-        sasaMap["TotalMutant"] = mutantTotalSasa;
+        sasaMap["WT_Position_Sasa"] = startSasa;
+        sasaMap["WT_DimerSasa"] = startTotalSasa;
+        sasaMap["Mutant_Position_Sasa"] = currentSasa;
+        sasaMap["Mutant_DimerSasa"] = mutantTotalSasa;
         sequenceSasaMap[currentSequence] = sasaMap;
 
 	    // write the pdb
-	    writer.write(pdb.getAtomPointers(), true, false, true);
+	    PDBWriter writer;
+	    writer.open(outputDir + "/" + currentSequence + ".pdb");
+	    writer.write(pdb.getAtomPointers(), true, false, false);
+        writer.close();
+
         // set the amino acid back to the original
         setAminoAcidAtPosition(pdb, chains, pos, chainPos, resi);
         // reset the pdb
         pdb.applySavedCoor("start");
     }
+
     map<string, map<string, double>> monomerSasas = getMonomerSasa(pdb, topFile, parFile, solvFile);
     // append the monomer sasas to the sequence sasa map
     for (auto it=sequenceSasaMap.begin(); it!=sequenceSasaMap.end(); it++){
@@ -331,7 +338,4 @@ int main(int argc, char *argv[]){
         sasaFile << endl;
     }
     sasaFile.close();
-
-    // close the pdb writer
-	writer.close();
 }
