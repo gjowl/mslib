@@ -256,6 +256,7 @@ int main(int argc, char *argv[]){
     // get the SASA of mutated pdbs
     cout << "Getting SASA of mutated pdbs" << endl;
     map<string, map<string, double>> sequenceSasaMap;
+    // only loop through the positions that are not the first or last position of the chain
     for (uint i=1; i<chains[0]->positionSize()-1; i++){
         int pos = i;
         int chainPos = i+startPos;
