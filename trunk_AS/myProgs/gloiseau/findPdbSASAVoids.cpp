@@ -134,8 +134,9 @@ map<string, map<string, double>> getMonomerSasa(System &_pdb, string _topFile, s
         int chainPosInt = MslTools::toInt(chainPos);
 
         // check if the position is an alanine
+        bool alaResi = false;
         if (resi == "ALA"){
-            continue;
+            alaResi = true;
         }
 
         double wtMonomerSasa = 0;
@@ -152,10 +153,17 @@ map<string, map<string, double>> getMonomerSasa(System &_pdb, string _topFile, s
 	    double totalMonomerSasa = mutMonomerSasa*2;
 
         // add values to the sasaMap
-        sasaMap[mutantSeq]["WT_Position_MonomerSasa"] = positionWtSasa;
-        sasaMap[mutantSeq]["Mutant_Position_MonomerSasa"] = positionMutSasa;
-        sasaMap[mutantSeq]["Mutant_MonomerSasa"] = totalMonomerSasa;
-        sasaMap[mutantSeq]["WT_MonomerSasa"] = startTotalSasa;
+        if (alaResi){
+            sasaMap[mutantSeq+'_'+MslTools::intToString(i)]["WT_Position_MonomerSasa"] = positionWtSasa;
+            sasaMap[mutantSeq+'_'+MslTools::intToString(i)]["Mutant_Position_MonomerSasa"] = positionMutSasa;
+            sasaMap[mutantSeq+'_'+MslTools::intToString(i)]["Mutant_MonomerSasa"] = totalMonomerSasa;
+            sasaMap[mutantSeq+'_'+MslTools::intToString(i)]["WT_MonomerSasa"] = startTotalSasa;
+        } else {
+            sasaMap[mutantSeq]["WT_Position_MonomerSasa"] = positionWtSasa;
+            sasaMap[mutantSeq]["Mutant_Position_MonomerSasa"] = positionMutSasa;
+            sasaMap[mutantSeq]["Mutant_MonomerSasa"] = totalMonomerSasa;
+            sasaMap[mutantSeq]["WT_MonomerSasa"] = startTotalSasa;
+        }
 
         // reset the monomer to the original identity and coordinates
         monoSys.setActiveIdentity(posId,resi);
@@ -263,10 +271,11 @@ int main(int argc, char *argv[]){
         // get the previous identity of the position
         Residue prevResi = positions[pos]->getCurrentIdentity();
         string resi = prevResi.getResidueName();
+        bool alaResi = false;
         // check if the position is an alanine
         if (resi == "ALA"){
             cout << "Position " << pos << " is ALA" << endl;
-            continue;
+            alaResi = true;
         }
         cout << "Position " << pos << " is " << resi << endl;
         // initialize the sasa map
@@ -294,7 +303,11 @@ int main(int argc, char *argv[]){
         sasaMap["WT_DimerSasa"] = startTotalSasa;
         sasaMap["Mutant_Position_Sasa"] = currentSasa;
         sasaMap["Mutant_DimerSasa"] = mutantTotalSasa;
-        sequenceSasaMap[currentSequence] = sasaMap;
+        if (alaResi){
+            sequenceSasaMap[currentSequence+'_'+MslTools::intToString(i)] = sasaMap;
+        } else {
+            sequenceSasaMap[currentSequence] = sasaMap;
+        }
 
 	    // write the pdb
 	    PDBWriter writer;
