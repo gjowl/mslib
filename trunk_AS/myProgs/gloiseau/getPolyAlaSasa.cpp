@@ -99,6 +99,8 @@ map<string, map<string, double>> getMonomerSasa(System &_pdb, string _topFile, s
             monoSys.setActiveIdentity(posId,"ALA");
         }
     }
+    monoSys.assignCoordinates(inputChain.getAtomPointers());
+    monoSys.buildAllAtoms();
 
     // save the coordinates of the monomer
     monoSys.saveAltCoor("start");
@@ -170,6 +172,10 @@ int main(int argc, char *argv[]){
 	
     // setup the output directory
     setupDirectory(outputDir);
+    
+    // read in the input pdb file
+    System startGeom;
+    startGeom.readPdb(pdbFile);
 
 	// read in the input pdb file
     System pdb;
@@ -178,7 +184,6 @@ int main(int argc, char *argv[]){
     CSB.setIMM1Params(15, 10);
     CSB.setBuildNonBondedInteractions(false);
     CSB.buildSystemFromPDB(pdbFile);
-
 
     // save the starting state of the pdb (already repacked, don't need to load energy terms for another repack)
     pdb.saveAltCoor("start");
@@ -199,9 +204,18 @@ int main(int argc, char *argv[]){
         // add identity to the position
         Residue prevResi = positions[i]->getCurrentIdentity();
         string resi = prevResi.getResidueName();
-        CSB.addIdentity(posId,"ALA");
-        pdb.setActiveIdentity(posId,"ALA");
+        
+        // if the first or last position of a chain, remove the identity (saw issues with unbuilt atoms in the center of the pdb at 0,0,0)
+        if (i == 0 || i == chains[0]->positionSize()-1 || i == chains[0]->positionSize() || i == positions.size()-1){
+            CSB.removeIdentity(posId,resi);
+            CSB.addIdentity(posId,"ALA");
+            pdb.setActiveIdentity(posId,"ALA");
+        } else {
+            CSB.addIdentity(posId,"ALA");
+            pdb.setActiveIdentity(posId,"ALA");
+        }
     }
+    pdb.assignCoordinates(startGeom.getAtomPointers(), true);
     pdb.buildAllAtoms();
 	string startSequence = extractSequence(pdb);
 	PDBWriter writer;
