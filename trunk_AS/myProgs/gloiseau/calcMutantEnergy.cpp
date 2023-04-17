@@ -214,7 +214,6 @@ int main(int argc, char *argv[]){
 	// (remnant from CATM, but used in the code that was used to get baselines so keeping it to be consistent)
     deleteTerminalBondInteractions(pdb,deleteTerminalInteractions);
 
-	
     // write the pdb
 	PDBWriter writer;
 	writer.open(outputDir + "/" + startSequence + ".pdb");
@@ -234,11 +233,50 @@ int main(int argc, char *argv[]){
         chainIds.push_back(chains[i]->getChainId());
     }
 
+	// first compute the energy of the initial pdb
+	// Optimize Initial Starting Position
+	SelfPairManager spm;
+	spm.seed(RNG.getSeed());
+	spm.setSystem(&pdb);
+	spm.setVerbose(false);
+	spm.getMinStates()[0];
+	spm.updateWeights();
+	spm.setOnTheFly(true);
+	spm.saveEnergiesByTerm(true);
+	// Set a mask and run a greedy to get the best state for the current sequence
+	vector<vector<bool>> mask = getActiveMask(pdb);
+	spm.runGreedyOptimizer(100, mask);
+	vector<uint> stateVec = spm.getMinStates()[0];
+	pdb.setActiveRotamers(stateVec);
+
+	// calculate the energy and add it to the sequenceEnergyMap
+	double dimerEnergy = pdb.calcEnergy();
+	sequenceEnergyMap[startSequence]["Dimer"] = dimerEnergy;
+
+	// loop through the energy terms
+	for (uint i=0; i<energyTermList.size(); i++){
+		// get the ith energy term
+		string energyTerm = energyTermList[i];
+		// get the energy for the ith energy term
+		double energy = Eset->getTermEnergy(energyTerm);
+		// add the term to the energy map
+		sequenceEnergyMap[startSequence][energyTerm] = energy;
+	}
+
+	// print the energy
+	pdb.printEnergySummary();
+
+	// compute the monomer energy of the initial pdb
+	computeMonomerEnergy(pdb, sequenceEnergyMap, startSequence, sout, topFile, parFile, solvFile, helicalAxis, backboneFile, rotLibFile, hbondFile, outputDir, greedyCycles,
+        SL, deleteTerminalInteractions, energyTermList, thread);
+
+	// loop through the positions to mutate and calculate the energy
     for (uint i=0; i < positionList.size(); i++){
         cout << positionList.size() << endl;
         cout << "Position: " << positionList[i] << endl;
         int pos = positionList[i];
-        int chainPos = i+startPos;
+        int chainPos = pos+startPos;
+		cout << "Chain Position: " << chainPos << endl;
         // get the previous identity of the position
         Residue prevResi = positions[pos]->getCurrentIdentity();
         string resi = prevResi.getResidueName();
@@ -255,18 +293,9 @@ int main(int argc, char *argv[]){
 	    string sequence = extractSequence(pdb);
         cout << "Sequence: " << sequence << endl;
 
-	    // Optimize Initial Starting Position
-	    SelfPairManager spm;
-	    spm.seed(RNG.getSeed());
-	    spm.setSystem(&pdb);
-	    spm.setVerbose(false);
-	    spm.getMinStates()[0];
-	    spm.updateWeights();
-	    spm.setOnTheFly(true);
-	    spm.saveEnergiesByTerm(true);
 		// Set a mask and run a greedy to get the best state for the current sequence
 		vector<vector<bool>> mask = getActiveMask(pdb);
-		spm.runGreedyOptimizer(50, mask);
+		spm.runGreedyOptimizer(100, mask);
 	    vector<uint> stateVec = spm.getMinStates()[0];
 	    pdb.setActiveRotamers(stateVec);
 
