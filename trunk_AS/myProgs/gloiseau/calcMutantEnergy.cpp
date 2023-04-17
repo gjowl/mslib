@@ -100,7 +100,7 @@ int main(int argc, char *argv[]){
     string mutantAA = OP.getString("mutantAA"); // mutant amino acid
     vector<string> deleteTerminalInteractions = OP.getStringVector("deleteTerminalInteractions"); // delete terminal bond interactions
 	vector<string> energyTermList = OP.getStringVector("energyTermList");
-    vector<int> positionList = OP.getIntVector("positionList"); // list of positions to mutate
+    vector<int> positionList = OP.getIntVector("Position"); // list of positions to mutate
     int greedyCycles = OP.getInt("greedyCycles"); // number of greedy cycles
     string SL = OP.getString("SL"); // sampling level
 
@@ -220,6 +220,10 @@ int main(int argc, char *argv[]){
 	writer.write(pdb.getAtomPointers(), true, false, false);
     writer.close();
 
+	cout << positionList.size() << endl;
+    for (uint i=0; i < positionList.size(); i++){
+		cout << "Position: " << positionList[i] << endl;
+	}
 	// initialize the sequenceEnergyMap
 	map<string, map<string, double>> sequenceEnergyMap;
     
