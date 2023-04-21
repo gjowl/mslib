@@ -363,14 +363,22 @@ void getCurrentMoveSizes(double &_currTemp, double &_endTemp, double &_deltaX, d
 	}
 }
 
+// function that decreases the acceptable move size based on the monte carlo function temperature change (decreaseMultiplier)
+// only decreases the move size if the move size is greater than the move limit
+// as the temperature decreases, the acceptable move size decreases
 double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease) {
-	// edited to make sure that the move size is decreasing properly down to the move limit: add in detail here
+	// get the change between the current acceptable move size and the move limit (ex: xShift 0.5-0.1)
 	double diffMoveSize = _moveSize-_moveLimit;
+	// get the current move size decrease based on the change in temperature (ex: xShift 0.4-(0.4*995/1000) = 0.4-0.398 = 0.002)
 	double moveDecrease = diffMoveSize-(diffMoveSize*_decreaseMultiplier);// edited on 2022-10-6: it now works properly; before it decreased to the move limit
+	// get the adjusted move size (the change in acceptable move size minus the move decrease; ex: xShift 0.5-0.002 = 0.498 acceptable)
 	double newMoveSize = _moveSize - moveDecrease;
+	// check to see if the new move size is greater than the accepted move limit (ex: xShift 0.498 > 0.1; 0.498 is the new maximum xShift change)
 	if (newMoveSize > _moveLimit){
 		return newMoveSize;
 	} else {
+		// if the move size is less, set the move size to the move limit and set the decrease boolean to false 
+		// to stop accepting any decreases in that move
 		_decrease = false;
 		return _moveSize;
 	}
