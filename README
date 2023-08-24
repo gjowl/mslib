@@ -11,8 +11,11 @@ When running the first time, make sure to look that the -I during the make is /y
 
 If it is /usr/lib, then it is likely not reading your .cshrc file. Make sure that tcsh is downloaded on your computer by running:
     sudo apt install tcsh
-    
-Then on the command line, run csh to set your terminal to a csh terminal (in some cases it defaults to bash). Run:
+
+Then on the command line, run csh to set your terminal to a csh terminal (in some cases it defaults to bash) by running:
+    exec tcsh
+
+To set the environment variables to the defaults you need for msl, run:
     source /path/to/.cshrc
 
 To make the objects and the binary files, first run the following in mslib/trunk_AS to make the directories needed:
