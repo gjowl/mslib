@@ -1,7 +1,7 @@
 #include <sstream>
 #include <iterator>
 #include <unistd.h>
-#include "backboneOptimizerFunctions.h"
+#include "backboneOptimizerFunctions_v2.h"
 #include "functions.h"
 
 using namespace std;
@@ -9,11 +9,60 @@ using namespace MSL;
 
 static SysEnv SYSENV;
 
+
+// moved here from seqDesign on 2023-8-26
+void convertToAxAndZForTranformation(BBOptions &_opt){
+	double axialRotation = abs(_opt.axialRotation);
+	double zShift = _opt.zShift;
+	// convert input axialRotation and zShift to transformation for interfacial parallelogram (Mueller 2014; Fig S1) 
+	_opt.axialRotation = axialRotation+(20*zShift/3);
+	_opt.axialRotation = -_opt.axialRotation;
+	_opt.zShift = zShift+(0.015*axialRotation);
+}
+
+void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTerminalInteractionList){
+	EnergySet* pESet = _sys.getEnergySet();
+	int chainSize = _sys.chainSize();
+	AtomPointerVector atoms;
+	for(int i = 0; i < chainSize; i++) {
+		Chain & thisChain = _sys.getChain(i);
+		vector<Position*>& positions = thisChain.getPositions();
+		int firstResidueNumber = 0; // hardcoded, this is done stupidly but works
+		int lastResidueNumber = positions[positions.size()-1]->getResidueNumber();
+		for(int i = firstResidueNumber; i < firstResidueNumber+3; i++) {
+			// rid of hbonds from first 3 positions
+			if(firstResidueNumber <= i) {
+				atoms += positions[i]->getAtomPointers();
+				//cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
+			}
+			// rid of hbonds from last 3 positions
+			if(lastResidueNumber > i) {
+				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
+				//cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
+			}
+		}
+	}
+	for (uint i=0; i<_deleteTerminalInteractionList.size(); i++){
+		pESet->deleteInteractionsWithAtoms(atoms,_deleteTerminalInteractionList[i]);
+	}
+}
+
 /***********************************
  *output file functions
  ***********************************/
-//TODO: make changes so that this can be run locally vs external server
-void setupOutputDirectory(Options &_opt){
+// for running on chtc
+void setupOutputDirectoryChtc(BBOptions &_opt){
+	_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.sequence;
+	//_opt.outputDir = string(get_current_dir_name()) + "/" + _opt.uniprotName;
+	//_opt.outputDir = "/exports/home/gloiseau/mslib/trunk_AS/" + _opt.sequence + "_" + to_string(_opt.seed);
+	string cmd = "mkdir -p " + _opt.outputDir;
+	if (system(cmd.c_str())){
+		cout << "Unable to make directory" << endl;
+		exit(0);
+	}
+}
+
+void setupOutputDirectory(BBOptions &_opt){
 	_opt.outputDir = _opt.outputDir + "/" + _opt.sequence;
 	string cmd = "mkdir -p " + _opt.outputDir;
 	if (system(cmd.c_str())){
@@ -22,66 +71,55 @@ void setupOutputDirectory(Options &_opt){
 	}
 }
 
-void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum){
-	EnergySet* pESet = _sys.getEnergySet();
-	int chainSize = _sys.chainSize();
-	AtomPointerVector atoms;
-	for(int i = 0; i < chainSize; i++) {
-		Chain & thisChain = _sys.getChain(i);
-		vector<Position*>& positions = thisChain.getPositions();
-		for(int i = 0; i < 3; i++) {
-			if(_firstResiNum > i) {
-				atoms += positions[i]->getAtomPointers();
-			}
-			if(_lastResiNum > i) {
-				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
-			}
-		}
-	}
-	pESet->deleteInteractionsWithAtoms(atoms,"SCWRL4_HBOND");
-}
-
 /***********************************
  *functions from geomRepack
  ***********************************/
-void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt){
-	//Repack side chains based on sasa scores
-	for (uint i = 0; i < _opt.rotamerSamplingVector.size()/2; i++) {
-		Position &posA = _sys.getPosition(i);
-		Position &posB = _sys.getPosition(i+_opt.sequence.length());
-		if (posA.identitySize() > 1){
-			for (uint j=0; j < posA.getNumberOfIdentities(); j++){
-				posA.setActiveIdentity(j);
-				posB.setActiveIdentity(j);
-				string posRot = _opt.sasaRepackLevel[_opt.rotamerSamplingVector[i]];
-				if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
-					if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) { 
-						cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
-					}
-					if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) { 
-						cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
-					}
-				}
-			}
-		} else {
-			string posRot = _opt.sasaRepackLevel[_opt.rotamerSamplingVector[i]];
-			if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
-				if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) { 
-					cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
-				}
-				if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) { 
-					cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
-				}
-			}
-		}
-	}
-}
+//void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOptions &_opt, vector<int> &_rotamerSampling){
+//	//Repack side chains based on sasa scores
+//	for (uint i = 0; i < _rotamerSampling.size()/2; i++) {
+//		Position &posA = _sys.getPosition(i);
+//		//Position &posB = _sys.getPosition(i+_opt.backboneLength);
+//		Position &posB = _sys.getPosition(i+_opt.sequence.length());
+//		if (posA.identitySize() > 1){
+//			for (uint j=0; j < posA.getNumberOfIdentities(); j++){
+//				posA.setActiveIdentity(j);
+//				posB.setActiveIdentity(j);
+//				string posRot = _opt.sasaRepackLevel[_rotamerSampling[i]];
+//				if (_opt.verbose){
+//					cout << posA.getPositionId() << ", " << posA.getResidueName() << ":" << posRot << endl;
+//					cout << posB.getPositionId() << ", " << posB.getResidueName() << ":" << posRot << endl;
+//				}
+//				if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
+//					if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) {
+//						cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
+//					}
+//					if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) {
+//						cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
+//					}
+//				}
+//			}
+//		} else {
+//			string posRot = _opt.sasaRepackLevel[_rotamerSampling[i]];
+//			if (_opt.verbose){
+//				cout << posA.getPositionId() << ", " << posA.getResidueName() << ": " << posRot << endl;
+//				cout << posB.getPositionId() << ", " << posB.getResidueName() << ": " << posRot << endl;
+//			}
+//			if (posA.getResidueName() != "GLY" && posA.getResidueName() != "ALA" && posA.getResidueName() != "PRO") {
+//				if (!_sysRot.loadRotamers(&posA, posA.getResidueName(), posRot)) {
+//					cerr << "Cannot load rotamers for " << posA.getResidueName() << endl;
+//				}
+//				if (!_sysRot.loadRotamers(&posB, posB.getResidueName(), posRot)) {
+//					cerr << "Cannot load rotamers for " << posB.getResidueName() << endl;
+//				}
+//			}
+//		}
+//	}
+//}
 
 /***********************************
  *repack functions
  ***********************************/
-
-double computeMonomerEnergy(System & _sys, Options& _opt, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _mout){
+double computeMonomerEnergy(System & _sys, BBOptions & _opt, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _mout){
 
 	time_t startTimeMono, endTimeMono;
 	double diffTimeMono;
@@ -121,7 +159,11 @@ END";
 	// Declare new system
 	System monoSys;
 	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile, _opt.solvFile);
-	CSBMono.setBuildTerm("CHARMM_ELEC", false);
+	if (_opt.useElec){
+		CSBMono.setBuildTerm("CHARMM_ELEC", true);
+	} else {
+		CSBMono.setBuildTerm("CHARMM_ELEC", false);
+	}
 	CSBMono.setBuildTerm("CHARMM_ANGL", false);
 	CSBMono.setBuildTerm("CHARMM_BOND", false);
 	CSBMono.setBuildTerm("CHARMM_DIHE", false);
@@ -144,16 +186,13 @@ END";
 	 ******************************************************************************/
 	EnergySet* monoEset = monoSys.getEnergySet();
 	monoEset->setAllTermsActive();
-	monoEset->setTermActive("CHARMM_ELEC", false);
 	monoEset->setTermActive("CHARMM_ANGL", false);
 	monoEset->setTermActive("CHARMM_BOND", false);
 	monoEset->setTermActive("CHARMM_DIHE", false);
 	monoEset->setTermActive("CHARMM_IMPR", false);
 	monoEset->setTermActive("CHARMM_U-BR", false);
 
-	int firstPos = 0;
-    int lastPos = monoSys.positionSize();
-	deleteTerminalHydrogenBondInteractions(monoSys, firstPos, lastPos);
+	deleteTerminalBondInteractions(monoSys,_opt.deleteTerminalInteractions);
 
 	/******************************************************************************
 	 *              === LOAD ROTAMERS FOR MONOMER & SET-UP SPM ===
@@ -172,13 +211,15 @@ END";
 		}
 	}
 
-
 	monoEset->setWeight("CHARMM_VDW", _opt.weight_vdw);
 	monoEset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
 	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
 	monoEset->setWeight("CHARMM_IMM1", _opt.weight_solv);
 	_mout << "Monomer - VDW weight: " << monoEset->getWeight("CHARMM_VDW") << " HB weight: " << monoEset->getWeight("SCWRL4_HBOND") << " IMM1REF weight: " << monoEset->getWeight("CHARMM_IMM1REF") << " IMM1 weight: " << monoEset->getWeight("CHARMM_IMM1") << endl;
-
+	if (_opt.useElec == true){
+		monoEset->setTermActive("CHARMM_ELEC", true);
+		monoEset->setWeight("CHARMM_ELEC", _opt.weight_elec);
+	}
 	monoSpm.setSystem(&monoSys);
 	monoSpm.updateWeights();
 
@@ -383,7 +424,6 @@ END";
 	diffTimeMono = difftime (endTimeMono, startTimeMono);
 	_mout << endl << "Total Monomer Time: " << setiosflags(ios::fixed) << setprecision(0) << diffTimeMono << " seconds" << endl;
 
-
 	/******************************************************************************
 	 *               === PRINT OUT MONOMER / STORE ENERGIES ===
 	 ******************************************************************************/
@@ -411,73 +451,15 @@ END";
 	}
 
 	// Store monomer energy by term
-	if(_opt.verbose) {
-		monoSys.calcEnergy();
-		_monomerEnergyByTerm = getEnergyByTermDoubled(monoSys.getEnergySet()); // must double the energy, as only computed energy for 1 helix
+	monoSys.calcEnergy();
+	_monomerEnergyByTerm = getEnergyByTermDoubled(monoSys.getEnergySet()); // must double the energy, as only computed energy for 1 helix
 
-		for(map<string,double>::iterator it = _monomerEnergyByTerm.begin(); it != _monomerEnergyByTerm.end(); it++) {
-			_mout << it->first << " " << it->second << endl;
-		}
+	for(map<string,double>::iterator it = _monomerEnergyByTerm.begin(); it != _monomerEnergyByTerm.end(); it++) {
+		_mout << it->first << " " << it->second << endl;
 	}
 
 	double finalEnergy = 2.0 * monoSpm.getMinBound()[0]; // double the energy for 2 helices
 	return finalEnergy;
-
-}
-
-
-/***********************************
- *help functions
- ***********************************/
-void backboneOptimizerUsage() {
-	cout << endl;
-	cout << "Run as" << endl;
-	//TODO: make this work tomorrow; should be able to organize this usage function and all of the stuff at the top properly; unless I move usage and other things to another file?
-	//cout << "   % " << programName << " --configfile <file.config>" << endl;
-	//cout << "For help" << endl;
-	//cout << "   % " << programName << " -h" << endl;
-	cout << endl;//TODO: add in some help options
-}
-
-void backboneOptimizerOutputErrorMessage(Options &_opt){
-		cerr << endl;
-		cerr << "The program terminated with errors:" << endl;
-		cerr << endl;
-		cerr << _opt.errorMessages << endl;
-		cerr << endl;
-		cerr << _opt.OPerrors << endl;
-		backboneOptimizerUsage();
-}
-
-//TODO: finish writing up this help
-void backboneOptimizerHelp(Options defaults) {
-	cout << "This program runs as:" << endl;
-	cout << " % seqDesign " << endl;
-	cout << "   Optional Parameters " << endl;
-	cout << "   --topFile <file> --parFile <file> --solvFile <file> --hBondFile <file> --rotLibFile <file>" << endl;
-	cout << "   --numberOfStructuresToMCRepack <int> --energyCutOff <double> --MCCycles <int> --MCMaxRejects=<int>" << endl;
-	cout << "   --MCStartTemp <double> --MCEndTemp <double> --MCCurve <CONSTANT-0, LINEAR-1, EXPONENTIAL-2, SIGMOIDAL-3, SOFT-4>" << endl;
-	cout << "   --greedyOptimizer=<true/false> --greedyCycles=<int>  --seed <int> --verbose <true/false>" << endl;
-	cout << "   --thread <int>" << endl;
-	cout << "   --configfile <file> " << endl;
-	cout << "   --weight_hbond <double> --weight_vdw <double> --weight_solv <double> --weight_seqEntropy <double>" << endl;
-	cout << "   --sasaRepackLevel <rotLevel> (in format SL95.00; 4 levels used by default) --interfaceLevel <int> " << endl << endl;
-	cout << "Template Configuration file (copy and paste the below into a file.config and run code as bin/seqDesign --config file.config" << endl;
-	cout << "#Input Files" << endl;
-	cout << setw(20) << "topFile " << defaults.topFile << endl;
-	cout << setw(20) << "parFile " << defaults.parFile << endl;
-	cout << setw(20) << "rotLibFile " << defaults.rotLibFile << endl;
-	cout << setw(20) << "solvFile " << defaults.solvFile << endl;
-	cout << setw(20) << "hbondFile " << defaults.hbondFile << endl;
-
-	cout << "#Booleans" << endl;
-	cout << setw(20) << "verbose " << defaults.verbose << endl;
-
-	cout << endl << "#Energy term weights" << endl;
-	cout << setw(20) << "weight_vdw " << defaults.weight_vdw << endl;
-	cout << setw(20) << "weight_hbond " << defaults.weight_hbond << endl;
-	cout << setw(20) << "weight_solv " << defaults.weight_solv << endl;
-	cout << endl;
 }
 
 /****************************************
@@ -485,7 +467,7 @@ void backboneOptimizerHelp(Options defaults) {
  *  ======= CONFIG FILE OPTIONS =======
  *
  ****************************************/
-Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options defaults){
+BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults){
 
 	/******************************************
 	 *  Pass the array of argument and the name of
@@ -493,11 +475,10 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 	 *  object.  Then ask for the value of the argument
 	 *  and collect error and warnings.
 	 *
-	 *  This function returns a Options structure
+	 *  This function returns a BBOptions structure
 	 *  defined at the head of this file
 	 ******************************************/
-
-	Options opt;
+	BBOptions opt;
 
 	/******************************************
 	 *  Set the allowed and required options:
@@ -511,16 +492,12 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 	vector<string> required;
 	vector<string> allowed;
 
-	//opt.required.push_back("");
-	//opt.allowed.push_back("");
-
-	//opt.allowed.push_back("");
-	// optional
+	//optional
 	//Weights
 	opt.allowed.push_back("weight_vdw");
 	opt.allowed.push_back("weight_hbond");
 	opt.allowed.push_back("weight_solv");
-
+	opt.allowed.push_back("weight_elec");
 	opt.allowed.push_back("verbose");
 
 	//Input Files
@@ -532,14 +509,11 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 	opt.allowed.push_back("outputDir");
 	opt.allowed.push_back("pdbName");
 	opt.allowed.push_back("configfile");
-	opt.allowed.push_back("pdbFile");
 
 	//
 	opt.allowed.push_back("sequence");
-	opt.allowed.push_back("rotamerSamplingString");
-	opt.allowed.push_back("rotamerSamplingVector");
-	opt.allowed.push_back("sasaRepackLevel");
 	opt.allowed.push_back("seed");
+
 	//Geometry
 	opt.allowed.push_back("xShift");
 	opt.allowed.push_back("crossingAngle");
@@ -564,6 +538,14 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 	opt.allowed.push_back("negAngle");
 	opt.allowed.push_back("negRot");
 
+	//version 2
+	opt.allowed.push_back("useElec");
+	opt.allowed.push_back("backboneFile");
+	opt.allowed.push_back("helicalAxis");
+	opt.allowed.push_back("useAlaAtCTerminus");
+	opt.allowed.push_back("deleteTerminalInteractions");
+	opt.allowed.push_back("uniprotName");
+
 	//Begin Parsing through the options
 	OptionParser OP;
 	OP.readArgv(_argc, _argv);
@@ -572,10 +554,15 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 	OP.setAllowed(opt.allowed);
 	OP.autoExtendOptions();
 
+	opt.errorFlag = false;
+	opt.warningFlag = false;
+
+	opt.errorMessages = "";
+	opt.warningMessages = "";
+
 	if (OP.countOptions() == 0){
-		backboneOptimizerUsage();
 		opt.errorMessages += "No options given!\n";
-		exit(0);
+		return opt;
 	}
 
 	/*****************************************
@@ -586,12 +573,7 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 		opt.OPerrors = OP.getErrors();
 		return opt;
 	}
-	opt.errorFlag = false;
-	opt.warningFlag = false;
-
-	opt.errorMessages = "";
-	opt.warningMessages = "";
-
+	
 	/*****************************************
 	 *  CHECK THE GIVEN OPTIONS
 	 *****************************************/
@@ -629,16 +611,6 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 		opt.errorMessages += "sequence not specified using L\n";
 		opt.errorFlag = true;
 	}
-	opt.rotamerSamplingString = OP.getString("rotamerSamplingString");
-	if (OP.fail()) {
-		opt.errorMessages += "Unable to identify state, make sure they are space separated\n";
-		opt.errorFlag = true;
-	}
-	opt.rotamerSamplingVector = OP.getIntVector("rotamerSampling");
-	if (OP.fail()) {
-		opt.errorMessages += "Unable to identify state, make sure they are space separated\n";
-		opt.errorFlag = true;
-	}
 
 	// Geometry
 	opt.xShift = OP.getDouble("xShift");
@@ -663,7 +635,7 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 		opt.axialRotation = 40;
 	}
 	if (opt.negRot == true){
-		opt.axialRotation = -opt.axialRotation;
+		opt.axialRotation = opt.axialRotation-100;
 	}
 	opt.zShift = OP.getDouble("zShift");
 	if (OP.fail()) {
@@ -713,12 +685,6 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 		opt.MCCurve = 3;
 	}
 	
-	//Load Rotamers using SASA values (from sgfc)
-	opt.sasaRepackLevel = OP.getMultiString("sasaRepackLevel");
-	if (OP.fail()) {
-		opt.warningMessages += "sasaRepacklevel not specified! Default to one level at SL90.00";
-		opt.sasaRepackLevel.push_back("SL90.00");
-	}
     //Weights
 	opt.weight_vdw = OP.getDouble("weight_vdw");
 	if (OP.fail()) {
@@ -738,31 +704,37 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 		opt.warningMessages += "weight_solv not specified, default 1.0\n";
 		opt.weight_solv = 1.0;
 	}
+	opt.weight_elec = OP.getDouble("weight_elec");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_elec not specified, default 1.0\n";
+		opt.weight_elec = 1.0;
+	}
 
 	//Shift Size
 	opt.deltaX = OP.getDouble("deltaX");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaX not specified using 0.5\n";
 		opt.warningFlag = true;
-		opt.deltaX = 0.5;
+		opt.deltaX = 0.1;
 	}
 	opt.deltaCross = OP.getDouble("deltaCross");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaCross not specified using 5.0\n";
 		opt.warningFlag = true;
-		opt.deltaCross = 5.0;
+		opt.deltaCross = 1.0;
 	}
 	opt.deltaAx = OP.getDouble("deltaAx");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaAx not specified using 4.0\n";
 		opt.warningFlag = true;
-		opt.deltaAx = 4.0;
+		opt.deltaAx = 1.0;
 	}
 	opt.deltaZ = OP.getDouble("deltaZ");
 	if (OP.fail()) {
 		opt.warningMessages += "deltaZ not specified using 0.5\n";
 		opt.warningFlag = true;
-		opt.deltaZ = 0.5;
+		opt.deltaZ = 0.1;
 	}
     //Parameter files
 	opt.topFile = OP.getString("topFile");
@@ -829,15 +801,10 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 		}
 	}
 
-	opt.pdbFile = OP.getString("pdbFile");
-	if (OP.fail()) {
-		opt.errorMessages += "pdbFile not specified";
-		opt.errorFlag = true;
-	}
 	opt.outputDir = OP.getString("outputDir");
 	if (OP.fail()) {
-		opt.errorMessages += "Unable to determine outputDir";
-		opt.errorFlag = true;
+		opt.warningMessages += "Unable to determine outputDir, using current directory\n";
+		opt.warningFlag = true;
 	}
 
 	// Monomer Options
@@ -866,8 +833,47 @@ Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options default
 		opt.MCMaxRejects = 10;
 	}
 
+	// version 2 options
+	opt.useElec = OP.getBool("useElec");
+	if (OP.fail()) {
+		opt.warningMessages += "useElec not specified using true\n";
+		opt.warningFlag = true;
+		opt.useElec = true;
+	}
+	opt.backboneFile = OP.getString("backboneFile");
+	if (OP.fail()) {
+		opt.errorMessages += "backboneFile not specified\n";
+		opt.errorFlag = true;
+	}
+	opt.helicalAxis = OP.getString("helicalAxis");
+	if (OP.fail()) {
+		opt.errorMessages += "helicalAxis not specified\n";
+		opt.errorFlag = true;
+	}
+	opt.useAlaAtCTerminus = OP.getBool("useAlaAtCTerminus");
+	if (OP.fail()) {
+		opt.warningMessages += "useAlaAtCTerminus not specified using true\n";
+		opt.warningFlag = true;
+		opt.useAlaAtCTerminus = true;
+	}
+	opt.backboneLength = OP.getInt("backboneLength");
+	if (OP.fail()) {
+		opt.warningMessages += "backboneLength not specified using 21\n";
+		opt.warningFlag = true;
+		opt.backboneLength = 21;
+	}
+	opt.deleteTerminalInteractions = OP.getMultiString("deleteTerminalInteractions");
+	if (OP.fail()) {
+		opt.deleteTerminalInteractions.push_back("");
+		opt.warningMessages += "deleteTerminalInteractions not specified\n";
+		opt.warningFlag = true;
+	}
+	opt.uniprotName = OP.getString("uniprotName");
+	if (OP.fail()) {
+		opt.uniprotName = "PROTEIN_UNK";
+		opt.warningMessages += "uniprotName not specified using " + opt.uniprotName + "\n";
+		opt.warningFlag = true;
+	}
 	opt.rerunConf = OP.getConfFile();
-
 	return opt;
 }
-	

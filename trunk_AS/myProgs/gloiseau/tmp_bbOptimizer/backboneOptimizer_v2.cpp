@@ -69,6 +69,19 @@ void monteCarloRepack(BBOptions &_opt, System &_sys, double &_savedXShift, SelfP
  map<string,double> _monomerEnergyByTerm, double _monomerEnergy, ofstream &_out);
 void checkOptionErrors(BBOptions &_opt);	
 
+void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
+	for (uint k=0; k < _sys.positionSize(); k++) {
+		Position &pos = _sys.getPosition(k);
+
+		if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+			if (!_sysRot.loadRotamers(&pos, pos.getResidueName(),_SL)) {
+				cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+			}
+		}
+	}
+}
+
+
 /***********************************
  *help functions
  ***********************************/
@@ -127,6 +140,9 @@ int main(int argc, char *argv[]){
 	rerun << opt.rerunConf << endl;
 	rerun.close();
 	
+	// get the starting geometries; convert to parallelogram axialRot and Z (Mueller 2014; Fig. S1)
+	convertToAxAndZForTranformation(opt);
+	
 	/******************************************************************************
 	 *                     === HELICAL AXIS SET UP ===
 	 ******************************************************************************/
@@ -160,9 +176,9 @@ int main(int argc, char *argv[]){
 	//helicalAxis.applySavedCoor("originState");
 	// set up the system for the input sequence
 	System sys;
-	string polySeq1 = convertToPolymerSequence(opt.sequence, opt.thread);
+	string polySeq1 = convertToPolymerSequenceNeutralPatch(opt.sequence, opt.thread);
 	prepareSystem(opt, sys, startGeom, polySeq1);
-	moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), helicalAxis.getAtomPointers(), trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
+	//moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), helicalAxis.getAtomPointers(), trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
 	// make sure to add the above to my code for design; increases stability with imm1 by quite a bit, ~10 from these runs of old CATM structures
 	// maybe I should try to redesign gpa???
 	// get chain A and B from the system
@@ -180,34 +196,14 @@ int main(int argc, char *argv[]){
 	cout << "axialRotation: " << opt.axialRotation << endl;
 	cout << "zShift:        " << opt.zShift << endl;
 
-	/******************************************************************************
-	 *       === IDENTIFY INTERFACIAL POSITIONS AND GET ROTAMER ASSIGNMENTS ===
-	 ******************************************************************************/
-	// Variables to output from defineInterfaceAndRotamerSampling function
-	//string rotamerLevels;
-	//string variablePositionString;
-	//string rotamerSamplingString;
-	//// vector of the positions that will be linked
-	//vector<int> linkedPositions;
-	//// vector of positions at the interface excluding termini positions
-	//vector<uint> interfacePositions;
-	//// vector of positions at the interface including the terminal positions
-	//vector<uint> allInterfacePositions;
-	//// vector of rotamer level for each position
-	//vector<int> rotamerSamplingPerPosition;
-
-	//// Defines the interfacial positions and the number of rotamers to give each position
-	//defineInterfaceAndRotamerSampling(opt, startGeom, PS, rotamerLevels, polySeq, variablePositionString, rotamerSamplingString,
-	// linkedPositions, allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, sout);
-	
 	// initialize the object for loading rotamers into our _system
 	SystemRotamerLoader sysRot(sys, opt.rotLibFile);
 	sysRot.defineRotamerSamplingLevels();
 
 	// Assign number of rotamers by residue burial
-	loadRotamers(sys, sysRot, "SL95.00");
+	loadRotamers(sys, sysRot, "SL97.00");
 	//loadRotamersBySASABurial(sys, sysRot, opt, rotamerSamplingPerPosition);
-	cout << sys.getAtomPointers() << endl;
+	//cout << sys.getAtomPointers() << endl;
 	
 	// setup random number generator object
 	RandomNumberGenerator RNG;
@@ -228,7 +224,7 @@ int main(int argc, char *argv[]){
 	spm.updateWeights();
 	spm.setOnTheFly(true);// changed to make more similar to CATM
 	spm.saveEnergiesByTerm(true);
-	//spm.calculateEnergies();
+	spm.calculateEnergies();
 	
 	// Repack dimer
 	repackSideChains(spm, opt.greedyCycles);
@@ -243,6 +239,7 @@ int main(int argc, char *argv[]){
 	double startDimer = sys.calcEnergy();
     cout << "Monomer Energy: " << monomerEnergy << endl;
     cout << "Dimer-Monomer: " << startDimer-monomerEnergy << endl;
+	exit(0);
     
 	sys.saveAltCoor("startingState");
 	helicalAxis.saveAltCoor("startingAxis");
@@ -257,8 +254,8 @@ int main(int argc, char *argv[]){
 
 	// xShift repack to get close to best xShift
 	localXShiftDocking(sys, opt, bestEnergy, monomerEnergy, spm, helicalAxis, axisA, axisB, apvChainA, apvChainB, trans, savedXShift);
-	helicalAxis.applySavedCoor("originState");
-	moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), helicalAxis.getAtomPointers(), trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
+	//helicalAxis.applySavedCoor("originState");
+	//moveZCenterOfCAMassToOrigin(sys.getAtomPointers(), helicalAxis.getAtomPointers(), trans);//compared to CATM, my structures were moved up by like 4 AAs. Could it be because of this?
 	
 	repackSideChains(spm, opt.greedyCycles);
 	vector<uint> xShiftStateVec = spm.getMinStates()[0];
@@ -505,30 +502,6 @@ void setGly69ToStartingGeometry(BBOptions &_opt, System &_sys, System &_helicalA
 	// initialize the gly69 backbone coordinates and transform it to the chosen geometry
 	_sys.readPdb(_opt.backboneFile);
 
-	//// read the initial helical axis coordinates	
-	//PDBReader readAxis;
-	//if(!readAxis.read(_axis)) {
-	//	cout << "Unable to read axis" << endl;
-	//	exit(0);
-	//}
-
-	//// setup the helical axis
-	//System helicalAxis;
-	//helicalAxis.addAtoms(readAxis.getAtomPointers());
-
-	// Read in Gly-69 to use as backbone coordinate template
-	//CRDReader cRead;
-	//cRead.open(_opt.backboneFile);
-	//if(!cRead.read()) {
-	//	cout << "Unable to read " << _opt.backboneFile << endl;
-	//	exit(0);
-	//}
-	//cRead.close();
-	//AtomPointerVector& glyAPV = cRead.getAtomPointers();
-
-	//_sys.assignCoordinates(glyAPV);
-	//_sys.buildAtoms();
-
 	// Set up chain A and chain B atom pointer vectors
 	Chain & chainA = _sys.getChain("A");
 	Chain & chainB = _sys.getChain("B");
@@ -553,13 +526,12 @@ void prepareSystem(BBOptions &_opt, System &_sys, System &_startGeom, string &_p
 	CSB.setBuildTerm("CHARMM_DIHE", false);
 	CSB.setBuildTerm("CHARMM_IMPR", false);
 	CSB.setBuildTerm("CHARMM_U-BR", false);
-
 	// load the membrane as solvent
 	CSB.setSolvent("MEMBRANE");
 	// set the midpoint length of the membrane and the exponential factor for the membrane (src/CharmmEnergy.cpp: IMM1ZtransFunction) 
 	CSB.setIMM1Params(15, 10);
 	// sets all nonbonded interactions to 0, excluding interactions between far atoms (src/CharmmSystemBuilder.cpp: updateNonbonded)
-	//CSB.setBuildNonBondedInteractions(false);
+	CSB.setBuildNonBondedInteractions(false);
 
 	// Setup polymer sequence and build the sequence using CharmmSystemBuilder
 	PolymerSequence PL(_polySeq);
@@ -578,12 +550,13 @@ void prepareSystem(BBOptions &_opt, System &_sys, System &_startGeom, string &_p
 	
 	// assign the coordinates of our system to the given geometry 
 	_sys.assignCoordinates(_startGeom.getAtomPointers(),false);
-	_sys.buildAtoms();
+	_sys.buildAllAtoms();
 	
 	// Add hydrogen bond term
 	HydrogenBondBuilder hb(_sys, _opt.hbondFile);
-	hb.buildInteractions(30);//when this is here, the HB weight is correct
+	hb.buildInteractions(50);//when this is here, the HB weight is correct
 
+	CSB.updateNonBonded(10,12,50);
 	/******************************************************************************
 	 *                     === INITIAL VARIABLE SET UP ===
 	 ******************************************************************************/
@@ -610,11 +583,8 @@ void prepareSystem(BBOptions &_opt, System &_sys, System &_startGeom, string &_p
 	/******************************************************************************
 	 *                === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
 	 ******************************************************************************/
-	// removes all hydrogen bonding near the termini of our helices
-	// (remnant from CATM, but used in the code that was used to get baselines so keeping it to be consistent)
-	int firstPos = 0;
-    int lastPos = _sys.positionSize();
-    deleteTerminalInteractions(_sys,_opt,firstPos,lastPos);
+	// updated on 2023-8-26 to be more similar to sequence design
+    deleteTerminalBondInteractions(_sys,_opt.deleteTerminalInteractions);
 
 	// Up to here is from readDPBAndCalcEnergy
 	/******************************************************************************

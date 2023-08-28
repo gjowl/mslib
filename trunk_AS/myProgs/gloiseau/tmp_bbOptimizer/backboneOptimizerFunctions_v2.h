@@ -1,5 +1,5 @@
-#ifndef BACKBONEOPTIMIZERFUNCTIONS_H
-#define BACKBONEOPTIMIZERFUNCTIONS_H
+#ifndef BACKBONEOPTIMIZERFUNCTIONSV2_H
+#define BACKBONEOPTIMIZERFUNCTIONSV2_H
 
 #include <sstream>
 
@@ -23,20 +23,27 @@
 #include "SysEnv.h"
 #include "ResidueSelection.h"
 #include "backboneOptimizerOptions.h"
+#include "SasaCalculator.h"
+
+using namespace std;
+using namespace MSL;
 
 /***********************************
  *output file functions
  ***********************************/
 // function to setup the output directory
-void setupOutputDirectory(Options &_opt);
+void setupOutputDirectory(BBOptions &_opt);
+void setupOutputDirectoryChtc(BBOptions &_opt);
 
 //
-void deleteTerminalHydrogenBondInteractions(System &_sys, int _firstResiNum, int _lastResiNum);
+void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTerminalInteractionList);
+void convertToAxAndZForTranformation(BBOptions &_opt);
 
 /***********************************
  *functions from geomRepack
  ***********************************/
-void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, Options &_opt);
+void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOptions &_opt);
+void loadRotamersBySASABurial(System &_sys, SystemRotamerLoader &_sysRot, BBOptions &_opt, vector<int> &_rotamerSampling);
 
 /***********************************
  *repack functions
@@ -46,17 +53,12 @@ void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
 /***********************************
  *monomer functions
  ***********************************/
-double computeMonomerEnergy(System & _sys, Options& _opt, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _fout);
+double computeMonomerEnergy(System & _sys, BBOptions &_opt, RandomNumberGenerator & _RNG, map<string,double> & _monomerEnergyByTerm, ofstream & _fout);
 
 /***********************************
- *help functions
+ *option parser
  ***********************************/
-void backboneOptimizerUsage();
-void backboneOptimizerHelp(Options defaults);
-void backboneOptimizerOutputErrorMessage(Options &_opt);
-
 // parse config file for given options
-Options backboneOptimizerParseOptions(int _argc, char * _argv[], Options defaults);
-
+BBOptions BBParseOptions(int _argc, char * _argv[], BBOptions defaults);
 
 # endif
