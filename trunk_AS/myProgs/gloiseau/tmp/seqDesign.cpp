@@ -833,6 +833,11 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 	// Monte Carlo while loop for finding the best sequences
 	string energyTermToEvaluate = "Totalw/Entropy";
 	double bestProb = sequenceProbability;
+
+	// added in a pdb writer to output the search trajectory as a pdb 2023-11-12
+	PDBWriter writer;
+	writer.open(_opt.outputDir + "/sequence_search_trajectory.pdb");
+	writer.write(_sys.getAtomPointers(), true, false, true);
 	while (!MC.getComplete()){
 		// get the sequence entropy probability for the current best sequence
 		map<string,vector<uint>> sequenceVectorMap;
@@ -875,6 +880,7 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 			sequenceEnergyMap[bestSeq]["acceptTemp"] = acceptTemp; // gets the accept cycle number for the current sequence
 			bestSequenceEnergyMap = sequenceEnergyMap[bestSeq]; // saves the current sequence energy map 
 			prevStateEntropy = currStateEntropy;
+			writer.write(_sys.getAtomPointers(), true, false, true);
 		}
 		//Reset the MC to run x more cycles
 		if (MC.getComplete() == true && randomMCRun == false){
@@ -891,6 +897,7 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 		}
 		cycleCounter++;
 	}
+	writer.close();
 	time(&endTimeSMC);
 	diffTimeSMC = difftime (endTimeSMC, startTimeSMC);
 	lout << "Time: " << diffTimeSMC << "s" << endl;
@@ -1396,6 +1403,11 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	double maxAx = 100;
 	double minZ = 0;
 	double maxZ = 6;
+
+	// added in a pdb writer to output the search trajectory as a pdb 2023-11-12
+	PDBWriter writer;
+	writer.open(_opt.outputDir + "/bbRepack_trajectory_" + to_string(_rep) + ".pdb");
+	writer.write(_sys.getAtomPointers(), true, false, true);
 	while(!MCMngr.getComplete()) {
 		// get the current temperature of the MC
 		double startTemp = MCMngr.getCurrentT();
@@ -1486,11 +1498,12 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 				}
 				bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
 				counter++;
+				writer.write(_sys.getAtomPointers(), true, false, true);
 				//writer.write(_sys.getAtomPointers(), true, false, true);
 			}
 		}
 	}
-	//writer.close();
+	writer.close();
 	bbout << "End Repack Cycles" << endl << endl; 
 	time(&endTimeMC);
 	diffTimeMC = difftime (endTimeMC, startTimeMC);
