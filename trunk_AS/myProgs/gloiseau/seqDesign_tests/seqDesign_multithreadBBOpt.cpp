@@ -2455,32 +2455,36 @@ void runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNumberGener
 	//Setup running SCMF
 	cout << "Running Self Consistent Mean Field" << endl;
 	_out << "Running Self Consistent Mean Field" << endl;
+	cout << 1 << endl;
 	spm.setRunSCMF(true);
 	spm.setRunSCMFBiasedMC(true);
 	spm.setRunUnbiasedMC(false);
-
-	// run and find a sequence using the chosen parameters (MCOptions, SCMF, DEE, etc.)
+	cout << 2 << endl;
 	spm.runOptimizer();
 
-	// vector for the SCMF state after the biased monte carlo
+	cout << 3 << endl;
 	vector<unsigned int> bestState = spm.getBestSCMFBiasedMCState();
 	_sys.setActiveRotamers(bestState);
 	_sys.saveAltCoor("SCMFState");
 	string startSequence = convertPolymerSeqToOneLetterSeq(_sys.getChain("A")); //used for outputting starting sequence
 	string rotamerSamplingString = convertVectorUintToString(_rotamerSamplingPositionVector); // string of rotamer sampling number (if 4 rotamer levels, 0-3 for each position)
 	string interfaceSeq = getInterfaceSequence(_opt.interfaceLevel, rotamerSamplingString, startSequence);
+	cout << 4 << endl;
 
 	// output spm run optimizer information
 	spmRunOptimizerOutput(spm, _sys, interfaceSeq, _out);
+	cout << 5 << endl;
 	
 	//Add energies for initial sequences into the sequenceEnergyMap
 	pair<string,vector<uint>> startSequenceStatePair = make_pair(startSequence, bestState);
 	getEnergiesForStartingSequence(_opt, spm, startSequence, bestState, _interfacePositions, _sequenceEnergyMap, _sequenceEntropyMap);
 	getSasaForStartingSequence(_sys, startSequence, bestState, _sequenceEnergyMap);
+	cout << 6 << endl;
 	
 	// reset the energy set
 	resetEnergySet(_sys, _opt.energyTermList);
 	vector<uint> unlinkedState = unlinkBestState(bestState, _interfacePositions, _opt.backboneLength);
+	cout << 7 << endl;
 	
 	// output the ending time
 	outputTime(clockTime, "Self Consistent Mean Field End", _out);

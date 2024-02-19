@@ -1120,8 +1120,8 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	_sys.saveAltCoor("savedRepackState");
 	_helicalAxis.saveAltCoor("BestRepack");
 	// uncomment the below and add the end of the accept to output the geometry trajectory pdb
-	//PDBWriter writer;
-	//writer.open(_opt.outputDir + "/bbRepack_"+to_string(_rep)+".pdb");
+	PDBWriter writer;
+	writer.open(_opt.outputDir + "/bbRepack_"+to_string(_rep)+".pdb");
 	// loop through the MC cycles for backbone repacks
 	bbout << "Starting Repack Cycles" << endl; 
 	while(!MCMngr.getComplete()) {
@@ -1197,10 +1197,10 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 			}
 			bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
 			counter++;
-			//writer.write(_sys.getAtomPointers(), true, false, true);
+			writer.write(_sys.getAtomPointers(), true, false, true);
 		}
 	}
-	//writer.close();
+	writer.close();
 	bbout << "End Repack Cycles" << endl << endl; 
 	time(&endTimeMC);
 	diffTimeMC = difftime (endTimeMC, startTimeMC);
@@ -1917,21 +1917,21 @@ void convertToRelativeAxAndZ(double _axialRotation, double _zShift, double &_rel
 	_relativeZ = (10*_zShift/9)+(0.15*axialRotation/9);
 }
 
-string extractSequence(System &_sys){
-	// initialize the sequence string
-	string sequence = "";
-	// get the first chain from the system
-	Chain &chain = _sys.getChain(0);
-	// loop through the chain
-	for (uint i=0; i<chain.positionSize(); i++){
-		// get the ith position in the system
-		Position &pos = chain.getPosition(i);
-		// get the residue name of the ith position
-		string res = pos.getResidueName();
-		// convert the residue name to one letter code
-		string aa = MslTools::getOneLetterCode(res);
-		// add the one letter code to the sequence string
-		sequence += aa;
-	}
-	return sequence;
-}
+//string extractSequence(System &_sys){
+//	// initialize the sequence string
+//	string sequence = "";
+//	// get the first chain from the system
+//	Chain &chain = _sys.getChain(0);
+//	// loop through the chain
+//	for (uint i=0; i<chain.positionSize(); i++){
+//		// get the ith position in the system
+//		Position &pos = chain.getPosition(i);
+//		// get the residue name of the ith position
+//		string res = pos.getResidueName();
+//		// convert the residue name to one letter code
+//		string aa = MslTools::getOneLetterCode(res);
+//		// add the one letter code to the sequence string
+//		sequence += aa;
+//	}
+//	return sequence;
+//}
