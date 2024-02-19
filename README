@@ -7,9 +7,7 @@ When initializing on a computer for the first time:
 
 Change the .cshrc file to accomodate file paths on your computer for the MSL environment variables.
 
-When running the first time, make sure to look that the -I during the make is /your/path/to/environment/variables and not /usr/lib.
-
-If it is /usr/lib, then it is likely not reading your .cshrc file. Make sure that tcsh is downloaded on your computer by running:
+Make sure that tcsh is downloaded on your computer by running:
     sudo apt install tcsh
 
 Then on the command line, run csh to set your terminal to a csh terminal (in some cases it defaults to bash) by running:
@@ -26,3 +24,18 @@ Finally, run:
     make
 
 This should make all of the objs and start making the binary files as well.
+
+
+Other errors:
+-   If you run source /path/to/.cshrc and it errors: 
+        set: Variable name must contain alphanumeric characters.
+    Then you need to change the .cshrc file to have the correct line endings for unix. To do this, run:
+        sudo apt install dos2unix
+    Reset the terminal or open a new terminal and run:
+        dos2unix /path/to/.cshrc
+-   When running the first time, make sure to look that the -I during the make is /your/path/to/environment/variables and not /usr/lib.
+    If it is /usr/lib, then it is likely not reading your .cshrc file. To fix this, run:
+        source /path/to/.cshrc
+        make clean
+        make
+-   If the make fails at the BBQTable and everything else seems correct, you may be running with the improper version of g++. 
