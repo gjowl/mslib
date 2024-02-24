@@ -1,0 +1,19 @@
+2024-2-23
+This directory contains code that I didn't end up finishing.
+Parts of it could be useful for future work (likely just the functions),
+so feel free to look through it if you're interested.
+
+bbOptimizer_tests:
+    - contains older versions of code for my backbone optimization script
+forwardFolding_tests: 
+    - efforts to make a piece of code similar to CATM but for other proteins
+    outside of GASright region. Didn't work out too well and took a long time
+    to run
+rosettaScripts_tests:
+    - contains helper code for running rosetta when I was trying to use rosetta
+    to predict my structures
+seqDesign_tests:
+    - contains code for sequence design scripts that I didn't end up finishing.
+    I think the functions could be useful for future work and there may be some 
+    TODO ideas in the heterodimer script
+

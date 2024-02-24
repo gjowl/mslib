@@ -1,7 +1,7 @@
 # THIS MAKE FILE IS USED TO MAKE PROGRAMS OR OBJECT THAT DO NOT BELONG 
 # TO THE CENTRAL REPOSITIORY WITHOUT ALTERING THE MASTER MAKEFILE
 #
-# UPDATED PROTOCOL FOR myProgs/USERNAME usage
+# PROTOCOL FOR myProgs/USERNAME usage
 #
 # 1) Rename this file to myProgs.mk
 #
@@ -36,9 +36,9 @@
 #   make bin/prog1
 #   make bin/prog2
 
-MYSOURCE  = 
-MYPROGS   = seqDesign CATM_v24.5 pizza00 rotateDihedral rotateDihedral2 rotateDihedral3  testEnergyCalculation2 greedySPM_new predictDisulfideDimer localDimerSearch CATM_v24 CATM_v24_yudong EnergyTest Energiiies CSBPlayground 
-MYHEADERS = 
+#MYSOURCE  = 
+#MYPROGS   = seqDesign pdbBBOptimization CATM_v24.5 CATM_v24 CATM_v24_yudong 
+#MYHEADERS = seqDesignOptions BaselinePairInteraction
 
 name = gloiseau
 MYDIR = myProgs/$(name)

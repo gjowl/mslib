@@ -1,7 +1,7 @@
 # THIS MAKE FILE IS USED TO MAKE PROGRAMS OR OBJECT THAT DO NOT BELONG 
 # TO THE CENTRAL REPOSITIORY WITHOUT ALTERING THE MASTER MAKEFILE
 #
-# UPDATED PROTOCOL FOR myProgs/USERNAME usage
+# PROTOCOL FOR myProgs/USERNAME usage
 #
 # 1) Rename this file to myProgs.mk
 #
@@ -37,7 +37,7 @@ objFileList = $(wildcard $(MYDIR)/*.h)
 objs = $(basename $(objFileList))
 # add to global makefile variable MYSOURCE
 MYSOURCE = $(notdir $(objs))
-
+#
 # PROGRAMS
 # The below gets the list of programs in the directory MYDIR (files that don't match with h file names) and puts them in the variable MYPROGS
 # get list of files in dir and get all files that don't match up with the file .h or .cpp, add to MYPROGS

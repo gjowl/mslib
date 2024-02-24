@@ -1,0 +1,41 @@
+Scripts
+seqDesign:
+    - my sequence design code
+    - designs homodimer sequences only up to the number that you desire for a given sequence (I defaulted to 5)
+    - uses calculated homodimer baseline energies to estimate the monomer sequence
+    - calculates the sequence entropy of the interface 
+        - compares using an input file of given entropy values for each sequence/how frequently
+        an amino acid is found in a membrane protein
+        - I calculated it from the membrane proteins I extracted geometries from in 2019, and was
+        inspired to do it by Liu et al. Genome Biology 2002
+    - does local backbone optimization after each designed sequence, changing the geometry a bit for
+    each sequence design monte carlo run
+interhelicalCoordinates:
+    - code that Alessandro wrote to identify interactions from membrane protein PDBs
+    - used to generate the membrane protein geometry landscape we used for protein design
+    - needs GSL to build
+generateSelfPairIMM1Baselines:
+    - generates the baseline energies that were used as estimates for monomer sequences
+BaselinePairInteractions:
+    - object used for calculating the baseline interactions used as estimates for monomer
+    sequences in sequence design code
+getPolyAlaSasa:
+    - generates SASA values for a polyalanine based sequence
+CATM_v24.5:
+    - updated version of CATM with the following changes:
+        - added option to allow for electrostatic energies to be calculated
+        - added option for turning off energy calculation at the helix ends
+        - added option to only save negative energy structures
+bbOptimizer:
+    - code that can either take in a pdb or set a homodimer sequence to a given geometry and does a 
+    local backbone optimization to get the most stable energy for the sequence
+    - Can input a sequence that is different from the given pdb and it should replace the sequence
+    - I use this code after sequence design to locally optimize the geometry (also done during the
+    design process, but this does a longer locally optimized repack)
+    - To ensure a local backbone optimization, it decreases the potential geometric shifts 
+    (ie. if xShift starts allowing 0.5 changes, after the first time it makes that change, it decreases
+     the potential next xShift towards a minimum using a monte carlo step decrease)
+geomRepack_11_09_2021:
+    - early version of backbone optimizer code
+findPdbSasaVoids:
+    - if given an input pdb, can identify voids. a practice version of getting voids in input PDBs

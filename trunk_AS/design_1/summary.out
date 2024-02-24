@@ -1,39 +1,5 @@
-02_15_2024
-Self Consistent Mean Field Start Time: Thu Feb 15 18:27:03 2024
-Elapsed time of program: 0.1min
+02_23_2024
+Self Consistent Mean Field Start Time: Fri Feb 23 18:08:30 2024
+Elapsed time of program: 0.101min
 
 Running Self Consistent Mean Field
-Initial Sequence:   LLLLAALAILLAALASLLILI
-Best Sequence:      LLLLAALAILLAALASLLILI
-Interface Sequence: LL--AA-AI--AA-AS--I--
-Total Energy:       1.62e+03
-VDW:                1.32e+03
-HBOND:              -60.5
-Self Consistent Mean Field End Time: Thu Feb 15 18:27:21 2024
-Elapsed time of program: 0.396min
-
-Monte Carlo Sequence Search Replicate 0 Start Time: Thu Feb 15 18:27:21 2024
-Elapsed time of program: 0.399min
-
-  - SelfPairManager energy calculation 0 Start Time: Thu Feb 15 18:27:24 2024
-Elapsed time of program: 0.46min
-
-  - SelfPairManager energy calculation 0 End Time: Thu Feb 15 18:27:25 2024
-Elapsed time of program: 0.465min
-
-- End monte carlo sequence search #0: 0.45min; Monte Carlo ended at Temp: 0.547
-
-- Best Sequence: LLLLAALAALLFVLASLLILI; Energy w/ baseline: 1.62e+03
-Monte Carlo Sequence Search Replicate 0 End Time: Thu Feb 15 18:27:52 2024
-Elapsed time of program: 0.919min
-
-Compute Monomer Energy Start Time: Thu Feb 15 18:27:53 2024
-Elapsed time of program: 0.927min
-
--Dimer - Monomer = 1.27e+03 - -102 = 1.37e+03
-Compute Monomer Energy End Time: Thu Feb 15 18:27:55 2024
-Elapsed time of program: 0.975min
-
-Backbone optimize replicate 0 Start Time: Thu Feb 15 18:27:55 2024
-Elapsed time of program: 0.975min
-
