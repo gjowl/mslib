@@ -1,0 +1,61 @@
+02_24_2024
+Self Consistent Mean Field Start Time: Sat Feb 24 01:34:57 2024
+Elapsed time of program: 0.0999min
+
+Running Self Consistent Mean Field
+Initial Sequence:   LLLLAALAILLAALASLLILI
+Best Sequence:      LLLLAALAILLAALASLLILI
+Interface Sequence: LL--AA-AI--AA-AS--I--
+Initial Energy:     1.62e+03
+Total Energy:       1.62e+03
+VDW:                1.32e+03
+HBOND:              -60.5
+Self Consistent Mean Field End Time: Sat Feb 24 01:35:16 2024
+Elapsed time of program: 0.41min
+
+Monte Carlo Sequence Search Replicate 0 Start Time: Sat Feb 24 01:35:16 2024
+Elapsed time of program: 0.413min
+
+  - SelfPairManager energy calculation 0 Start Time: Sat Feb 24 01:35:20 2024
+Elapsed time of program: 0.476min
+
+  - SelfPairManager energy calculation 0 End Time: Sat Feb 24 01:35:20 2024
+Elapsed time of program: 0.481min
+
+- End monte carlo sequence search #0: 0.483min; Monte Carlo ended at Temp: 0.547
+
+- Best Sequence: LLLLAALAALLFVLASLLILI; Energy w/ baseline: 1.62e+03
+Monte Carlo Sequence Search Replicate 0 End Time: Sat Feb 24 01:35:49 2024
+Elapsed time of program: 0.964min
+
+Compute Monomer Energy Start Time: Sat Feb 24 01:35:49 2024
+Elapsed time of program: 0.974min
+
+-Dimer - Monomer = 1.27e+03 - -102 = 1.37e+03
+Compute Monomer Energy End Time: Sat Feb 24 01:35:53 2024
+Elapsed time of program: 1.03min
+
+Backbone optimize replicate 0 Start Time: Sat Feb 24 01:35:53 2024
+Elapsed time of program: 1.03min
+
+Backbone optimize replicate 0 End Time: Sat Feb 24 01:35:58 2024
+Elapsed time of program: 1.11min
+
+Monte Carlo Sequence Search Replicate 1 Start Time: Sat Feb 24 01:35:58 2024
+Elapsed time of program: 1.11min
+
+  - SelfPairManager energy calculation 1 Start Time: Sat Feb 24 01:36:02 2024
+Elapsed time of program: 1.19min
+
+  - SelfPairManager energy calculation 1 End Time: Sat Feb 24 01:36:02 2024
+Elapsed time of program: 1.19min
+
+- End monte carlo sequence search #1: 0.517min; Monte Carlo ended at Temp: 0.547
+
+- Best Sequence: LLLLAALAALLFVLASLLILI; Energy w/ baseline: 234
+Monte Carlo Sequence Search Replicate 1 End Time: Sat Feb 24 01:36:33 2024
+Elapsed time of program: 1.69min
+
+Sequence,RotamerValues,Interface,InterfaceSequence,Seed,Density,Baseline,Dimer,Dimerw/Baseline,HBONDDimer,HBONDDimerOptimize,HBONDDimerPreOptimize,HBONDMonomer,IMM1Dimer,IMM1DimerOptimize,IMM1DimerPreOptimize,IMM1Monomer,Monomer,MonomerSasa,OptimizeSasa,PreBBOptimizeSasa,SequenceEntropy,SequenceProbability,Total,TotalPreOptimize,Totalw/Entropy,VDWDimer,VDWDimerOptimize,VDWDimerPreOptimize,VDWMonomer,acceptCycleNumber,acceptTemp,endAxialRotation,endAxialRotationPrime,endCrossingAngle,endXShift,endZShift,endZShiftPrime,firstRepackEnergy,preOptimizeAxialRotation,preOptimizeAxialRotationPrime,preOptimizeCrossingAngle,preOptimizeEnergy,preOptimizeXShift,preOptimizeZShift,preOptimizeZShiftPrime,preRepackTotal,replicateNumber,startAxialRotation,startAxialRotationPrime,startCrossingAngle,startXShift,startZShift,startZShiftPrime,
+LLLLAALAALLFVLASLLILI,103301210220131023032,,LL--AA-AA--FV-AS--I--,1,0,343.925,1272.6,1616.53,-60.444,-60.2679,-60.2679,-60.444,0,0,0,0,-101.637,4394.02,3846.01,3751.86,6.46405,1.81109e-05,-9.75185,1374.39,1622.99,1333.04,-51.1206,1333.02,-41.1926,133,135.765,-66.6667,61.1113,27.3876,10.1856,4.75002,4.16669,499.342,-66.6667,60,25,1374.39,10,4.6,4,1374.24,0,-66.6667,60,25,10,4.6,4,
+Total Time: 2 minutes

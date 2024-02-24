@@ -167,19 +167,9 @@ struct Options{
 	int seed;
 };
 
-
-void outputTime(auto _start, string _descriptor, ofstream &_sout);
-string setupOutputDirectory(string _dirName);
-void outputErrorMessage(string _message, string _optionParserErrors);
-void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTerminalInteractionList);
-void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq,
- RandomNumberGenerator &_RNG, ofstream &_sout);
-void computeMonomerEnergy(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, map<string,map<string,double>> &_sequenceEnergyMap, string _seq, ofstream &_sout);
-Options parseOptions(int _argc, char * _argv[]);
-
-void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS);
-
-// backbone optimization functions
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    === BACKBONE OPTIMIZATION FUNCTIONS ===
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _sequence, PolymerSequence _PS, AtomPointerVector &_startPdb, map<string,double> _startGeometry,
  map<string, map<string, double>> &_sequenceEnergyMapFinal, ofstream &_eout);
 void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string,double> &_sequenceEnergyMap,
@@ -187,31 +177,71 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
  string _outputDir, int _rep, ofstream &_sout);
 
+// decrease move size functions
+void getCurrentMoveSizes(double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
+ double _deltaXLimit, double _deltaCrossLimit, double _deltaAxLimit, double _deltaZLimit, bool &_decreaseMoveSize, int _moveToPerform);
+double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease);
+
 // axial rotation and zShift conversion from given input ax' and z' to ax and z (Mueller 2014; Fig. S1)
 void convertToRelativeAxAndZ(double _axialRotation, double _zShift, double &_relativeAx, double &_relativeZ);
-map<string, double> getGeometryMap(map<string,double> _geometry, string _descriptor);
-void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, double> &_energyMap);
-void outputFiles(Options &_opt, double _seed, map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout);
 
-// set the active identity for each position to the identity in the given sequence (only for homodimers)
-string extractSequence(System &_sys);
-string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
-void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL);
-void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
-vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1);
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    === FUNCTIONS FROM CATM ===
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+// geometry functions
 void moveZCenterOfCAMassToOrigin(AtomPointerVector& _apV, AtomPointerVector& _axis, Transforms & _trans);
 void backboneMovement(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, Transforms _trans, double _deltaMove, unsigned int moveType);
 void transformation(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, CartesianPoint & _ori, CartesianPoint & _xAxis, CartesianPoint & _zAxis, double _zShift, double _axialRotation, double _crossingAngle, double _xShift, Transforms & _trans);
 void c2Symmetry(AtomPointerVector & _apvA, AtomPointerVector & _apvB);
 double getStandardNormal(RandomNumberGenerator& RNG);
-void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
-void getCurrentMoveSizes(double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
- double _deltaXLimit, double _deltaCrossLimit, double _deltaAxLimit, double _deltaZLimit, bool &_decreaseMoveSize, int _moveToPerform);
-double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease);
+
+// compute the monomer energy  
+// REDACTED VERSION: void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq,
+// RandomNumberGenerator &_RNG, ofstream &_sout);
+// NEW VERSION: transforms object is made in the function
+void computeMonomerEnergy(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, map<string,map<string,double>> &_sequenceEnergyMap, string _seq, ofstream &_sout);
+
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    === HELPER FUNCTIONS ===
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+// function that adds the energy terms to the system, sets up the energy map, and transforms the system to the given geometry
+void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS);
+
+// delete terminal interactions for a given list of interactions (CHARMM_IMM1, CHARMM_IMM1REF, CHARMM_VDW, SCWRL4_HBOND, etc.)
 void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTerminalInteractionList);
+
+// set the active identity for each position to the identity in the given sequence (only for homodimers)
+string extractSequence(System &_sys);
+string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
+void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB,
+ map<string,double> _geometry, Transforms &_trans);
+
+// side chain functions
+void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
+void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL);
+
+// usage function
+void usage();
+
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    === OUTPUT FUNCTIONS ===
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+map<string, double> getGeometryMap(map<string,double> _geometry, string _descriptor);
+void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, double> &_energyMap);
+void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
+vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1);
+void outputFiles(Options &_opt, double _seed, map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout);
+void outputTime(auto _start, string _descriptor, ofstream &_sout);
+string setupOutputDirectory(string _dirName);
+void outputErrorMessage(string _message, string _optionParserErrors);
 
 // function for writing a pdb
 void writePdb(System &_sys, string _outputDir, string _pdbName);
+
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    === OPTIONS ===
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+Options parseOptions(int _argc, char * _argv[]);
 
 int main(int argc, char *argv[]){
 
@@ -359,6 +389,476 @@ int main(int argc, char *argv[]){
 	exit(0);
 }
 
+
+
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    === BACKBONE OPTIMIZATION FUNCTIONS ===
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _sequence, PolymerSequence _PS, AtomPointerVector &_startPdb, map<string,double> _startGeometry,
+ map<string, map<string, double>> &_sequenceEnergyMapFinal, ofstream &_eout){
+	/*******************************************
+	 *       === HELICAL AXIS SET UP ===
+	 *******************************************/
+	System helicalAxis;
+	helicalAxis.readPdb(_opt.helicalAxis);
+
+	// System for the helical axis that sets protein around the origin (0.0, 0.0, 0.0)
+	// AtomPointerVector for the helical axis for each chain
+	AtomPointerVector &axisA = helicalAxis.getChain("A").getAtomPointers();
+	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
+	
+	// Set up object used for transformations
+	Transforms trans;
+	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
+	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
+
+	// get the starting geometry using polyglycine
+	System startGeom;
+	setGly69ToStartingGeometry(_opt,startGeom,helicalAxis,axisA,axisB,_startGeometry,trans);
+
+	/******************************************************************************
+	 *  === DECLARE SYSTEM FOR POLYLEU WITH ALTERNATE IDENTITIES AT INTERFACE ===
+	 ******************************************************************************/
+	// set up the system for the input sequence
+	System sys;
+	prepareSystem(_opt, sys, startGeom, _PS);
+
+	sys.assignCoordinates(_startPdb,false);
+	sys.buildAllAtoms();
+	
+	double dimer = sys.calcEnergy();
+    cout << "Dimer Energy: " << dimer << endl;
+	sys.printEnergySummary();
+	// initialize the object for loading rotamers into system
+	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
+	sysRot.defineRotamerSamplingLevels();
+
+	loadRotamers(sys, sysRot, _opt.SL);
+	sys.buildAllAtoms();
+	
+	// Optimize Initial Starting Position
+	SelfPairManager spm;
+	spm.seed(_RNG.getSeed());
+	spm.setSystem(&sys);
+	spm.setVerbose(false);
+	spm.getMinStates()[0];
+	spm.updateWeights();
+	spm.setOnTheFly(true);
+	spm.saveEnergiesByTerm(true);
+	//repackSideChains(spm, _opt.greedyCycles);
+	repackSideChains(spm, 50);
+	vector<uint> stateVec = spm.getMinStates()[0];
+	sys.setActiveRotamers(stateVec);
+	
+	dimer = sys.calcEnergy();
+    cout << "Dimer Energy: " << dimer << endl;
+    sys.printEnergySummary();
+	writePdb(sys, _opt.outputDir, "startPdb");
+	/******************************************************************************
+	 *   === MONTE CARLO TO SEARCH FOR BEST SEQUENCES AND BACKBONE OPTIMIZE ===
+	 ******************************************************************************/
+	// define the best state
+	vector<uint> bestState = stateVec;
+	
+	// get chain A and B from the system
+	Chain & chainA = sys.getChain("A");
+	Chain & chainB = sys.getChain("B");
+
+	// Set up chain A and chain B atom pointer vectors
+	AtomPointerVector & apvChainA = chainA.getAtomPointers();
+	AtomPointerVector & apvChainB = chainB.getAtomPointers();
+
+	// set the starting geometry
+	sys.saveAltCoor("startingState");
+	helicalAxis.saveAltCoor("startingState");
+	double currentEnergy = sys.calcEnergy();
+
+	string repackDir = _opt.outputDir;
+	//computeMonomerEnergy(sys, helicalAxis, _opt, trans, _sequenceEnergyMapFinal, _sequence, _RNG, _eout);
+	computeMonomerEnergy(sys, _opt, _RNG,  _sequenceEnergyMapFinal, _sequence, _eout);
+
+	// get the monomer energy from the sequence energy map
+	double monomerEnergy = _sequenceEnergyMapFinal[_sequence]["Monomer"];
+	map<string,double> monomerEnergyTerms;
+	// loop through the terms in the sequence energy map
+	for (auto & term : _sequenceEnergyMapFinal[_sequence]){
+		// check if the term name contains "Monomer"
+		if (term.first.find("Monomer") != string::npos){
+			// if it does, add it to the monomer energy terms map
+			monomerEnergyTerms[term.first] = term.second;
+		}
+	}
+	_sequenceEnergyMapFinal.clear();
+	// loop through the number of backbone repack cycles
+	for (uint i=0; i<_opt.backboneRepackCycles; i++){
+		// output the start time
+		outputTime(clockTime, "Backbone optimize replicate " + to_string(i) + " Start", _eout);
+
+		// initialize the sequence energy map
+		map<string, double> energyMap;
+
+		// add the starting geometry to the energy map
+		map<string, double> startGeometry = getGeometryMap(_startGeometry, "preOptimize");
+		addGeometryToEnergyMap(startGeometry, energyMap);
+
+		// save the pre backbone optimize energy and the replicate number in the 
+		energyMap["preOptimizeEnergy"] = currentEnergy;
+		energyMap["replicateNumber"] = i;
+		
+		// backbone optimizer function
+		backboneOptimizeMonteCarlo(_opt, sys, spm, energyMap, _sequence, bestState, helicalAxis, axisA, axisB, apvChainA, apvChainB,
+		 trans, _RNG, monomerEnergy, repackDir, i, _eout);
+		
+		// append the sequence energy map to the final sequence energy map by looping through the sequence energy map
+		for (auto &energy : energyMap){
+			_sequenceEnergyMapFinal[_sequence+"_"+to_string(i)][energy.first] = energy.second;
+		}
+		// add the monomer energy terms to the sequence energy map
+		for (auto &term : monomerEnergyTerms){
+			_sequenceEnergyMapFinal[_sequence+"_"+to_string(i)][term.first] = term.second;
+		}
+
+		// reset the energy map
+		energyMap.clear(); // reset the energyMap for the next cycle
+
+		// reset the system to the starting state
+		sys.applySavedCoor("startingState");
+		helicalAxis.applySavedCoor("startingState");
+		
+		// output the end time
+		outputTime(clockTime, "Backbone optimize replicate " + to_string(i) + " End", _eout);
+	}
+}
+
+// monte carlo backbone optimization function
+void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string,double> &_energyMap,
+ string _sequence, vector<uint> _bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
+ AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
+ string _outputDir, int _rep, ofstream &_sout){
+	// Setup backbone repack file
+	ofstream bbout;
+	string bboutfile = _outputDir + "/" + to_string(_rep) + "_repack.out";
+	bbout.open(bboutfile.c_str());
+
+	// Local Backbone Monte Carlo Repacks Time setup	
+	time_t startTimeMC, endTimeMC;
+	double diffTimeMC;
+	time(&startTimeMC);
+	
+	// starting geometry
+	double xShift = _opt.xShift;	
+	double crossingAngle = _opt.crossingAngle;
+	double axialRotation = _opt.axialRotation;
+	double zShift = _opt.zShift;
+
+	// final geometry
+	double finalXShift = _opt.xShift;
+	double finalCrossingAngle = _opt.crossingAngle;
+	double finalAxialRotation = _opt.axialRotation;
+	double finalZShift = _opt.zShift;
+
+	bbout << "***STARTING GEOMETRY***" << endl;
+	// calculate starting sasa
+	SasaCalculator startSasa(_sys.getAtomPointers());
+	startSasa.calcSasa();
+	double sasa = startSasa.getTotalSasa();
+	_energyMap["PreBBOptimizeSasa"] = sasa;
+
+	// Monte Carlo Repack Manager Setup
+	MonteCarloManager MCMngr(_opt.backboneMCStartTemp, _opt.backboneMCEndTemp, _opt.backboneMCCycles, _opt.backboneMCCurve, _opt.backboneMCMaxRejects, _opt.backboneConvergedSteps, _opt.backboneConvergedE);
+
+	vector<unsigned int> MCOBest = _bestState;
+	unsigned int counter = 0;
+	_sys.setActiveRotamers(_bestState);
+	double currentEnergy = _spm.getStateEnergy(_bestState)-_monomerEnergy;
+	double dimer = _spm.getStateEnergy(_bestState);
+	double calcDimer = _sys.calcEnergy();
+	_energyMap["TotalPreOptimize"] = currentEnergy;
+	_energyMap["VDWDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_VDW");
+	_energyMap["IMM1DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	_energyMap["HBONDDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
+	
+	double bestEnergy = currentEnergy;
+	double prevBestEnergy = currentEnergy;
+	MCMngr.setEner(currentEnergy);
+
+	// setup variables for shifts: ensures that they start from the proper values for every repack and not just the final value from the initial repack
+	bool decreaseMoveSize = _opt.decreaseMoveSize;
+	double deltaX = _opt.deltaX;
+	double deltaCross = _opt.deltaCross;
+	double deltaAx = _opt.deltaAx;
+	double deltaZ = _opt.deltaZ;
+
+	_sys.saveAltCoor("savedRepackState");
+	_helicalAxis.saveAltCoor("BestRepack");
+	// uncomment the below and lines ... ; it makes the outputs quite large, but you'll have outputs for the entire optimization
+	//PDBWriter writer;
+	//writer.open(_opt.outputDir + "/bbRepack_"+to_string(_rep)+".pdb");
+	// loop through the MC cycles for backbone repacks
+	bbout << "Starting Repack Cycles" << endl; 
+	while(!MCMngr.getComplete()) {
+		// get the current temperature of the MC
+		double startTemp = MCMngr.getCurrentT();
+		
+		_sys.applySavedCoor("savedRepackState");
+		_helicalAxis.applySavedCoor("BestRepack");
+		
+		int moveToPreform = _RNG.getRandomInt(3);
+		
+		double deltaXShift = 0.0;
+		double deltaZShift = 0.0;
+		double deltaCrossingAngle = 0.0;
+		double deltaAxialRotation = 0.0; 
+		
+		//======================================
+		//====== Z Shift (Crossing Point) ======
+		//======================================
+		if (moveToPreform == 0) {
+			//deltaZShift = getStandardNormal(RNG1) * 0.1;
+			deltaZShift = getStandardNormal(_RNG) * deltaZ;
+			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPreform);
+		} else if (moveToPreform == 1) {
+		//===========================
+		//===== Axial Rotation ======
+		//===========================
+			//deltaAxialRotation = getStandardNormal(_RNG1) * 1.0;
+			deltaAxialRotation = getStandardNormal(_RNG) * deltaAx;
+			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaAxialRotation, moveToPreform);
+		} else if (moveToPreform == 2) {
+		//==================================
+		//====== Local Crossing Angle ======
+		//==================================
+			//deltaCrossingAngle = getStandardNormal(_RNG1) * 1.0;
+			deltaCrossingAngle = getStandardNormal(_RNG) * deltaCross;
+			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaCrossingAngle, moveToPreform);
+		} else if (moveToPreform == 3) {
+		//==============================================
+		//====== X shift (Interhelical Distance) =======
+		//==============================================
+			//deltaXShift = getStandardNormal(_RNG1) * 0.1;
+			deltaXShift = getStandardNormal(_RNG) * deltaX;
+			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaXShift, moveToPreform);
+		}
+
+		// Run optimization
+		repackSideChains(_spm, _opt.greedyCycles);
+		vector<unsigned int> MCOFinal = _spm.getMinStates()[0];
+		currentEnergy = _spm.getMinBound()[0]-_monomerEnergy;
+		_sys.setActiveRotamers(MCOFinal);//THIS WAS NOT HERE BEFORE 2022-8-26 NIGHT! MAKE SURE IT'S IN ALL OTHER CODE, IT'S CRUCIAL TO SAVING THE STATE
+		if (counter == 0){
+			_energyMap["firstRepackEnergy"] = currentEnergy;
+		}
+		if (!MCMngr.accept(currentEnergy)) {
+			bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " energy: " << currentEnergy << endl;
+		} else {
+			bestEnergy = currentEnergy;
+			_sys.saveAltCoor("savedRepackState");
+			_helicalAxis.saveAltCoor("BestRepack");
+		
+			finalXShift = finalXShift + deltaXShift;
+			finalCrossingAngle = finalCrossingAngle + deltaCrossingAngle;
+			finalAxialRotation = finalAxialRotation + deltaAxialRotation;
+			finalZShift = finalZShift + deltaZShift;
+			MCOBest = MCOFinal;
+
+			// if accept, decrease the value of the moves by the sigmoid function
+			if (_opt.decreaseMoveSize == true){
+				double endTemp = MCMngr.getCurrentT();
+				getCurrentMoveSizes(startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, _opt.deltaXLimit,
+				 _opt.deltaCrossLimit, _opt.deltaAxLimit, _opt.deltaZLimit, decreaseMoveSize, moveToPreform);
+			}
+			bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
+			counter++;
+			//writer.write(_sys.getAtomPointers(), true, false, true);
+		}
+	}
+	//writer.close();
+	bbout << "End Repack Cycles" << endl << endl; 
+	time(&endTimeMC);
+	diffTimeMC = difftime (endTimeMC, startTimeMC);
+	_sys.applySavedCoor("savedRepackState");
+	_helicalAxis.applySavedCoor("BestRepack");
+	// write the pdb for the final state of the backbone optimization
+	writePdb(_sys, _outputDir, to_string(_rep));
+	double dimerEnergy = _spm.getStateEnergy(MCOBest);
+	double finalEnergy = dimerEnergy-_monomerEnergy;
+	
+	// Output change in geometry
+	bbout << "***REPACK GEOMETRY***" << endl;
+	bbout << "Energy;        Before: " << prevBestEnergy << "; After: " << bestEnergy << endl << endl;
+
+	// sets the updated backbone parameters
+	map<string,double> geometry;
+	geometry["xShift"] = finalXShift;
+	geometry["crossingAngle"] = finalCrossingAngle;
+	geometry["axialRotation"] = finalAxialRotation;
+	geometry["zShift"] = finalZShift;
+
+	// add the geometry to the map post backbone optimization
+	map<string, double> endGeometry = getGeometryMap(geometry, "end");
+	addGeometryToEnergyMap(endGeometry, _energyMap);
+
+	SasaCalculator endDimerSasa(_sys.getAtomPointers());
+	endDimerSasa.calcSasa();
+	double endSasa = endDimerSasa.getTotalSasa();
+	_energyMap["OptimizeSasa"] = endSasa;
+	_energyMap["Total"] = finalEnergy;
+	_energyMap["VDWDimerOptimize"] = _spm.getStateEnergy(MCOBest, "CHARMM_VDW");
+	_energyMap["IMM1DimerOptimize"] = _spm.getStateEnergy(MCOBest, "CHARMM_IMM1")+_spm.getStateEnergy(MCOBest, "CHARMM_IMM1REF");
+	_energyMap["HBONDDimerOptimize"] = _spm.getStateEnergy(MCOBest, "SCWRL4_HBOND");
+	
+	bbout << MCMngr.getReasonCompleted() << endl;	
+	bbout << "Monte Carlo repack complete. Time: " << diffTimeMC/60 << "min" << endl << endl;
+
+	// clear the saved repack state
+	_sys.clearSavedCoor("savedRepackState");
+	_helicalAxis.clearSavedCoor("BestRepack");
+}
+
+// adjust the move sizes based on the monte carlo function (decrease by multiplying by the change in temperature)
+void getCurrentMoveSizes(double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
+ double _deltaXLimit, double _deltaCrossLimit, double _deltaAxLimit, double _deltaZLimit, bool &_decreaseMoveSize, int _moveToPerform) {
+	// define the temperature change
+	double decreaseMultiplier = _endTemp/_currTemp;
+	// setup the decrease booleans; if the move size has reached its minimum, don't decrease it further and set to false
+	bool decreaseZ = false;
+	bool decreaseAx = false;
+	bool decreaseCross = false;
+	bool decreaseX = false;
+
+	// move to perform is the move that was just performed from the backboneOptimizer function
+	if (_moveToPerform == 0){
+		decreaseZ = true;
+		_deltaZ = decreaseMoveSize(_deltaZ, _deltaZLimit, decreaseMultiplier, decreaseZ);
+	} else if (_moveToPerform == 1) {
+		decreaseAx = true;
+		_deltaAx = decreaseMoveSize(_deltaAx, _deltaAxLimit, decreaseMultiplier, decreaseAx);
+	} else if (_moveToPerform == 2) {
+		decreaseCross = true;
+		_deltaCross = decreaseMoveSize(_deltaCross, _deltaCrossLimit, decreaseMultiplier, decreaseCross);
+	} else if (_moveToPerform == 3) {
+		decreaseX = true;
+		_deltaX = decreaseMoveSize(_deltaX, _deltaXLimit, decreaseMultiplier, decreaseX);
+	}
+
+	// if all of the move sizes have reached their minimum, set the decrease move size boolean to false	
+	if (decreaseX == false && decreaseCross == false && decreaseAx == false && decreaseZ == false){
+		_decreaseMoveSize = false;
+	}
+}
+
+// function that decreases the acceptable move size based on the monte carlo function temperature change (decreaseMultiplier)
+// only decreases the move size if the move size is greater than the move limit
+// as the temperature decreases, the acceptable move size decreases
+
+double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease) {
+	// get the change between the current acceptable move size and the move limit (ex: xShift 0.5-0.1)
+	double diffMoveSize = _moveSize-_moveLimit;
+	// get the current move size decrease based on the change in temperature (ex: xShift 0.4-(0.4*995/1000) = 0.4-0.398 = 0.002)
+	double moveDecrease = diffMoveSize-(diffMoveSize*_decreaseMultiplier);// edited on 2022-10-6: it now works properly; before it decreased to the move limit
+	// get the adjusted move size (the change in acceptable move size minus the move decrease; ex: xShift 0.5-0.002 = 0.498 acceptable)
+	double newMoveSize = _moveSize - moveDecrease;
+	// check to see if the new move size is greater than the accepted move limit (ex: xShift 0.498 > 0.1; 0.498 is the new maximum xShift change)
+	if (newMoveSize > _moveLimit){
+		return newMoveSize;
+	} else {
+		// if the move size is less, set the move size to the move limit and set the decrease boolean to false 
+		// to stop accepting any decreases in that move
+		_decrease = false;
+		return _moveSize;
+	}
+}
+
+void convertToRelativeAxAndZ(double _axialRotation, double _zShift, double &_relativeAx, double &_relativeZ){
+	// use the positive axial rotation for conversion since our axial rotations are negative
+	//double axialRotation = abs(_axialRot);
+	double axialRotation = _axialRotation;
+	// use equations from Mueller 2014; Fig. S1
+	_relativeAx = (10*axialRotation/9)+(200*_zShift/27);
+	_relativeAx = 100+_relativeAx;
+	_relativeZ = (10*_zShift/9)+(0.15*axialRotation/9);
+}
+
+
+
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    === OUTPUT FUNCTIONS ===
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+map<string, double> getGeometryMap(map<string,double> _geometry, string _descriptor){
+	// get geometries from the initial geometry map
+	double xShift = _geometry["xShift"];
+	double crossingAngle = _geometry["crossingAngle"];
+	double axialRotation = _geometry["axialRotation"];
+	double zShift = _geometry["zShift"];
+
+	// add the descriptor to the output geometry map
+	map<string, double> geometryMap;
+	geometryMap[_descriptor+"XShift"] = xShift;
+	geometryMap[_descriptor+"CrossingAngle"] = crossingAngle;
+	geometryMap[_descriptor+"AxialRotation"] = axialRotation;
+	geometryMap[_descriptor+"ZShift"] = zShift;
+
+	// convert axialRotation and zShift for output (from parallelogram from Ben)
+	double relativeAx;
+	double relativeZ;
+	convertToRelativeAxAndZ(axialRotation, zShift, relativeAx, relativeZ);
+	geometryMap[_descriptor+"AxialRotationPrime"] = relativeAx;
+	geometryMap[_descriptor+"ZShiftPrime"] = relativeZ;
+	return geometryMap;
+}
+
+void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, double> &_energyMap){
+	for (auto &it : _geometryMap){
+		_energyMap[it.first] = it.second;
+	}
+}
+
+// output energies by term into a referenced energyMap
+void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
+vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
+	if (_includeIMM1 == false){//No IMM1 Energy (for the Monte Carlos, both dimer and monomer)
+		for (uint i=0; i<_energyTermList.size(); i++){
+			string energyTerm = _energyTermList[i]; //CHARMM_ and SCWRL4_ terms
+			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;//Removes the CHARMM_ and SCWRL4_ before energyTerm names
+			if (energyTerm.find("IMM1") != string::npos){
+				continue;
+			} else {
+				if (_energyDescriptor.find("Monomer") != string::npos){
+					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
+				} else {
+					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
+				}
+			}
+		}
+		if (_energyDescriptor.find("Monomer") != string::npos){
+			//skip if monomer; could add calc baseline here at some point
+		} else {
+			_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
+			_energyMap["DimerSelfBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE");
+			_energyMap["DimerPairBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
+		}
+	} else if (_includeIMM1 == true){//IMM1 Energies
+		for (uint i=0; i<_energyTermList.size(); i++){
+			string energyTerm = _energyTermList[i];
+			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;
+			if (_energyDescriptor.find("Monomer") != string::npos){
+				if (energyTerm.find("IMM1") != string::npos){
+					_energyMap["IMM1Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
+				} else {
+					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
+				}
+			} else {
+				if (energyTerm.find("IMM1") != string::npos){
+					_energyMap["IMM1Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
+				} else {
+					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
+				}
+			}
+		}
+		//_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
+	}
+}
+
 void outputFiles(Options &_opt, double _seed, map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout){
 	// Setup vector to hold energy file lines
 	vector<string> energyLines;
@@ -401,7 +901,7 @@ void outputFiles(Options &_opt, double _seed, map<string,map<string,double>> _se
 	eout.close();
 }
 
-// 
+// setups up the output directory in the current working directory, good for running on chtc and biochem servers
 string setupOutputDirectory(string _dirName){
 	_dirName = string(get_current_dir_name()) + "/" + _dirName;
 	string cmd = "mkdir -p " + _dirName;
@@ -419,6 +919,370 @@ void outputErrorMessage(string _message, string _optionParserErrors){
 	cout << _message << endl;
 	cout << endl;
 	cout << _optionParserErrors << endl;
+}
+
+void outputTime(auto _start, string _descriptor, ofstream &_sout){
+	auto end = chrono::system_clock::now();
+	time_t endTimeFormatted = chrono::system_clock::to_time_t(end); 
+	chrono::duration<double> elapsedTime = end-_start;
+	_sout.precision(3);// rounds output to 3 decimal places
+	cout.precision(3);// rounds output to 3 decimal places
+	_sout << _descriptor << " Time: " << ctime(&endTimeFormatted);
+	_sout << "Elapsed time of program: " << elapsedTime.count()/60 << "min" << endl << endl;
+	cout << _descriptor << " Time: " << ctime(&endTimeFormatted);
+	cout << "Elapsed time of program: " << elapsedTime.count()/60 << "min" << endl << endl;
+}
+
+void writePdb(System &_sys, string _outputDir, string _pdbName){
+	PDBWriter writer;
+	writer.open(_outputDir + "/" + _pdbName + ".pdb");
+	writer.write(_sys.getAtomPointers(), true, false, false);
+	writer.close();
+}
+
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    === HELPER FUNCTIONS ===
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS){	
+	// declare system
+	CharmmSystemBuilder CSB(_sys,_opt.topFile,_opt.parFile,_opt.solvFile);
+	if (_opt.useElec == false){
+		CSB.setBuildTerm("CHARMM_ELEC", false);
+	} else {
+		CSB.setBuildTerm("CHARMM_ELEC", true);
+	}
+	CSB.setBuildTerm("CHARMM_ANGL", false);
+	CSB.setBuildTerm("CHARMM_BOND", false);
+	CSB.setBuildTerm("CHARMM_DIHE", false);
+	CSB.setBuildTerm("CHARMM_IMPR", false);
+	CSB.setBuildTerm("CHARMM_U-BR", false);
+	CSB.setBuildTerm("CHARMM_IMM1REF", true);
+	CSB.setBuildTerm("CHARMM_IMM1", true);
+
+	// load the membrane as solvent
+	CSB.setSolvent("MEMBRANE");
+	// set the midpoint length of the membrane and the exponential factor for the membrane (src/CharmmEnergy.cpp: IMM1ZtransFunction) 
+	CSB.setIMM1Params(15, 10);
+	// sets all nonbonded interactions to 0, excluding interactions between far atoms (src/CharmmSystemBuilder.cpp: updateNonbonded)
+	CSB.setBuildNonBondedInteractions(false);
+
+	// Setup polymer sequence and build the sequence using CharmmSystemBuilder
+	if(!CSB.buildSystem(_PS)) {
+		cerr << "Unable to build system from " << _PS << endl;
+		exit(0);
+	}
+	
+	// assign the coordinates of our system to the given geometry 
+	_sys.assignCoordinates(_startGeom.getAtomPointers(),false);
+	_sys.buildAllAtoms();
+	
+	// Add hydrogen bond term
+	HydrogenBondBuilder hb(_sys, _opt.hbondFile);
+	hb.buildInteractions(50);//when this is here, the HB weight is correct
+
+	CSB.updateNonBonded(10,12,50);
+	/******************************************************************************
+	 *                     === INITIAL VARIABLE SET UP ===
+	 ******************************************************************************/
+	// Initialize EnergySet that contains energies for the chosen terms for our design
+	EnergySet* Eset = _sys.getEnergySet();
+	// Set all terms inactive and explicitly set the given terms as active
+	Eset->setAllTermsInactive();
+	Eset->setTermActive("CHARMM_VDW", true);
+	Eset->setTermActive("SCWRL4_HBOND", true);
+	Eset->setTermActive("CHARMM_IMM1REF", true);
+	Eset->setTermActive("CHARMM_IMM1", true);
+
+	// Set weights
+	Eset->setWeight("CHARMM_VDW", _opt.weight_vdw);
+	Eset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
+	Eset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
+	Eset->setWeight("CHARMM_IMM1", _opt.weight_solv);
+
+	if (_opt.useElec == true){
+		Eset->setTermActive("CHARMM_ELEC", true);
+		Eset->setWeight("CHARMM_ELEC", _opt.weight_elec);
+	}
+
+	_sys.calcEnergy();
+	/******************************************************************************
+	 *                === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
+	 ******************************************************************************/
+	// removes all hydrogen bonding near the termini of our helices
+	// (remnant from CATM, but used in the code that was used to get baselines so keeping it to be consistent)
+    deleteTerminalBondInteractions(_sys,_opt.deleteTerminalInteractions);
+}
+
+void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTerminalInteractionList){
+	EnergySet* pESet = _sys.getEnergySet();
+	int chainSize = _sys.chainSize();
+	AtomPointerVector atoms;
+	for(int i = 0; i < chainSize; i++) {
+		Chain & thisChain = _sys.getChain(i);
+		vector<Position*>& positions = thisChain.getPositions();
+		int firstResidueNumber = 0; // hardcoded, this is done stupidly but works
+		int lastResidueNumber = positions[positions.size()-1]->getResidueNumber();
+		for(int i = firstResidueNumber; i < firstResidueNumber+3; i++) {
+			// rid of hbonds from first 3 positions
+			if(firstResidueNumber <= i) {
+				atoms += positions[i]->getAtomPointers();
+				//cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
+			}
+			// rid of hbonds from last 3 positions
+			if(lastResidueNumber > i) {
+				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
+				//cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
+			}
+		}
+	}
+	for (uint i=0; i<_deleteTerminalInteractionList.size(); i++){
+		pESet->deleteInteractionsWithAtoms(atoms,_deleteTerminalInteractionList[i]);
+	}
+}
+
+// set the active identity for each position to the identity in the given sequence (only for homodimers)
+string extractSequence(System &_sys){
+	// initialize the sequence string
+	string sequence = "";
+	// get the first chain from the system
+	Chain &chain = _sys.getChain(0);
+	// loop through the chain
+	for (uint i=0; i<chain.positionSize(); i++){
+		// get the ith position in the system
+		Position &pos = chain.getPosition(i);
+		// get the residue name of the ith position
+		string res = pos.getResidueName();
+		// convert the residue name to one letter code
+		string aa = MslTools::getOneLetterCode(res);
+		// add the one letter code to the sequence string
+		sequence += aa;
+	}
+	return sequence;
+}
+
+string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum) {
+	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
+	// A:{32}ALA ILE GLY GLY GLY
+	// B:{32}ALA ILE GLY GLY GLY
+	string ps = "";
+	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
+		if (it == _seq.begin() || it == _seq.end()-1){
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if (it == _seq.begin()){
+				if(resName == "HIS") {
+					ps = ps + " HSE-ACE";
+				} else {
+					ps = ps + " " + resName + "-ACE";
+				}
+			} else {
+				if(resName == "HIS") {
+					ps = ps + " HSE-CT2";
+				} else {
+					ps = ps + " " + resName + "-CT2";
+				}
+			}
+		} else {
+			stringstream ss;
+			ss << *it;
+			string resName = MslTools::getThreeLetterCode(ss.str());
+			if(resName == "HIS") {
+				ps = ps + " HSE";
+			} else {
+				ps = ps + " " + resName;
+			}
+		}
+	}
+	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
+	return "A" + ps + "\nB" + ps;
+}
+
+// sets the gly69 backbone to starting geometry
+void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB,
+ map<string,double> _geometry, Transforms &_trans) {
+	/******************************************************************************
+	 *         === COPY BACKBONE COORDINATES AND TRANSFORM TO GEOMETRY ===
+	 ******************************************************************************/
+	// initialize the gly69 backbone coordinates and transform it to the chosen geometry
+	_sys.readPdb(_opt.backboneFile);
+
+	// Set up chain A and chain B atom pointer vectors
+	Chain & chainA = _sys.getChain("A");
+	Chain & chainB = _sys.getChain("B");
+	AtomPointerVector & apvChainA = chainA.getAtomPointers();
+	AtomPointerVector & apvChainB = chainB.getAtomPointers();
+	
+	// Reference points for Helices
+	CartesianPoint ori(0.0,0.0,0.0);
+	CartesianPoint xAxis(1.0,0.0,0.0);
+	CartesianPoint zAxis(0.0,0.0,1.0);
+
+	double xShift = _geometry["xShift"];
+	double zShift = _geometry["zShift"];
+	double axialRotation = _geometry["axialRotation"];
+	double crossingAngle = _geometry["crossingAngle"];
+
+	// Transform to chosen geometry
+	transformation(apvChainA, apvChainB, _axisA, _axisB, ori, xAxis, zAxis, zShift, axialRotation, crossingAngle, xShift, _trans);
+	moveZCenterOfCAMassToOrigin(_sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);
+}
+
+
+void repackSideChains(SelfPairManager & _spm, int _greedyCycles) {
+	_spm.setOnTheFly(1);
+	_spm.calculateEnergies(); // CHANGE BACK!!!
+	_spm.runGreedyOptimizer(_greedyCycles);
+}
+
+void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
+	for (uint k=0; k < _sys.positionSize(); k++) {
+		Position &pos = _sys.getPosition(k);
+        // check if there is more than one identity for this position
+        if (pos.identitySize() > 1) {
+            for (uint i=0; i<pos.identitySize(); i++){
+                // set the active identity
+			    pos.setActiveIdentity(i);
+		        if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+		        	if (!_sysRot.loadRotamers(&pos, pos.getResidueName(),_SL)) {
+		        		cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+		        	}
+		        }
+            }
+        } else if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
+			if (!_sysRot.loadRotamers(&pos, pos.getResidueName(),_SL)) {
+				cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
+			}
+		}
+	}
+}
+
+void usage() {
+	cout << endl;
+	cout << "Run as" << endl;
+	cout << "   % " << programName << " --configfile <file.config>" << endl;
+	cout << "For help" << endl;
+	cout << "   % " << programName << " -h" << endl;
+	cout << endl;
+}
+
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    === FUNCTIONS FROM CATM ===
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+void moveZCenterOfCAMassToOrigin(AtomPointerVector& _apV, AtomPointerVector& _axis, Transforms & _trans) {
+	AtomSelection sel(_apV);
+	AtomPointerVector & caApV = sel.select("name CA");
+	double zShift = 0.0;
+	for(int i = 0; i < caApV.size(); i++) {
+		zShift += (caApV[i]->getCoor()).getZ();
+	}
+	zShift = -1.0 * zShift/double(caApV.size());
+
+	CartesianPoint interDistVect;
+	interDistVect.setCoor(0.0, 0.0, zShift);
+	_trans.translate(_apV, interDistVect);
+	_trans.translate(_axis, interDistVect);
+}
+
+void c2Symmetry(AtomPointerVector & _apvA, AtomPointerVector & _apvB) {
+	// Set coordinates of chain A to chain B
+	for (uint i=0; i < _apvA.size(); i++) {
+		_apvB[i]->copyAllCoor(*_apvA[i]);
+	}
+
+	// Rotation matrix for 180 degrees
+	// flips the sign on the x and y coordinates
+	Matrix m(3,3,0.0);
+	m[0][0] = -1.0;
+	m[0][1] = 0.0;
+	m[0][2] = 0.0;
+	m[1][0] = 0.0;
+	m[1][1] = -1.0;
+	m[1][2] = 0.0;
+	m[2][0] = 0.0;
+	m[2][1] = 0.0;
+	m[2][2] = 1.0;
+
+	// Rotate chain B around Z axis
+	Transforms trans;
+	trans.rotate(_apvB, m);
+}
+
+void transformation(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, CartesianPoint & _ori, CartesianPoint & _xAxis, CartesianPoint & _zAxis, double _zShift, double _axialRotation, double _crossingAngle, double _xShift, Transforms & _trans) {
+
+	//====== Z Shift (Crossing Point) ======
+	CartesianPoint zShiftCP(0.0, 0.0, _zShift);
+	_trans.translate(_chainA, zShiftCP);
+
+	//===== Axial Rotation ======
+	_trans.rotate(_chainA, _axialRotation, _ori, _zAxis);
+
+	//====== Local Crossing Angle ======
+	_trans.rotate(_chainA, (_crossingAngle/2.0), _ori, _xAxis);
+	_trans.rotate(_axisA, (_crossingAngle/2.0), _ori, _xAxis);
+
+	//====== X shift (Interhelical Distance) =======
+	CartesianPoint interDistVect;
+	interDistVect.setCoor((-1.0*_xShift/2.0), 0.0, 0.0);
+	_trans.translate(_chainA, interDistVect);
+	_trans.translate(_axisA, interDistVect);
+
+	c2Symmetry(_chainA, _chainB);
+	c2Symmetry(_axisA, _axisB);
+}
+
+void backboneMovement(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, Transforms _trans, double _deltaMove, unsigned int moveType) {
+
+	 if (moveType == 0) {
+		// Z Shift
+		CartesianPoint translateA = _axisA(1).getCoor() - _axisA(0).getCoor(); // vector minus helical center
+		translateA = translateA.getUnit() * _deltaMove; // unit vector of helical axis times the amount to shift by
+
+		_trans.translate(_chainA, translateA);
+
+		c2Symmetry(_chainA, _chainB);
+		c2Symmetry(_axisA, _axisB);
+
+	} else if (moveType == 1) {
+		// Axial Rotation
+		_trans.rotate(_chainA, (_deltaMove), _axisA(0).getCoor(), _axisA(1).getCoor());
+
+		c2Symmetry(_chainA, _chainB);
+		c2Symmetry(_axisA, _axisB);
+
+	} else 	if (moveType == 2) {
+		// Crossing Angle
+		_trans.rotate(_chainA, (_deltaMove * 0.5), _axisA(0).getCoor(), _axisB(0).getCoor());
+		_trans.rotate(_axisA, (_deltaMove * 0.5), _axisA(0).getCoor(), _axisB(0).getCoor());
+
+		c2Symmetry(_chainA, _chainB);
+		c2Symmetry(_axisA, _axisB);
+
+	} else if (moveType == 3) {
+		// XShift
+		// Helix A interhelical distance
+		CartesianPoint translateA = _axisB(0).getCoor() - _axisA(0).getCoor(); // vector minus helical center
+		translateA = translateA.getUnit() * _deltaMove * -0.5; // unit vector of helical axis times the amount to shift by
+
+		_trans.translate(_chainA, translateA);
+		_trans.translate(_axisA, translateA);
+
+		// Helix B interhelical distance
+		c2Symmetry(_chainA, _chainB);
+		c2Symmetry(_axisA, _axisB);
+
+	} else {
+		cerr << "Unknown moveType " << moveType << " in backboneMovement. Should be 0-3 " << endl;
+	}
+}
+
+// Just add 10 U(0,1) uniform random variables, offset by 0.5 to make mean = 0 and divide by variance = (10 * var(U(0,1)))
+double getStandardNormal(RandomNumberGenerator& RNG) {
+	double retVal = 0.0;
+	for(int i = 0; i < 10; i ++) {
+		retVal += RNG.getRandomDouble();
+	}
+	return (retVal/10.0 - 0.5) * 1.2;
 }
 
 void computeMonomerEnergy(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, map<string,map<string,double>> &_sequenceEnergyMap, string _seq, ofstream &_sout) {
@@ -1035,495 +1899,12 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 	outputTime(clockTime, "Compute Monomer Energy End", _sout);
 }
 
-// sets the gly69 backbone to starting geometry
-void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB,
- map<string,double> _geometry, Transforms &_trans) {
-	/******************************************************************************
-	 *         === COPY BACKBONE COORDINATES AND TRANSFORM TO GEOMETRY ===
-	 ******************************************************************************/
-	// initialize the gly69 backbone coordinates and transform it to the chosen geometry
-	_sys.readPdb(_opt.backboneFile);
 
-	// Set up chain A and chain B atom pointer vectors
-	Chain & chainA = _sys.getChain("A");
-	Chain & chainB = _sys.getChain("B");
-	AtomPointerVector & apvChainA = chainA.getAtomPointers();
-	AtomPointerVector & apvChainB = chainB.getAtomPointers();
-	
-	// Reference points for Helices
-	CartesianPoint ori(0.0,0.0,0.0);
-	CartesianPoint xAxis(1.0,0.0,0.0);
-	CartesianPoint zAxis(0.0,0.0,1.0);
+/*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-	double xShift = _geometry["xShift"];
-	double zShift = _geometry["zShift"];
-	double axialRotation = _geometry["axialRotation"];
-	double crossingAngle = _geometry["crossingAngle"];
+    === OPTIONS ===
 
-	// Transform to chosen geometry
-	transformation(apvChainA, apvChainB, _axisA, _axisB, ori, xAxis, zAxis, zShift, axialRotation, crossingAngle, xShift, _trans);
-	moveZCenterOfCAMassToOrigin(_sys.getAtomPointers(), _helicalAxis.getAtomPointers(), _trans);
-}
-
-void backboneOptimizer(Options &_opt, RandomNumberGenerator &_RNG, string _sequence, PolymerSequence _PS, AtomPointerVector &_startPdb, map<string,double> _startGeometry,
- map<string, map<string, double>> &_sequenceEnergyMapFinal, ofstream &_eout){
-	/*******************************************
-	 *       === HELICAL AXIS SET UP ===
-	 *******************************************/
-	System helicalAxis;
-	helicalAxis.readPdb(_opt.helicalAxis);
-
-	// System for the helical axis that sets protein around the origin (0.0, 0.0, 0.0)
-	// AtomPointerVector for the helical axis for each chain
-	AtomPointerVector &axisA = helicalAxis.getChain("A").getAtomPointers();
-	AtomPointerVector &axisB = helicalAxis.getChain("B").getAtomPointers();
-	
-	// Set up object used for transformations
-	Transforms trans;
-	trans.setTransformAllCoors(true); // transform all coordinates (non-active rotamers)
-	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
-
-	// get the starting geometry using polyglycine
-	System startGeom;
-	setGly69ToStartingGeometry(_opt,startGeom,helicalAxis,axisA,axisB,_startGeometry,trans);
-
-	/******************************************************************************
-	 *  === DECLARE SYSTEM FOR POLYLEU WITH ALTERNATE IDENTITIES AT INTERFACE ===
-	 ******************************************************************************/
-	// set up the system for the input sequence
-	System sys;
-	prepareSystem(_opt, sys, startGeom, _PS);
-
-	sys.assignCoordinates(_startPdb,false);
-	sys.buildAllAtoms();
-	
-	double dimer = sys.calcEnergy();
-    cout << "Dimer Energy: " << dimer << endl;
-	sys.printEnergySummary();
-	// initialize the object for loading rotamers into system
-	SystemRotamerLoader sysRot(sys, _opt.rotLibFile);
-	sysRot.defineRotamerSamplingLevels();
-
-	loadRotamers(sys, sysRot, _opt.SL);
-	sys.buildAllAtoms();
-	
-	// Optimize Initial Starting Position
-	SelfPairManager spm;
-	spm.seed(_RNG.getSeed());
-	spm.setSystem(&sys);
-	spm.setVerbose(false);
-	spm.getMinStates()[0];
-	spm.updateWeights();
-	spm.setOnTheFly(true);
-	spm.saveEnergiesByTerm(true);
-	//repackSideChains(spm, _opt.greedyCycles);
-	repackSideChains(spm, 50);
-	vector<uint> stateVec = spm.getMinStates()[0];
-	sys.setActiveRotamers(stateVec);
-	
-	dimer = sys.calcEnergy();
-    cout << "Dimer Energy: " << dimer << endl;
-    sys.printEnergySummary();
-	writePdb(sys, _opt.outputDir, "startPdb");
-	/******************************************************************************
-	 *   === MONTE CARLO TO SEARCH FOR BEST SEQUENCES AND BACKBONE OPTIMIZE ===
-	 ******************************************************************************/
-	// define the best state
-	vector<uint> bestState = stateVec;
-	
-	// get chain A and B from the system
-	Chain & chainA = sys.getChain("A");
-	Chain & chainB = sys.getChain("B");
-
-	// Set up chain A and chain B atom pointer vectors
-	AtomPointerVector & apvChainA = chainA.getAtomPointers();
-	AtomPointerVector & apvChainB = chainB.getAtomPointers();
-
-	// set the starting geometry
-	sys.saveAltCoor("startingState");
-	helicalAxis.saveAltCoor("startingState");
-	double currentEnergy = sys.calcEnergy();
-
-	string repackDir = _opt.outputDir;
-	//computeMonomerEnergy(sys, helicalAxis, _opt, trans, _sequenceEnergyMapFinal, _sequence, _RNG, _eout);
-	computeMonomerEnergy(sys, _opt, _RNG,  _sequenceEnergyMapFinal, _sequence, _eout);
-
-	// get the monomer energy from the sequence energy map
-	double monomerEnergy = _sequenceEnergyMapFinal[_sequence]["Monomer"];
-	map<string,double> monomerEnergyTerms;
-	// loop through the terms in the sequence energy map
-	for (auto & term : _sequenceEnergyMapFinal[_sequence]){
-		// check if the term name contains "Monomer"
-		if (term.first.find("Monomer") != string::npos){
-			// if it does, add it to the monomer energy terms map
-			monomerEnergyTerms[term.first] = term.second;
-		}
-	}
-	_sequenceEnergyMapFinal.clear();
-	// loop through the number of backbone repack cycles
-	for (uint i=0; i<_opt.backboneRepackCycles; i++){
-		// output the start time
-		outputTime(clockTime, "Backbone optimize replicate " + to_string(i) + " Start", _eout);
-
-		// initialize the sequence energy map
-		map<string, double> energyMap;
-
-		// add the starting geometry to the energy map
-		map<string, double> startGeometry = getGeometryMap(_startGeometry, "preOptimize");
-		addGeometryToEnergyMap(startGeometry, energyMap);
-
-		// save the pre backbone optimize energy and the replicate number in the 
-		energyMap["preOptimizeEnergy"] = currentEnergy;
-		energyMap["replicateNumber"] = i;
-		
-		// backbone optimizer function
-		backboneOptimizeMonteCarlo(_opt, sys, spm, energyMap, _sequence, bestState, helicalAxis, axisA, axisB, apvChainA, apvChainB,
-		 trans, _RNG, monomerEnergy, repackDir, i, _eout);
-		
-		// append the sequence energy map to the final sequence energy map by looping through the sequence energy map
-		for (auto &energy : energyMap){
-			_sequenceEnergyMapFinal[_sequence+"_"+to_string(i)][energy.first] = energy.second;
-		}
-		// add the monomer energy terms to the sequence energy map
-		for (auto &term : monomerEnergyTerms){
-			_sequenceEnergyMapFinal[_sequence+"_"+to_string(i)][term.first] = term.second;
-		}
-
-		// reset the energy map
-		energyMap.clear(); // reset the energyMap for the next cycle
-
-		// reset the system to the starting state
-		sys.applySavedCoor("startingState");
-		helicalAxis.applySavedCoor("startingState");
-		
-		// output the end time
-		outputTime(clockTime, "Backbone optimize replicate " + to_string(i) + " End", _eout);
-	}
-}
-
-// monte carlo backbone optimization function
-void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_spm, map<string,double> &_energyMap,
- string _sequence, vector<uint> _bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
- AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
- string _outputDir, int _rep, ofstream &_sout){
-	// Setup backbone repack file
-	ofstream bbout;
-	string bboutfile = _outputDir + "/" + to_string(_rep) + "_repack.out";
-	bbout.open(bboutfile.c_str());
-
-	// Local Backbone Monte Carlo Repacks Time setup	
-	time_t startTimeMC, endTimeMC;
-	double diffTimeMC;
-	time(&startTimeMC);
-	
-	// starting geometry
-	double xShift = _opt.xShift;	
-	double crossingAngle = _opt.crossingAngle;
-	double axialRotation = _opt.axialRotation;
-	double zShift = _opt.zShift;
-
-	// final geometry
-	double finalXShift = _opt.xShift;
-	double finalCrossingAngle = _opt.crossingAngle;
-	double finalAxialRotation = _opt.axialRotation;
-	double finalZShift = _opt.zShift;
-
-	bbout << "***STARTING GEOMETRY***" << endl;
-	// calculate starting sasa
-	SasaCalculator startSasa(_sys.getAtomPointers());
-	startSasa.calcSasa();
-	double sasa = startSasa.getTotalSasa();
-	_energyMap["PreBBOptimizeSasa"] = sasa;
-
-	// Monte Carlo Repack Manager Setup
-	MonteCarloManager MCMngr(_opt.backboneMCStartTemp, _opt.backboneMCEndTemp, _opt.backboneMCCycles, _opt.backboneMCCurve, _opt.backboneMCMaxRejects, _opt.backboneConvergedSteps, _opt.backboneConvergedE);
-
-	vector<unsigned int> MCOBest = _bestState;
-	unsigned int counter = 0;
-	_sys.setActiveRotamers(_bestState);
-	double currentEnergy = _spm.getStateEnergy(_bestState)-_monomerEnergy;
-	double dimer = _spm.getStateEnergy(_bestState);
-	double calcDimer = _sys.calcEnergy();
-	_energyMap["TotalPreOptimize"] = currentEnergy;
-	_energyMap["VDWDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_VDW");
-	_energyMap["IMM1DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
-	_energyMap["HBONDDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
-	
-	double bestEnergy = currentEnergy;
-	double prevBestEnergy = currentEnergy;
-	MCMngr.setEner(currentEnergy);
-
-	// setup variables for shifts: ensures that they start from the proper values for every repack and not just the final value from the initial repack
-	bool decreaseMoveSize = _opt.decreaseMoveSize;
-	double deltaX = _opt.deltaX;
-	double deltaCross = _opt.deltaCross;
-	double deltaAx = _opt.deltaAx;
-	double deltaZ = _opt.deltaZ;
-
-	_sys.saveAltCoor("savedRepackState");
-	_helicalAxis.saveAltCoor("BestRepack");
-	// uncomment the below and lines ... ; it makes the outputs quite large, but you'll have outputs for the entire optimization
-	//PDBWriter writer;
-	//writer.open(_opt.outputDir + "/bbRepack_"+to_string(_rep)+".pdb");
-	// loop through the MC cycles for backbone repacks
-	bbout << "Starting Repack Cycles" << endl; 
-	while(!MCMngr.getComplete()) {
-		// get the current temperature of the MC
-		double startTemp = MCMngr.getCurrentT();
-		
-		_sys.applySavedCoor("savedRepackState");
-		_helicalAxis.applySavedCoor("BestRepack");
-		
-		int moveToPreform = _RNG.getRandomInt(3);
-		
-		double deltaXShift = 0.0;
-		double deltaZShift = 0.0;
-		double deltaCrossingAngle = 0.0;
-		double deltaAxialRotation = 0.0; 
-		
-		//======================================
-		//====== Z Shift (Crossing Point) ======
-		//======================================
-		if (moveToPreform == 0) {
-			//deltaZShift = getStandardNormal(RNG1) * 0.1;
-			deltaZShift = getStandardNormal(_RNG) * deltaZ;
-			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaZShift, moveToPreform);
-		} else if (moveToPreform == 1) {
-		//===========================
-		//===== Axial Rotation ======
-		//===========================
-			//deltaAxialRotation = getStandardNormal(_RNG1) * 1.0;
-			deltaAxialRotation = getStandardNormal(_RNG) * deltaAx;
-			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaAxialRotation, moveToPreform);
-		} else if (moveToPreform == 2) {
-		//==================================
-		//====== Local Crossing Angle ======
-		//==================================
-			//deltaCrossingAngle = getStandardNormal(_RNG1) * 1.0;
-			deltaCrossingAngle = getStandardNormal(_RNG) * deltaCross;
-			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaCrossingAngle, moveToPreform);
-		} else if (moveToPreform == 3) {
-		//==============================================
-		//====== X shift (Interhelical Distance) =======
-		//==============================================
-			//deltaXShift = getStandardNormal(_RNG1) * 0.1;
-			deltaXShift = getStandardNormal(_RNG) * deltaX;
-			backboneMovement(_apvChainA, _apvChainB, _axisA, _axisB, _trans, deltaXShift, moveToPreform);
-		}
-
-		// Run optimization
-		repackSideChains(_spm, _opt.greedyCycles);
-		vector<unsigned int> MCOFinal = _spm.getMinStates()[0];
-		currentEnergy = _spm.getMinBound()[0]-_monomerEnergy;
-		_sys.setActiveRotamers(MCOFinal);//THIS WAS NOT HERE BEFORE 2022-8-26 NIGHT! MAKE SURE IT'S IN ALL OTHER CODE, IT'S CRUCIAL TO SAVING THE STATE
-		if (counter == 0){
-			_energyMap["firstRepackEnergy"] = currentEnergy;
-		}
-		if (!MCMngr.accept(currentEnergy)) {
-			bbout << "MCReject   xShift: " << finalXShift+deltaXShift << " crossingAngle: " << finalCrossingAngle+deltaCrossingAngle << " axialRotation: " << finalAxialRotation+deltaAxialRotation << " zShift: " << finalZShift+deltaZShift << " energy: " << currentEnergy << endl;
-		} else {
-			bestEnergy = currentEnergy;
-			_sys.saveAltCoor("savedRepackState");
-			_helicalAxis.saveAltCoor("BestRepack");
-		
-			finalXShift = finalXShift + deltaXShift;
-			finalCrossingAngle = finalCrossingAngle + deltaCrossingAngle;
-			finalAxialRotation = finalAxialRotation + deltaAxialRotation;
-			finalZShift = finalZShift + deltaZShift;
-			MCOBest = MCOFinal;
-
-			// if accept, decrease the value of the moves by the sigmoid function
-			if (_opt.decreaseMoveSize == true){
-				double endTemp = MCMngr.getCurrentT();
-				getCurrentMoveSizes(startTemp, endTemp, deltaX, deltaCross, deltaAx, deltaZ, _opt.deltaXLimit,
-				 _opt.deltaCrossLimit, _opt.deltaAxLimit, _opt.deltaZLimit, decreaseMoveSize, moveToPreform);
-			}
-			bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
-			counter++;
-			//writer.write(_sys.getAtomPointers(), true, false, true);
-		}
-	}
-	//writer.close();
-	bbout << "End Repack Cycles" << endl << endl; 
-	time(&endTimeMC);
-	diffTimeMC = difftime (endTimeMC, startTimeMC);
-	_sys.applySavedCoor("savedRepackState");
-	_helicalAxis.applySavedCoor("BestRepack");
-	// write the pdb for the final state of the backbone optimization
-	writePdb(_sys, _outputDir, to_string(_rep));
-	double dimerEnergy = _spm.getStateEnergy(MCOBest);
-	double finalEnergy = dimerEnergy-_monomerEnergy;
-	
-	// Output change in geometry
-	bbout << "***REPACK GEOMETRY***" << endl;
-	bbout << "Energy;        Before: " << prevBestEnergy << "; After: " << bestEnergy << endl << endl;
-
-	// sets the updated backbone parameters
-	map<string,double> geometry;
-	geometry["xShift"] = finalXShift;
-	geometry["crossingAngle"] = finalCrossingAngle;
-	geometry["axialRotation"] = finalAxialRotation;
-	geometry["zShift"] = finalZShift;
-
-	// add the geometry to the map post backbone optimization
-	map<string, double> endGeometry = getGeometryMap(geometry, "end");
-	addGeometryToEnergyMap(endGeometry, _energyMap);
-
-	SasaCalculator endDimerSasa(_sys.getAtomPointers());
-	endDimerSasa.calcSasa();
-	double endSasa = endDimerSasa.getTotalSasa();
-	_energyMap["OptimizeSasa"] = endSasa;
-	_energyMap["Total"] = finalEnergy;
-	_energyMap["VDWDimerOptimize"] = _spm.getStateEnergy(MCOBest, "CHARMM_VDW");
-	_energyMap["IMM1DimerOptimize"] = _spm.getStateEnergy(MCOBest, "CHARMM_IMM1")+_spm.getStateEnergy(MCOBest, "CHARMM_IMM1REF");
-	_energyMap["HBONDDimerOptimize"] = _spm.getStateEnergy(MCOBest, "SCWRL4_HBOND");
-	
-	bbout << MCMngr.getReasonCompleted() << endl;	
-	bbout << "Monte Carlo repack complete. Time: " << diffTimeMC/60 << "min" << endl << endl;
-
-	// clear the saved repack state
-	_sys.clearSavedCoor("savedRepackState");
-	_helicalAxis.clearSavedCoor("BestRepack");
-}
-
-void usage() {
-	cout << endl;
-	cout << "Run as" << endl;
-	cout << "   % " << programName << " --configfile <file.config>" << endl;
-	cout << "For help" << endl;
-	cout << "   % " << programName << " -h" << endl;
-	cout << endl;
-}
-
-
-map<string, double> getGeometryMap(map<string,double> _geometry, string _descriptor){
-	// get geometries from the initial geometry map
-	double xShift = _geometry["xShift"];
-	double crossingAngle = _geometry["crossingAngle"];
-	double axialRotation = _geometry["axialRotation"];
-	double zShift = _geometry["zShift"];
-
-	// add the descriptor to the output geometry map
-	map<string, double> geometryMap;
-	geometryMap[_descriptor+"XShift"] = xShift;
-	geometryMap[_descriptor+"CrossingAngle"] = crossingAngle;
-	geometryMap[_descriptor+"AxialRotation"] = axialRotation;
-	geometryMap[_descriptor+"ZShift"] = zShift;
-
-	// convert axialRotation and zShift for output (from parallelogram from Ben)
-	double relativeAx;
-	double relativeZ;
-	convertToRelativeAxAndZ(axialRotation, zShift, relativeAx, relativeZ);
-	geometryMap[_descriptor+"AxialRotationPrime"] = relativeAx;
-	geometryMap[_descriptor+"ZShiftPrime"] = relativeZ;
-	return geometryMap;
-}
-
-void outputTime(auto _start, string _descriptor, ofstream &_sout){
-	auto end = chrono::system_clock::now();
-	time_t endTimeFormatted = chrono::system_clock::to_time_t(end); 
-	chrono::duration<double> elapsedTime = end-_start;
-	_sout.precision(3);// rounds output to 3 decimal places
-	cout.precision(3);// rounds output to 3 decimal places
-	_sout << _descriptor << " Time: " << ctime(&endTimeFormatted);
-	_sout << "Elapsed time of program: " << elapsedTime.count()/60 << "min" << endl << endl;
-	cout << _descriptor << " Time: " << ctime(&endTimeFormatted);
-	cout << "Elapsed time of program: " << elapsedTime.count()/60 << "min" << endl << endl;
-}
-
-void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS){	
-	// declare system
-	CharmmSystemBuilder CSB(_sys,_opt.topFile,_opt.parFile,_opt.solvFile);
-	if (_opt.useElec == false){
-		CSB.setBuildTerm("CHARMM_ELEC", false);
-	} else {
-		CSB.setBuildTerm("CHARMM_ELEC", true);
-	}
-	CSB.setBuildTerm("CHARMM_ANGL", false);
-	CSB.setBuildTerm("CHARMM_BOND", false);
-	CSB.setBuildTerm("CHARMM_DIHE", false);
-	CSB.setBuildTerm("CHARMM_IMPR", false);
-	CSB.setBuildTerm("CHARMM_U-BR", false);
-	CSB.setBuildTerm("CHARMM_IMM1REF", true);
-	CSB.setBuildTerm("CHARMM_IMM1", true);
-
-	// load the membrane as solvent
-	CSB.setSolvent("MEMBRANE");
-	// set the midpoint length of the membrane and the exponential factor for the membrane (src/CharmmEnergy.cpp: IMM1ZtransFunction) 
-	CSB.setIMM1Params(15, 10);
-	// sets all nonbonded interactions to 0, excluding interactions between far atoms (src/CharmmSystemBuilder.cpp: updateNonbonded)
-	CSB.setBuildNonBondedInteractions(false);
-
-	// Setup polymer sequence and build the sequence using CharmmSystemBuilder
-	if(!CSB.buildSystem(_PS)) {
-		cerr << "Unable to build system from " << _PS << endl;
-		exit(0);
-	}
-	
-	// assign the coordinates of our system to the given geometry 
-	_sys.assignCoordinates(_startGeom.getAtomPointers(),false);
-	_sys.buildAllAtoms();
-	
-	// Add hydrogen bond term
-	HydrogenBondBuilder hb(_sys, _opt.hbondFile);
-	hb.buildInteractions(50);//when this is here, the HB weight is correct
-
-	CSB.updateNonBonded(10,12,50);
-	/******************************************************************************
-	 *                     === INITIAL VARIABLE SET UP ===
-	 ******************************************************************************/
-	// Initialize EnergySet that contains energies for the chosen terms for our design
-	EnergySet* Eset = _sys.getEnergySet();
-	// Set all terms inactive and explicitly set the given terms as active
-	Eset->setAllTermsInactive();
-	Eset->setTermActive("CHARMM_VDW", true);
-	Eset->setTermActive("SCWRL4_HBOND", true);
-	Eset->setTermActive("CHARMM_IMM1REF", true);
-	Eset->setTermActive("CHARMM_IMM1", true);
-
-	// Set weights
-	Eset->setWeight("CHARMM_VDW", _opt.weight_vdw);
-	Eset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
-	Eset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
-	Eset->setWeight("CHARMM_IMM1", _opt.weight_solv);
-
-	if (_opt.useElec == true){
-		Eset->setTermActive("CHARMM_ELEC", true);
-		Eset->setWeight("CHARMM_ELEC", _opt.weight_elec);
-	}
-
-	_sys.calcEnergy();
-	/******************************************************************************
-	 *                === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
-	 ******************************************************************************/
-	// removes all hydrogen bonding near the termini of our helices
-	// (remnant from CATM, but used in the code that was used to get baselines so keeping it to be consistent)
-    deleteTerminalBondInteractions(_sys,_opt.deleteTerminalInteractions);
-}
-
-void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, double> &_energyMap){
-	for (auto &it : _geometryMap){
-		_energyMap[it.first] = it.second;
-	}
-}
-
-void convertToRelativeAxAndZ(double _axialRotation, double _zShift, double &_relativeAx, double &_relativeZ){
-	// use the positive axial rotation for conversion since our axial rotations are negative
-	//double axialRotation = abs(_axialRot);
-	double axialRotation = _axialRotation;
-	// use equations from Mueller 2014; Fig. S1
-	_relativeAx = (10*axialRotation/9)+(200*_zShift/27);
-	_relativeAx = 100+_relativeAx;
-	_relativeZ = (10*_zShift/9)+(0.15*axialRotation/9);
-}
-
-void writePdb(System &_sys, string _outputDir, string _pdbName){
-	PDBWriter writer;
-	writer.open(_outputDir + "/" + _pdbName + ".pdb");
-	writer.write(_sys.getAtomPointers(), true, false, false);
-	writer.close();
-}
-
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 Options parseOptions(int _argc, char * _argv[]){
 
 	/******************************************
@@ -2064,340 +2445,4 @@ Options parseOptions(int _argc, char * _argv[]){
 	opt.rerunConf = OP.getConfFile();
 
 	return opt;
-}
-
-// set the active identity for each position to the identity in the given sequence (only for homodimers)
-string extractSequence(System &_sys){
-	// initialize the sequence string
-	string sequence = "";
-	// get the first chain from the system
-	Chain &chain = _sys.getChain(0);
-	// loop through the chain
-	for (uint i=0; i<chain.positionSize(); i++){
-		// get the ith position in the system
-		Position &pos = chain.getPosition(i);
-		// get the residue name of the ith position
-		string res = pos.getResidueName();
-		// convert the residue name to one letter code
-		string aa = MslTools::getOneLetterCode(res);
-		// add the one letter code to the sequence string
-		sequence += aa;
-	}
-	return sequence;
-}
-
-string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum) {
-	// convert a 1 letter _sequence like AIGGG and startResNum = 32 to
-	// A:{32}ALA ILE GLY GLY GLY
-	// B:{32}ALA ILE GLY GLY GLY
-	string ps = "";
-	for(string::iterator it = _seq.begin(); it != _seq.end();it++ ) {
-		if (it == _seq.begin() || it == _seq.end()-1){
-			stringstream ss;
-			ss << *it;
-			string resName = MslTools::getThreeLetterCode(ss.str());
-			if (it == _seq.begin()){
-				if(resName == "HIS") {
-					ps = ps + " HSE-ACE";
-				} else {
-					ps = ps + " " + resName + "-ACE";
-				}
-			} else {
-				if(resName == "HIS") {
-					ps = ps + " HSE-CT2";
-				} else {
-					ps = ps + " " + resName + "-CT2";
-				}
-			}
-		} else {
-			stringstream ss;
-			ss << *it;
-			string resName = MslTools::getThreeLetterCode(ss.str());
-			if(resName == "HIS") {
-				ps = ps + " HSE";
-			} else {
-				ps = ps + " " + resName;
-			}
-		}
-	}
-	ps = ":{" + MslTools::intToString(_startResNum) + "} " + ps;
-	return "A" + ps + "\nB" + ps;
-}
-
-void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL){
-	for (uint k=0; k < _sys.positionSize(); k++) {
-		Position &pos = _sys.getPosition(k);
-        // check if there is more than one identity for this position
-        if (pos.identitySize() > 1) {
-            for (uint i=0; i<pos.identitySize(); i++){
-                // set the active identity
-			    pos.setActiveIdentity(i);
-		        if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-		        	if (!_sysRot.loadRotamers(&pos, pos.getResidueName(),_SL)) {
-		        		cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
-		        	}
-		        }
-            }
-        } else if (pos.getResidueName() != "GLY" && pos.getResidueName() != "ALA" && pos.getResidueName() != "PRO") {
-			if (!_sysRot.loadRotamers(&pos, pos.getResidueName(),_SL)) {
-				cerr << "Cannot load rotamers for " << pos.getResidueName() << endl;
-			}
-		}
-	}
-}
-
-
-// output energies by term into a referenced energyMap
-void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
-vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
-	if (_includeIMM1 == false){//No IMM1 Energy (for the Monte Carlos, both dimer and monomer)
-		for (uint i=0; i<_energyTermList.size(); i++){
-			string energyTerm = _energyTermList[i]; //CHARMM_ and SCWRL4_ terms
-			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;//Removes the CHARMM_ and SCWRL4_ before energyTerm names
-			if (energyTerm.find("IMM1") != string::npos){
-				continue;
-			} else {
-				if (_energyDescriptor.find("Monomer") != string::npos){
-					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
-				} else {
-					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
-				}
-			}
-		}
-		if (_energyDescriptor.find("Monomer") != string::npos){
-			//skip if monomer; could add calc baseline here at some point
-		} else {
-			_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
-			_energyMap["DimerSelfBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE");
-			_energyMap["DimerPairBaseline"] = _spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
-		}
-	} else if (_includeIMM1 == true){//IMM1 Energies
-		for (uint i=0; i<_energyTermList.size(); i++){
-			string energyTerm = _energyTermList[i];
-			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;
-			if (_energyDescriptor.find("Monomer") != string::npos){
-				if (energyTerm.find("IMM1") != string::npos){
-					_energyMap["IMM1Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
-				} else {
-					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
-				}
-			} else {
-				if (energyTerm.find("IMM1") != string::npos){
-					_energyMap["IMM1Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
-				} else {
-					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
-				}
-			}
-		}
-		//_energyMap["Baseline"] = _spm.getStateEnergy(_stateVec,"BASELINE")+_spm.getStateEnergy(_stateVec,"BASELINE_PAIR");
-	}
-}
-
-/***********************************
- *geometry
- ***********************************/
-
-void moveZCenterOfCAMassToOrigin(AtomPointerVector& _apV, AtomPointerVector& _axis, Transforms & _trans) {
-	AtomSelection sel(_apV);
-	AtomPointerVector & caApV = sel.select("name CA");
-	double zShift = 0.0;
-	for(int i = 0; i < caApV.size(); i++) {
-		zShift += (caApV[i]->getCoor()).getZ();
-	}
-	zShift = -1.0 * zShift/double(caApV.size());
-
-	CartesianPoint interDistVect;
-	interDistVect.setCoor(0.0, 0.0, zShift);
-	_trans.translate(_apV, interDistVect);
-	_trans.translate(_axis, interDistVect);
-}
-
-
-void c2Symmetry(AtomPointerVector & _apvA, AtomPointerVector & _apvB) {
-	// Set coordinates of chain A to chain B
-	for (uint i=0; i < _apvA.size(); i++) {
-		_apvB[i]->copyAllCoor(*_apvA[i]);
-	}
-
-	// Rotation matrix for 180 degrees
-	// flips the sign on the x and y coordinates
-	Matrix m(3,3,0.0);
-	m[0][0] = -1.0;
-	m[0][1] = 0.0;
-	m[0][2] = 0.0;
-	m[1][0] = 0.0;
-	m[1][1] = -1.0;
-	m[1][2] = 0.0;
-	m[2][0] = 0.0;
-	m[2][1] = 0.0;
-	m[2][2] = 1.0;
-
-	// Rotate chain B around Z axis
-	Transforms trans;
-	trans.rotate(_apvB, m);
-}
-
-
-void transformation(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, CartesianPoint & _ori, CartesianPoint & _xAxis, CartesianPoint & _zAxis, double _zShift, double _axialRotation, double _crossingAngle, double _xShift, Transforms & _trans) {
-
-	//====== Z Shift (Crossing Point) ======
-	CartesianPoint zShiftCP(0.0, 0.0, _zShift);
-	_trans.translate(_chainA, zShiftCP);
-
-	//===== Axial Rotation ======
-	_trans.rotate(_chainA, _axialRotation, _ori, _zAxis);
-
-	//====== Local Crossing Angle ======
-	_trans.rotate(_chainA, (_crossingAngle/2.0), _ori, _xAxis);
-	_trans.rotate(_axisA, (_crossingAngle/2.0), _ori, _xAxis);
-
-	//====== X shift (Interhelical Distance) =======
-	CartesianPoint interDistVect;
-	interDistVect.setCoor((-1.0*_xShift/2.0), 0.0, 0.0);
-	_trans.translate(_chainA, interDistVect);
-	_trans.translate(_axisA, interDistVect);
-
-	c2Symmetry(_chainA, _chainB);
-	c2Symmetry(_axisA, _axisB);
-}
-
-void backboneMovement(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, Transforms _trans, double _deltaMove, unsigned int moveType) {
-
-	 if (moveType == 0) {
-		// Z Shift
-		CartesianPoint translateA = _axisA(1).getCoor() - _axisA(0).getCoor(); // vector minus helical center
-		translateA = translateA.getUnit() * _deltaMove; // unit vector of helical axis times the amount to shift by
-
-		_trans.translate(_chainA, translateA);
-
-		c2Symmetry(_chainA, _chainB);
-		c2Symmetry(_axisA, _axisB);
-
-	} else if (moveType == 1) {
-		// Axial Rotation
-		_trans.rotate(_chainA, (_deltaMove), _axisA(0).getCoor(), _axisA(1).getCoor());
-
-		c2Symmetry(_chainA, _chainB);
-		c2Symmetry(_axisA, _axisB);
-
-	} else 	if (moveType == 2) {
-		// Crossing Angle
-		_trans.rotate(_chainA, (_deltaMove * 0.5), _axisA(0).getCoor(), _axisB(0).getCoor());
-		_trans.rotate(_axisA, (_deltaMove * 0.5), _axisA(0).getCoor(), _axisB(0).getCoor());
-
-		c2Symmetry(_chainA, _chainB);
-		c2Symmetry(_axisA, _axisB);
-
-	} else if (moveType == 3) {
-		// XShift
-		// Helix A interhelical distance
-		CartesianPoint translateA = _axisB(0).getCoor() - _axisA(0).getCoor(); // vector minus helical center
-		translateA = translateA.getUnit() * _deltaMove * -0.5; // unit vector of helical axis times the amount to shift by
-
-		_trans.translate(_chainA, translateA);
-		_trans.translate(_axisA, translateA);
-
-		// Helix B interhelical distance
-		c2Symmetry(_chainA, _chainB);
-		c2Symmetry(_axisA, _axisB);
-
-	} else {
-		cerr << "Unknown moveType " << moveType << " in backboneMovement. Should be 0-3 " << endl;
-	}
-}
-
-// Just add 10 U(0,1) uniform random variables, offset by 0.5 to make mean = 0 and divide by variance = (10 * var(U(0,1)))
-double getStandardNormal(RandomNumberGenerator& RNG) {
-	double retVal = 0.0;
-	for(int i = 0; i < 10; i ++) {
-		retVal += RNG.getRandomDouble();
-	}
-	return (retVal/10.0 - 0.5) * 1.2;
-}
-
-void repackSideChains(SelfPairManager & _spm, int _greedyCycles) {
-	_spm.setOnTheFly(1);
-	_spm.calculateEnergies(); // CHANGE BACK!!!
-	_spm.runGreedyOptimizer(_greedyCycles);
-}
-
-// adjust the move sizes based on the monte carlo function (decrease by multiplying by the change in temperature)
-void getCurrentMoveSizes(double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
- double _deltaXLimit, double _deltaCrossLimit, double _deltaAxLimit, double _deltaZLimit, bool &_decreaseMoveSize, int _moveToPerform) {
-	// define the temperature change
-	double decreaseMultiplier = _endTemp/_currTemp;
-	// setup the decrease booleans; if the move size has reached its minimum, don't decrease it further and set to false
-	bool decreaseZ = false;
-	bool decreaseAx = false;
-	bool decreaseCross = false;
-	bool decreaseX = false;
-
-	// move to perform is the move that was just performed from the backboneOptimizer function
-	if (_moveToPerform == 0){
-		decreaseZ = true;
-		_deltaZ = decreaseMoveSize(_deltaZ, _deltaZLimit, decreaseMultiplier, decreaseZ);
-	} else if (_moveToPerform == 1) {
-		decreaseAx = true;
-		_deltaAx = decreaseMoveSize(_deltaAx, _deltaAxLimit, decreaseMultiplier, decreaseAx);
-	} else if (_moveToPerform == 2) {
-		decreaseCross = true;
-		_deltaCross = decreaseMoveSize(_deltaCross, _deltaCrossLimit, decreaseMultiplier, decreaseCross);
-	} else if (_moveToPerform == 3) {
-		decreaseX = true;
-		_deltaX = decreaseMoveSize(_deltaX, _deltaXLimit, decreaseMultiplier, decreaseX);
-	}
-
-	// if all of the move sizes have reached their minimum, set the decrease move size boolean to false	
-	if (decreaseX == false && decreaseCross == false && decreaseAx == false && decreaseZ == false){
-		_decreaseMoveSize = false;
-	}
-}
-
-// function that decreases the acceptable move size based on the monte carlo function temperature change (decreaseMultiplier)
-// only decreases the move size if the move size is greater than the move limit
-// as the temperature decreases, the acceptable move size decreases
-
-double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease) {
-	// get the change between the current acceptable move size and the move limit (ex: xShift 0.5-0.1)
-	double diffMoveSize = _moveSize-_moveLimit;
-	// get the current move size decrease based on the change in temperature (ex: xShift 0.4-(0.4*995/1000) = 0.4-0.398 = 0.002)
-	double moveDecrease = diffMoveSize-(diffMoveSize*_decreaseMultiplier);// edited on 2022-10-6: it now works properly; before it decreased to the move limit
-	// get the adjusted move size (the change in acceptable move size minus the move decrease; ex: xShift 0.5-0.002 = 0.498 acceptable)
-	double newMoveSize = _moveSize - moveDecrease;
-	// check to see if the new move size is greater than the accepted move limit (ex: xShift 0.498 > 0.1; 0.498 is the new maximum xShift change)
-	if (newMoveSize > _moveLimit){
-		return newMoveSize;
-	} else {
-		// if the move size is less, set the move size to the move limit and set the decrease boolean to false 
-		// to stop accepting any decreases in that move
-		_decrease = false;
-		return _moveSize;
-	}
-}
-
-void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTerminalInteractionList){
-	EnergySet* pESet = _sys.getEnergySet();
-	int chainSize = _sys.chainSize();
-	AtomPointerVector atoms;
-	for(int i = 0; i < chainSize; i++) {
-		Chain & thisChain = _sys.getChain(i);
-		vector<Position*>& positions = thisChain.getPositions();
-		int firstResidueNumber = 0; // hardcoded, this is done stupidly but works
-		int lastResidueNumber = positions[positions.size()-1]->getResidueNumber();
-		for(int i = firstResidueNumber; i < firstResidueNumber+3; i++) {
-			// rid of hbonds from first 3 positions
-			if(firstResidueNumber <= i) {
-				atoms += positions[i]->getAtomPointers();
-				//cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
-			}
-			// rid of hbonds from last 3 positions
-			if(lastResidueNumber > i) {
-				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
-				//cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
-			}
-		}
-	}
-	for (uint i=0; i<_deleteTerminalInteractionList.size(); i++){
-		pESet->deleteInteractionsWithAtoms(atoms,_deleteTerminalInteractionList[i]);
-	}
 }

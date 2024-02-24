@@ -218,37 +218,75 @@ struct Options{
 	int seed;
 };
 
-// Functions
-//TODO: organize the below
+/*
+			Disclaimers:
+			 - I wasn't very good at naming functions, so I apologize in advance if some of the names are confusing and non-descriptive.
+			 - some of these functions lack comments, for why I made changes. I wasn't too great at documenting some of the changes I made
+			 - unfortunately this code only works for homodimer sequences. I do think there's a way to make it work for heterodimers,
+			 and that'll be in my thesis
+			 - I was able to organize my code within the function declarations, but I didn't have time to organize their definitions...
+			 but if you're using vim you can use the handy /TypeNameOfFunction and you should be able to find it after a few clicks
+			 - also this was my first real big coding project...and it shows lol. I think you'll understand when you go through it
+ */
+
+/*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+      === STRING FUNCTIONS ===
+ &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
+// polymer sequence functions
 string convertPolymerSeqToOneLetterSeq(Chain &_chain);
 string convertToPolymerSequence(string _seq, int _startResNum);
-void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
-vector<uint> convertStringToVectorUint(string _inputString);
+string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
+string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum);
+string convertVectorUintToString(vector<uint> _inputVector);
+
+// generate sequence functions 
+string generateBackboneSequence(string _backbone, int _length);
+string generateMonomerMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions);
 string generateMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions);
+string generateString(string _backbone, int _length);
+
+// interface functions 
+string getInterfaceString(vector<int> _interface, int _seqLength);
+string getAlternateIdString(vector<string> _alternateIds);
+string getInterfaceSequence(int _interfaceLevelLimit, string _interface, string _sequence);
+string getAlternateIdString(vector<string> _alternateIds);
+string generateBackboneSequence(string _backboneAA, int _length, bool _useAlaCap);
+
+/*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+      === VECTOR FUNCTIONS ===
+ &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
+vector<uint> convertStringToVectorUint(string _inputString);
+vector<uint> getLinkedPositions(vector<uint> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel);
+
+// Convert positions to string for setLinkedPositions(std::vector<std::vector<std::string> > &_linkedPositions) which uses "A,19" "B,19" format!
+vector<vector<string>> convertToLinkedFormat(System &_sys, vector<uint> &_interfacialPositions, int _backboneLength);
+
+//unlinks a state vector, replicating the state vector of the linked structure (i.e. for a sequence with 5 AAs and 5 rotamers each: linked: 0,1,2,3,4; unlinked: 0,1,2,3,4,0,1,2,3,4)
+vector<uint> unlinkBestState(vector<uint> _bestState, vector<uint> _interfacePositions, int _backboneLength);
+vector<uint> getVariablePositions(vector<uint> &_interfacialPositions);
+std::vector<pair <int, double> > calculateResidueBurial (System &_sys);
+vector<uint> getAllInterfacePositions(int _interfaceLevel, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength);
+vector<uint> getInterfacePositions(int _interfaceLevel, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength);
+
+// gets the interfacial positions from a vector
+vector<uint> getAllInterfacePositions(int _interfaceLevel, vector<uint> &_rotamerSamplingPerPosition);
+vector<uint> getInterfacePositions(int _interfaceLevel, vector<uint> &_rotamerSamplingPerPosition);
+
+/*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+       === CATM FUNCTIONS ===
+ &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
+// moves the helices to the origin in 3D space (x=0, y=0, z=0)
 void moveZCenterOfCAMassToOrigin(AtomPointerVector& _apV, AtomPointerVector& _axis, Transforms & _trans);
 void c2Symmetry(AtomPointerVector & _apvA, AtomPointerVector & _apvB);
 void transformation(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, CartesianPoint & _ori, CartesianPoint & _xAxis, CartesianPoint & _zAxis, double _zShift, double _axialRotation, double _crossingAngle, double _xShift, Transforms & _trans);
 double getStandardNormal(RandomNumberGenerator& RNG);
-void getCurrentMoveSizes(double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
- double _deltaXLimit, double _deltaCrossLimit, double _deltaAxLimit, double _deltaZLimit, bool &_decreaseMoveSize, int _moveToPerform);
-double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease);
-void resetEnergySet(System &_sys, vector<string> _energyTermList);
-double sumDoubleVector(vector<double> _vector);
-string generateString(string _backbone, int _length);
-void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL);
-string convertToPolymerSequenceNeutralPatch(string _seq, int _startResNum);
-string convertToPolymerSequenceNeutralPatchMonomer(string _seq, int _startResNum);
-string convertVectorUintToString(vector<uint> _inputVector);
 void backboneMovement(AtomPointerVector & _chainA, AtomPointerVector & _chainB, AtomPointerVector & _axisA, AtomPointerVector & _axisB, Transforms _trans, double _deltaMove, unsigned int moveType);
 std::vector < std::vector < bool > > getActiveMask (System &_sys);
-string generateBackboneSequence(string _backboneAA, int _length, bool _useAlaCap);
-void setActiveSequence(System &_sys, string _sequence);
-// function for writing a pdb
-void writePdb(System &_sys, string _outputDir, string _pdbName);
+void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL);
 
-/***********************************
- *load rotamer functions
- ***********************************/
+/*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+       === SIDECHAIN FUNCTIONS ===
+ &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
 //Uses rotamer sampling defined by given interface values to load rotamers by position
 void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, bool _useInterfaceBurial, vector<string> _repackLevels, string _SL,
  vector<uint> _rotamerSampling);
@@ -256,46 +294,12 @@ void loadRotamers(System &_sys, SystemRotamerLoader &_sysRot, bool _useInterface
 void loadRotamersByBurial(System &_sys, SystemRotamerLoader &_sysRot, vector<string> _repackLevels, vector<uint> _rotamerSampling);
 //load rotamers for interfacial positions
 void loadInterfacialRotamers(System &_sys, SystemRotamerLoader &_sysRot, string _SL, int _numRotamerLevels, vector<uint> _interface);
+// repack sidechains using the self pair manager
+void repackSideChains(SelfPairManager & _spm, int _greedyCycles);
 
-/***********************************
- *define interface and rotamer sampling
- ***********************************/
-//
-vector<uint> getLinkedPositions(vector<uint> _rotamerSampling, int _interfaceLevel, int _highestRotamerLevel);
-// Convert positions to string for setLinkedPositions(std::vector<std::vector<std::string> > &_linkedPositions) which uses "A,19" "B,19" format!
-vector<vector<string>> convertToLinkedFormat(System &_sys, vector<uint> &_interfacialPositions, int _backboneLength);
-//unlinks a state vector, replicating the state vector of the linked structure (i.e. for a sequence with 5 AAs and 5 rotamers each: linked: 0,1,2,3,4; unlinked: 0,1,2,3,4,0,1,2,3,4)
-vector<uint> unlinkBestState(vector<uint> _bestState, vector<uint> _interfacePositions, int _backboneLength);
-
-/***********************************
- *geometry
- ***********************************/
-// moves the helices to the origin in 3D space (x=0, y=0, z=0)
-void moveZCenterOfCAMassToOrigin(AtomPointerVector& _apV, AtomPointerVector& _axis, Transforms & _trans);
-
-/***********************************
- *string output functions
- ***********************************/
-// TODO: if possible, make some of these more multipurpose
-string generateBackboneSequence(string _backbone, int _length);
-string generateMonomerMultiIDPolymerSequence(string _seq, int _startResNum, vector<string> _alternateIds, vector<int> _interfacialPositions);
-string getInterfaceString(vector<int> _interface, int _seqLength);
-string getAlternateIdString(vector<string> _alternateIds);
-string getInterfaceSequence(int _interfaceLevelLimit, string _interface, string _sequence);
-
-/***********************************
- *define interface and rotamer sampling
- ***********************************/
-//
-vector<uint> getVariablePositions(vector<uint> &_interfacialPositions);
-//
-std::vector<pair <int, double> > calculateResidueBurial (System &_sys);
-vector<uint> getAllInterfacePositions(int _interfaceLevel, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength);
-vector<uint> getInterfacePositions(int _interfaceLevel, vector<uint> &_rotamerSamplingPerPosition, int _backboneLength);
-
-/***********************************
- *baseline energy helper functions
- ***********************************/
+/*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+       === BASELINE FUNCTIONS ===
+ &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
 // calculates the self energies of a structure
 vector<double> calcBaselineEnergies(System &_sys, int _thread, int _backboneLength);
 // calculates the pair energies of a structure
@@ -309,9 +313,10 @@ map<string,map<string,map<uint, double>>> readPairParameters(string _baselineFil
 void buildSelfInteractions(System &_sys, map<string, double> &_selfMap);
 void buildPairInteractions(System &_sys, map<string,map<string,map<uint,double>>>& _pairMap);
 
-/***********************************
- *sequence entropy functions
- ***********************************/
+/*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+       === SEQUENCE ENTROPY FUNCTIONS ===
+ &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
+//TODO: if you remember to do so, add in an explanation in here! Otherwise, I hope I explain it well enough in my thesis
 // counts the number of each AA in a sequence and outputs a map<string(AA),int(numAA)> ...
 map<string,int> getAACountMap(vector<string> _seq);
 // calculates the number of permutations possible for a sequence
@@ -319,17 +324,23 @@ double calcNumberOfPermutations(map<string,int> _seqAACounts, int _seqLength);
 // sets up calculating sequence entropy for an interface (gets the AA counts for the interface
 // and calculates the number of permutations for those AAs and the number of interfacial positions)
 double calculateSequenceProbability(map<string,int> &_seqCountMap, map<string,double> &_entropyMap, double _numberOfPermutations);
+// calculate the sequence entropy for a given interfacial sequence
+double calculateInterfaceSequenceEntropy(string _sequence, map<string, double> _sequenceEntropyMap, vector<uint> _interfacePositions,
+ double &_sequenceProbability, double _seqEntropyWeight);
 
-//
+// calculate the sasa for a given sequence and add it to the sequence energy map
 void getSasaForStartingSequence(System &_sys, string _sequence, vector<uint> _state, map<string, map<string,double>> &_sequenceEnergyMap);
 
-// gets the interfacial positions from a vector
-vector<uint> getAllInterfacePositions(int _interfaceLevel, vector<uint> &_rotamerSamplingPerPosition);
-vector<uint> getInterfacePositions(int _interfaceLevel, vector<uint> &_rotamerSamplingPerPosition);
+/*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
-/***********************************
-* sequence search functions
- ***********************************/
+       === SEQUENCE SEARCH FUNCTIONS ===
+
+ &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
+// function that runs a SelfConsistentMeanField algorithm to find the best starting sequence, only taking into account monomer energies
+void runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, vector<uint> _rotamerSamplingPositionVector,
+ vector<uint> _interfacePositions, map<string, map<string,double>> &_sequenceEnergyMap, map<string, double> _sequenceEntropyMap,
+ ofstream &_out);
+void checkForClashing(System &_startGeom, Options &_opt, vector<uint> _interfacePositions, ofstream &_sout);
 // outputs for runSCMFToGetStartingSequence
 void spmRunOptimizerOutput(SelfPairManager &_spm, System &_sys, string _interfaceSeq, ofstream &_out);
 // gets the sasa score for sequences found during monte carlo search
@@ -339,46 +350,53 @@ void getEnergiesForStartingSequence(SelfPairManager &_spm, string _startSequence
  bool _useBaseline);
 void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
   vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1);
-// sequence search functions
+
+// sequence monte carlo functions
+// driver function for the sequence monte carlo search
 void searchForBestSequence(System &_startGeom, Options &_opt, PolymerSequence &_PS,
  map<string, map<string,double>> &_sequenceEnergyMap, map<string,double> &_sequenceEntropyMap,
  vector<unsigned int> &_bestState, string &_bestSequence, vector<uint> &_allInterfacialPositionsList,
  vector<uint> &_interfacialPositionsList, vector<uint> &_rotamerSampling,
  RandomNumberGenerator &_RNG, int _rep, ofstream &_sout, ofstream &_err);
+
+/*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        === SEQUENCE MONTE CARLO FUNCTIONS ===
+ &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
+// iterative mutation of amino acids through given interfacial positions to find the best sequence
 void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
  vector<uint> &_bestState, string &_bestSequence, map<string, map<string,double>> &_sequenceEnergyMap, 
  map<string,double> _sequenceEntropyMap, vector<uint> &_allInterfacialPositionsList, vector<uint> &_interfacialPositionsList,
  vector<uint> &_rotamerSampling, int _rep, ofstream &_sout, ofstream &_err);
+
+// mutate a random position in the sequence
 map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt, SelfPairManager &_spm, RandomNumberGenerator &_RNG,
  string _bestSeq, double _bestEnergy, map<string,vector<uint>> &_sequenceStateMap, map<string,double> _sequenceEntropyMap,
  vector<uint> _allInterfacialPositionsList, vector<uint> _interfacialPositionsList, vector<uint> _rotamerSampling);
+
+// get the best sequence from the sequence energy map
 string getBestSequenceInMap(map<string,map<string,double>> &_sequenceEnergyMap, string _energyTerm);
 string getSequenceUsingMetropolisCriteria(map<string,map<string,double>> &_sequenceEnergyMap, RandomNumberGenerator &_RNG, double _currTemp, string _energyTerm);
 void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, double _prevEnergy, string _currSeq, vector<uint> _currVec,
  vector<uint> &_rotamerSampling, vector<uint> &_allInterfacePositions, map<string,map<string,double>> &_seqEnergyMap,
  map<string,double> &_sequenceEntropyMap);
-//void switchSequence(System &_sys, Options &_opt, string _sequence = "AAALLLLLLLLLLLLLLLAAA");
+
+// switches the sequence in a system to a given sequence; only for homodimers
+//REDACTED: defaulted sequence to have alanine ends
+// void switchSequence(System &_sys, Options &_opt, string _sequence = "AAALLLLLLLLLLLLLLLAAA");
 void switchSequence(System &_sys, Options &_opt, string _sequence);
-// function that runs a SelfConsistentMeanField algorithm to find the best starting sequence, only taking into account monomer energies
-void runSCMFToGetStartingSequence(System &_sys, Options &_opt, RandomNumberGenerator &_RNG, vector<uint> _rotamerSamplingPositionVector,
- vector<uint> _interfacePositions, map<string, map<string,double>> &_sequenceEnergyMap, map<string, double> _sequenceEntropyMap,
- ofstream &_out);
 
-// geometry setup functions
-void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS, bool _useBaseline);
-void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis,
- AtomPointerVector &_axisA, AtomPointerVector &_axisB, Transforms &_trans);
-void getStartingGeometry(Options &_opt, ofstream &_sout);
-void checkForClashing(System &_startGeom, Options &_opt, vector<uint> _interfacePositions, ofstream &_sout);
-
-// define interface and rotamer level functions
+/*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        === DEFINE INTERFACE FUNCTIONS ===
+ &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
 PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom, vector<uint> &_allInterfacePositions,
  vector<uint> &_interfacePositions, vector<uint> &_rotamerSamplingPerPosition);
 void defineRotamerLevels(Options &_opt, vector<pair <int, double> > &_resiBurial, vector<int> &_interfacePositions,
  string &_rotamerLevels, string &_variablePositionString);
 void useInputInterface(Options &_opt, string &_variablePositionString, string &_rotamerLevels, vector<int> &_interfacePositions);
 
-// backbone optimization functions
+/*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+       === BACKBONE OPTIMIZER FUNCTIONS ===
+ &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
 void backboneOptimizer(Options &_opt, System &_startGeom, string _sequence, vector<uint> _bestState, map<string, map<string,double>> &_sequenceEnergyMap,
  uint _rep, System &_helicalAxis, AtomPointerVector &_axisA,  AtomPointerVector &_axisB, vector<uint> _rotamerSampling, Transforms &_trans,
  RandomNumberGenerator &_RNG, ofstream &_sout);
@@ -386,17 +404,15 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
  string _sequence, vector<uint> &_bestState, System &_helicalAxis, AtomPointerVector &_axisA, AtomPointerVector &_axisB, AtomPointerVector &_apvChainA,
  AtomPointerVector &_apvChainB, Transforms &_trans, RandomNumberGenerator &_RNG, double _monomerEnergy,
  uint _rep, ofstream &_sout);
-
-// output functions
-void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPerPosition,
- map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout);
-void outputTime(auto _clockTime, string _descriptor, ofstream &_sout);
-string getRunParameters(Options &_opt, vector<double> _densities);
-
+void getCurrentMoveSizes(double &_currTemp, double &_endTemp, double &_deltaX, double &_deltaCross, double &_deltaAx, double &_deltaZ,
+ double _deltaXLimit, double _deltaCrossLimit, double _deltaAxLimit, double _deltaZLimit, bool &_decreaseMoveSize, int _moveToPerform);
+double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMultiplier, bool &_decrease);
 
 // axial rotation and zShift conversion from given input ax' and z' to ax and z (Mueller 2014; Fig. S1)
 void convertToRelativeAxAndZ(double _axialRotation, double _zShift, double &_relativeAx, double &_relativeZ);
 void convertToAxAndZForTranformation(Options &_opt);
+
+// a kind of trick I used to make energy/geometry maps during the sequence search that would allow me to add them with different descriptors to the names (start, preOptimize,  etc.) 
 map<string, double> getGeometryMap(Options &opt, string _descriptor);
 void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, map<string, double>> &_energyMap, string _bestSequence);
 
@@ -404,35 +420,56 @@ void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, map<st
 void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Transforms & _trans, map<string,map<string,double>> &_sequenceEnergyMap, string _seq,
  RandomNumberGenerator &_RNG, ofstream &_sout, ofstream &_err);
 
-// calculate the sequence entropy for a given interfacial sequence
-double calculateInterfaceSequenceEntropy(string _sequence, map<string, double> _sequenceEntropyMap, vector<uint> _interfacePositions,
- double &_sequenceProbability, double _seqEntropyWeight);
 
+/*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+          ===  OUTPUT FUNCTIONS ===
+ &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
+void outputTime(auto _clockTime, string _descriptor, ofstream &_sout);
+string getRunParameters(Options &_opt, vector<double> _densities);
 // output the information for the starting design (geometry and interfacial amino acids)
 void outputStartDesignInfo(Options &_opt);
+// directory setup functions
+void setupDesignDirectory(Options &_opt);
 
-// string functions
-string getAlternateIdString(vector<string> _alternateIds);
+// output files
+void outputFiles(Options &_opt, double _seed, vector<uint> _rotamerSamplingPerPosition,
+ map<string,map<string,double>> _sequenceEnergyMap, ofstream &_sout);
+void getStartingGeometry(Options &_opt, ofstream &_sout);
+
+// function for writing a pdb
+void writePdb(System &_sys, string _outputDir, string _pdbName);
+
+/*&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+          ===  HELPER FUNCTIONS ===
+ &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&*/
+// geometry setup functions
+void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSequence &_PS, bool _useBaseline);
+void setGly69ToStartingGeometry(Options &_opt, System &_sys, System &_helicalAxis,
+ AtomPointerVector &_axisA, AtomPointerVector &_axisB, Transforms &_trans);
+
+// calculate residue burial for a given sequence
+std::vector<pair <int, double> > calculateResidueBurial(Options &_opt, System &_startGeom, string _seq);
+
+// delete terminal interactions for a given list of interactions (CHARMM_IMM1, CHARMM_IMM1REF, CHARMM_VDW, SCWRL4_HBOND, etc.)
+void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTerminalInteractionList);
+void resetEnergySet(System &_sys, vector<string> _energyTermList);
+
+// sum a vector of doubles, usually for calculating baseline energies
+double sumDoubleVector(vector<double> _vector);
+
+// set the system to the given sequence; does not repack the sequence
+void setActiveSequence(System &_sys, string _sequence);
 
 // help functions
 void usage();
 void help(Options defaults);
 void outputErrorMessage(Options &_opt);
 
-// directory setup functions
-void setupDesignDirectory(Options &_opt);
-
-
-//Calculate Residue Burial and output a PDB that highlights the interface
-std::vector<pair <int, double> > calculateResidueBurial(Options &_opt, System &_startGeom, string _seq);
-
-void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTerminalInteractionList);
-
 // parse config file for given options
 Options parseOptions(int _argc, char * _argv[]);
 
 /******************************************
- *  =======  BEGIN MAIN =======
+ *  ======= begin main =======
  ******************************************/
 int main(int argc, char *argv[]){
 	
@@ -449,7 +486,9 @@ int main(int argc, char *argv[]){
 	strftime(buffer,sizeof(buffer),"%m_%d_%Y",timeinfo);
 	string date(buffer);
 	
-	// parse command line options
+	/******************************************
+	 *     ======= parse options =======
+	 ******************************************/
 	Options opt = parseOptions(argc, argv);
 	if (opt.errorFlag) {
 		outputErrorMessage(opt);
@@ -460,6 +499,9 @@ int main(int argc, char *argv[]){
 		exit(0);
 	}
 
+	/******************************************
+	 *     ======= output setup =======
+	 ******************************************/
 	setupDesignDirectory(opt); // makes a directory in the directory that you run from, with design_<runNumber> as the name
 	
 	// setup the rerun config file
@@ -486,9 +528,9 @@ int main(int argc, char *argv[]){
 	// output starting design information
 	outputStartDesignInfo(opt);
 
-	/*******************************************
-	 *       === HELICAL AXIS SET UP ===
-	 *******************************************/
+	/******************************************
+	 *    ======= helical axis setup =======
+	 ******************************************/
 	// System for the helical axis that sets protein around the origin (0.0, 0.0, 0.0)
 	System helicalAxis;
 	helicalAxis.readPdb(opt.helicalAxis);
@@ -503,15 +545,13 @@ int main(int argc, char *argv[]){
 	trans.setNaturalMovements(true); // all atoms are rotated such as the total movement of the atoms is minimized
 
 	/******************************************************************************
-	 *      === COPY BACKBONE COORDINATES AND TRANSFORM TO INPUT GEOMETRY ===
+	 *      ==== setup the starting geometry system ====
 	 ******************************************************************************/
 	// get the starting geometry using polyglycine
 	System startGeom;
 	setGly69ToStartingGeometry(opt,startGeom,helicalAxis,axisA,axisB,trans);
 	
-	/******************************************************************************
-	 *       === IDENTIFY INTERFACIAL POSITIONS AND GET ROTAMER ASSIGNMENTS ===
-	 ******************************************************************************/
+	// initialize interfacial positions and rotamer sampling levels vectors
 	vector<uint> interfacePositions; // vector of positions at the interface excluding termini positions
 	vector<uint> allInterfacePositions; // vector of positions at the interface including the terminal positions
 	vector<uint> rotamerSamplingPerPosition; // vector of rotamer level for each position
@@ -521,9 +561,9 @@ int main(int argc, char *argv[]){
 	 rotamerSamplingPerPosition);
 	
 	/******************************************************************************
-	 *  === DECLARE SYSTEM FOR POLYLEU WITH ALTERNATE IDENTITIES AT INTERFACE ===
+	 *  === declare the system with alternate identities at the interface ===
 	 ******************************************************************************/
-	// set up the system for the input sequence
+	// set up the system for the input sequence (I never tried with other sequences, but I assume it would work with more than just polyLeu)
 	System sys;
 	prepareSystem(opt, sys, startGeom, interfacePolySeq, opt.useBaseline);
 	checkForClashing(sys, opt, interfacePositions, sout); // checks an interface for clashes; if too clashing (>10 VDW) with alanine at those positions, exit
@@ -534,15 +574,22 @@ int main(int argc, char *argv[]){
 	loadRotamers(sys, sysRot, opt.useSasaBurial, opt.sasaRepackLevel, opt.SL, rotamerSamplingPerPosition);
 	switchSequence(sys, opt, opt.sequence);
 
-	/******************************************************************************
-	 *           === VARIABLES FOR SAVING ENERGIES AND SEQUENCES ===
-	 ******************************************************************************/
-	map<string, map<string,double>> sequenceEnergyMapBest; // energyMap to hold all energies for output into a summary file
-	map<string, double> sequenceEntropyMap = readSingleParameters(opt.sequenceEntropyFile); // Get sequence entropy map
+	// 2024-2-24: looking through this I definitely did this in a ratchet way. Instead of initializing the tmp sequenceEnergyMapBest inside of the loop sequence search loop, 
+	// I did it outside much further up. Could it be for a reason? I vaguely recall there being an issue if I tried to put it in the loop ... so I wouldn't touch it. 
+	// Same with the weird thing I do with "seq", "prevSequence", and "bestSequence". I tried to fix it real quick by just calling "seq" "prevSequence", and then
+	// initializing "bestSequence" in the loop ... and it didn't work. Convoluted, but another one of those things I wouldn't touch unless you need to. If so:
+	//                                                               
+	//                                                            happy debugging :D!
+	//
 
 	/******************************************************************************
-	 *                    === GET THE BEST STARTING STATE ===
+	 *               === get the best starting state/sequence ===
 	 ******************************************************************************/
+	// initialize the energy map to hold all energies and geometry data for the best sequences found during the sequence search 
+	map<string, map<string,double>> sequenceEnergyMapBest;
+ 	// Get sequence entropy map from the sequence entropy file 
+	map<string, double> sequenceEntropyMap = readSingleParameters(opt.sequenceEntropyFile);
+	
 	// Initialize RNG with seed (time or given seed number)
 	RandomNumberGenerator RNG;
 	if (opt.useTimeBasedSeed){
@@ -551,7 +598,8 @@ int main(int argc, char *argv[]){
 		RNG.setSeed(opt.seed);
 	}
 	
-	// if runSCMF is true, get the best starting state using SelfConsistentMeanField
+	// if runSCMF is true, get the best starting state using SelfConsistentMeanField. 
+	// TODO: I ran this as true during my design runs...but I think it also works as false???
 	if (opt.runSCMF == true){
 		runSCMFToGetStartingSequence(sys, opt, RNG, rotamerSamplingPerPosition, 
 		 interfacePositions, sequenceEnergyMapBest, sequenceEntropyMap, sout);
@@ -562,50 +610,45 @@ int main(int argc, char *argv[]){
 	string seq = convertPolymerSeqToOneLetterSeq(chainA);
 	cout << "Sequence before stateMC: " << seq << endl;
 
-	/******************************************************************************
-	 *   === MONTE CARLO TO SEARCH FOR BEST SEQUENCES AND BACKBONE OPTIMIZE ===
-	 ******************************************************************************/
-	map<string, map<string,double>> sequenceEnergyMapFinalSeqs; // energyMap to hold all energies for output into a summary file
+	/************************************************************************************
+	 *   === monte carlo search for sequences, embedded with backbone optimization ===
+	 ************************************************************************************/
+	map<string, map<string,double>> sequenceEnergyMapFinalSeqs; // energyMap to hold all energies and geometries for the final sequences that will output into a summary file
 	string bestSequence = seq;
 	string prevSequence;
 	map<string, double> startGeometries = getGeometryMap(opt, "start");
 	addGeometryToEnergyMap(startGeometries, sequenceEnergyMapBest, bestSequence);
 
-	// loop through sequence search and backbone optimization
-	// realized that my sequence search works well for a backbone, and my optimization works well for a sequence, so why am I doing them concurrently?
-	// instead, I can do more backbone cycles for multiple sequence searches? May be easier to explain than iterative sequence search and optimization
-	// is it possible to pass an energy set to multiple systems?
-	// TODO: I don't think I can do this; I would need to be able to copy the energy set to a new system, which I don't think I can do
+	// loop for sequence search and backbone optimization 
 	for (uint i=0; i<opt.backboneSearchCycles; i++){
+		// first, initialize the best state outside of the sequence search
 		vector<uint> bestState;
-		// run state Monte Carlo to get a random sequence from the best state
+
+		// run state Monte Carlo to iterate through each state of the system (ie. looping to search for the best sequence)
 		searchForBestSequence(startGeom, opt, interfacePolySeq, sequenceEnergyMapBest, sequenceEntropyMap, bestState, bestSequence,
 		 allInterfacePositions, interfacePositions, rotamerSamplingPerPosition, RNG, i, sout, err);
-		// add in the starting geometries to the map	
-		addGeometryToEnergyMap(startGeometries, sequenceEnergyMapBest, bestSequence);
-		// TODO: going to set up this today; save x number of sequences from the search and then optimize them with threading
-		// if the sequence is different, optimize the backbone
+		addGeometryToEnergyMap(startGeometries, sequenceEnergyMapBest, bestSequence); // add in the starting geometries to the sequence energy map holding the best sequences	
+
+		// check if the sequence is different from the starting sequence
+		// if so, perform a short backbone optimization for that sequence
 		if (prevSequence != bestSequence){ 
-			// switch the sequence to the best sequence from the search monte carlo
-			switchSequence(sys, opt, bestSequence);
-			// compute monomer energy
-			computeMonomerEnergy(sys, helicalAxis, opt, trans, sequenceEnergyMapBest, bestSequence, RNG, sout, err);
-			// optimize the backbone for the sequence
+			switchSequence(sys, opt, bestSequence); // switch the sequence to the best sequence from the monte carlo search
+			computeMonomerEnergy(sys, helicalAxis, opt, trans, sequenceEnergyMapBest, bestSequence, RNG, sout, err); // compute monomer energy for that sequence
+
+			// optimize the backbone for that sequence by using a monte carlo search through geometry space
 			backboneOptimizer(opt, startGeom, bestSequence, bestState, sequenceEnergyMapBest, i, helicalAxis, axisA, axisB,
 			 rotamerSamplingPerPosition, trans, RNG, sout);
-			// get the best sequence from the energy map
-			sequenceEnergyMapFinalSeqs[bestSequence] = sequenceEnergyMapBest[bestSequence];	
-			// reset the energy map
-			sequenceEnergyMapBest.clear(); // energyMap to hold all energies for output into a summary file
+			sequenceEnergyMapFinalSeqs[bestSequence] = sequenceEnergyMapBest[bestSequence];	// get the best sequence from the energy map
+			sequenceEnergyMapBest.clear(); // reset the energy map
 		} else {
-			// end loop if same sequence from seq monte carlo
+			// end loop if the sequence didn't change in the sequence monte carlo
 			i = opt.backboneSearchCycles;	
 		}
 		prevSequence = bestSequence;// save the current best sequence as the previous sequence for comparison before backbone optimization
 	}
 
 	/******************************************************************************
-	 *                   === WRITE OUT ENERGY AND DESIGN FILES ===
+	 *                   === output files ===
 	 ******************************************************************************/
 	double seed = RNG.getSeed();
 	outputFiles(opt, seed, rotamerSamplingPerPosition, sequenceEnergyMapFinalSeqs, sout);
@@ -1160,7 +1203,7 @@ map<string,map<string,double>> mutateRandomPosition(System &_sys, Options &_opt,
 	return sequenceEnergyMap;
 }
 
-// threaded function that gets energies for a sequence and appends to a map
+// threaded function that gets energies for a sequence and appends to the sequence energy map
 void energyFunction(Options &_opt, SelfPairManager &_spm, string _prevSeq, double _prevEnergy, string _currSeq, vector<uint> _currVec,
  vector<uint> &_rotamerSampling, vector<uint> &_interfacePositions, map<string,map<string,double>> &_seqEnergyMap,
  map<string,double> &_sequenceEntropyMap){
@@ -1255,7 +1298,6 @@ string getSequenceUsingMetropolisCriteria(map<string,map<string,double>> &_seque
 	}
 	return currSeq;
 }
-
 
 /****************************************************************
  *       === IDENTIFY INTERFACE USING RESIDUE BURIAL ===
@@ -1538,7 +1580,11 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	cout << "Calculated Dimer Energy: " << calcDimer << endl;
 	_sequenceEnergyMap[_sequence]["TotalPreOptimize"] = currentEnergy;
 	_sequenceEnergyMap[_sequence]["VDWDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_VDW");
-	_sequenceEnergyMap[_sequence]["IMM1DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	// TODO: separate these energy terms everywhere/find a better way to do this
+	// 2024-2-24: change to the below to split the IMM1 and IMM1REF energies
+	//_sequenceEnergyMap[_sequence]["IMM1DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	_sequenceEnergyMap[_sequence]["CHARMM_IMM1_DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1");
+	_sequenceEnergyMap[_sequence]["CHARMM_IMM1REF_DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
 	_sequenceEnergyMap[_sequence]["HBONDDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
 	
 	double bestEnergy = currentEnergy;
@@ -1690,7 +1736,10 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	_sequenceEnergyMap[_sequence]["OptimizeSasa"] = endSasa;
 	_sequenceEnergyMap[_sequence]["Total"] = finalEnergy;
 	_sequenceEnergyMap[_sequence]["VDWDimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_VDW");
-	_sequenceEnergyMap[_sequence]["IMM1DimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	// 2024-2-24: change to the below to split the IMM1 and IMM1REF energies
+	//_sequenceEnergyMap[_sequence]["IMM1DimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	_sequenceEnergyMap[_sequence]["CHARMM_IMM1_DimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1");
+	_sequenceEnergyMap[_sequence]["CHARMM_IMM1REF_DimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
 	_sequenceEnergyMap[_sequence]["HBONDDimerOptimize"] = _spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
 
 	// sets the updated backbone parameters
@@ -1841,11 +1890,13 @@ void help(Options defaults) {
 	cout << setw(20) << "runDEESingles" << defaults.runDEESingles << endl;
 	cout << setw(20) << "runDEEPairs" << defaults.runDEEPairs << endl;
 	cout << setw(20) << "runSCMF" << defaults.runSCMF << endl;
-	//TODO: set this up so that instead of running through that, I just have the output sequence and state below
-	if (defaults.runDEESingles == false && defaults.runDEEPairs == false && defaults.runSCMF == false){
 
-	}
+	//TODO: set this up so that it can run with these options for the DEE and SCMF
+	//if (defaults.runDEESingles == false && defaults.runDEEPairs == false && defaults.runSCMF == false){
 
+	//}
+
+	// load rotamers based on SASA scores
 	if (defaults.useSasaBurial == true){
 		//cout << "#Load Rotamers based on SASA scores" << endl;
 		for (uint i=0; i<defaults.sasaRepackLevel.size()-1; i++){
@@ -3514,15 +3565,29 @@ vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
 		for (uint i=0; i<_energyTermList.size(); i++){
 			string energyTerm = _energyTermList[i];
 			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;
-			if (_energyDescriptor.find("Monomer") != string::npos){
-				if (energyTerm.find("IMM1") != string::npos){
-					_energyMap["IMM1Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
+			//if (_energyDescriptor.find("Monomer") != string::npos){
+			//	if (energyTerm.find("IMM1") != string::npos){
+			//		_energyMap["IMM1Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
+			//	} else {
+			//		_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
+			//	}
+			//} else {
+			//	if (energyTerm.find("IMM1") != string::npos){
+			//		_energyMap["IMM1Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
+			//	} else {
+			//		_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
+			//}
+			// 2024-2-24: change to the below to split the IMM1 and IMM1REF energies
+			if (energyTerm.find("IMM1") != string::npos){
+					_energyMap["CHARMM_IMM1_Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1"))*2;
+					_energyMap["CHARMM_IMM1REF_Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
 				} else {
 					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
 				}
 			} else {
 				if (energyTerm.find("IMM1") != string::npos){
-					_energyMap["IMM1Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
+					_energyMap["CHARMM_IMM1_Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1");
+					_energyMap["CHARMM_IMM1REF_Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
 				} else {
 					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
 				}
