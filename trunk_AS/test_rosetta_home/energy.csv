@@ -1,0 +1,29 @@
+Compute Monomer Energy Start Time: Sat Feb 24 12:09:31 2024
+Elapsed time of program: 0.112min
+
+Compute Monomer Energy End Time: Sat Feb 24 12:09:43 2024
+Elapsed time of program: 0.309min
+
+Backbone optimize replicate 0 Start Time: Sat Feb 24 12:09:43 2024
+Elapsed time of program: 0.31min
+
+Backbone optimize replicate 0 End Time: Sat Feb 24 12:10:50 2024
+Elapsed time of program: 1.43min
+
+Backbone optimize replicate 1 Start Time: Sat Feb 24 12:10:50 2024
+Elapsed time of program: 1.43min
+
+Backbone optimize replicate 1 End Time: Sat Feb 24 12:10:59 2024
+Elapsed time of program: 1.59min
+
+Backbone optimize replicate 2 Start Time: Sat Feb 24 12:10:59 2024
+Elapsed time of program: 1.59min
+
+Backbone optimize replicate 2 End Time: Sat Feb 24 12:11:15 2024
+Elapsed time of program: 1.84min
+
+Geometry,Interface,Seed,CHARMM_IMM1Optimize,CHARMM_IMM1PreOptimize,CHARMM_IMM1REFOptimize,CHARMM_IMM1REFPreOptimize,CHARMM_IMM1REF_Monomer,CHARMM_IMM1_Monomer,CHARMM_VDWOptimize,CHARMM_VDWPreOptimize,HBONDMonomer,Monomer,MonomerSasa,OptimizeSasa,PreBBOptimizeSasa,SCWRL4_HBONDOptimize,SCWRL4_HBONDPreOptimize,Total,TotalPreOptimize,VDWMonomer,endAxialRotation,endAxialRotationPrime,endCrossingAngle,endXShift,endZShift,endZShiftPrime,firstRepackEnergy,preOptimizeAxialRotation,preOptimizeAxialRotationPrime,preOptimizeCrossingAngle,preOptimizeEnergy,preOptimizeXShift,preOptimizeZShift,preOptimizeZShiftPrime,replicateNumber,
+AAALAALAALLFVLASLLAAA_0,000110011001100110000,1,0,0,0,0,0,0,1.49435e+06,1.49434e+06,-60.3245,1.4942e+06,4041.47,3634.72,3634.72,-60.3245,-60.3245,88.1434,85.5771,1.49426e+06,40,174.074,25,9.2,4,5.11111,87.841,40,174.074,25,1.49428e+06,9.2,4,5.11111,0,
+AAALAALAALLFVLASLLAAA_1,000110011001100110000,1,0,0,0,0,0,0,1.49435e+06,1.49435e+06,-60.3245,1.4942e+06,4041.47,3630,3634.72,-60.3245,-60.3245,87.9365,88.1434,1.49426e+06,39.4153,172.16,25.0573,9.20938,3.8293,4.9117,87.8815,40,174.074,25,1.49428e+06,9.2,4,5.11111,1,
+AAALAALAALLFVLASLLAAA_2,000110011001100110000,1,0,0,0,0,0,0,1.49435e+06,1.49435e+06,-60.3245,1.4942e+06,4041.47,3630.34,3634.72,-60.3245,-60.3245,87.7881,87.9568,1.49426e+06,41.1999,177.753,25.1186,9.2,4.31664,5.48293,87.8872,40,174.074,25,1.49428e+06,9.2,4,5.11111,2,
+Total Time: 2 minutes

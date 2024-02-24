@@ -1,6 +1,6 @@
 02_24_2024
-Self Consistent Mean Field Start Time: Sat Feb 24 01:34:57 2024
-Elapsed time of program: 0.0999min
+Self Consistent Mean Field Start Time: Sat Feb 24 11:22:00 2024
+Elapsed time of program: 0.0956min
 
 Running Self Consistent Mean Field
 Initial Sequence:   LLLLAALAILLAALASLLILI
@@ -10,52 +10,52 @@ Initial Energy:     1.62e+03
 Total Energy:       1.62e+03
 VDW:                1.32e+03
 HBOND:              -60.5
-Self Consistent Mean Field End Time: Sat Feb 24 01:35:16 2024
-Elapsed time of program: 0.41min
+Self Consistent Mean Field End Time: Sat Feb 24 11:22:18 2024
+Elapsed time of program: 0.386min
 
-Monte Carlo Sequence Search Replicate 0 Start Time: Sat Feb 24 01:35:16 2024
-Elapsed time of program: 0.413min
+Monte Carlo Sequence Search Replicate 0 Start Time: Sat Feb 24 11:22:18 2024
+Elapsed time of program: 0.392min
 
-  - SelfPairManager energy calculation 0 Start Time: Sat Feb 24 01:35:20 2024
-Elapsed time of program: 0.476min
+  - SelfPairManager energy calculation 0 Start Time: Sat Feb 24 11:22:22 2024
+Elapsed time of program: 0.451min
 
-  - SelfPairManager energy calculation 0 End Time: Sat Feb 24 01:35:20 2024
-Elapsed time of program: 0.481min
+  - SelfPairManager energy calculation 0 End Time: Sat Feb 24 11:22:22 2024
+Elapsed time of program: 0.455min
 
 - End monte carlo sequence search #0: 0.483min; Monte Carlo ended at Temp: 0.547
 
 - Best Sequence: LLLLAALAALLFVLASLLILI; Energy w/ baseline: 1.62e+03
-Monte Carlo Sequence Search Replicate 0 End Time: Sat Feb 24 01:35:49 2024
-Elapsed time of program: 0.964min
+Monte Carlo Sequence Search Replicate 0 End Time: Sat Feb 24 11:22:51 2024
+Elapsed time of program: 0.933min
 
-Compute Monomer Energy Start Time: Sat Feb 24 01:35:49 2024
-Elapsed time of program: 0.974min
+Compute Monomer Energy Start Time: Sat Feb 24 11:22:51 2024
+Elapsed time of program: 0.942min
 
 -Dimer - Monomer = 1.27e+03 - -102 = 1.37e+03
-Compute Monomer Energy End Time: Sat Feb 24 01:35:53 2024
-Elapsed time of program: 1.03min
+Compute Monomer Energy End Time: Sat Feb 24 11:22:54 2024
+Elapsed time of program: 0.988min
 
-Backbone optimize replicate 0 Start Time: Sat Feb 24 01:35:53 2024
-Elapsed time of program: 1.03min
+Backbone optimize replicate 0 Start Time: Sat Feb 24 11:22:54 2024
+Elapsed time of program: 0.988min
 
-Backbone optimize replicate 0 End Time: Sat Feb 24 01:35:58 2024
-Elapsed time of program: 1.11min
+Backbone optimize replicate 0 End Time: Sat Feb 24 11:22:58 2024
+Elapsed time of program: 1.06min
 
-Monte Carlo Sequence Search Replicate 1 Start Time: Sat Feb 24 01:35:58 2024
-Elapsed time of program: 1.11min
+Monte Carlo Sequence Search Replicate 1 Start Time: Sat Feb 24 11:22:58 2024
+Elapsed time of program: 1.06min
 
-  - SelfPairManager energy calculation 1 Start Time: Sat Feb 24 01:36:02 2024
-Elapsed time of program: 1.19min
+  - SelfPairManager energy calculation 1 Start Time: Sat Feb 24 11:23:02 2024
+Elapsed time of program: 1.13min
 
-  - SelfPairManager energy calculation 1 End Time: Sat Feb 24 01:36:02 2024
-Elapsed time of program: 1.19min
+  - SelfPairManager energy calculation 1 End Time: Sat Feb 24 11:23:03 2024
+Elapsed time of program: 1.13min
 
-- End monte carlo sequence search #1: 0.517min; Monte Carlo ended at Temp: 0.547
+- End monte carlo sequence search #1: 0.45min; Monte Carlo ended at Temp: 0.547
 
-- Best Sequence: LLLLAALAALLFVLASLLILI; Energy w/ baseline: 234
-Monte Carlo Sequence Search Replicate 1 End Time: Sat Feb 24 01:36:33 2024
-Elapsed time of program: 1.69min
+- Best Sequence: LLLLAALAALLFVLASLLILI; Energy w/ baseline: 237
+Monte Carlo Sequence Search Replicate 1 End Time: Sat Feb 24 11:23:31 2024
+Elapsed time of program: 1.6min
 
-Sequence,RotamerValues,Interface,InterfaceSequence,Seed,Density,Baseline,Dimer,Dimerw/Baseline,HBONDDimer,HBONDDimerOptimize,HBONDDimerPreOptimize,HBONDMonomer,IMM1Dimer,IMM1DimerOptimize,IMM1DimerPreOptimize,IMM1Monomer,Monomer,MonomerSasa,OptimizeSasa,PreBBOptimizeSasa,SequenceEntropy,SequenceProbability,Total,TotalPreOptimize,Totalw/Entropy,VDWDimer,VDWDimerOptimize,VDWDimerPreOptimize,VDWMonomer,acceptCycleNumber,acceptTemp,endAxialRotation,endAxialRotationPrime,endCrossingAngle,endXShift,endZShift,endZShiftPrime,firstRepackEnergy,preOptimizeAxialRotation,preOptimizeAxialRotationPrime,preOptimizeCrossingAngle,preOptimizeEnergy,preOptimizeXShift,preOptimizeZShift,preOptimizeZShiftPrime,preRepackTotal,replicateNumber,startAxialRotation,startAxialRotationPrime,startCrossingAngle,startXShift,startZShift,startZShiftPrime,
-LLLLAALAALLFVLASLLILI,103301210220131023032,,LL--AA-AA--FV-AS--I--,1,0,343.925,1272.6,1616.53,-60.444,-60.2679,-60.2679,-60.444,0,0,0,0,-101.637,4394.02,3846.01,3751.86,6.46405,1.81109e-05,-9.75185,1374.39,1622.99,1333.04,-51.1206,1333.02,-41.1926,133,135.765,-66.6667,61.1113,27.3876,10.1856,4.75002,4.16669,499.342,-66.6667,60,25,1374.39,10,4.6,4,1374.24,0,-66.6667,60,25,10,4.6,4,
+Sequence,RotamerValues,Interface,InterfaceSequence,Seed,Density,Baseline,CHARMM_IMM1Optimize,CHARMM_IMM1PreOptimize,CHARMM_IMM1REFOptimize,CHARMM_IMM1REFPreOptimize,CHARMM_IMM1REF_Dimer,CHARMM_IMM1REF_Monomer,CHARMM_IMM1_Dimer,CHARMM_IMM1_Monomer,CHARMM_VDWOptimize,CHARMM_VDWPreOptimize,Dimer,Dimerw/Baseline,HBONDDimer,HBONDMonomer,Monomer,MonomerSasa,OptimizeSasa,PreBBOptimizeSasa,SCWRL4_HBONDOptimize,SCWRL4_HBONDPreOptimize,SequenceEntropy,SequenceProbability,Total,TotalPreOptimize,Totalw/Entropy,VDWDimer,VDWMonomer,acceptCycleNumber,acceptTemp,endAxialRotation,endAxialRotationPrime,endCrossingAngle,endXShift,endZShift,endZShiftPrime,firstRepackEnergy,preOptimizeAxialRotation,preOptimizeAxialRotationPrime,preOptimizeCrossingAngle,preOptimizeEnergy,preOptimizeXShift,preOptimizeZShift,preOptimizeZShiftPrime,preRepackTotal,replicateNumber,startAxialRotation,startAxialRotationPrime,startCrossingAngle,startXShift,startZShift,startZShiftPrime,
+LLLLAALAALLFVLASLLILI,103301210220131023032,,LL--AA-AA--FV-AS--I--,1,0,343.925,0,0,0,0,0,0,0,0,-46.6716,1333.02,1272.6,1616.53,-60.444,-60.444,-101.637,4399.56,3829.56,3751.86,-60.2679,-60.2679,6.46405,1.81109e-05,-5.30283,1374.39,1622.99,1333.04,-41.1926,136,103.966,-66.6667,60.4602,27.7246,10.0797,4.66213,4.06903,381.823,-66.6667,60,25,1374.39,10,4.6,4,1374.24,0,-66.6667,60,25,10,4.6,4,
 Total Time: 2 minutes

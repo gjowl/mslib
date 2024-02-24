@@ -1,0 +1,54 @@
+***STARTING GEOMETRY***
+xShift;        Before: 9.52055; After: 9.52055
+crossingAngle; Before: 21.5687; After: 21.5687
+axialRotation; Before: -53.1199; After: -53.1199
+zShift;        Before: 4.52078; After: 4.52078
+
+axialRotationPrime; Before: 74.4651; After: 74.4651
+zShiftPrime;        Before: 4.13776; After: 4.13776
+
+Starting Repack Cycles
+MCAccept 0 xShift: 9.52055 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.52078 energy: -30.9166
+MCAccept 1 xShift: 9.52055 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.61363 energy: -30.7531
+MCReject   xShift: 9.52055 crossingAngle: 21.2955 axialRotation: -53.2826 zShift: 4.61363 energy: -29.5627
+MCAccept 2 xShift: 9.52055 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.55775 energy: -31.0112
+MCAccept 3 xShift: 9.55111 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.55775 energy: -30.9682
+MCAccept 4 xShift: 9.53801 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.55775 energy: -30.9976
+MCAccept 5 xShift: 9.53801 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.54155 energy: -30.9772
+MCAccept 6 xShift: 9.53801 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.51048 energy: -30.8311
+MCAccept 7 xShift: 9.53801 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.46729 energy: -30.3742
+MCAccept 8 xShift: 9.54804 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.46729 energy: -30.3539
+MCAccept 9 xShift: 9.55921 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.46729 energy: -30.3212
+MCAccept 10 xShift: 9.55494 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.46729 energy: -30.3349
+MCReject   xShift: 9.57552 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.46729 energy: -30.2556
+MCReject   xShift: 9.55494 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.43065 energy: -29.6884
+MCReject   xShift: 9.55494 crossingAngle: 21.7121 axialRotation: -53.1199 zShift: 4.46729 energy: -28.8827
+MCAccept 11 xShift: 9.55494 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.5006 energy: -30.7071
+MCReject   xShift: 9.55494 crossingAngle: 21.7759 axialRotation: -53.1199 zShift: 4.5006 energy: -29.2471
+MCReject   xShift: 9.59026 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.5006 energy: -30.5351
+MCAccept 12 xShift: 9.55353 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.5006 energy: -30.7119
+MCReject   xShift: 9.55353 crossingAngle: 21.2955 axialRotation: -53.4555 zShift: 4.5006 energy: -29.0883
+MCReject   xShift: 9.56565 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.5006 energy: -30.665
+MCReject   xShift: 9.55118 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.5006 energy: -30.7196
+MCReject   xShift: 9.55353 crossingAngle: 21.8168 axialRotation: -53.1199 zShift: 4.5006 energy: -29.1015
+MCReject   xShift: 9.55353 crossingAngle: 21.6079 axialRotation: -53.1199 zShift: 4.5006 energy: -29.8055
+MCReject   xShift: 9.55353 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.44254 energy: -29.9323
+MCReject   xShift: 9.55828 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.5006 energy: -30.695
+MCReject   xShift: 9.55353 crossingAngle: 21.3623 axialRotation: -53.1199 zShift: 4.5006 energy: -30.5313
+MCAccept 13 xShift: 9.52531 crossingAngle: 21.2955 axialRotation: -53.1199 zShift: 4.5006 energy: -30.7722
+End Repack Cycles
+
+***REPACK GEOMETRY***
+xShift;        Before: 9.52055; After: 9.52531
+crossingAngle; Before: 21.5687; After: 21.2955
+axialRotation; Before: -53.1199; After: -53.1199
+zShift;        Before: 4.52078; After: 4.5006
+
+axialRotationPrime; Before: 74.4651; After: 74.3157
+zShiftPrime;        Before: 4.13776; After: 4.11534
+
+Energy;        Before: -30.1231; After: -30.7722
+
+Completed all cycles. Accepted 19/33
+Monte Carlo repack complete. Time: 0.25min
+

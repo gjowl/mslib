@@ -227,6 +227,7 @@ void usage();
     === OUTPUT FUNCTIONS ===
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 map<string, double> getGeometryMap(map<string,double> _geometry, string _descriptor);
+void addEnergiesToMap(Options &_opt, SelfPairManager &_spm, map<string, double> &_energyMap, vector<uint> _bestState, string _descriptor);
 void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, double> &_energyMap);
 void outputEnergiesByTerm(SelfPairManager &_spm, vector<uint> _stateVec, map<string,double> &_energyMap,
 vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1);
@@ -574,9 +575,16 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	double dimer = _spm.getStateEnergy(_bestState);
 	double calcDimer = _sys.calcEnergy();
 	_energyMap["TotalPreOptimize"] = currentEnergy;
-	_energyMap["VDWDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_VDW");
-	_energyMap["IMM1DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
-	_energyMap["HBONDDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
+	addEnergiesToMap(_opt, _spm, _energyMap, _bestState, "PreOptimize");
+	// 2024-2-24: change to the below to split the IMM1 and IMM1REF energies
+	//_energyMap["VDWDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_VDW");
+	//_energyMap["IMM1DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	//_energyMap["CHARMM_IMM1_DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1");
+	//_energyMap["CHARMM_IMM1REF_DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	//_energyMap["HBONDDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
+	//if (_opt.useElec == true){
+	//	_energyMap["CHARMM_ELEC_PreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_ELEC");
+	//}
 	
 	double bestEnergy = currentEnergy;
 	double prevBestEnergy = currentEnergy;
@@ -703,9 +711,14 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	double endSasa = endDimerSasa.getTotalSasa();
 	_energyMap["OptimizeSasa"] = endSasa;
 	_energyMap["Total"] = finalEnergy;
-	_energyMap["VDWDimerOptimize"] = _spm.getStateEnergy(MCOBest, "CHARMM_VDW");
-	_energyMap["IMM1DimerOptimize"] = _spm.getStateEnergy(MCOBest, "CHARMM_IMM1")+_spm.getStateEnergy(MCOBest, "CHARMM_IMM1REF");
-	_energyMap["HBONDDimerOptimize"] = _spm.getStateEnergy(MCOBest, "SCWRL4_HBOND");
+
+	addEnergiesToMap(_opt, _spm, _energyMap, _bestState, "Optimize");
+	// 2024-2-24: change to the below to split the IMM1 and IMM1REF energies
+	//_energyMap["VDWDimerOptimize"] = _spm.getStateEnergy(MCOBest, "CHARMM_VDW");
+	//_energyMap["IMM1DimerOptimize"] = _spm.getStateEnergy(MCOBest, "CHARMM_IMM1")+_spm.getStateEnergy(MCOBest, "CHARMM_IMM1REF");
+	//_energyMap["CHARMM_IMM1_DimerOptimize"] = _spm.getStateEnergy(MCOBest, "CHARMM_IMM1");
+	//_energyMap["CHARMM_IMM1REF_DimerOptimize"] = _spm.getStateEnergy(MCOBest, "CHARMM_IMM1REF");
+	//_energyMap["HBONDDimerOptimize"] = _spm.getStateEnergy(MCOBest, "SCWRL4_HBOND");
 	
 	bbout << MCMngr.getReasonCompleted() << endl;	
 	bbout << "Monte Carlo repack complete. Time: " << diffTimeMC/60 << "min" << endl << endl;
@@ -807,6 +820,24 @@ map<string, double> getGeometryMap(map<string,double> _geometry, string _descrip
 	return geometryMap;
 }
 
+// 2024-2-24: change energy outputs to the below to split the IMM1 and IMM1REF energies, and make it able to accomodate any additional energy terms
+void addEnergiesToMap(Options &_opt, SelfPairManager &_spm, map<string, double> &_energyMap, vector<uint> _bestState, string _descriptor){
+	// loop through the energy terms in the options and get the energy for each term
+	for (auto &it : _opt.energyTermList){
+		string energyLabel = _descriptor + "_" + it.substr(7,it.length());//Removes the CHARMM_ and SCWRL4_ before energyTerm names
+		_energyMap[energyLabel] = _spm.getStateEnergy(_bestState, it);
+	}
+}
+// 2024-2-24: change energy outputs to the below to split the IMM1 and IMM1REF energies, and make it able to accomodate any additional energy terms
+void addEnergiesToMap(Options &_opt, SelfPairManager &_spm, map<string, map<string, double>> &_sequenceEnergyMap, string _sequence, vector<uint> _bestState, string _descriptor){
+	// loop through the energy terms in the options and get the energy for each term
+	for (auto &it : _opt.energyTermList){
+		string energyLabel = _descriptor + "_" + it.substr(7,it.length());//Removes the CHARMM_ and SCWRL4_ before energyTerm names
+		_sequenceEnergyMap[_sequence][_descriptor+"_"+it] = _spm.getStateEnergy(_bestState, it);
+	}
+}
+
+
 void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, double> &_energyMap){
 	for (auto &it : _geometryMap){
 		_energyMap[it.first] = it.second;
@@ -841,15 +872,30 @@ vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
 		for (uint i=0; i<_energyTermList.size(); i++){
 			string energyTerm = _energyTermList[i];
 			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;
+			// 2024-2-24: change to the below to split the IMM1 and IMM1REF energies
+			//if (_energyDescriptor.find("Monomer") != string::npos){
+			//	if (energyTerm.find("IMM1") != string::npos){
+			//		_energyMap["IMM1Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
+			//	} else {
+			//		_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
+			//	}
+			//} else {
+			//	if (energyTerm.find("IMM1") != string::npos){
+			//		_energyMap["IMM1Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
+			//	} else {
+			//		_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
+			//}
 			if (_energyDescriptor.find("Monomer") != string::npos){
 				if (energyTerm.find("IMM1") != string::npos){
-					_energyMap["IMM1Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
+					_energyMap["CHARMM_IMM1_Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1"))*2;
+					_energyMap["CHARMM_IMM1REF_Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
 				} else {
 					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
 				}
 			} else {
 				if (energyTerm.find("IMM1") != string::npos){
-					_energyMap["IMM1Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
+					_energyMap["CHARMM_IMM1_Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1");
+					_energyMap["CHARMM_IMM1REF_Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
 				} else {
 					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
 				}

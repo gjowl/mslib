@@ -412,8 +412,9 @@ double decreaseMoveSize(double _moveSize, double _moveLimit, double _decreaseMul
 void convertToRelativeAxAndZ(double _axialRotation, double _zShift, double &_relativeAx, double &_relativeZ);
 void convertToAxAndZForTranformation(Options &_opt);
 
-// a kind of trick I used to make energy/geometry maps during the sequence search that would allow me to add them with different descriptors to the names (start, preOptimize,  etc.) 
+// a kind of trick I used to make geometry maps during the sequence search that would allow me to add them with different descriptors to the names (start, preOptimize,  etc.) 
 map<string, double> getGeometryMap(Options &opt, string _descriptor);
+void addEnergiesToMap(Options &_opt, SelfPairManager &_spm, map<string, map<string, double>> &_sequenceEnergyMap, string _sequence, vector<uint> _bestState, string _descriptor);
 void addGeometryToEnergyMap(map<string, double> _geometryMap, map<string, map<string, double>> &_energyMap, string _bestSequence);
 
 // calculate the monomer energy for a given sequence
@@ -686,16 +687,25 @@ double calculateInterfaceSequenceEntropy(string _sequence, map<string, double> _
 
 map<string, double> getGeometryMap(Options &_opt, string _descriptor){
 	map<string, double> geometryMap;
-	geometryMap[_descriptor+"XShift"] = _opt.xShift;
-	geometryMap[_descriptor+"CrossingAngle"] = _opt.crossingAngle;
-	geometryMap[_descriptor+"AxialRotation"] = _opt.axialRotation;
-	geometryMap[_descriptor+"ZShift"] = _opt.zShift;
+	geometryMap[_descriptor+"_xShift"] = _opt.xShift;
+	geometryMap[_descriptor+"_crossingAngle"] = _opt.crossingAngle;
+	geometryMap[_descriptor+"_axialRotation"] = _opt.axialRotation;
+	geometryMap[_descriptor+"_zShift"] = _opt.zShift;
 	double relativeAx;
 	double relativeZ;
 	convertToRelativeAxAndZ(_opt.axialRotation, _opt.zShift, relativeAx, relativeZ);
-	geometryMap[_descriptor+"AxialRotationPrime"] = relativeAx;
-	geometryMap[_descriptor+"ZShiftPrime"] = relativeZ;
+	geometryMap[_descriptor+"_axialRotationPrime"] = relativeAx;
+	geometryMap[_descriptor+"_zShiftPrime"] = relativeZ;
 	return geometryMap;
+}
+
+// 2024-2-24: change energy outputs to the below to split the IMM1 and IMM1REF energies, and make it able to accomodate any additional energy terms
+void addEnergiesToMap(Options &_opt, SelfPairManager &_spm, map<string, map<string, double>> &_sequenceEnergyMap, string _sequence, vector<uint> _bestState, string _descriptor){
+	// loop through the energy terms in the options and get the energy for each term
+	for (auto &it : _opt.energyTermList){
+		string energyLabel = _descriptor + "_" + it.substr(7,it.length());//Removes the CHARMM_ and SCWRL4_ before energyTerm names
+		_sequenceEnergyMap[_sequence][energyLabel] = _spm.getStateEnergy(_bestState, it);
+	}
 }
 
 void outputGeometry(Options &_opt, double _xShift, double _crossingAngle, double _axialRotation, double _zShift, ofstream &_sout){
@@ -1578,14 +1588,15 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	cout << "Starting Dimer Energy: " << dimer << endl;
 	cout << "Monomer Energy: " << _monomerEnergy << endl;
 	cout << "Calculated Dimer Energy: " << calcDimer << endl;
+
+	// output the energies before backbone optimization
 	_sequenceEnergyMap[_sequence]["TotalPreOptimize"] = currentEnergy;
-	_sequenceEnergyMap[_sequence]["VDWDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_VDW");
-	// TODO: separate these energy terms everywhere/find a better way to do this
-	// 2024-2-24: change to the below to split the IMM1 and IMM1REF energies
-	//_sequenceEnergyMap[_sequence]["IMM1DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
-	_sequenceEnergyMap[_sequence]["CHARMM_IMM1_DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1");
-	_sequenceEnergyMap[_sequence]["CHARMM_IMM1REF_DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
-	_sequenceEnergyMap[_sequence]["HBONDDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
+	addEnergiesToMap(_opt, _spm, _sequenceEnergyMap, _sequence, _bestState, "PreOptimize");
+	//_sequenceEnergyMap[_sequence]["VDWDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_VDW");
+	////_sequenceEnergyMap[_sequence]["IMM1DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	//_sequenceEnergyMap[_sequence]["CHARMM_IMM1_DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1");
+	//_sequenceEnergyMap[_sequence]["CHARMM_IMM1REF_DimerPreOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	//_sequenceEnergyMap[_sequence]["HBONDDimerPreOptimize"] = _spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
 	
 	double bestEnergy = currentEnergy;
 	double prevBestEnergy = currentEnergy;
@@ -1733,14 +1744,17 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	SasaCalculator endDimerSasa(_sys.getAtomPointers());
 	endDimerSasa.calcSasa();
 	double endSasa = endDimerSasa.getTotalSasa();
+
+	// output the energies post backbone optimization
 	_sequenceEnergyMap[_sequence]["OptimizeSasa"] = endSasa;
 	_sequenceEnergyMap[_sequence]["Total"] = finalEnergy;
-	_sequenceEnergyMap[_sequence]["VDWDimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_VDW");
-	// 2024-2-24: change to the below to split the IMM1 and IMM1REF energies
-	//_sequenceEnergyMap[_sequence]["IMM1DimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
-	_sequenceEnergyMap[_sequence]["CHARMM_IMM1_DimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1");
-	_sequenceEnergyMap[_sequence]["CHARMM_IMM1REF_DimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
-	_sequenceEnergyMap[_sequence]["HBONDDimerOptimize"] = _spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
+	addEnergiesToMap(_opt, _spm, _sequenceEnergyMap, _sequence, _bestState, "Optimize");
+	//// 2024-2-24: change to the below to split the IMM1 and IMM1REF energies
+	//_sequenceEnergyMap[_sequence]["VDWDimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_VDW");
+	////_sequenceEnergyMap[_sequence]["IMM1DimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1")+_spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	//_sequenceEnergyMap[_sequence]["CHARMM_IMM1_DimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1");
+	//_sequenceEnergyMap[_sequence]["CHARMM_IMM1REF_DimerOptimize"] = _spm.getStateEnergy(_bestState, "CHARMM_IMM1REF");
+	//_sequenceEnergyMap[_sequence]["HBONDDimerOptimize"] = _spm.getStateEnergy(_bestState, "SCWRL4_HBOND");
 
 	// sets the updated backbone parameters
 	_opt.xShift = finalXShift;
@@ -3565,6 +3579,7 @@ vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
 		for (uint i=0; i<_energyTermList.size(); i++){
 			string energyTerm = _energyTermList[i];
 			string energyLabel = energyTerm.substr(7,energyTerm.length())+_energyDescriptor;
+			// 2024-2-24: change to the below to split the IMM1 and IMM1REF energies
 			//if (_energyDescriptor.find("Monomer") != string::npos){
 			//	if (energyTerm.find("IMM1") != string::npos){
 			//		_energyMap["IMM1Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1")+_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
@@ -3577,8 +3592,8 @@ vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
 			//	} else {
 			//		_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
 			//}
-			// 2024-2-24: change to the below to split the IMM1 and IMM1REF energies
-			if (energyTerm.find("IMM1") != string::npos){
+			if (_energyDescriptor.find("Monomer") != string::npos){
+				if (energyTerm.find("IMM1") != string::npos){
 					_energyMap["CHARMM_IMM1_Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1"))*2;
 					_energyMap["CHARMM_IMM1REF_Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
 				} else {
