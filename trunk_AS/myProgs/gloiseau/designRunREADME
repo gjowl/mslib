@@ -1,0 +1,16 @@
+Below is the order of things you did for a design run:
+    - extract geometries from a set of structures:
+        - determine the spaces that are most common as starting points by density
+    - plot those geometries and develop a geometric space by:
+        - checking for the interface for different geometries using SASA (?)
+        - generating random geometries from a set of given limits 
+    - design sequences:
+        - input a random geometry
+        - use a monte carlo to both search through sequences and geometric space
+    - analyze design data:
+        - determine sequences that are good candidates for an additional, longer local backbone optimization
+        - run backbone optimization script on the input pdb
+    - input backbone optimized data into experimental comparison:
+
+I have nice scripts to help with analysis of the design data WITH experimental data. I have some very shitty scripts 
+to help analyze just the design data alone...
