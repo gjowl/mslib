@@ -703,7 +703,7 @@ map<string, double> getGeometryMap(Options &_opt, string _descriptor){
 void addEnergiesToMap(Options &_opt, SelfPairManager &_spm, map<string, map<string, double>> &_sequenceEnergyMap, string _sequence, vector<uint> _bestState, string _descriptor){
 	// loop through the energy terms in the options and get the energy for each term
 	for (auto &it : _opt.energyTermList){
-		string energyLabel = _descriptor + "_" + it.substr(7,it.length());//Removes the CHARMM_ and SCWRL4_ before energyTerm names
+		string energyLabel = it.substr(7,it.length()) + '_' + _descriptor;//Removes the CHARMM_ and SCWRL4_ before energyTerm names and adds descriptor to the end
 		_sequenceEnergyMap[_sequence][energyLabel] = _spm.getStateEnergy(_bestState, it);
 	}
 }
@@ -3594,15 +3594,15 @@ vector<string> _energyTermList, string _energyDescriptor, bool _includeIMM1){
 			//}
 			if (_energyDescriptor.find("Monomer") != string::npos){
 				if (energyTerm.find("IMM1") != string::npos){
-					_energyMap["CHARMM_IMM1_Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1"))*2;
-					_energyMap["CHARMM_IMM1REF_Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
+					_energyMap["IMM1_Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1"))*2;
+					_energyMap["IMM1REF_Monomer"] = (_spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF"))*2;
 				} else {
 					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm)*2;
 				}
 			} else {
 				if (energyTerm.find("IMM1") != string::npos){
-					_energyMap["CHARMM_IMM1_Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1");
-					_energyMap["CHARMM_IMM1REF_Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
+					_energyMap["IMM1_Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1");
+					_energyMap["IMM1REF_Dimer"] = _spm.getStateEnergy(_stateVec,"CHARMM_IMM1REF");
 				} else {
 					_energyMap[energyLabel] = _spm.getStateEnergy(_stateVec, energyTerm);
 				}
