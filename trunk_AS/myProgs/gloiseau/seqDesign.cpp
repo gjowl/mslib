@@ -2495,15 +2495,15 @@ void deleteTerminalBondInteractions(System &_sys, vector<string> &_deleteTermina
 	for(int i = 0; i < chainSize; i++) {
 		Chain & thisChain = _sys.getChain(i);
 		vector<Position*>& positions = thisChain.getPositions();
-		int firstResidueNumber = 0; // hardcoded, this is done stupidly but works
+		int firstResidueNumber = 0; // this is kinda done stupidly but it works; removes hbonds first and last 4 positions
 		int lastResidueNumber = positions[positions.size()-1]->getResidueNumber();
-		for(int i = firstResidueNumber; i < firstResidueNumber+3; i++) {
-			// rid of hbonds from first 3 positions
+		for(int i = firstResidueNumber; i < firstResidueNumber+4; i++) { // changed on 2024-2-29 to address hbonding AAs at the interface that don't have a way to hbond in the monomer
+			// rid of hbonds from first 4 positions
 			if(firstResidueNumber <= i) {
 				atoms += positions[i]->getAtomPointers();
 				//cout << "Removing Hbonds from " << positions[i]->getPositionId()  << endl;
 			}
-			// rid of hbonds from last 3 positions
+			// rid of hbonds from last 4 positions
 			if(lastResidueNumber > i) {
 				atoms += positions[positions.size() - 1 - i]->getAtomPointers();
 				//cout << "Removing Hbonds from " << positions[positions.size() - 1 - i]->getPositionId()  << endl;
