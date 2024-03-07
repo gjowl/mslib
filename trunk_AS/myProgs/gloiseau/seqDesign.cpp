@@ -172,7 +172,8 @@ struct Options{
 
 	// energy weights
 	double weight_vdw; //weight of vdw energy contribution to total energy: default = 1
-	double weight_solv; //weight of solvation energy contribution to total energy: default = 1
+	double weight_IMM1; //weight of solvation energy contribution to total energy: default = 1
+	double weight_IMM1REF; //weight of solvation energy contribution to total energy: default = 1
 	double weight_elec; //weight of electrostatic energy contribution to total energy: default = 1
 	double weight_hbond; //weight of hbond energy contribution to total energy: default = 1
 	double weight_seqEntropy; //weight of sequence entropy contribution to total energy: default = 1
@@ -911,8 +912,8 @@ void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSeque
 	// Set weights
 	Eset->setWeight("CHARMM_VDW", _opt.weight_vdw);
 	Eset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
-	Eset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
-	Eset->setWeight("CHARMM_IMM1", _opt.weight_solv);
+	Eset->setWeight("CHARMM_IMM1", _opt.weight_IMM1);
+	Eset->setWeight("CHARMM_IMM1REF", _opt.weight_IMM1REF);
 
 	if (_opt.useElec == true){
 		Eset->setTermActive("CHARMM_ELEC", true);
@@ -1627,9 +1628,9 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 	double maxZ = 6;
 
 	// added in a pdb writer to output the search trajectory as a pdb 2023-11-12
-	PDBWriter writer;
-	writer.open(_opt.outputDir + "/bbRepack_trajectory_" + to_string(_rep) + ".pdb");
-	writer.write(_sys.getAtomPointers(), true, false, true);
+	//PDBWriter writer;
+	//writer.open(_opt.outputDir + "/bbRepack_trajectory_" + to_string(_rep) + ".pdb");
+	//writer.write(_sys.getAtomPointers(), true, false, true);
 	while(!MCMngr.getComplete()) {
 		// get the current temperature of the MC
 		double startTemp = MCMngr.getCurrentT();
@@ -1720,12 +1721,12 @@ double backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &
 				}
 				bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
 				counter++;
-				writer.write(_sys.getAtomPointers(), true, false, true);
+				//writer.write(_sys.getAtomPointers(), true, false, true);
 				//writer.write(_sys.getAtomPointers(), true, false, true);
 			}
 		}
 	}
-	writer.close();
+	//writer.close();
 	bbout << "End Repack Cycles" << endl << endl; 
 	time(&endTimeMC);
 	diffTimeMC = difftime (endTimeMC, startTimeMC);
@@ -1870,7 +1871,7 @@ void help(Options defaults) {
 	cout << "   --greedyOptimizer=<true/false> --greedyCycles=<int>  --seed <int> --verbose <true/false>" << endl;
 	cout << "   --thread <int>" << endl;
 	cout << "   --configfile <file> " << endl;
-	cout << "   --weight_hbond <double> --weight_vdw <double> --weight_solv <double> --weight_seqEntropy <double>" << endl;
+	cout << "   --weight_hbond <double> --weight_vdw <double> --weight_IMM1 <double> --weight_IMM1REF --weight_seqEntropy <double>" << endl;
 	cout << "   --sasaRepackLevel <rotLevel> (in format SL95.00; 4 levels used by default) --interfaceLevel <int> " << endl << endl;
 	cout << "Template Configuration file (copy and paste the below into a file.config and run code as bin/seqDesign --config file.config" << endl;
 	cout << setw(20) << "backboneCrd " << defaults.backboneCrd << endl;
@@ -1941,7 +1942,8 @@ void help(Options defaults) {
 	cout << endl << "#Energy term weights" << endl;
 	cout << setw(20) << "weight_vdw " << defaults.weight_vdw << endl;
 	cout << setw(20) << "weight_hbond " << defaults.weight_hbond << endl;
-	cout << setw(20) << "weight_solv " << defaults.weight_solv << endl;
+	cout << setw(20) << "weight_IMM1 " << defaults.weight_IMM1 << endl;
+	cout << setw(20) << "weight_IMM1REF " << defaults.weight_IMM1REF << endl;
 	cout << setw(20) << "weight_seqEntropy " << defaults.weight_seqEntropy << endl;
 	cout << endl;
 }
@@ -2074,8 +2076,8 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 
 	monoEset->setWeight("CHARMM_VDW", _opt.weight_vdw);
 	monoEset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
-	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
-	monoEset->setWeight("CHARMM_IMM1", _opt.weight_solv);
+	monoEset->setWeight("CHARMM_IMM1", _opt.weight_IMM1);
+	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_IMM1REF);
 
 	/*****************************************************************************
 	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
@@ -3724,7 +3726,8 @@ Options parseOptions(int _argc, char * _argv[]){
 	
 	//Weights
 	opt.allowed.push_back("weight_vdw");
-	opt.allowed.push_back("weight_solv");
+	opt.allowed.push_back("weight_IMM1");
+	opt.allowed.push_back("weight_IMM1REF");
 	opt.allowed.push_back("weight_elec");
 	opt.allowed.push_back("weight_hbond");
 	opt.allowed.push_back("weight_seqEntropy");
@@ -4263,11 +4266,17 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningMessages += "weight_hbond not specified, default 1.0\n";
 		opt.weight_hbond = 1.0;
 	}
-	opt.weight_solv = OP.getDouble("weight_solv");
+	opt.weight_IMM1 = OP.getDouble("weight_IMM1");
 	if (OP.fail()) {
 		opt.warningFlag = true;
-		opt.warningMessages += "weight_solv not specified, default 1.0\n";
-		opt.weight_solv = 1.0;
+		opt.warningMessages += "weight_IMM1 not specified, default 1.0\n";
+		opt.weight_IMM1 = 1.0;
+	}
+	opt.weight_IMM1REF = OP.getDouble("weight_IMM1REF");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_IMM1REF not specified, default 1.0\n";
+		opt.weight_IMM1REF = 1.0;
 	}
 	opt.weight_seqEntropy = OP.getDouble("weight_seqEntropy");
 	if (OP.fail()) {

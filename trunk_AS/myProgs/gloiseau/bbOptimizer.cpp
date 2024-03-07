@@ -98,7 +98,8 @@ struct Options{
 
     // energy weights
 	double weight_vdw; //weight of vdw energy contribution to total energy: default = 1
-	double weight_solv; //weight of solvation energy contribution to total energy: default = 1
+	double weight_IMM1; //weight of solvation energy contribution to total energy: default = 1
+	double weight_IMM1REF; //weight of solvation energy contribution to total energy: default = 1
 	double weight_elec; //weight of electrostatic energy contribution to total energy: default = 1
 	double weight_hbond; //weight of hbond energy contribution to total energy: default = 1
 
@@ -1033,8 +1034,8 @@ void prepareSystem(Options &_opt, System &_sys, System &_startGeom, PolymerSeque
 	// Set weights
 	Eset->setWeight("CHARMM_VDW", _opt.weight_vdw);
 	Eset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
-	Eset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
-	Eset->setWeight("CHARMM_IMM1", _opt.weight_solv);
+	Eset->setWeight("CHARMM_IMM1", _opt.weight_IMM1);
+	Eset->setWeight("CHARMM_IMM1REF", _opt.weight_IMM1REF);
 
 	if (_opt.useElec == true){
 		Eset->setTermActive("CHARMM_ELEC", true);
@@ -1387,8 +1388,8 @@ void computeMonomerEnergy(System &_sys, Options &_opt, RandomNumberGenerator &_R
 
 	monoEset->setWeight("CHARMM_VDW", _opt.weight_vdw);
 	monoEset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
-	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
-	monoEset->setWeight("CHARMM_IMM1", _opt.weight_solv);
+	monoEset->setWeight("CHARMM_IMM1", _opt.weight_IMM1);
+	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_IMM1REF);
 	
 	/*****************************************************************************
 	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
@@ -1685,8 +1686,8 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 
 	monoEset->setWeight("CHARMM_VDW", _opt.weight_vdw);
 	monoEset->setWeight("SCWRL4_HBOND", _opt.weight_hbond);
-	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_solv);
-	monoEset->setWeight("CHARMM_IMM1", _opt.weight_solv);
+	monoEset->setWeight("CHARMM_IMM1", _opt.weight_IMM1);
+	monoEset->setWeight("CHARMM_IMM1REF", _opt.weight_IMM1REF);
 	
 	/*****************************************************************************
 	 *              === DELETE TERMINAL HYDROGEN BOND INTERACTIONS ===
@@ -1972,7 +1973,8 @@ Options parseOptions(int _argc, char * _argv[]){
 	//Weights
 	opt.allowed.push_back("weight_vdw");
 	opt.allowed.push_back("weight_hbond");
-	opt.allowed.push_back("weight_solv");
+	opt.allowed.push_back("weight_IMM1");
+	opt.allowed.push_back("weight_IMM1REF");
 
 	// booleans
 	opt.allowed.push_back("verbose");
@@ -2198,11 +2200,17 @@ Options parseOptions(int _argc, char * _argv[]){
 		opt.warningMessages += "weight_hbond not specified, default 1.0\n";
 		opt.weight_hbond = 1.0;
 	}
-	opt.weight_solv = OP.getDouble("weight_solv");
+	opt.weight_IMM1 = OP.getDouble("weight_IMM1");
 	if (OP.fail()) {
 		opt.warningFlag = true;
-		opt.warningMessages += "weight_solv not specified, default 1.0\n";
-		opt.weight_solv = 1.0;
+		opt.warningMessages += "weight_IMM1 not specified, default 1.0\n";
+		opt.weight_IMM1 = 1.0;
+	}
+	opt.weight_IMM1REF = OP.getDouble("weight_IMM1REF");
+	if (OP.fail()) {
+		opt.warningFlag = true;
+		opt.warningMessages += "weight_IMM1REF not specified, default 1.0\n";
+		opt.weight_IMM1REF = 1.0;
 	}
 
     //Parameter files
