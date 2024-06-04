@@ -2821,6 +2821,61 @@ bool hydrogenBondCheck(System & _sys, Options &_opt, vector<string> _parsedGeoIn
 
 }
 
+bool rulesCheck(System & _sys, string _geoIndex, map<int, string> _rulesMap) {
+
+	int idx = MslTools::toInt(_geoIndex);
+	if (_rulesMap.find(idx) == _rulesMap.end()) {
+		return true;
+	}
+
+	vector<string> parsedRules = MslTools::tokenize(_rulesMap[idx], ",");
+	// read over all the rules for a given model
+	for (uint m = 1; m < parsedRules.size(); m++) {
+		int delimiter  = parsedRules[m].find_first_of(":");
+		string position = parsedRules[m].substr(0,1)+","+parsedRules[m].substr(1,delimiter-1); // makes string A,35
+		string rule = parsedRules[m].substr(delimiter+1,(parsedRules[m].length()-delimiter-1)); 
+		if(!_sys.positionExists(position)) {
+			continue;
+		}
+		//fout << "position " << position << " must be " << rule << " , " << " is actually " << _sys.getPosition(position).getResidueName() << endl;
+
+		// Check if there is a ! "not"
+		size_t findNot = rule.find("!");
+
+		// if there is a "not"
+		if (findNot == 0) { // ! will only appear in position 0
+			rule = rule.substr(2);
+			rule = MslTools::trim(rule, "]"); // residues that cannot exist in given position
+			// look at position given in rule	
+			string resName = MslTools::getOneLetterCode(_sys.getPosition(position).getResidueName());
+			for (uint n=0; n < rule.length(); n++) {
+				if (rule.substr(n, 1) == resName) {
+					return false;
+				}
+			}
+			
+		}
+		else { // no "not" found
+			rule = rule.substr(1);
+			rule = MslTools::trim(rule, "]"); // residues that must exist in given position
+			// look at position given in rule	
+			string resName = MslTools::getOneLetterCode(_sys.getPosition(position).getResidueName());
+			bool found = false;
+			for (uint n=0; n < rule.length(); n++) {
+				if (rule.substr(n, 1) == resName) {
+					found = true;
+					break;
+				}
+			}
+			if(!found) {
+				return false;
+			}
+		}
+	}
+	
+	return true;
+}
+
 map<string,double> getEnergyByTerm(EnergySet* _eSet) {
 	// get all terms
 	map<string,double> eByTerm;
