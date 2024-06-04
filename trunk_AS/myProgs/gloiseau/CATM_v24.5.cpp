@@ -741,6 +741,7 @@ void transformation(AtomPointerVector & _chainA, AtomPointerVector & _chainB, At
 void c2Symmetry(AtomPointerVector & _apvA, AtomPointerVector & _apvB);
 double getStandardNormal(RandomNumberGenerator& RNG);
 bool hydrogenBondCheck(System & _sys, Options &_opt, vector<string> _parsedGeoInformation, double & _xShiftStart);
+bool rulesCheck(System & _sys, string _geoIndex, map<int, string> _rulesMap);
 vector<string> getInterHelicalHbonds(EnergySet* & _ESet);
 map<string, unsigned int> interfaceResidueCheck(AtomPointerVector & _chainA, AtomPointerVector & _chainB);
 map<string,double> getEnergyByTerm(EnergySet* _eSet);
