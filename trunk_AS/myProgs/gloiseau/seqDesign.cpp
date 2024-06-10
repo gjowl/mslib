@@ -601,7 +601,7 @@ int main(int argc, char *argv[]){
 	}
 	
 	// if runSCMF is true, get the best starting state using SelfConsistentMeanField. 
-	// TODO: I ran this as true during my design runs...but I think it also works as false???
+	// I ran this as true during my design runs but I think it also works as false, just ends up with a sequence that's primarily a single amino acid
 	if (opt.runSCMF == true){
 		runSCMFToGetStartingSequence(sys, opt, RNG, rotamerSamplingPerPosition, 
 		 interfacePositions, sequenceEnergyMapBest, sequenceEntropyMap, sout);
