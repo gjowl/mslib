@@ -854,7 +854,7 @@ int main(int argc, char *argv[]) {
 	 ******************************************************************************/
 	System sys;
 	CharmmSystemBuilder CSB(sys,opt.topFile,opt.parFile,opt.solvFile);
-	CSB.setBuildTerm("CHARMM_ELEC", false);
+	//CSB.setBuildTerm("CHARMM_ELEC", false);
 	CSB.setBuildTerm("CHARMM_ANGL", false);
 	CSB.setBuildTerm("CHARMM_BOND", false);
 	CSB.setBuildTerm("CHARMM_DIHE", false);
@@ -924,7 +924,7 @@ int main(int argc, char *argv[]) {
 	EnergySet* Eset = sys.getEnergySet();
 	// Set all terms active, besides Charmm-Elec
 	Eset->setAllTermsActive();
-	Eset->setTermActive("CHARMM_ELEC", false);
+	//Eset->setTermActive("CHARMM_ELEC", false);
 	Eset->setTermActive("CHARMM_ANGL", false);
 	Eset->setTermActive("CHARMM_BOND", false);
 	Eset->setTermActive("CHARMM_DIHE", false);
@@ -2303,7 +2303,7 @@ double computeMonomerEnergy(System & _sys, Transforms & _trans, Options & _opt, 
 	// Declare new system
 	System monoSys;
 	CharmmSystemBuilder CSBMono(monoSys, _opt.topFile, _opt.parFile, _opt.solvFile);
-	CSBMono.setBuildTerm("CHARMM_ELEC", false);
+	//CSBMono.setBuildTerm("CHARMM_ELEC", false);
 	CSBMono.setBuildTerm("CHARMM_ANGL", false);
 	CSBMono.setBuildTerm("CHARMM_BOND", false);
 	CSBMono.setBuildTerm("CHARMM_DIHE", false);
@@ -2327,7 +2327,7 @@ double computeMonomerEnergy(System & _sys, Transforms & _trans, Options & _opt, 
 	 ******************************************************************************/
 	EnergySet* monoEset = monoSys.getEnergySet();
 	monoEset->setAllTermsActive();
-	monoEset->setTermActive("CHARMM_ELEC", false);
+	//monoEset->setTermActive("CHARMM_ELEC", false);
 	monoEset->setTermActive("CHARMM_ANGL", false);
 	monoEset->setTermActive("CHARMM_BOND", false);
 	monoEset->setTermActive("CHARMM_DIHE", false);
