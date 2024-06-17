@@ -1624,7 +1624,7 @@ void computeMonomerEnergy(System &_sys, Options &_opt, RandomNumberGenerator &_R
 
 	// Add energy to sequence energy map
 	map<string,double> &energyMap = _sequenceEnergyMap[_seq];
-	outputEnergiesByTerm(monoSpm, stateVec, energyMap, _opt.energyTermList, "Monomer", true);
+	outputEnergiesByTerm(monoSpm, stateVec, energyMap, _opt.energyTermList, "_Monomer", true);
 	_sequenceEnergyMap[_seq]["Monomer"] = monomerEnergy;
 	_sequenceEnergyMap[_seq]["MonomerSasa"] = totalMonomerSasa;
 
@@ -1921,7 +1921,7 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 
 	// Add energy to sequence energy map
 	map<string,double> &energyMap = _sequenceEnergyMap[_seq];
-	outputEnergiesByTerm(monoSpm, stateVec, energyMap, _opt.energyTermList, "Monomer", true);
+	outputEnergiesByTerm(monoSpm, stateVec, energyMap, _opt.energyTermList, "_Monomer", true);
 	_sequenceEnergyMap[_seq]["Monomer"] = monomerEnergy;
 	_sequenceEnergyMap[_seq]["MonomerSasa"] = totalMonomerSasa;
 
