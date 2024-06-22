@@ -850,7 +850,7 @@ void checkForClashing(System &_startGeom, Options &_opt, vector<uint> _interface
 	double relativeZ;
 	convertToRelativeAxAndZ(_opt.axialRotation, _opt.zShift, relativeAx, relativeZ);
 	string geometry = "x"+MslTools::doubleToString(_opt.xShift)+"_cross"+MslTools::doubleToString(_opt.crossingAngle)
-	 +"_ax"+MslTools::doubleToString(relativeAx)+"_z"+MslTools::doubleToString(relativeZ)+"_vdW"+to_string(energy)+".pdb";
+	 +"_ax"+MslTools::doubleToString(relativeAx)+"_z"+MslTools::doubleToString(relativeZ)+"_vdW"+to_string(energy);
 	writePdb(sys, _opt.outputDir, geometry);
 }
 
@@ -1050,8 +1050,9 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 	double bestProb = sequenceProbability;
 
 	// added in a pdb writer to output the search trajectory as a pdb 2023-11-12
+	string seqSearchTrajectory = "sequence_search_trajectory_"+to_string(_rep)+".pdb";
 	PDBWriter writer;
-	writer.open(_opt.outputDir + "/sequence_search_trajectory.pdb");
+	writer.open(_opt.outputDir + "/" + seqSearchTrajectory);
 	writer.write(_sys.getAtomPointers(), true, false, true);
 	while (!MC.getComplete()){
 		// get the sequence entropy probability for the current best sequence
@@ -1124,8 +1125,9 @@ void sequenceSearchMonteCarlo(System &_sys, Options &_opt, SelfPairManager &_spm
 	
 	// output the best sequence pdb
 	string pdbOutput = "bestSequence_"+to_string(_rep);
+	string seqSearch = "seqSearch_"+to_string(_rep);
 	_sys.setActiveRotamers(_bestState);
-	writePdb(_sys, _opt.outputDir, "seqSearch");
+	writePdb(_sys, _opt.outputDir, seqSearch);
 	cout << "End monte carlo sequence search #" << _rep << ": " << diffTimeSMC/60 << "min" << endl;
 	cout << "Monte Carlo ended at Temp: " << MC.getCurrentT() << endl << endl;
 	cout << "- Best Sequence: " << bestSeq << "; Energy w/ baseline: " << bestEnergy << endl;
@@ -2316,8 +2318,8 @@ void computeMonomerEnergy(System &_sys, System &_helicalAxis, Options &_opt, Tra
 	double dimerEnergy = _sequenceEnergyMap[_seq]["Dimer"];
 	cout << "Dimer Energy: " << _seq << ": " << dimerEnergy << endl;
 	double totalEnergy = dimerEnergy-monomerEnergy;
-	_sout << "-Dimer - Monomer = " << dimerEnergy << " - " << monomerEnergy << " = " << totalEnergy << endl;
-	cout << "-Dimer - Monomer = " << dimerEnergy << " - " << monomerEnergy << " = " << totalEnergy << endl;
+	_sout << "- Dimer - Monomer = " << dimerEnergy << " - " << monomerEnergy << " = " << totalEnergy << endl;
+	cout << "- Dimer - Monomer = " << dimerEnergy << " - " << monomerEnergy << " = " << totalEnergy << endl;
 	_sequenceEnergyMap[_seq]["preRepackTotal"] = totalEnergy;
 
 	// cal;ulate the energy of the monomer for positions 4-18

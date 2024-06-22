@@ -273,8 +273,6 @@ int main(int argc, char *argv[]){
 	 ******************************************************************************/
 	// summary file output
 	ofstream sout;
-	// monomer file output
-	ofstream mout;
 	// error file output
 	ofstream err;
 	// rerun config output
@@ -282,13 +280,11 @@ int main(int argc, char *argv[]){
 
 	string outputDir = setupOutputDirectory(opt.outputDir);
 
-	string soutfile = outputDir + "/energy.csv";
-	string moutfile = outputDir + "/monomer.out";
+	string soutfile = outputDir + "/summary.out";
 	string errfile  = outputDir + "/errors.out";
 	string rerunfile = outputDir + "/rerun.config";
 
 	sout.open(soutfile.c_str());
-	mout.open(moutfile.c_str());
 	err.open(errfile.c_str());
 	rerun.open(rerunfile.c_str());
 
@@ -386,7 +382,6 @@ int main(int argc, char *argv[]){
 
     // close all of the output file writers
     sout.close();
-    mout.close();
     err.close();
 	exit(0);
 }
