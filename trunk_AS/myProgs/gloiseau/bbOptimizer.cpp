@@ -677,6 +677,7 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 		}
 	}
 	//writer.close();
+	// TODO: add in here to run a final optimization where the parameters decrease to 0
 	bbout << "End Repack Cycles" << endl << endl; 
 	time(&endTimeMC);
 	diffTimeMC = difftime (endTimeMC, startTimeMC);

@@ -29,7 +29,7 @@ using namespace std;
 
 static SysEnv SYSENV;
 string programName = ""; 
-string programDescription = "Reads a PDB into MSL and then calculates the energy; made for reading rosetta PDBs and calculating the energy";
+string programDescription = "Used to identify potential voids in a protein structure when mutating a residue to alanine.";
 string programAuthor = "Gilbert Loiseau";
 string programVersion = "1";
 string programDate = "13 Feb 2023";
