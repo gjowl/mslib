@@ -596,8 +596,8 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 	_sys.saveAltCoor("savedRepackState");
 	_helicalAxis.saveAltCoor("BestRepack");
 	// uncomment the below and lines ... ; it makes the outputs quite large, but you'll have outputs for the entire optimization
-	//PDBWriter writer;
-	//writer.open(_opt.outputDir + "/bbRepack_"+to_string(_rep)+".pdb");
+	PDBWriter writer;
+	writer.open(_opt.outputDir + "/bbRepack_"+to_string(_rep)+".pdb");
 	// loop through the MC cycles for backbone repacks
 	bbout << "Starting Repack Cycles" << endl; 
 	while(!MCMngr.getComplete()) {
@@ -673,10 +673,10 @@ void backboneOptimizeMonteCarlo(Options &_opt, System &_sys, SelfPairManager &_s
 			}
 			bbout << "MCAccept " << counter <<  " xShift: " << finalXShift << " crossingAngle: " << finalCrossingAngle << " axialRotation: " << finalAxialRotation << " zShift: " << finalZShift << " energy: " << currentEnergy << endl;
 			counter++;
-			//writer.write(_sys.getAtomPointers(), true, false, true);
+			writer.write(_sys.getAtomPointers(), true, false, true);
 		}
 	}
-	//writer.close();
+	writer.close();
 	// TODO: add in here to run a final optimization where the parameters decrease to 0
 	bbout << "End Repack Cycles" << endl << endl; 
 	time(&endTimeMC);

@@ -1,0 +1,655 @@
+***STARTING GEOMETRY***
+Starting Repack Cycles
+MCAccept 0 xShift: 9.12888 crossingAngle: 25 axialRotation: 40 zShift: 4 energy: -54.1885
+MCAccept 1 xShift: 9.12888 crossingAngle: 25 axialRotation: 39.8521 zShift: 4 energy: -53.3827
+MCAccept 2 xShift: 9.12888 crossingAngle: 25 axialRotation: 39.8521 zShift: 4.02773 energy: -53.3601
+MCAccept 3 xShift: 9.21797 crossingAngle: 25 axialRotation: 39.8521 zShift: 4.02773 energy: -52.2786
+MCAccept 4 xShift: 9.21797 crossingAngle: 24.9766 axialRotation: 39.8521 zShift: 4.02773 energy: -51.8002
+MCAccept 5 xShift: 9.11506 crossingAngle: 24.9766 axialRotation: 39.8521 zShift: 4.02773 energy: -54.2962
+MCAccept 6 xShift: 9.11506 crossingAngle: 24.9766 axialRotation: 39.9884 zShift: 4.02773 energy: -53.6113
+MCAccept 7 xShift: 9.11506 crossingAngle: 24.9766 axialRotation: 40.2516 zShift: 4.02773 energy: -54.4538
+MCAccept 8 xShift: 9.11506 crossingAngle: 24.9766 axialRotation: 40.2516 zShift: 3.99345 energy: -54.4118
+MCAccept 9 xShift: 9.11506 crossingAngle: 24.9766 axialRotation: 40.2516 zShift: 3.95767 energy: -54.3496
+MCAccept 10 xShift: 9.14317 crossingAngle: 24.9766 axialRotation: 40.2516 zShift: 3.95767 energy: -53.9599
+MCAccept 11 xShift: 9.14317 crossingAngle: 24.7631 axialRotation: 40.2516 zShift: 3.95767 energy: -52.6424
+MCAccept 12 xShift: 9.14317 crossingAngle: 24.7631 axialRotation: 41.1033 zShift: 3.95767 energy: -52.9216
+MCAccept 13 xShift: 9.14317 crossingAngle: 24.7631 axialRotation: 41.1033 zShift: 3.95119 energy: -52.4644
+MCAccept 14 xShift: 9.14317 crossingAngle: 24.7631 axialRotation: 41.1033 zShift: 3.99274 energy: -53.1631
+MCAccept 15 xShift: 9.14317 crossingAngle: 24.7837 axialRotation: 41.1033 zShift: 3.99274 energy: -53.1521
+MCAccept 16 xShift: 9.14317 crossingAngle: 24.7837 axialRotation: 41.1033 zShift: 4.05954 energy: -53.5374
+MCAccept 17 xShift: 9.14317 crossingAngle: 24.7837 axialRotation: 41.1217 zShift: 4.05954 energy: -53.5068
+MCAccept 18 xShift: 9.08359 crossingAngle: 24.7837 axialRotation: 41.1217 zShift: 4.05954 energy: -53.898
+MCAccept 19 xShift: 9.08075 crossingAngle: 24.7837 axialRotation: 41.1217 zShift: 4.05954 energy: -53.9071
+MCReject   xShift: 9.08075 crossingAngle: 24.5874 axialRotation: 41.1217 zShift: 4.05954 energy: -53.3519
+MCAccept 20 xShift: 9.08075 crossingAngle: 25.1186 axialRotation: 41.1217 zShift: 4.05954 energy: -53.6316
+MCAccept 21 xShift: 9.08075 crossingAngle: 25.1186 axialRotation: 41.1217 zShift: 4.0181 energy: -52.8061
+MCAccept 22 xShift: 9.08075 crossingAngle: 25.5041 axialRotation: 41.1217 zShift: 4.0181 energy: -52.2689
+MCAccept 23 xShift: 9.08075 crossingAngle: 25.5041 axialRotation: 41.3609 zShift: 4.0181 energy: -51.7652
+MCReject   xShift: 9.08075 crossingAngle: 25.5041 axialRotation: 41.8396 zShift: 4.0181 energy: -49.5818
+MCAccept 24 xShift: 9.08075 crossingAngle: 25.1838 axialRotation: 41.3609 zShift: 4.0181 energy: -52.0444
+MCAccept 25 xShift: 9.08075 crossingAngle: 24.6874 axialRotation: 41.3609 zShift: 4.0181 energy: -52.8881
+MCAccept 26 xShift: 9.08075 crossingAngle: 24.6874 axialRotation: 41.6628 zShift: 4.0181 energy: -51.4692
+MCAccept 27 xShift: 9.04778 crossingAngle: 24.6874 axialRotation: 41.6628 zShift: 4.0181 energy: -51.1603
+MCAccept 28 xShift: 9.04778 crossingAngle: 25.3235 axialRotation: 41.6628 zShift: 4.0181 energy: -50.4188
+MCAccept 29 xShift: 9.04045 crossingAngle: 25.3235 axialRotation: 41.6628 zShift: 4.0181 energy: -50.3093
+MCReject   xShift: 9.04045 crossingAngle: 25.3235 axialRotation: 41.7628 zShift: 4.0181 energy: -49.7423
+MCReject   xShift: 8.97106 crossingAngle: 25.3235 axialRotation: 41.6628 zShift: 4.0181 energy: -48.7562
+MCAccept 30 xShift: 9.05188 crossingAngle: 25.3235 axialRotation: 41.6628 zShift: 4.0181 energy: -50.4759
+MCReject   xShift: 9.05188 crossingAngle: 25.3235 axialRotation: 41.6628 zShift: 3.90963 energy: -48.8249
+MCAccept 31 xShift: 9.05188 crossingAngle: 25.5342 axialRotation: 41.6628 zShift: 4.0181 energy: -49.8095
+MCAccept 32 xShift: 9.05188 crossingAngle: 25.5342 axialRotation: 41.6628 zShift: 3.95423 energy: -49.0966
+MCAccept 33 xShift: 9.05188 crossingAngle: 25.5342 axialRotation: 41.687 zShift: 3.95423 energy: -48.9285
+MCReject   xShift: 9.05188 crossingAngle: 25.5342 axialRotation: 41.687 zShift: 3.85085 energy: -46.5934
+MCAccept 34 xShift: 9.02011 crossingAngle: 25.5342 axialRotation: 41.687 zShift: 3.95423 energy: -48.1665
+MCAccept 35 xShift: 9.02011 crossingAngle: 25.5342 axialRotation: 41.7875 zShift: 3.95423 energy: -47.3119
+MCAccept 36 xShift: 9.01644 crossingAngle: 25.5342 axialRotation: 41.7875 zShift: 3.95423 energy: -47.1975
+MCAccept 37 xShift: 9.01644 crossingAngle: 25.5342 axialRotation: 41.4196 zShift: 3.95423 energy: -49.9549
+MCAccept 38 xShift: 9.01644 crossingAngle: 25.5342 axialRotation: 41.4997 zShift: 3.95423 energy: -49.11
+MCAccept 39 xShift: 9.01644 crossingAngle: 25.5342 axialRotation: 41.4997 zShift: 3.90084 energy: -48.4874
+MCAccept 40 xShift: 9.01644 crossingAngle: 25.5342 axialRotation: 40.8708 zShift: 3.90084 energy: -51.9012
+MCAccept 41 xShift: 9.01644 crossingAngle: 25.5342 axialRotation: 40.8708 zShift: 3.90619 energy: -51.9508
+MCAccept 42 xShift: 9.07288 crossingAngle: 25.5342 axialRotation: 40.8708 zShift: 3.90619 energy: -52.2511
+MCAccept 43 xShift: 9.07288 crossingAngle: 25.7492 axialRotation: 40.8708 zShift: 3.90619 energy: -52.1289
+MCAccept 44 xShift: 9.07288 crossingAngle: 25.8506 axialRotation: 40.8708 zShift: 3.90619 energy: -52.0471
+MCAccept 45 xShift: 9.07288 crossingAngle: 26.0798 axialRotation: 40.8708 zShift: 3.90619 energy: -51.7961
+MCAccept 46 xShift: 8.97528 crossingAngle: 26.0798 axialRotation: 40.8708 zShift: 3.90619 energy: -50.4244
+MCAccept 47 xShift: 8.97528 crossingAngle: 26.0798 axialRotation: 40.7521 zShift: 3.90619 energy: -51.1005
+MCAccept 48 xShift: 8.97528 crossingAngle: 26.0798 axialRotation: 40.7521 zShift: 3.81563 energy: -49.7389
+MCReject   xShift: 8.97528 crossingAngle: 26.4997 axialRotation: 40.7521 zShift: 3.81563 energy: -47.9659
+MCAccept 49 xShift: 8.97528 crossingAngle: 26.0798 axialRotation: 40.7521 zShift: 3.85218 energy: -50.3289
+MCAccept 50 xShift: 8.97528 crossingAngle: 26.0798 axialRotation: 40.7521 zShift: 3.87082 energy: -50.6083
+MCAccept 51 xShift: 9.00095 crossingAngle: 26.0798 axialRotation: 40.7521 zShift: 3.87082 energy: -51.1138
+MCAccept 52 xShift: 9.00095 crossingAngle: 26.0798 axialRotation: 40.7521 zShift: 3.84913 energy: -50.8218
+MCAccept 53 xShift: 9.00095 crossingAngle: 26.0798 axialRotation: 40.7521 zShift: 3.80614 energy: -50.1881
+MCAccept 54 xShift: 9.00095 crossingAngle: 25.7769 axialRotation: 40.7521 zShift: 3.80614 energy: -50.8313
+MCAccept 55 xShift: 8.96466 crossingAngle: 25.7769 axialRotation: 40.7521 zShift: 3.80614 energy: -49.6491
+MCAccept 56 xShift: 8.96466 crossingAngle: 25.7769 axialRotation: 40.7521 zShift: 3.83414 energy: -50.4875
+MCAccept 57 xShift: 8.96466 crossingAngle: 25.7769 axialRotation: 40.7521 zShift: 3.89537 energy: -51.2937
+MCAccept 58 xShift: 8.96466 crossingAngle: 25.9512 axialRotation: 40.7521 zShift: 3.89537 energy: -50.991
+MCAccept 59 xShift: 8.96466 crossingAngle: 25.9512 axialRotation: 41.1867 zShift: 3.89537 energy: -48.0031
+MCAccept 60 xShift: 8.96466 crossingAngle: 25.9512 axialRotation: 41.1867 zShift: 3.87581 energy: -47.5762
+MCReject   xShift: 8.84421 crossingAngle: 25.9512 axialRotation: 41.1867 zShift: 3.87581 energy: -42.5376
+MCAccept 61 xShift: 8.96466 crossingAngle: 25.9512 axialRotation: 41.1867 zShift: 3.95224 energy: -48.7197
+MCAccept 62 xShift: 8.96466 crossingAngle: 25.8392 axialRotation: 41.1867 zShift: 3.95224 energy: -49.4559
+MCAccept 63 xShift: 8.96466 crossingAngle: 25.8392 axialRotation: 41.1867 zShift: 3.98281 energy: -49.9646
+MCAccept 64 xShift: 8.96466 crossingAngle: 25.8392 axialRotation: 41.2113 zShift: 3.98281 energy: -49.3566
+MCAccept 65 xShift: 8.96466 crossingAngle: 25.7448 axialRotation: 41.2113 zShift: 3.98281 energy: -50.0337
+MCAccept 66 xShift: 8.9466 crossingAngle: 25.7448 axialRotation: 41.2113 zShift: 3.98281 energy: -49.525
+MCAccept 67 xShift: 8.9466 crossingAngle: 25.7448 axialRotation: 40.9981 zShift: 3.98281 energy: -50.8148
+MCAccept 68 xShift: 8.97968 crossingAngle: 25.7448 axialRotation: 40.9981 zShift: 3.98281 energy: -51.5022
+MCAccept 69 xShift: 8.97968 crossingAngle: 25.6243 axialRotation: 40.9981 zShift: 3.98281 energy: -51.6615
+MCAccept 70 xShift: 8.97968 crossingAngle: 25.6243 axialRotation: 40.9981 zShift: 4.04797 energy: -51.5893
+MCAccept 71 xShift: 8.97968 crossingAngle: 25.6883 axialRotation: 40.9981 zShift: 4.04797 energy: -51.9016
+MCAccept 72 xShift: 8.97968 crossingAngle: 25.4266 axialRotation: 40.9981 zShift: 4.04797 energy: -52.8554
+MCAccept 73 xShift: 8.96015 crossingAngle: 25.4266 axialRotation: 40.9981 zShift: 4.04797 energy: -52.5357
+MCAccept 74 xShift: 8.96015 crossingAngle: 25.4266 axialRotation: 40.8432 zShift: 4.04797 energy: -53.361
+MCAccept 75 xShift: 8.96015 crossingAngle: 25.4266 axialRotation: 40.8432 zShift: 4.08742 energy: -53.8364
+MCReject   xShift: 8.96015 crossingAngle: 25.4266 axialRotation: 40.8432 zShift: 4.02369 energy: -53.0403
+MCReject   xShift: 8.96015 crossingAngle: 25.4266 axialRotation: 40.8432 zShift: 4.0075 energy: -52.8137
+MCReject   xShift: 8.96015 crossingAngle: 25.8278 axialRotation: 40.8432 zShift: 4.08742 energy: -52.9927
+MCAccept 76 xShift: 8.96015 crossingAngle: 25.4266 axialRotation: 40.8432 zShift: 4.17832 energy: -53.8189
+MCAccept 77 xShift: 8.96015 crossingAngle: 25.2926 axialRotation: 40.8432 zShift: 4.17832 energy: -54.8625
+MCAccept 78 xShift: 9.01214 crossingAngle: 25.2926 axialRotation: 40.8432 zShift: 4.17832 energy: -55.1239
+MCAccept 79 xShift: 9.01214 crossingAngle: 25.6457 axialRotation: 40.8432 zShift: 4.17832 energy: -54.8454
+MCReject   xShift: 9.01214 crossingAngle: 25.6457 axialRotation: 40.8432 zShift: 4.20769 energy: -54.3765
+MCAccept 80 xShift: 9.02988 crossingAngle: 25.6457 axialRotation: 40.8432 zShift: 4.17832 energy: -54.8799
+MCAccept 81 xShift: 9.02988 crossingAngle: 25.6457 axialRotation: 40.8432 zShift: 4.14539 energy: -54.6236
+MCAccept 82 xShift: 9.02988 crossingAngle: 25.6457 axialRotation: 40.8432 zShift: 4.1194 energy: -54.3992
+MCAccept 83 xShift: 9.02988 crossingAngle: 25.5122 axialRotation: 40.8432 zShift: 4.1194 energy: -54.5607
+MCAccept 84 xShift: 9.08678 crossingAngle: 25.5122 axialRotation: 40.8432 zShift: 4.1194 energy: -54.4543
+MCAccept 85 xShift: 9.08678 crossingAngle: 25.5122 axialRotation: 40.8432 zShift: 4.15369 energy: -54.6564
+MCReject   xShift: 8.98841 crossingAngle: 25.5122 axialRotation: 40.8432 zShift: 4.15369 energy: -53.9323
+MCAccept 86 xShift: 9.08678 crossingAngle: 25.5122 axialRotation: 40.7354 zShift: 4.15369 energy: -54.8359
+MCAccept 87 xShift: 9.01836 crossingAngle: 25.5122 axialRotation: 40.7354 zShift: 4.15369 energy: -55.0849
+MCAccept 88 xShift: 9.01836 crossingAngle: 25.5122 axialRotation: 40.7354 zShift: 4.1266 energy: -54.8998
+MCAccept 89 xShift: 9.06215 crossingAngle: 25.5122 axialRotation: 40.7354 zShift: 4.1266 energy: -54.8403
+MCAccept 90 xShift: 9.03518 crossingAngle: 25.5122 axialRotation: 40.7354 zShift: 4.1266 energy: -54.9064
+MCReject   xShift: 9.03518 crossingAngle: 25.5122 axialRotation: 41.2927 zShift: 4.1266 energy: -52.4393
+MCAccept 91 xShift: 9.07015 crossingAngle: 25.5122 axialRotation: 40.7354 zShift: 4.1266 energy: -54.2655
+MCAccept 92 xShift: 9.07015 crossingAngle: 25.5122 axialRotation: 40.6973 zShift: 4.1266 energy: -54.8742
+MCAccept 93 xShift: 9.07015 crossingAngle: 25.5122 axialRotation: 40.6973 zShift: 4.15032 energy: -54.9922
+MCAccept 94 xShift: 9.07015 crossingAngle: 26.0444 axialRotation: 40.6973 zShift: 4.15032 energy: -54.5776
+MCAccept 95 xShift: 9.07015 crossingAngle: 26.0444 axialRotation: 40.6973 zShift: 4.11203 energy: -54.2643
+MCAccept 96 xShift: 9.07015 crossingAngle: 26.4731 axialRotation: 40.6973 zShift: 4.11203 energy: -53.4034
+MCAccept 97 xShift: 9.17813 crossingAngle: 26.4731 axialRotation: 40.6973 zShift: 4.11203 energy: -52.9506
+MCAccept 98 xShift: 9.17813 crossingAngle: 26.7142 axialRotation: 40.6973 zShift: 4.11203 energy: -52.5682
+MCReject   xShift: 9.24922 crossingAngle: 26.7142 axialRotation: 40.6973 zShift: 4.11203 energy: -51.7234
+MCAccept 99 xShift: 9.17813 crossingAngle: 26.7142 axialRotation: 40.988 zShift: 4.11203 energy: -52.1657
+MCReject   xShift: 9.17813 crossingAngle: 26.7142 axialRotation: 40.988 zShift: 4.0904 energy: -51.8606
+MCAccept 100 xShift: 9.17813 crossingAngle: 26.7142 axialRotation: 40.6483 zShift: 4.11203 energy: -52.717
+MCAccept 101 xShift: 9.17813 crossingAngle: 26.7142 axialRotation: 40.6632 zShift: 4.11203 energy: -52.6729
+MCAccept 102 xShift: 9.17813 crossingAngle: 26.7142 axialRotation: 40.5356 zShift: 4.11203 energy: -53.0157
+MCAccept 103 xShift: 9.17813 crossingAngle: 26.7142 axialRotation: 40.4855 zShift: 4.11203 energy: -53.1465
+MCAccept 104 xShift: 9.22378 crossingAngle: 26.7142 axialRotation: 40.4855 zShift: 4.11203 energy: -52.5668
+MCAccept 105 xShift: 9.22378 crossingAngle: 26.4724 axialRotation: 40.4855 zShift: 4.11203 energy: -52.8043
+MCAccept 106 xShift: 9.22378 crossingAngle: 26.4724 axialRotation: 40.4855 zShift: 4.13165 energy: -52.8919
+MCReject   xShift: 9.22378 crossingAngle: 26.4724 axialRotation: 40.5235 zShift: 4.13165 energy: -52.8422
+MCAccept 107 xShift: 9.22378 crossingAngle: 26.3158 axialRotation: 40.4855 zShift: 4.13165 energy: -52.9784
+MCAccept 108 xShift: 9.22378 crossingAngle: 26.3158 axialRotation: 40.4855 zShift: 4.19327 energy: -53.1546
+MCReject   xShift: 9.22378 crossingAngle: 26.3158 axialRotation: 40.8097 zShift: 4.19327 energy: -52.8414
+MCReject   xShift: 9.3327 crossingAngle: 26.3158 axialRotation: 40.4855 zShift: 4.19327 energy: -50.8521
+MCAccept 109 xShift: 9.23707 crossingAngle: 26.3158 axialRotation: 40.4855 zShift: 4.19327 energy: -52.9057
+MCAccept 110 xShift: 9.23707 crossingAngle: 26.3158 axialRotation: 40.4855 zShift: 4.08866 energy: -52.5887
+MCAccept 111 xShift: 9.23707 crossingAngle: 26.3158 axialRotation: 40.4855 zShift: 4.17679 energy: -52.8698
+MCAccept 112 xShift: 9.23707 crossingAngle: 26.3158 axialRotation: 40.4855 zShift: 4.1629 energy: -52.8356
+MCAccept 113 xShift: 9.23707 crossingAngle: 26.3158 axialRotation: 40.4886 zShift: 4.1629 energy: -52.8338
+MCAccept 114 xShift: 9.23707 crossingAngle: 26.3158 axialRotation: 40.4886 zShift: 4.21291 energy: -52.9415
+MCAccept 115 xShift: 9.23707 crossingAngle: 26.3158 axialRotation: 40.4886 zShift: 4.2017 energy: -52.9213
+MCAccept 116 xShift: 9.23707 crossingAngle: 26.4197 axialRotation: 40.4886 zShift: 4.2017 energy: -52.9052
+MCAccept 117 xShift: 9.23707 crossingAngle: 26.4197 axialRotation: 40.7827 zShift: 4.2017 energy: -52.63
+MCAccept 118 xShift: 9.23707 crossingAngle: 26.4047 axialRotation: 40.7827 zShift: 4.2017 energy: -52.6416
+MCAccept 119 xShift: 9.23707 crossingAngle: 26.5289 axialRotation: 40.7827 zShift: 4.2017 energy: -52.5339
+MCAccept 120 xShift: 9.23707 crossingAngle: 26.5289 axialRotation: 40.7827 zShift: 4.13548 energy: -52.0617
+MCAccept 121 xShift: 9.15422 crossingAngle: 26.5289 axialRotation: 40.7827 zShift: 4.13548 energy: -52.9832
+MCAccept 122 xShift: 9.15422 crossingAngle: 26.5289 axialRotation: 40.7827 zShift: 4.08462 energy: -52.5268
+MCAccept 123 xShift: 9.15422 crossingAngle: 26.5289 axialRotation: 40.7827 zShift: 4.10571 energy: -52.6506
+MCAccept 124 xShift: 9.15422 crossingAngle: 26.4559 axialRotation: 40.7827 zShift: 4.10571 energy: -52.8367
+MCAccept 125 xShift: 9.08828 crossingAngle: 26.4559 axialRotation: 40.7827 zShift: 4.10571 energy: -53.0639
+MCAccept 126 xShift: 9.08828 crossingAngle: 26.3672 axialRotation: 40.7827 zShift: 4.10571 energy: -53.2297
+MCAccept 127 xShift: 9.08828 crossingAngle: 26.3672 axialRotation: 40.7827 zShift: 4.12881 energy: -53.4976
+MCAccept 128 xShift: 9.07645 crossingAngle: 26.3672 axialRotation: 40.7827 zShift: 4.12881 energy: -53.493
+MCAccept 129 xShift: 9.07645 crossingAngle: 26.3672 axialRotation: 40.7827 zShift: 4.19662 energy: -53.9312
+MCAccept 130 xShift: 9.13028 crossingAngle: 26.3672 axialRotation: 40.7827 zShift: 4.19662 energy: -53.9514
+MCAccept 131 xShift: 9.13028 crossingAngle: 26.3672 axialRotation: 40.695 zShift: 4.19662 energy: -53.9237
+MCAccept 132 xShift: 9.13028 crossingAngle: 26.1998 axialRotation: 40.695 zShift: 4.19662 energy: -54.3317
+MCAccept 133 xShift: 9.13028 crossingAngle: 26.5202 axialRotation: 40.695 zShift: 4.19662 energy: -53.965
+MCAccept 134 xShift: 9.13028 crossingAngle: 26.5202 axialRotation: 40.1347 zShift: 4.19662 energy: -54.8249
+MCAccept 135 xShift: 9.13028 crossingAngle: 26.5202 axialRotation: 40.1347 zShift: 4.15971 energy: -54.725
+MCAccept 136 xShift: 9.18604 crossingAngle: 26.5202 axialRotation: 40.1347 zShift: 4.15971 energy: -53.5907
+MCAccept 137 xShift: 9.18604 crossingAngle: 26.5202 axialRotation: 40.1347 zShift: 4.2178 energy: -53.9535
+MCAccept 138 xShift: 9.18604 crossingAngle: 26.5202 axialRotation: 40.1347 zShift: 4.18213 energy: -53.9086
+MCAccept 139 xShift: 9.16747 crossingAngle: 26.5202 axialRotation: 40.1347 zShift: 4.18213 energy: -54.2265
+MCAccept 140 xShift: 9.16747 crossingAngle: 26.3968 axialRotation: 40.1347 zShift: 4.18213 energy: -54.232
+MCAccept 141 xShift: 9.16747 crossingAngle: 26.1337 axialRotation: 40.1347 zShift: 4.18213 energy: -54.1905
+MCAccept 142 xShift: 9.16747 crossingAngle: 26.1337 axialRotation: 40.1347 zShift: 4.16336 energy: -54.1773
+MCAccept 143 xShift: 9.16747 crossingAngle: 26.1337 axialRotation: 40.3682 zShift: 4.16336 energy: -54.1283
+MCAccept 144 xShift: 9.18496 crossingAngle: 26.1337 axialRotation: 40.3682 zShift: 4.16336 energy: -53.8431
+MCAccept 145 xShift: 9.18496 crossingAngle: 26.1337 axialRotation: 40.0973 zShift: 4.16336 energy: -53.8513
+MCAccept 146 xShift: 9.18496 crossingAngle: 26.1337 axialRotation: 39.8768 zShift: 4.16336 energy: -53.7387
+MCAccept 147 xShift: 9.18496 crossingAngle: 26.1337 axialRotation: 40.356 zShift: 4.16336 energy: -53.8474
+MCAccept 148 xShift: 9.18496 crossingAngle: 26.1337 axialRotation: 40.6296 zShift: 4.16336 energy: -53.3905
+MCAccept 149 xShift: 9.20279 crossingAngle: 26.1337 axialRotation: 40.6296 zShift: 4.16336 energy: -53.3758
+MCAccept 150 xShift: 9.16736 crossingAngle: 26.1337 axialRotation: 40.6296 zShift: 4.16336 energy: -53.8912
+MCAccept 151 xShift: 9.16736 crossingAngle: 26.1337 axialRotation: 40.3875 zShift: 4.16336 energy: -54.1196
+MCAccept 152 xShift: 9.16736 crossingAngle: 26.1337 axialRotation: 40.3875 zShift: 4.16336 energy: -54.1196
+MCAccept 153 xShift: 9.16736 crossingAngle: 26.1337 axialRotation: 40.3875 zShift: 4.25445 energy: -54.2727
+MCAccept 154 xShift: 9.1195 crossingAngle: 26.1337 axialRotation: 40.3875 zShift: 4.25445 energy: -55.0113
+MCAccept 155 xShift: 9.1195 crossingAngle: 26.1337 axialRotation: 40.0423 zShift: 4.25445 energy: -54.9921
+MCAccept 156 xShift: 9.1195 crossingAngle: 26.18 axialRotation: 40.0423 zShift: 4.25445 energy: -55.0123
+MCAccept 157 xShift: 9.1195 crossingAngle: 26.18 axialRotation: 40.0423 zShift: 4.22599 energy: -55.0097
+MCAccept 158 xShift: 9.12711 crossingAngle: 26.18 axialRotation: 40.0423 zShift: 4.22599 energy: -54.8883
+MCAccept 159 xShift: 9.12711 crossingAngle: 26.18 axialRotation: 40.0423 zShift: 4.23485 energy: -54.8893
+MCAccept 160 xShift: 9.12711 crossingAngle: 25.8708 axialRotation: 40.0423 zShift: 4.23485 energy: -54.7325
+MCAccept 161 xShift: 9.12711 crossingAngle: 25.9006 axialRotation: 40.0423 zShift: 4.23485 energy: -54.7507
+MCAccept 162 xShift: 9.12711 crossingAngle: 25.9006 axialRotation: 40.0423 zShift: 4.26144 energy: -54.729
+MCAccept 163 xShift: 9.12711 crossingAngle: 25.3872 axialRotation: 40.0423 zShift: 4.26144 energy: -54.3125
+MCAccept 164 xShift: 9.12711 crossingAngle: 25.3872 axialRotation: 40.0423 zShift: 4.27823 energy: -54.279
+MCAccept 165 xShift: 9.12711 crossingAngle: 25.3872 axialRotation: 40.0423 zShift: 4.28634 energy: -54.2618
+MCReject   xShift: 9.15888 crossingAngle: 25.3872 axialRotation: 40.0423 zShift: 4.28634 energy: -53.6396
+MCReject   xShift: 9.12711 crossingAngle: 25.2476 axialRotation: 40.0423 zShift: 4.28634 energy: -53.7388
+MCReject   xShift: 9.12711 crossingAngle: 25.1025 axialRotation: 40.0423 zShift: 4.28634 energy: -53.2209
+MCAccept 166 xShift: 9.12711 crossingAngle: 25.2784 axialRotation: 40.0423 zShift: 4.28634 energy: -54.1518
+MCAccept 167 xShift: 9.12711 crossingAngle: 25.4045 axialRotation: 40.0423 zShift: 4.28634 energy: -54.2788
+MCAccept 168 xShift: 9.12711 crossingAngle: 25.4045 axialRotation: 40.0423 zShift: 4.28373 energy: -53.5141
+MCAccept 169 xShift: 9.12711 crossingAngle: 25.4045 axialRotation: 39.9486 zShift: 4.28373 energy: -54.1668
+MCAccept 170 xShift: 9.12711 crossingAngle: 25.4045 axialRotation: 39.9486 zShift: 4.33354 energy: -52.9553
+MCAccept 171 xShift: 9.12711 crossingAngle: 25.4045 axialRotation: 39.9486 zShift: 4.36821 energy: -53.9329
+MCAccept 172 xShift: 9.12711 crossingAngle: 25.5711 axialRotation: 39.9486 zShift: 4.36821 energy: -54.1161
+MCAccept 173 xShift: 9.18882 crossingAngle: 25.5711 axialRotation: 39.9486 zShift: 4.36821 energy: -52.8047
+MCAccept 174 xShift: 9.18882 crossingAngle: 25.7957 axialRotation: 39.9486 zShift: 4.36821 energy: -53.0489
+MCAccept 175 xShift: 9.20631 crossingAngle: 25.7957 axialRotation: 39.9486 zShift: 4.36821 energy: -52.6453
+MCAccept 176 xShift: 9.20631 crossingAngle: 25.7957 axialRotation: 39.9486 zShift: 4.26729 energy: -52.9306
+MCAccept 177 xShift: 9.20631 crossingAngle: 25.7957 axialRotation: 39.7827 zShift: 4.26729 energy: -52.685
+MCReject   xShift: 9.27996 crossingAngle: 25.7957 axialRotation: 39.7827 zShift: 4.26729 energy: -50.9824
+MCAccept 178 xShift: 9.20631 crossingAngle: 25.7957 axialRotation: 39.7948 zShift: 4.26729 energy: -52.7039
+MCAccept 179 xShift: 9.20631 crossingAngle: 25.5321 axialRotation: 39.7948 zShift: 4.26729 energy: -52.4222
+MCAccept 180 xShift: 9.20631 crossingAngle: 25.271 axialRotation: 39.7948 zShift: 4.26729 energy: -52.1214
+MCAccept 181 xShift: 9.20631 crossingAngle: 25.1913 axialRotation: 39.7948 zShift: 4.26729 energy: -51.7953
+MCAccept 182 xShift: 9.20631 crossingAngle: 25.1913 axialRotation: 39.7948 zShift: 4.25407 energy: -51.8226
+MCReject   xShift: 9.20631 crossingAngle: 25.1913 axialRotation: 39.7948 zShift: 4.27983 energy: -51.5339
+MCAccept 183 xShift: 9.20631 crossingAngle: 25.1913 axialRotation: 39.7948 zShift: 4.25828 energy: -52.054
+MCAccept 184 xShift: 9.20631 crossingAngle: 25.1913 axialRotation: 39.7983 zShift: 4.25828 energy: -51.8161
+MCAccept 185 xShift: 9.20631 crossingAngle: 25.1913 axialRotation: 39.7983 zShift: 4.28882 energy: -51.6634
+MCAccept 186 xShift: 9.20631 crossingAngle: 25.1913 axialRotation: 39.4619 zShift: 4.28882 energy: -51.4431
+MCAccept 187 xShift: 9.20631 crossingAngle: 25.1913 axialRotation: 39.5237 zShift: 4.28882 energy: -51.3213
+MCAccept 188 xShift: 9.20631 crossingAngle: 24.8982 axialRotation: 39.5237 zShift: 4.28882 energy: -50.9851
+MCAccept 189 xShift: 9.20631 crossingAngle: 25.2521 axialRotation: 39.5237 zShift: 4.28882 energy: -51.5863
+MCAccept 190 xShift: 9.20631 crossingAngle: 25.0104 axialRotation: 39.5237 zShift: 4.28882 energy: -51.4955
+MCAccept 191 xShift: 9.15073 crossingAngle: 25.0104 axialRotation: 39.5237 zShift: 4.28882 energy: -52.4146
+MCAccept 192 xShift: 9.15073 crossingAngle: 25.0104 axialRotation: 39.5237 zShift: 4.34887 energy: -52.5052
+MCReject   xShift: 9.22582 crossingAngle: 25.0104 axialRotation: 39.5237 zShift: 4.34887 energy: -50.5626
+MCAccept 193 xShift: 9.15073 crossingAngle: 25.0104 axialRotation: 39.5237 zShift: 4.32337 energy: -52.3532
+MCAccept 194 xShift: 9.15513 crossingAngle: 25.0104 axialRotation: 39.5237 zShift: 4.32337 energy: -52.271
+MCReject   xShift: 9.15513 crossingAngle: 25.0104 axialRotation: 39.5237 zShift: 4.35065 energy: -48.0582
+MCAccept 195 xShift: 9.15513 crossingAngle: 25.0104 axialRotation: 39.2117 zShift: 4.32337 energy: -52.0674
+MCAccept 196 xShift: 9.15513 crossingAngle: 25.0104 axialRotation: 39.2117 zShift: 4.23074 energy: -51.9086
+MCAccept 197 xShift: 9.15513 crossingAngle: 24.9166 axialRotation: 39.2117 zShift: 4.23074 energy: -52.1716
+MCAccept 198 xShift: 9.07682 crossingAngle: 24.9166 axialRotation: 39.2117 zShift: 4.23074 energy: -52.4745
+MCAccept 199 xShift: 9.07682 crossingAngle: 24.9166 axialRotation: 39.179 zShift: 4.23074 energy: -53.2748
+MCAccept 200 xShift: 9.07682 crossingAngle: 24.9166 axialRotation: 39.4794 zShift: 4.23074 energy: -53.361
+MCAccept 201 xShift: 9.07682 crossingAngle: 24.9166 axialRotation: 39.2448 zShift: 4.23074 energy: -53.3366
+MCAccept 202 xShift: 9.09517 crossingAngle: 24.9166 axialRotation: 39.2448 zShift: 4.23074 energy: -53.3117
+MCAccept 203 xShift: 9.09517 crossingAngle: 24.9166 axialRotation: 39.0832 zShift: 4.23074 energy: -53.1416
+MCReject   xShift: 9.09517 crossingAngle: 24.9166 axialRotation: 38.7235 zShift: 4.23074 energy: -52.6802
+MCReject   xShift: 9.09517 crossingAngle: 24.9166 axialRotation: 39.0067 zShift: 4.23074 energy: -52.6396
+MCAccept 204 xShift: 9.09517 crossingAngle: 24.9166 axialRotation: 39.0832 zShift: 4.22088 energy: -53.158
+MCAccept 205 xShift: 9.09517 crossingAngle: 24.9166 axialRotation: 39.0832 zShift: 4.30924 energy: -52.9771
+MCAccept 206 xShift: 9.09517 crossingAngle: 25.2439 axialRotation: 39.0832 zShift: 4.30924 energy: -51.8424
+MCAccept 207 xShift: 9.13517 crossingAngle: 25.2439 axialRotation: 39.0832 zShift: 4.30924 energy: -52.6262
+MCAccept 208 xShift: 9.13517 crossingAngle: 25.2439 axialRotation: 39.0832 zShift: 4.3152 energy: -52.4597
+MCAccept 209 xShift: 9.13517 crossingAngle: 25.2439 axialRotation: 39.0915 zShift: 4.3152 energy: -52.319
+MCReject   xShift: 9.15927 crossingAngle: 25.2439 axialRotation: 39.0915 zShift: 4.3152 energy: -51.98
+MCReject   xShift: 9.13517 crossingAngle: 25.2439 axialRotation: 38.7866 zShift: 4.3152 energy: -51.3037
+MCAccept 210 xShift: 9.13517 crossingAngle: 25.2439 axialRotation: 38.9658 zShift: 4.3152 energy: -52.3018
+MCReject   xShift: 9.13517 crossingAngle: 25.2439 axialRotation: 38.7535 zShift: 4.3152 energy: -51.857
+MCReject   xShift: 9.20982 crossingAngle: 25.2439 axialRotation: 38.9658 zShift: 4.3152 energy: -50.742
+MCAccept 211 xShift: 9.13517 crossingAngle: 25.2439 axialRotation: 39.1511 zShift: 4.3152 energy: -52.3831
+MCAccept 212 xShift: 9.13517 crossingAngle: 25.2439 axialRotation: 39.1511 zShift: 4.40644 energy: -52.4532
+MCAccept 213 xShift: 9.1249 crossingAngle: 25.2439 axialRotation: 39.1511 zShift: 4.40644 energy: -52.6614
+MCReject   xShift: 9.1249 crossingAngle: 25.2439 axialRotation: 38.789 zShift: 4.40644 energy: -49.7003
+MCAccept 214 xShift: 9.1642 crossingAngle: 25.2439 axialRotation: 39.1511 zShift: 4.40644 energy: -51.8311
+MCAccept 215 xShift: 9.1642 crossingAngle: 25.2439 axialRotation: 39.5893 zShift: 4.40644 energy: -52.4648
+MCAccept 216 xShift: 9.1642 crossingAngle: 25.2439 axialRotation: 39.5893 zShift: 4.37388 energy: -52.3452
+MCReject   xShift: 9.23994 crossingAngle: 25.2439 axialRotation: 39.5893 zShift: 4.37388 energy: -50.7084
+MCAccept 217 xShift: 9.1642 crossingAngle: 25.2439 axialRotation: 40.1776 zShift: 4.37388 energy: -53.0132
+MCAccept 218 xShift: 9.1642 crossingAngle: 25.3657 axialRotation: 40.1776 zShift: 4.37388 energy: -53.4685
+MCAccept 219 xShift: 9.1642 crossingAngle: 25.3657 axialRotation: 40.398 zShift: 4.37388 energy: -53.7679
+MCAccept 220 xShift: 9.1642 crossingAngle: 25.5684 axialRotation: 40.398 zShift: 4.37388 energy: -53.9535
+MCReject   xShift: 9.1642 crossingAngle: 25.5684 axialRotation: 40.1123 zShift: 4.37388 energy: -53.5867
+MCAccept 221 xShift: 9.14859 crossingAngle: 25.5684 axialRotation: 40.398 zShift: 4.37388 energy: -54.2548
+MCAccept 222 xShift: 9.14859 crossingAngle: 25.5684 axialRotation: 40.398 zShift: 4.27712 energy: -53.7161
+MCAccept 223 xShift: 9.14859 crossingAngle: 25.5684 axialRotation: 40.398 zShift: 4.35808 energy: -54.2796
+MCAccept 224 xShift: 9.14859 crossingAngle: 25.5684 axialRotation: 40.398 zShift: 4.37101 energy: -54.2595
+MCAccept 225 xShift: 9.14859 crossingAngle: 25.8002 axialRotation: 40.398 zShift: 4.37101 energy: -54.437
+MCReject   xShift: 9.22536 crossingAngle: 25.8002 axialRotation: 40.398 zShift: 4.37101 energy: -52.8556
+MCAccept 226 xShift: 9.14859 crossingAngle: 26.0396 axialRotation: 40.398 zShift: 4.37101 energy: -54.5841
+MCAccept 227 xShift: 9.18432 crossingAngle: 26.0396 axialRotation: 40.398 zShift: 4.37101 energy: -53.9069
+MCAccept 228 xShift: 9.18432 crossingAngle: 26.4267 axialRotation: 40.398 zShift: 4.37101 energy: -54.0876
+MCAccept 229 xShift: 9.18432 crossingAngle: 26.4267 axialRotation: 40.398 zShift: 4.38545 energy: -54.0845
+MCAccept 230 xShift: 9.18432 crossingAngle: 25.8934 axialRotation: 40.398 zShift: 4.38545 energy: -53.789
+MCReject   xShift: 9.18432 crossingAngle: 25.8934 axialRotation: 40.1901 zShift: 4.38545 energy: -53.5496
+MCAccept 231 xShift: 9.18432 crossingAngle: 25.866 axialRotation: 40.398 zShift: 4.38545 energy: -53.7686
+MCAccept 232 xShift: 9.17505 crossingAngle: 25.866 axialRotation: 40.398 zShift: 4.38545 energy: -53.9566
+MCAccept 233 xShift: 9.17505 crossingAngle: 25.866 axialRotation: 40.4049 zShift: 4.38545 energy: -53.9632
+MCAccept 234 xShift: 9.17505 crossingAngle: 25.6168 axialRotation: 40.4049 zShift: 4.38545 energy: -53.7636
+MCAccept 235 xShift: 9.17505 crossingAngle: 25.6168 axialRotation: 40.5419 zShift: 4.38545 energy: -53.9059
+MCReject   xShift: 9.17505 crossingAngle: 25.6168 axialRotation: 40.4286 zShift: 4.38545 energy: -53.7902
+MCAccept 236 xShift: 9.17505 crossingAngle: 25.6168 axialRotation: 40.7115 zShift: 4.38545 energy: -54.0403
+MCAccept 237 xShift: 9.17505 crossingAngle: 25.5019 axialRotation: 40.7115 zShift: 4.38545 energy: -53.9636
+MCAccept 238 xShift: 9.17505 crossingAngle: 25.5019 axialRotation: 40.7115 zShift: 4.35789 energy: -53.9848
+MCAccept 239 xShift: 9.17505 crossingAngle: 25.756 axialRotation: 40.7115 zShift: 4.35789 energy: -54.1259
+MCAccept 240 xShift: 9.17505 crossingAngle: 25.756 axialRotation: 40.7115 zShift: 4.33577 energy: -54.1224
+MCAccept 241 xShift: 9.17505 crossingAngle: 25.6575 axialRotation: 40.7115 zShift: 4.33577 energy: -54.079
+MCAccept 242 xShift: 9.17505 crossingAngle: 25.6575 axialRotation: 40.7115 zShift: 4.26405 energy: -54.0395
+MCAccept 243 xShift: 9.17505 crossingAngle: 25.6575 axialRotation: 40.7115 zShift: 4.29577 energy: -54.0661
+MCAccept 244 xShift: 9.14552 crossingAngle: 25.6575 axialRotation: 40.7115 zShift: 4.29577 energy: -54.5504
+MCAccept 245 xShift: 9.14552 crossingAngle: 25.6575 axialRotation: 40.7115 zShift: 4.29263 energy: -54.5469
+MCAccept 246 xShift: 9.14552 crossingAngle: 25.6575 axialRotation: 40.7115 zShift: 4.30952 energy: -54.5638
+MCAccept 247 xShift: 9.14552 crossingAngle: 25.6575 axialRotation: 40.7115 zShift: 4.32605 energy: -54.5763
+MCAccept 248 xShift: 9.14552 crossingAngle: 25.7482 axialRotation: 40.7115 zShift: 4.32605 energy: -54.6067
+MCAccept 249 xShift: 9.14552 crossingAngle: 25.7482 axialRotation: 40.2207 zShift: 4.32605 energy: -54.3586
+MCAccept 250 xShift: 9.14552 crossingAngle: 25.7482 axialRotation: 40.2207 zShift: 4.26785 energy: -54.4258
+MCAccept 251 xShift: 9.14552 crossingAngle: 25.7482 axialRotation: 40.2207 zShift: 4.28887 energy: -54.406
+MCAccept 252 xShift: 9.14552 crossingAngle: 26.099 axialRotation: 40.2207 zShift: 4.28887 energy: -54.6098
+MCAccept 253 xShift: 9.10804 crossingAngle: 26.099 axialRotation: 40.2207 zShift: 4.28887 energy: -55.2147
+MCAccept 254 xShift: 9.08561 crossingAngle: 26.099 axialRotation: 40.2207 zShift: 4.28887 energy: -55.5252
+MCReject   xShift: 9.08561 crossingAngle: 26.099 axialRotation: 40.7017 zShift: 4.28887 energy: -55.2333
+MCAccept 255 xShift: 9.08561 crossingAngle: 26.099 axialRotation: 40.2207 zShift: 4.27377 energy: -55.5131
+MCAccept 256 xShift: 9.08561 crossingAngle: 26.5842 axialRotation: 40.2207 zShift: 4.27377 energy: -55.4961
+MCAccept 257 xShift: 9.08561 crossingAngle: 26.5842 axialRotation: 40.3424 zShift: 4.27377 energy: -54.9322
+MCAccept 258 xShift: 9.08561 crossingAngle: 26.5842 axialRotation: 40.3424 zShift: 4.3676 energy: -55.6312
+MCReject   xShift: 9.08561 crossingAngle: 26.5842 axialRotation: 40.9781 zShift: 4.3676 energy: -54.3336
+MCAccept 259 xShift: 9.08561 crossingAngle: 26.5842 axialRotation: 40.7424 zShift: 4.3676 energy: -55.1901
+MCReject   xShift: 9.08561 crossingAngle: 26.5842 axialRotation: 40.7424 zShift: 4.33652 energy: -54.652
+MCAccept 260 xShift: 9.08561 crossingAngle: 26.7039 axialRotation: 40.7424 zShift: 4.3676 energy: -54.7026
+MCAccept 261 xShift: 9.08561 crossingAngle: 26.7039 axialRotation: 40.7424 zShift: 4.37485 energy: -55.1053
+MCAccept 262 xShift: 9.08561 crossingAngle: 26.3573 axialRotation: 40.7424 zShift: 4.37485 energy: -55.3882
+MCAccept 263 xShift: 9.08561 crossingAngle: 26.3573 axialRotation: 40.6459 zShift: 4.37485 energy: -55.4932
+MCReject   xShift: 9.08561 crossingAngle: 26.3573 axialRotation: 41.3429 zShift: 4.37485 energy: -53.9081
+MCAccept 264 xShift: 9.08561 crossingAngle: 26.0878 axialRotation: 40.6459 zShift: 4.37485 energy: -55.5398
+MCAccept 265 xShift: 9.08561 crossingAngle: 26.0878 axialRotation: 40.897 zShift: 4.37485 energy: -55.3252
+MCAccept 266 xShift: 9.08561 crossingAngle: 26.0878 axialRotation: 40.9898 zShift: 4.37485 energy: -55.1945
+MCReject   xShift: 9.12854 crossingAngle: 26.0878 axialRotation: 40.9898 zShift: 4.37485 energy: -54.7903
+MCAccept 267 xShift: 9.08561 crossingAngle: 26.0878 axialRotation: 40.742 zShift: 4.37485 energy: -55.4801
+MCReject   xShift: 9.11237 crossingAngle: 26.0878 axialRotation: 40.742 zShift: 4.37485 energy: -55.1799
+MCAccept 268 xShift: 9.08561 crossingAngle: 26.0878 axialRotation: 40.742 zShift: 4.41297 energy: -55.5654
+MCAccept 269 xShift: 9.11307 crossingAngle: 26.0878 axialRotation: 40.742 zShift: 4.41297 energy: -55.2354
+MCAccept 270 xShift: 9.1176 crossingAngle: 26.0878 axialRotation: 40.742 zShift: 4.41297 energy: -55.1747
+MCAccept 271 xShift: 9.1176 crossingAngle: 26.0878 axialRotation: 40.742 zShift: 4.4471 energy: -55.2087
+MCAccept 272 xShift: 9.1176 crossingAngle: 26.0878 axialRotation: 40.742 zShift: 4.46092 energy: -55.2173
+MCAccept 273 xShift: 9.12459 crossingAngle: 26.0878 axialRotation: 40.742 zShift: 4.46092 energy: -55.1145
+MCAccept 274 xShift: 9.12459 crossingAngle: 26.0878 axialRotation: 40.742 zShift: 4.47624 energy: -55.1188
+MCAccept 275 xShift: 9.12459 crossingAngle: 26.3127 axialRotation: 40.742 zShift: 4.47624 energy: -55.1685
+MCAccept 276 xShift: 9.12459 crossingAngle: 26.4732 axialRotation: 40.742 zShift: 4.47624 energy: -54.6524
+MCAccept 277 xShift: 9.14459 crossingAngle: 26.4732 axialRotation: 40.742 zShift: 4.47624 energy: -54.8792
+MCAccept 278 xShift: 9.09915 crossingAngle: 26.4732 axialRotation: 40.742 zShift: 4.47624 energy: -55.4969
+MCAccept 279 xShift: 9.09915 crossingAngle: 26.4732 axialRotation: 40.7031 zShift: 4.47624 energy: -55.5153
+MCAccept 280 xShift: 9.09915 crossingAngle: 26.4732 axialRotation: 40.7031 zShift: 4.46434 energy: -55.4943
+MCAccept 281 xShift: 9.09915 crossingAngle: 26.4732 axialRotation: 40.3455 zShift: 4.46434 energy: -55.5072
+MCAccept 282 xShift: 9.09915 crossingAngle: 26.9061 axialRotation: 40.3455 zShift: 4.46434 energy: -55.5585
+MCAccept 283 xShift: 9.09915 crossingAngle: 27.1894 axialRotation: 40.3455 zShift: 4.46434 energy: -55.471
+MCAccept 284 xShift: 9.09915 crossingAngle: 27.1894 axialRotation: 40.3597 zShift: 4.46434 energy: -55.4606
+MCAccept 285 xShift: 9.09915 crossingAngle: 27.1894 axialRotation: 40.4677 zShift: 4.46434 energy: -55.3594
+MCReject   xShift: 9.09915 crossingAngle: 27.1894 axialRotation: 40.4677 zShift: 4.36538 energy: -54.9519
+MCAccept 286 xShift: 9.09915 crossingAngle: 27.1894 axialRotation: 40.4677 zShift: 4.46543 energy: -55.3629
+MCAccept 287 xShift: 9.09915 crossingAngle: 27.1894 axialRotation: 40.4799 zShift: 4.46543 energy: -55.349
+MCAccept 288 xShift: 9.09915 crossingAngle: 27.1894 axialRotation: 40.4799 zShift: 4.50622 energy: -55.4669
+MCAccept 289 xShift: 9.09915 crossingAngle: 27.1894 axialRotation: 40.5096 zShift: 4.50622 energy: -55.4414
+MCAccept 290 xShift: 9.07718 crossingAngle: 27.1894 axialRotation: 40.5096 zShift: 4.50622 energy: -55.6591
+MCAccept 291 xShift: 9.07718 crossingAngle: 27.2857 axialRotation: 40.5096 zShift: 4.50622 energy: -55.576
+MCAccept 292 xShift: 9.07718 crossingAngle: 26.894 axialRotation: 40.5096 zShift: 4.50622 energy: -55.819
+MCAccept 293 xShift: 9.0449 crossingAngle: 26.894 axialRotation: 40.5096 zShift: 4.50622 energy: -56.1061
+MCAccept 294 xShift: 9.0449 crossingAngle: 27.0728 axialRotation: 40.5096 zShift: 4.50622 energy: -55.9927
+MCAccept 295 xShift: 9.0449 crossingAngle: 26.9905 axialRotation: 40.5096 zShift: 4.50622 energy: -56.0514
+MCAccept 296 xShift: 9.0449 crossingAngle: 26.9905 axialRotation: 40.5193 zShift: 4.50622 energy: -56.0407
+MCAccept 297 xShift: 9.0449 crossingAngle: 26.9905 axialRotation: 40.5193 zShift: 4.55203 energy: -56.1601
+MCAccept 298 xShift: 9.0449 crossingAngle: 26.549 axialRotation: 40.5193 zShift: 4.55203 energy: -56.2275
+MCAccept 299 xShift: 9.0449 crossingAngle: 26.549 axialRotation: 40.5193 zShift: 4.62137 energy: -56.2192
+MCAccept 300 xShift: 9.01247 crossingAngle: 26.549 axialRotation: 40.5193 zShift: 4.62137 energy: -56.5188
+MCAccept 301 xShift: 9.01247 crossingAngle: 26.549 axialRotation: 40.2188 zShift: 4.62137 energy: -56.4579
+MCAccept 302 xShift: 9.02167 crossingAngle: 26.549 axialRotation: 40.2188 zShift: 4.62137 energy: -56.3616
+MCAccept 303 xShift: 9.02167 crossingAngle: 26.1156 axialRotation: 40.2188 zShift: 4.62137 energy: -56.0549
+MCAccept 304 xShift: 9.02167 crossingAngle: 25.9096 axialRotation: 40.2188 zShift: 4.62137 energy: -55.8698
+MCAccept 305 xShift: 9.02167 crossingAngle: 26.3035 axialRotation: 40.2188 zShift: 4.62137 energy: -56.2028
+MCAccept 306 xShift: 9.02167 crossingAngle: 26.3035 axialRotation: 40.9691 zShift: 4.62137 energy: -56.3399
+MCAccept 307 xShift: 9.02167 crossingAngle: 26.3035 axialRotation: 40.9691 zShift: 4.64658 energy: -56.381
+MCAccept 308 xShift: 9.02167 crossingAngle: 26.3035 axialRotation: 41.3121 zShift: 4.64658 energy: -56.0487
+MCAccept 309 xShift: 9.03628 crossingAngle: 26.3035 axialRotation: 41.3121 zShift: 4.64658 energy: -56.0051
+MCAccept 310 xShift: 9.03628 crossingAngle: 26.3035 axialRotation: 41.2104 zShift: 4.64658 energy: -56.1256
+MCAccept 311 xShift: 9.03628 crossingAngle: 26.3035 axialRotation: 41.0265 zShift: 4.64658 energy: -56.2605
+MCAccept 312 xShift: 9.03893 crossingAngle: 26.3035 axialRotation: 41.0265 zShift: 4.64658 energy: -56.2416
+MCReject   xShift: 9.06821 crossingAngle: 26.3035 axialRotation: 41.0265 zShift: 4.64658 energy: -55.9828
+MCAccept 313 xShift: 9.03893 crossingAngle: 26.534 axialRotation: 41.0265 zShift: 4.64658 energy: -56.1981
+MCAccept 314 xShift: 9.03893 crossingAngle: 26.534 axialRotation: 41.0265 zShift: 4.65959 energy: -56.2268
+MCAccept 315 xShift: 9.05439 crossingAngle: 26.534 axialRotation: 41.0265 zShift: 4.65959 energy: -56.113
+MCAccept 316 xShift: 9.05439 crossingAngle: 26.534 axialRotation: 41.0265 zShift: 4.68054 energy: -56.1451
+MCReject   xShift: 9.07921 crossingAngle: 26.534 axialRotation: 41.0265 zShift: 4.68054 energy: -55.8999
+MCReject   xShift: 9.06166 crossingAngle: 26.534 axialRotation: 41.0265 zShift: 4.68054 energy: -56.0796
+MCAccept 317 xShift: 9.00851 crossingAngle: 26.534 axialRotation: 41.0265 zShift: 4.68054 energy: -56.4246
+MCAccept 318 xShift: 9.00851 crossingAngle: 26.534 axialRotation: 41.0265 zShift: 4.65859 energy: -56.3674
+MCAccept 319 xShift: 9.00851 crossingAngle: 26.534 axialRotation: 40.7768 zShift: 4.65859 energy: -56.5365
+MCAccept 320 xShift: 8.9744 crossingAngle: 26.534 axialRotation: 40.7768 zShift: 4.65859 energy: -56.6503
+MCAccept 321 xShift: 8.9744 crossingAngle: 26.534 axialRotation: 40.7768 zShift: 4.70476 energy: -56.7091
+MCAccept 322 xShift: 8.91441 crossingAngle: 26.534 axialRotation: 40.7768 zShift: 4.70476 energy: -56.9614
+MCReject   xShift: 8.85674 crossingAngle: 26.534 axialRotation: 40.7768 zShift: 4.70476 energy: -56.777
+MCReject   xShift: 8.91441 crossingAngle: 26.534 axialRotation: 40.9158 zShift: 4.70476 energy: -56.4937
+MCAccept 323 xShift: 8.91441 crossingAngle: 26.4898 axialRotation: 40.7768 zShift: 4.70476 energy: -56.9549
+MCAccept 324 xShift: 8.91255 crossingAngle: 26.4898 axialRotation: 40.7768 zShift: 4.70476 energy: -56.974
+MCAccept 325 xShift: 8.91255 crossingAngle: 26.8144 axialRotation: 40.7768 zShift: 4.70476 energy: -56.9228
+MCAccept 326 xShift: 8.91255 crossingAngle: 26.8144 axialRotation: 40.7768 zShift: 4.69949 energy: -56.8898
+MCAccept 327 xShift: 8.96012 crossingAngle: 26.8144 axialRotation: 40.7768 zShift: 4.69949 energy: -56.6357
+MCReject   xShift: 8.96012 crossingAngle: 27.2265 axialRotation: 40.7768 zShift: 4.69949 energy: -56.2793
+MCAccept 328 xShift: 8.95494 crossingAngle: 26.8144 axialRotation: 40.7768 zShift: 4.69949 energy: -56.6258
+MCAccept 329 xShift: 8.95494 crossingAngle: 26.8144 axialRotation: 40.8067 zShift: 4.69949 energy: -56.5922
+MCAccept 330 xShift: 8.92807 crossingAngle: 26.8144 axialRotation: 40.8067 zShift: 4.69949 energy: -56.6003
+MCAccept 331 xShift: 8.92807 crossingAngle: 26.8144 axialRotation: 40.8067 zShift: 4.68448 energy: -56.4048
+MCAccept 332 xShift: 8.94071 crossingAngle: 26.8144 axialRotation: 40.8067 zShift: 4.68448 energy: -56.4871
+MCAccept 333 xShift: 8.9248 crossingAngle: 26.8144 axialRotation: 40.8067 zShift: 4.68448 energy: -56.5809
+MCAccept 334 xShift: 8.9248 crossingAngle: 26.8144 axialRotation: 40.8067 zShift: 4.72301 energy: -56.8456
+MCAccept 335 xShift: 8.9248 crossingAngle: 26.8144 axialRotation: 40.8067 zShift: 4.64971 energy: -56.2227
+MCAccept 336 xShift: 8.9248 crossingAngle: 26.6121 axialRotation: 40.8067 zShift: 4.64971 energy: -56.3988
+MCAccept 337 xShift: 8.9248 crossingAngle: 26.6121 axialRotation: 40.8067 zShift: 4.69079 energy: -56.5375
+MCAccept 338 xShift: 8.99547 crossingAngle: 26.6121 axialRotation: 40.8067 zShift: 4.69079 energy: -56.615
+MCReject   xShift: 9.07497 crossingAngle: 26.6121 axialRotation: 40.8067 zShift: 4.69079 energy: -55.9477
+MCAccept 339 xShift: 9.0039 crossingAngle: 26.6121 axialRotation: 40.8067 zShift: 4.69079 energy: -56.5776
+MCAccept 340 xShift: 9.0039 crossingAngle: 26.3799 axialRotation: 40.8067 zShift: 4.69079 energy: -56.5636
+MCReject   xShift: 9.09756 crossingAngle: 26.3799 axialRotation: 40.8067 zShift: 4.69079 energy: -55.5553
+MCAccept 341 xShift: 9.0039 crossingAngle: 26.4784 axialRotation: 40.8067 zShift: 4.69079 energy: -56.577
+MCAccept 342 xShift: 8.98831 crossingAngle: 26.4784 axialRotation: 40.8067 zShift: 4.69079 energy: -56.6485
+MCAccept 343 xShift: 8.98831 crossingAngle: 26.5731 axialRotation: 40.8067 zShift: 4.69079 energy: -56.6446
+MCAccept 344 xShift: 8.98831 crossingAngle: 26.5731 axialRotation: 40.8067 zShift: 4.72409 energy: -56.6745
+MCAccept 345 xShift: 8.98831 crossingAngle: 26.5731 axialRotation: 40.8067 zShift: 4.75459 energy: -56.7125
+MCAccept 346 xShift: 8.98831 crossingAngle: 26.6216 axialRotation: 40.8067 zShift: 4.75459 energy: -56.7167
+MCAccept 347 xShift: 8.98831 crossingAngle: 26.6216 axialRotation: 40.8898 zShift: 4.75459 energy: -56.6759
+MCAccept 348 xShift: 8.98831 crossingAngle: 26.485 axialRotation: 40.8898 zShift: 4.75459 energy: -56.6733
+MCAccept 349 xShift: 8.98831 crossingAngle: 26.5247 axialRotation: 40.8898 zShift: 4.75459 energy: -56.6763
+MCReject   xShift: 9.02179 crossingAngle: 26.5247 axialRotation: 40.8898 zShift: 4.75459 energy: -56.4719
+MCAccept 350 xShift: 8.98831 crossingAngle: 26.8361 axialRotation: 40.8898 zShift: 4.75459 energy: -56.6321
+MCAccept 351 xShift: 8.98831 crossingAngle: 26.8361 axialRotation: 40.8898 zShift: 4.70762 energy: -56.5318
+MCAccept 352 xShift: 8.98831 crossingAngle: 26.8361 axialRotation: 40.8898 zShift: 4.72812 energy: -56.5795
+MCAccept 353 xShift: 8.99038 crossingAngle: 26.8361 axialRotation: 40.8898 zShift: 4.72812 energy: -56.5755
+MCReject   xShift: 8.99038 crossingAngle: 26.9233 axialRotation: 40.8898 zShift: 4.72812 energy: -56.5303
+MCAccept 354 xShift: 8.99038 crossingAngle: 26.8361 axialRotation: 40.8898 zShift: 4.74776 energy: -56.6118
+MCAccept 355 xShift: 8.99038 crossingAngle: 26.8361 axialRotation: 40.9621 zShift: 4.74776 energy: -56.5544
+MCAccept 356 xShift: 8.99038 crossingAngle: 26.8731 axialRotation: 40.9621 zShift: 4.74776 energy: -56.5348
+MCAccept 357 xShift: 8.99038 crossingAngle: 26.5047 axialRotation: 40.9621 zShift: 4.74776 energy: -56.6409
+MCReject   xShift: 8.99038 crossingAngle: 26.5047 axialRotation: 41.3115 zShift: 4.74776 energy: -56.3351
+MCAccept 358 xShift: 8.99038 crossingAngle: 26.5047 axialRotation: 40.5423 zShift: 4.74776 energy: -56.6664
+MCAccept 359 xShift: 8.99038 crossingAngle: 26.269 axialRotation: 40.5423 zShift: 4.74776 energy: -56.5312
+MCAccept 360 xShift: 8.99038 crossingAngle: 26.4102 axialRotation: 40.5423 zShift: 4.74776 energy: -56.6174
+MCAccept 361 xShift: 8.99038 crossingAngle: 26.3514 axialRotation: 40.5423 zShift: 4.74776 energy: -56.5833
+MCAccept 362 xShift: 8.99038 crossingAngle: 26.3514 axialRotation: 40.7514 zShift: 4.74776 energy: -56.6466
+MCAccept 363 xShift: 8.99038 crossingAngle: 26.2855 axialRotation: 40.7514 zShift: 4.74776 energy: -56.6187
+MCAccept 364 xShift: 8.99038 crossingAngle: 26.2855 axialRotation: 40.7411 zShift: 4.74776 energy: -56.6171
+MCAccept 365 xShift: 8.99038 crossingAngle: 26.5984 axialRotation: 40.7411 zShift: 4.74776 energy: -56.7165
+MCAccept 366 xShift: 8.99038 crossingAngle: 26.6679 axialRotation: 40.7411 zShift: 4.74776 energy: -56.725
+MCAccept 367 xShift: 8.99038 crossingAngle: 26.6679 axialRotation: 40.7411 zShift: 4.784 energy: -56.7473
+MCAccept 368 xShift: 8.99038 crossingAngle: 26.9307 axialRotation: 40.7411 zShift: 4.784 energy: -56.7602
+MCAccept 369 xShift: 8.97213 crossingAngle: 26.9307 axialRotation: 40.7411 zShift: 4.784 energy: -56.8227
+MCAccept 370 xShift: 8.97213 crossingAngle: 27.0211 axialRotation: 40.7411 zShift: 4.784 energy: -56.7991
+MCAccept 371 xShift: 8.99803 crossingAngle: 27.0211 axialRotation: 40.7411 zShift: 4.784 energy: -56.7096
+MCAccept 372 xShift: 8.99803 crossingAngle: 27.0211 axialRotation: 40.7167 zShift: 4.784 energy: -56.7209
+MCAccept 373 xShift: 9.00187 crossingAngle: 27.0211 axialRotation: 40.7167 zShift: 4.784 energy: -56.6995
+MCAccept 374 xShift: 9.00187 crossingAngle: 26.9256 axialRotation: 40.7167 zShift: 4.784 energy: -56.7064
+MCAccept 375 xShift: 9.00187 crossingAngle: 26.9256 axialRotation: 40.7167 zShift: 4.82006 energy: -56.7217
+MCAccept 376 xShift: 8.9799 crossingAngle: 26.9256 axialRotation: 40.7167 zShift: 4.82006 energy: -56.8444
+MCAccept 377 xShift: 8.9799 crossingAngle: 26.8396 axialRotation: 40.7167 zShift: 4.82006 energy: -56.8392
+MCAccept 378 xShift: 8.99371 crossingAngle: 26.8396 axialRotation: 40.7167 zShift: 4.82006 energy: -56.7639
+MCAccept 379 xShift: 8.99371 crossingAngle: 26.8396 axialRotation: 40.7167 zShift: 4.79433 energy: -56.7586
+MCReject   xShift: 8.99371 crossingAngle: 26.747 axialRotation: 40.7167 zShift: 4.79433 energy: -56.7458
+MCAccept 380 xShift: 8.98378 crossingAngle: 26.8396 axialRotation: 40.7167 zShift: 4.79433 energy: -56.8104
+MCAccept 381 xShift: 9.0344 crossingAngle: 26.8396 axialRotation: 40.7167 zShift: 4.79433 energy: -56.4281
+MCReject   xShift: 9.07958 crossingAngle: 26.8396 axialRotation: 40.7167 zShift: 4.79433 energy: -55.8685
+MCAccept 382 xShift: 8.99763 crossingAngle: 26.8396 axialRotation: 40.7167 zShift: 4.79433 energy: -56.7348
+MCReject   xShift: 8.99763 crossingAngle: 26.8396 axialRotation: 40.9175 zShift: 4.79433 energy: -56.6615
+MCAccept 383 xShift: 8.99763 crossingAngle: 26.8396 axialRotation: 40.7167 zShift: 4.83529 energy: -56.7352
+MCAccept 384 xShift: 8.99763 crossingAngle: 26.8396 axialRotation: 40.7167 zShift: 4.8384 energy: -56.7341
+MCAccept 385 xShift: 9.01028 crossingAngle: 26.8396 axialRotation: 40.7167 zShift: 4.8384 energy: -56.636
+MCAccept 386 xShift: 9.01028 crossingAngle: 26.8396 axialRotation: 41.0736 zShift: 4.8384 energy: -56.576
+MCAccept 387 xShift: 9.00689 crossingAngle: 26.8396 axialRotation: 41.0736 zShift: 4.8384 energy: -56.5934
+MCAccept 388 xShift: 8.98577 crossingAngle: 26.8396 axialRotation: 41.0736 zShift: 4.8384 energy: -56.6695
+MCReject   xShift: 8.98577 crossingAngle: 26.8396 axialRotation: 41.2687 zShift: 4.8384 energy: -56.4595
+MCAccept 389 xShift: 8.98577 crossingAngle: 26.8396 axialRotation: 41.2229 zShift: 4.8384 energy: -56.5136
+MCAccept 390 xShift: 8.98577 crossingAngle: 26.8396 axialRotation: 41.018 zShift: 4.8384 energy: -56.7156
+MCAccept 391 xShift: 8.95416 crossingAngle: 26.8396 axialRotation: 41.018 zShift: 4.8384 energy: -56.7357
+MCAccept 392 xShift: 8.89658 crossingAngle: 26.8396 axialRotation: 41.018 zShift: 4.8384 energy: -57.0343
+MCAccept 393 xShift: 8.89658 crossingAngle: 26.8396 axialRotation: 40.8561 zShift: 4.8384 energy: -57.3999
+MCReject   xShift: 8.89658 crossingAngle: 26.8396 axialRotation: 40.8561 zShift: 4.80373 energy: -57.2531
+MCReject   xShift: 8.8538 crossingAngle: 26.8396 axialRotation: 40.8561 zShift: 4.8384 energy: -57.1035
+MCReject   xShift: 8.89658 crossingAngle: 27.0552 axialRotation: 40.8561 zShift: 4.8384 energy: -57.3067
+MCReject   xShift: 8.80801 crossingAngle: 26.8396 axialRotation: 40.8561 zShift: 4.8384 energy: -56.3191
+MCReject   xShift: 8.89658 crossingAngle: 26.8396 axialRotation: 41.208 zShift: 4.8384 energy: -56.4428
+MCReject   xShift: 8.89658 crossingAngle: 26.8396 axialRotation: 41.0437 zShift: 4.8384 energy: -56.9652
+MCReject   xShift: 8.89658 crossingAngle: 26.8396 axialRotation: 41.1616 zShift: 4.8384 energy: -56.6057
+MCAccept 394 xShift: 8.91424 crossingAngle: 26.8396 axialRotation: 40.8561 zShift: 4.8384 energy: -57.3678
+MCAccept 395 xShift: 8.91424 crossingAngle: 26.8396 axialRotation: 40.8561 zShift: 4.85838 energy: -57.4344
+MCAccept 396 xShift: 8.91424 crossingAngle: 26.8396 axialRotation: 40.8561 zShift: 4.86136 energy: -57.4435
+MCReject   xShift: 8.97572 crossingAngle: 26.8396 axialRotation: 40.8561 zShift: 4.86136 energy: -56.852
+MCAccept 397 xShift: 8.91424 crossingAngle: 26.7108 axialRotation: 40.8561 zShift: 4.86136 energy: -57.432
+MCAccept 398 xShift: 8.91424 crossingAngle: 26.7108 axialRotation: 40.8561 zShift: 4.85126 energy: -57.4045
+MCReject   xShift: 8.91424 crossingAngle: 26.7108 axialRotation: 40.8626 zShift: 4.85126 energy: -57.3943
+MCAccept 399 xShift: 8.91424 crossingAngle: 26.7108 axialRotation: 40.6355 zShift: 4.85126 energy: -57.6569
+MCReject   xShift: 8.91424 crossingAngle: 26.7108 axialRotation: 40.6355 zShift: 4.82489 energy: -57.6251
+MCAccept 400 xShift: 8.91424 crossingAngle: 26.7108 axialRotation: 40.6355 zShift: 4.88104 energy: -57.6759
+MCAccept 401 xShift: 8.91424 crossingAngle: 26.7108 axialRotation: 40.6215 zShift: 4.88104 energy: -57.6828
+MCAccept 402 xShift: 8.91424 crossingAngle: 26.7108 axialRotation: 40.6215 zShift: 4.8751 energy: -57.6811
+MCAccept 403 xShift: 8.91248 crossingAngle: 26.7108 axialRotation: 40.6215 zShift: 4.8751 energy: -57.6917
+MCAccept 404 xShift: 8.91248 crossingAngle: 26.834 axialRotation: 40.6215 zShift: 4.8751 energy: -57.7413
+MCReject   xShift: 8.91248 crossingAngle: 26.834 axialRotation: 40.7619 zShift: 4.8751 energy: -57.6157
+MCAccept 405 xShift: 8.88084 crossingAngle: 26.834 axialRotation: 40.6215 zShift: 4.8751 energy: -57.7806
+MCAccept 406 xShift: 8.90144 crossingAngle: 26.834 axialRotation: 40.6215 zShift: 4.8751 energy: -57.7821
+MCAccept 407 xShift: 8.90144 crossingAngle: 26.8192 axialRotation: 40.6215 zShift: 4.8751 energy: -57.778
+MCReject   xShift: 8.91583 crossingAngle: 26.8192 axialRotation: 40.6215 zShift: 4.8751 energy: -57.7175
+MCAccept 408 xShift: 8.90144 crossingAngle: 26.8192 axialRotation: 40.6215 zShift: 4.84583 energy: -57.746
+MCAccept 409 xShift: 8.90144 crossingAngle: 26.8192 axialRotation: 40.6215 zShift: 4.88645 energy: -57.7856
+MCAccept 410 xShift: 8.90144 crossingAngle: 26.8192 axialRotation: 40.6215 zShift: 4.9102 energy: -57.7929
+MCAccept 411 xShift: 8.90901 crossingAngle: 26.8192 axialRotation: 40.6215 zShift: 4.9102 energy: -57.7641
+MCAccept 412 xShift: 8.90901 crossingAngle: 26.7862 axialRotation: 40.6215 zShift: 4.9102 energy: -57.7496
+MCAccept 413 xShift: 8.90901 crossingAngle: 26.7862 axialRotation: 40.6215 zShift: 4.87744 energy: -57.7424
+MCAccept 414 xShift: 8.90901 crossingAngle: 26.8217 axialRotation: 40.6215 zShift: 4.87744 energy: -57.755
+MCReject   xShift: 8.97384 crossingAngle: 26.8217 axialRotation: 40.6215 zShift: 4.87744 energy: -56.8139
+MCAccept 415 xShift: 8.90901 crossingAngle: 26.8217 axialRotation: 40.6215 zShift: 4.9199 energy: -57.764
+MCAccept 416 xShift: 8.8791 crossingAngle: 26.8217 axialRotation: 40.6215 zShift: 4.9199 energy: -57.8542
+MCAccept 417 xShift: 8.8791 crossingAngle: 26.6751 axialRotation: 40.6215 zShift: 4.9199 energy: -57.8184
+MCAccept 418 xShift: 8.8791 crossingAngle: 26.6751 axialRotation: 40.4173 zShift: 4.9199 energy: -57.8843
+MCReject   xShift: 8.83671 crossingAngle: 26.6751 axialRotation: 40.4173 zShift: 4.9199 energy: -57.8396
+MCReject   xShift: 8.8791 crossingAngle: 26.6751 axialRotation: 40.5928 zShift: 4.9199 energy: -57.8347
+MCAccept 419 xShift: 8.8791 crossingAngle: 26.6751 axialRotation: 40.3669 zShift: 4.9199 energy: -57.8833
+MCAccept 420 xShift: 8.8791 crossingAngle: 26.6751 axialRotation: 40.3832 zShift: 4.9199 energy: -57.8843
+MCReject   xShift: 8.8791 crossingAngle: 26.6751 axialRotation: 40.2551 zShift: 4.9199 energy: -57.8578
+MCAccept 421 xShift: 8.86912 crossingAngle: 26.6751 axialRotation: 40.3832 zShift: 4.9199 energy: -57.9093
+MCAccept 422 xShift: 8.86912 crossingAngle: 26.6751 axialRotation: 40.2329 zShift: 4.9199 energy: -57.8845
+MCReject   xShift: 8.90298 crossingAngle: 26.6751 axialRotation: 40.2329 zShift: 4.9199 energy: -57.6909
+MCReject   xShift: 8.86912 crossingAngle: 26.6256 axialRotation: 40.2329 zShift: 4.9199 energy: -57.8539
+MCAccept 423 xShift: 8.86912 crossingAngle: 26.6751 axialRotation: 40.4374 zShift: 4.9199 energy: -57.9036
+MCReject   xShift: 8.90055 crossingAngle: 26.6751 axialRotation: 40.4374 zShift: 4.9199 energy: -57.7718
+MCAccept 424 xShift: 8.86912 crossingAngle: 26.6751 axialRotation: 40.4491 zShift: 4.9199 energy: -57.9014
+MCReject   xShift: 8.86912 crossingAngle: 26.6751 axialRotation: 40.7398 zShift: 4.9199 energy: -57.7217
+MCReject   xShift: 8.84263 crossingAngle: 26.6751 axialRotation: 40.4491 zShift: 4.9199 energy: -57.8555
+MCAccept 425 xShift: 8.86912 crossingAngle: 26.7681 axialRotation: 40.4491 zShift: 4.9199 energy: -57.938
+MCAccept 426 xShift: 8.86912 crossingAngle: 26.7737 axialRotation: 40.4491 zShift: 4.9199 energy: -57.9399
+MCAccept 427 xShift: 8.86912 crossingAngle: 26.7737 axialRotation: 40.4491 zShift: 4.94317 energy: -57.9369
+MCAccept 428 xShift: 8.86912 crossingAngle: 26.7864 axialRotation: 40.4491 zShift: 4.94317 energy: -57.9418
+MCReject   xShift: 8.86912 crossingAngle: 26.7864 axialRotation: 40.7806 zShift: 4.94317 energy: -57.7338
+MCAccept 429 xShift: 8.86912 crossingAngle: 26.7864 axialRotation: 40.4844 zShift: 4.94317 energy: -57.935
+MCReject   xShift: 8.90853 crossingAngle: 26.7864 axialRotation: 40.4844 zShift: 4.94317 energy: -57.7556
+MCReject   xShift: 8.88685 crossingAngle: 26.7864 axialRotation: 40.4844 zShift: 4.94317 energy: -57.892
+MCAccept 430 xShift: 8.86912 crossingAngle: 26.7864 axialRotation: 40.4838 zShift: 4.94317 energy: -57.9352
+MCAccept 431 xShift: 8.86912 crossingAngle: 26.8875 axialRotation: 40.4838 zShift: 4.94317 energy: -57.9652
+MCAccept 432 xShift: 8.86912 crossingAngle: 27.1007 axialRotation: 40.4838 zShift: 4.94317 energy: -57.9924
+MCReject   xShift: 8.86912 crossingAngle: 27.1007 axialRotation: 40.5146 zShift: 4.94317 energy: -57.973
+MCReject   xShift: 8.86912 crossingAngle: 27.1007 axialRotation: 40.75 zShift: 4.94317 energy: -57.7192
+MCAccept 433 xShift: 8.86912 crossingAngle: 27.1007 axialRotation: 40.3411 zShift: 4.94317 energy: -58.0424
+MCReject   xShift: 8.86912 crossingAngle: 27.1007 axialRotation: 40.4266 zShift: 4.94317 energy: -58.0202
+MCAccept 434 xShift: 8.86734 crossingAngle: 27.1007 axialRotation: 40.3411 zShift: 4.94317 energy: -58.0427
+MCAccept 435 xShift: 8.86734 crossingAngle: 27.1007 axialRotation: 40.431 zShift: 4.94317 energy: -58.0172
+MCReject   xShift: 8.87875 crossingAngle: 27.1007 axialRotation: 40.431 zShift: 4.94317 energy: -58.0135
+MCAccept 436 xShift: 8.86734 crossingAngle: 27.1007 axialRotation: 40.431 zShift: 4.92668 energy: -58.0098
+MCReject   xShift: 8.86734 crossingAngle: 27.1007 axialRotation: 40.481 zShift: 4.92668 energy: -57.9778
+MCAccept 437 xShift: 8.86734 crossingAngle: 27.1007 axialRotation: 40.2481 zShift: 4.92668 energy: -58.0592
+MCAccept 438 xShift: 8.86734 crossingAngle: 27.229 axialRotation: 40.2481 zShift: 4.92668 energy: -58.0777
+MCAccept 439 xShift: 8.86734 crossingAngle: 27.2645 axialRotation: 40.2481 zShift: 4.92668 energy: -58.0796
+MCAccept 440 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.92668 energy: -58.0745
+MCAccept 441 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.91748 energy: -58.075
+MCAccept 442 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.94555 energy: -58.0673
+MCReject   xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.3359 zShift: 4.94555 energy: -58.0419
+MCReject   xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.97864 energy: -58.0342
+MCAccept 443 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.94057 energy: -58.07
+MCAccept 444 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.89968 energy: -58.0701
+MCReject   xShift: 8.86024 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.89968 energy: -58.0532
+MCAccept 445 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.90158 energy: -58.071
+MCReject   xShift: 8.86734 crossingAngle: 27.528 axialRotation: 40.2481 zShift: 4.90158 energy: -58.0307
+MCReject   xShift: 8.85032 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.90158 energy: -58.0138
+MCAccept 446 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.91761 energy: -58.075
+MCAccept 447 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.93306 energy: -58.073
+MCReject   xShift: 8.86231 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.93306 energy: -58.0659
+MCAccept 448 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.93385 energy: -58.0728
+MCAccept 449 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.94125 energy: -58.0697
+MCAccept 450 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2481 zShift: 4.91012 energy: -58.0739
+MCAccept 451 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2072 zShift: 4.91012 energy: -58.0894
+MCAccept 452 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2072 zShift: 4.91812 energy: -58.0876
+MCReject   xShift: 8.90151 crossingAngle: 27.387 axialRotation: 40.2072 zShift: 4.91812 energy: -58.0073
+MCReject   xShift: 8.86507 crossingAngle: 27.387 axialRotation: 40.2072 zShift: 4.91812 energy: -58.0852
+MCAccept 453 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.2072 zShift: 4.92313 energy: -58.0858
+MCAccept 454 xShift: 8.86734 crossingAngle: 27.387 axialRotation: 40.167 zShift: 4.92313 energy: -58.0908
+MCAccept 455 xShift: 8.86734 crossingAngle: 27.322 axialRotation: 40.167 zShift: 4.92313 energy: -58.0902
+MCReject   xShift: 8.86734 crossingAngle: 27.2088 axialRotation: 40.167 zShift: 4.92313 energy: -58.0778
+MCReject   xShift: 8.86734 crossingAngle: 27.322 axialRotation: 40.2832 zShift: 4.92313 energy: -58.0695
+MCAccept 456 xShift: 8.86662 crossingAngle: 27.322 axialRotation: 40.167 zShift: 4.92313 energy: -58.0902
+MCAccept 457 xShift: 8.86662 crossingAngle: 27.322 axialRotation: 40.2307 zShift: 4.92313 energy: -58.084
+MCReject   xShift: 8.86662 crossingAngle: 27.322 axialRotation: 40.5828 zShift: 4.92313 energy: -57.796
+MCAccept 458 xShift: 8.86662 crossingAngle: 27.322 axialRotation: 40.2303 zShift: 4.92313 energy: -58.084
+MCAccept 459 xShift: 8.86662 crossingAngle: 27.322 axialRotation: 40.2303 zShift: 4.89593 energy: -58.0858
+MCReject   xShift: 8.86662 crossingAngle: 27.3901 axialRotation: 40.2303 zShift: 4.89593 energy: -58.0761
+MCAccept 460 xShift: 8.86558 crossingAngle: 27.322 axialRotation: 40.2303 zShift: 4.89593 energy: -58.0843
+MCAccept 461 xShift: 8.86558 crossingAngle: 27.041 axialRotation: 40.2303 zShift: 4.89593 energy: -58.0667
+MCReject   xShift: 8.86558 crossingAngle: 26.9695 axialRotation: 40.2303 zShift: 4.89593 energy: -58.0484
+MCAccept 462 xShift: 8.86558 crossingAngle: 27.041 axialRotation: 40.2303 zShift: 4.89854 energy: -58.0655
+MCAccept 463 xShift: 8.86558 crossingAngle: 27.041 axialRotation: 40.2571 zShift: 4.89854 energy: -58.0615
+MCReject   xShift: 8.86558 crossingAngle: 27.041 axialRotation: 40.2571 zShift: 4.90787 energy: -58.0582
+MCReject   xShift: 8.86558 crossingAngle: 27.041 axialRotation: 39.941 zShift: 4.89854 energy: -57.974
+MCReject   xShift: 8.86558 crossingAngle: 27.041 axialRotation: 40.2571 zShift: 4.92373 energy: -58.0485
+MCAccept 464 xShift: 8.86558 crossingAngle: 27.041 axialRotation: 40.2571 zShift: 4.87675 energy: -58.0623
+MCAccept 465 xShift: 8.86558 crossingAngle: 26.9061 axialRotation: 40.2571 zShift: 4.87675 energy: -58.0326
+MCAccept 466 xShift: 8.86558 crossingAngle: 26.9989 axialRotation: 40.2571 zShift: 4.87675 energy: -58.0551
+MCReject   xShift: 8.86558 crossingAngle: 26.9989 axialRotation: 40.274 zShift: 4.87675 energy: -58.0494
+MCAccept 467 xShift: 8.86558 crossingAngle: 26.9989 axialRotation: 40.2074 zShift: 4.87675 energy: -58.0669
+MCReject   xShift: 8.86558 crossingAngle: 26.9989 axialRotation: 40.2074 zShift: 4.90322 energy: -58.0523
+MCAccept 468 xShift: 8.86507 crossingAngle: 26.9989 axialRotation: 40.2074 zShift: 4.87675 energy: -58.0668
+MCReject   xShift: 8.86507 crossingAngle: 26.9881 axialRotation: 40.2074 zShift: 4.87675 energy: -58.0642
+MCReject   xShift: 8.83716 crossingAngle: 26.9989 axialRotation: 40.2074 zShift: 4.87675 energy: -57.9854
+MCAccept 469 xShift: 8.86468 crossingAngle: 26.9989 axialRotation: 40.2074 zShift: 4.87675 energy: -58.0668
+MCAccept 470 xShift: 8.86468 crossingAngle: 27.0266 axialRotation: 40.2074 zShift: 4.87675 energy: -58.073
+MCAccept 471 xShift: 8.86468 crossingAngle: 27.0266 axialRotation: 40.2074 zShift: 4.88889 energy: -58.069
+MCReject   xShift: 8.87725 crossingAngle: 27.0266 axialRotation: 40.2074 zShift: 4.88889 energy: -58.0547
+MCAccept 472 xShift: 8.86468 crossingAngle: 27.0266 axialRotation: 40.2074 zShift: 4.87727 energy: -58.0729
+MCReject   xShift: 8.86468 crossingAngle: 26.8525 axialRotation: 40.2074 zShift: 4.87727 energy: -58.0208
+MCAccept 473 xShift: 8.86468 crossingAngle: 27.1509 axialRotation: 40.2074 zShift: 4.87727 energy: -58.091
+MCAccept 474 xShift: 8.86468 crossingAngle: 27.138 axialRotation: 40.2074 zShift: 4.87727 energy: -58.0899
+MCReject   xShift: 8.86468 crossingAngle: 27.138 axialRotation: 40.3091 zShift: 4.87727 energy: -58.0415
+MCAccept 475 xShift: 8.86468 crossingAngle: 27.2655 axialRotation: 40.2074 zShift: 4.87727 energy: -58.0921
+MCReject   xShift: 8.86468 crossingAngle: 27.2655 axialRotation: 39.9028 zShift: 4.87727 energy: -58.0838
+MCReject   xShift: 8.83686 crossingAngle: 27.2655 axialRotation: 40.2074 zShift: 4.87727 energy: -57.9682
+MCAccept 476 xShift: 8.86468 crossingAngle: 27.2655 axialRotation: 40.2074 zShift: 4.86825 energy: -58.0878
+MCAccept 477 xShift: 8.87481 crossingAngle: 27.2655 axialRotation: 40.2074 zShift: 4.86825 energy: -58.0957
+MCReject   xShift: 8.87481 crossingAngle: 27.2655 axialRotation: 40.3127 zShift: 4.86825 energy: -58.0306
+MCAccept 478 xShift: 8.87481 crossingAngle: 27.2632 axialRotation: 40.2074 zShift: 4.86825 energy: -58.0958
+MCReject   xShift: 8.87481 crossingAngle: 27.3318 axialRotation: 40.2074 zShift: 4.86825 energy: -58.0912
+MCAccept 479 xShift: 8.87481 crossingAngle: 27.2632 axialRotation: 40.2074 zShift: 4.86579 energy: -58.0949
+MCAccept 480 xShift: 8.87481 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.86579 energy: -58.1206
+MCReject   xShift: 8.87481 crossingAngle: 27.1859 axialRotation: 40.1312 zShift: 4.86579 energy: -58.1125
+MCAccept 481 xShift: 8.8678 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.86579 energy: -58.122
+MCReject   xShift: 8.8678 crossingAngle: 27.2632 axialRotation: 40.5434 zShift: 4.86579 energy: -57.7258
+MCReject   xShift: 8.8678 crossingAngle: 27.2081 axialRotation: 40.1312 zShift: 4.86579 energy: -58.119
+MCReject   xShift: 8.8678 crossingAngle: 27.5167 axialRotation: 40.1312 zShift: 4.86579 energy: -58.0873
+MCReject   xShift: 8.8678 crossingAngle: 27.2632 axialRotation: 40.4957 zShift: 4.86579 energy: -57.7944
+MCReject   xShift: 8.85724 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.86579 energy: -58.1061
+MCReject   xShift: 8.8599 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.86579 energy: -58.1122
+MCReject   xShift: 8.8678 crossingAngle: 27.2632 axialRotation: 40.1625 zShift: 4.86579 energy: -58.1117
+MCReject   xShift: 8.8678 crossingAngle: 27.2632 axialRotation: 39.7664 zShift: 4.86579 energy: -58.0141
+MCReject   xShift: 8.84533 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.86579 energy: -58.0612
+MCReject   xShift: 8.84521 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.86579 energy: -58.0606
+MCReject   xShift: 8.82595 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.86579 energy: -57.9238
+MCReject   xShift: 8.8678 crossingAngle: 27.1313 axialRotation: 40.1312 zShift: 4.86579 energy: -58.1091
+MCReject   xShift: 8.8678 crossingAngle: 27.2632 axialRotation: 40.2487 zShift: 4.86579 energy: -58.0665
+MCAccept 482 xShift: 8.8678 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.86552 energy: -58.1221
+MCAccept 483 xShift: 8.8678 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.86568 energy: -58.122
+MCReject   xShift: 8.8678 crossingAngle: 27.2632 axialRotation: 39.779 zShift: 4.86568 energy: -58.0249
+MCReject   xShift: 8.8654 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.86568 energy: -58.1203
+MCReject   xShift: 8.90655 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.86568 energy: -58.0056
+MCAccept 484 xShift: 8.8678 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.85684 energy: -58.1219
+MCReject   xShift: 8.88568 crossingAngle: 27.2632 axialRotation: 40.1312 zShift: 4.85684 energy: -58.1031
+MCAccept 485 xShift: 8.8678 crossingAngle: 27.2711 axialRotation: 40.1312 zShift: 4.85684 energy: -58.1219
+MCReject   xShift: 8.85673 crossingAngle: 27.2711 axialRotation: 40.1312 zShift: 4.85684 energy: -58.1019
+MCReject   xShift: 8.88423 crossingAngle: 27.2711 axialRotation: 40.1312 zShift: 4.85684 energy: -58.1076
+MCReject   xShift: 8.8389 crossingAngle: 27.2711 axialRotation: 40.1312 zShift: 4.85684 energy: -58.017
+MCAccept 486 xShift: 8.8678 crossingAngle: 27.2711 axialRotation: 39.965 zShift: 4.85684 energy: -58.1377
+MCReject   xShift: 8.8678 crossingAngle: 27.2711 axialRotation: 39.965 zShift: 4.89121 energy: -58.0822
+MCReject   xShift: 8.8678 crossingAngle: 27.2711 axialRotation: 39.6765 zShift: 4.85684 energy: -57.9607
+MCReject   xShift: 8.8678 crossingAngle: 27.2711 axialRotation: 40.2884 zShift: 4.85684 energy: -58.0236
+MCReject   xShift: 8.81603 crossingAngle: 27.2711 axialRotation: 39.965 zShift: 4.85684 energy: -57.9139
+MCReject   xShift: 8.8678 crossingAngle: 27.2711 axialRotation: 39.9424 zShift: 4.85684 energy: -58.1331
+MCReject   xShift: 8.8678 crossingAngle: 27.2711 axialRotation: 39.965 zShift: 4.86821 energy: -58.1223
+MCReject   xShift: 8.8678 crossingAngle: 27.2711 axialRotation: 39.965 zShift: 4.86313 energy: -58.1295
+MCAccept 487 xShift: 8.8678 crossingAngle: 27.4459 axialRotation: 39.965 zShift: 4.85684 energy: -58.1511
+MCAccept 488 xShift: 8.8678 crossingAngle: 27.4459 axialRotation: 39.965 zShift: 4.84348 energy: -58.1604
+MCReject   xShift: 8.88473 crossingAngle: 27.4459 axialRotation: 39.965 zShift: 4.84348 energy: -58.1408
+MCAccept 489 xShift: 8.8678 crossingAngle: 27.4459 axialRotation: 39.965 zShift: 4.82893 energy: -58.1656
+MCReject   xShift: 8.8678 crossingAngle: 27.4459 axialRotation: 40.0234 zShift: 4.82893 energy: -58.1445
+MCAccept 490 xShift: 8.8678 crossingAngle: 27.325 axialRotation: 39.965 zShift: 4.82893 energy: -58.1679
+MCReject   xShift: 8.93392 crossingAngle: 27.325 axialRotation: 39.965 zShift: 4.82893 energy: -57.8554
+MCAccept 491 xShift: 8.8678 crossingAngle: 27.325 axialRotation: 39.965 zShift: 4.82122 energy: -58.171
+MCReject   xShift: 8.85567 crossingAngle: 27.325 axialRotation: 39.965 zShift: 4.82122 energy: -58.1544
+MCAccept 492 xShift: 8.8678 crossingAngle: 27.325 axialRotation: 39.9084 zShift: 4.82122 energy: -58.1761
+MCAccept 493 xShift: 8.8678 crossingAngle: 27.325 axialRotation: 39.9043 zShift: 4.82122 energy: -58.1761
+MCAccept 494 xShift: 8.8678 crossingAngle: 27.325 axialRotation: 39.9043 zShift: 4.81497 energy: -58.1808
+MCReject   xShift: 8.8706 crossingAngle: 27.325 axialRotation: 39.9043 zShift: 4.81497 energy: -58.1794
+MCAccept 495 xShift: 8.8678 crossingAngle: 27.3604 axialRotation: 39.9043 zShift: 4.81497 energy: -58.1832
+End Repack Cycles
+
+***REPACK GEOMETRY***
+Energy;        Before: -52.8648; After: -58.1832
+
+Completed all cycles. Accepted 496/645
+Monte Carlo repack complete. Time: 24.25min
+

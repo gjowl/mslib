@@ -1318,7 +1318,6 @@ string getSequenceUsingMetropolisCriteria(map<string,map<string,double>> &_seque
 // This takes poly-val helix to calculate the residue burial of every position and based on the burial and number
 // of 'SASA interface level' decides rotamer level to assign to the position and also decides which of these positions are 'interfacial'
 // PS is the actual polymerSeq object whereas polySeq is the string version of the polymerSeq
-//TODO: fix this to start...make this entire thing less complicated, don't need as many vectors, just two or three (rotamer levels, interface, and allInterface)
 PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom, vector<uint> &_allInterfacePositions,
  vector<uint> &_interfacePositions, vector<uint> &_rotamerSamplingPerPosition){
 	
@@ -1330,9 +1329,6 @@ PolymerSequence getInterfacialPolymerSequence(Options &_opt, System &_startGeom,
 	vector<int> interfacePositions;
 	
 	// if sequence is not empty, use polyLeu
-	// I feel like heterodimerization would be best as an option in this case, but I would have to set everything up with an option, which isn't ideal
-	// for now, I think my initial idea of starting the code as an alternate hetero version is best, and then I can set the homodimerization to be the 
-	// same if need be?
 	string backboneSeq;
 	if (_opt.sequence == ""){
 		backboneSeq = generateBackboneSequence(_opt.backboneAA, _opt.backboneLength, _opt.useAlaAtTermini);
