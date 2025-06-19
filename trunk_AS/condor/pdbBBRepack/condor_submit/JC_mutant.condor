@@ -1,0 +1,29 @@
+batch_name = bbOptimizer_JC_mutant
+baseDir    = /home/loiseau/pdbBBRepack
+pdbDir     = /home/loiseau/gasright_JC_designPdbs
+
+executable = /home/loiseau/programs/bbOptimizer
+output     = $(baseDir)/out/$(sequence).out
+log        = $(baseDir)/log/$(sequence).log
+error      = $(baseDir)/err/$(sequence).err
+stream_output = TRUE
+stream_error  = TRUE
+
+configFile = bbOptimizer_2024.config
+inputFileDir = /home/loiseau/inputFiles
+inputCsvDir = /home/loiseau/pdbBBRepack/inputCsv
+
+#Compute Resources
+request_cpus = 1
+request_memory = 4GB
+request_disk = 1GB
++WantFlocking = TRUE
++WantGlideIn = TRUE
+
+should_transfer_files = YES
+transfer_input_files = $(baseDir)/$(configFile), $(pdbDir)/$(pdbFile), $(inputFileDir)/helicalAxis.pdb, $(inputFileDir)/69-gly-residue-helix.pdb, $(inputFileDir)/69-gly-residue-helix.crd, $(inputFileDir)/top_all22_prot.inp, $(inputFileDir)/par_all22_prot.inp, $(inputFileDir)/par_hbond_CA_2.txt, $(inputFileDir)/solvpar22.inp, $(inputFileDir)/rotlib_combined_-60_-40.txt, $(inputFileDir)/CENTROIDS_0.5_cutoff-6_byHbond, $(inputFileDir)/TMRULES_byHbond.txt 
+when_to_transfer_output = ON_EXIT_OR_EVICT
+transfer_output_files = $(sequence)
+
+Arguments = "--config $(configFile) --outputDir $(sequence) --pdbFile $(pdbFile) --sequence $(sequence) --interface $(interface) --xShift $(xShift) --crossingAngle $(crossingAngle) --negAngle $(negAngle) --axialRotation $(axialRotation) --negRot $(negRot) --zShift $(zShift)"
+queue sequence,interface,axialRotation,crossingAngle,xShift,zShift,pdbFile,negRot,negAngle from $(inputCsvDir)/JC_mutants.csv

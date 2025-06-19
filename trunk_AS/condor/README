@@ -1,0 +1,8 @@
+Condor submit files used to run for a majority of my data
+
+On the chtc cluster at UW-Madison, jobs were submitted using the following command:
+    - condor_submit <filename>
+
+File paths may have to be modified to match your local system
+
+pdbBBRepack took many efforts and tries, so I included all of the submit, config, and csv files to run the jobs

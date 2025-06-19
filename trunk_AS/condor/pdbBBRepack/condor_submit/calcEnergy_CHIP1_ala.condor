@@ -1,0 +1,27 @@
+batch_name = calcEnergy_CHIP1_ala
+baseDir    = /home/loiseau/calcEnergy
+
+executable = /home/loiseau/programs/calcEnergyOfPdb
+output     = $(baseDir)/out/$(outputDir).out
+log        = $(baseDir)/log/$(outputDir).log
+error      = $(baseDir)/err/$(outputDir).err
+stream_output = TRUE
+stream_error  = TRUE
+
+configFile = calcEnergy_CHIP1_ala.config
+inputFileDir = /home/loiseau/inputFiles
+
+#Compute Resources
+request_cpus = 1
+request_memory = 4GB
+request_disk = 1GB
++WantFlocking = TRUE
++WantGlideIn = TRUE
+
+should_transfer_files = YES
+transfer_input_files = $(baseDir)/$(configFile), $(baseDir)/CHIP1_designPdbs/$(pdbFile), $(inputFileDir)/helicalAxis.pdb, $(inputFileDir)/69-gly-residue-helix.pdb, $(inputFileDir)/69-gly-residue-helix.crd, $(inputFileDir)/top_all22_prot.inp, $(inputFileDir)/par_all22_prot.inp, $(inputFileDir)/par_hbond_CA_2.txt, $(inputFileDir)/solvpar22.inp, $(inputFileDir)/rotlib_combined_-60_-40.txt, $(inputFileDir)/CENTROIDS_0.5_cutoff-6_byHbond, $(inputFileDir)/TMRULES_byHbond.txt 
+when_to_transfer_output = ON_EXIT_OR_EVICT
+transfer_output_files = $(outputDir)
+
+Arguments = "--config $(configFile) --outputDir $(outputDir) --pdbFile $(pdbFile) --sequence $(sequence) --interface $(interface) --xShift $(xShift) --crossingAngle $(crossingAngle) --negAngle $(negAngle) --axialRotation $(axialRotation) --negRot false --zShift $(zShift)"
+queue outputDir,sequence,interface,xShift,negAngle,crossingAngle,axialRotation,zShift,pdbFile,x from $(baseDir)/CHIP1_designs_ala.csv

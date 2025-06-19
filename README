@@ -39,3 +39,16 @@ Other errors:
         make clean
         make
 -   If the make fails at the BBQTable and everything else seems correct, you may be running with the improper version of g++. 
+
+
+If looking to run my scripts for design:
+-   Found in trunk_AS/myProgs/gloiseau/seqDesign.cpp:
+    -   On the command line, run: bin/seqDesign --configfile config seqDesign_example.config
+
+If looking to rerun scripts in bulk for design, those can be found in trunk_AS/condor/:
+-   interhelicalCoordinates = condor_submit interhelicalCoordinates.condor
+-   seqDesign = condor_submit seqDesign.condor
+
+Other scripts are also found in the condor and myProgs/gloiseau directories to rerun the more niche parts of the program (calculating mutants, getting voids, generating baselines, etc.)
+
+More details for each of these scripts can be found in trunk_AS/myProgs/gloiseau/README

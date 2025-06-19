@@ -1,7 +1,5 @@
 Scripts
 seqDesign:
- - make seqDesign
- - seqDesign --config 
     - my sequence design code
     - designs homodimer sequences only up to the number that you desire for a given sequence (I defaulted to 5)
     - uses calculated homodimer baseline energies to estimate the monomer sequence
